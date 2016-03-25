@@ -101,7 +101,7 @@ def stack_job(String name, String slug) {
           parameters {
             //currentBuild()
             predefinedProps([
-              PRODUCT: 'ci_hsc',
+              PRODUCT: name,
               BRANCH: '$BUILD_BRANCH'
             ])
             booleanParam('SKIP_DEMO', true)
