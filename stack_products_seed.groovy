@@ -1,4 +1,4 @@
-@Grab(group='org.yaml', module='snakeyaml', version='1.16')
+//@Grab(group='org.yaml', module='snakeyaml', version='1.16')
 import org.yaml.snakeyaml.Yaml
 
 def repos = new URL("https://raw.githubusercontent.com/lsst/lsstsw/master/etc/repos.yaml")
