@@ -3,8 +3,8 @@ import org.yaml.snakeyaml.Yaml
 
 def repos = new URL("https://raw.githubusercontent.com/lsst/lsstsw/master/etc/repos.yaml")
 
-def y  = new Yaml()
-def doc =  y.load(repos.newReader())
+def y = new Yaml()
+def doc = y.load(repos.newReader())
 
 def locations = [:]
 doc.each { k, v ->
