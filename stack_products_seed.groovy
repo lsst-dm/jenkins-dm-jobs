@@ -1,6 +1,8 @@
 //@Grab(group='org.yaml', module='snakeyaml', version='1.16')
 import org.yaml.snakeyaml.Yaml
 
+def job_folder = 'products'
+
 def repos = new URL("https://raw.githubusercontent.com/lsst/lsstsw/master/etc/repos.yaml")
 
 def y = new Yaml()
@@ -25,13 +27,17 @@ doc.each { k, v ->
   locations[k] = slug
 }
 
-locations.each { name,slug ->
-  println "${name} : ${slug}"
-  stack_job(name, slug)
+folder(job_folder) {
+  displayName('EUPS Products')
 }
 
-def stack_job(String name, String slug) {
-  job(name) {
+locations.each { name,slug ->
+  println "${name} : ${slug}"
+  stack_job(job_folder, name, slug)
+}
+
+def stack_job(String folder, String name, String slug) {
+  job("${folder}/${name}") {
     scm {
       git {
         remote {
