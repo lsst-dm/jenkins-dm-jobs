@@ -1,4 +1,3 @@
-//@Grab(group='org.yaml', module='snakeyaml', version='1.16')
 import org.yaml.snakeyaml.Yaml
 
 def job_folder = 'products'
