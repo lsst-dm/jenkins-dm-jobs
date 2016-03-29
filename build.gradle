@@ -1,4 +1,6 @@
-defaultTasks 'libs'
+apply plugin: 'groovy'
+
+defaultTasks 'test'
 
 repositories {
     jcenter()
@@ -24,3 +26,15 @@ task libs(type: Copy) {
 task wrapper(type: Wrapper) {
     gradleVersion = '2.2.1'
 }
+
+// copied from
+// https://github.com/sheehan/job-dsl-gradle-example/blob/master/build.gradle
+sourceSets {
+    jobs {
+        groovy {
+            srcDirs 'jobs'
+        }
+    }
+}
+
+tasks.getByName('test').inputs.files(sourceSets.jobs.groovy.srcDirs)
