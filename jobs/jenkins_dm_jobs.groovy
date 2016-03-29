@@ -1,5 +1,5 @@
 def name = 'jenkins-dm-jobs'
-def org = 'jhoblitt'
+def org = 'lsst-sqre'
 def slug = "${org}/${name}"
 
 folder('ci-ci') {

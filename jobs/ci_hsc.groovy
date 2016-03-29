@@ -1,8 +1,8 @@
 def name = 'ci_hsc'
-def org = 'jhoblitt'
+def org = 'lsst'
 def slug = "${org}/${name}"
 
-job("${name}-test") {
+job(name) {
   scm {
     git {
       remote {
