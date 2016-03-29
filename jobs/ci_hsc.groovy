@@ -77,11 +77,12 @@ if (binding.variables.containsKey('ghprbSourceBranch')) {
           ])
           booleanParam('SKIP_DEMO', true)
         }
-        publishers {
-          // must be defined even to use the global defaults
-          hipChat {}
-        }
       }
     }
+  }
+
+  publishers {
+    // must be defined even to use the global defaults
+    hipChat {}
   }
 }
