@@ -44,7 +44,11 @@ def stack_job(String folder, String name, String slug) {
           //refspec('+refs/pull/*:refs/remotes/origin/pr/*')
         }
         branch('*/master')
-        shallowClone(true)
+        extensions {
+          cloneOptions {
+            shallow(true)
+          }
+        }
       }
     }
 

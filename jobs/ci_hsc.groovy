@@ -10,7 +10,11 @@ job("${name}-test") {
         //refspec('+refs/pull/*:refs/remotes/origin/pr/*')
       }
       branch('*/master')
-      shallowClone(true)
+      extensions {
+        cloneOptions {
+          shallow(true)
+        }
+      }
     }
   }
 
