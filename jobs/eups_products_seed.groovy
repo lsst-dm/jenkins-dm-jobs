@@ -62,7 +62,6 @@ def stack_job(String folder, String name, String slug) {
     keepDependencies()
 
     triggers {
-      cron('H 0,8,16 * * *')
       githubPush()
       pullRequest {
         cron('H/5 * * * *')
