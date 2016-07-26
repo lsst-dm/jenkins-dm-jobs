@@ -6,6 +6,7 @@ import javaposse.jobdsl.dsl.Job
 class StackOsMatrix {
   String product
   Boolean skip_demo
+  String cron = 'H H/8 * * *'
 
   Job build(DslFactory dslFactory) {
     dslFactory.job(product) {
@@ -23,7 +24,7 @@ class StackOsMatrix {
       keepDependencies()
 
       triggers {
-        cron('H H/8 * * *')
+        cron(cron)
       }
 
       steps {
