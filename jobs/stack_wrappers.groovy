@@ -17,9 +17,20 @@ import util.StackOsMatrix
     product: 'qserv_distrib',
     skip_demo: true,
   ],
+  [
+    product: 'sims_utils',
+    skip_demo: true,
+    cron: 'H * * * *',
+  ],
 ].each { j ->
-  new StackOsMatrix(
+  def stack = new StackOsMatrix(
     product: j['product'],
     skip_demo: j['skip_demo']
-  ).build(this)
+  )
+
+  if (j.containsKey('cron')) {
+    stack.cron = j['cron']
+  }
+
+  stack.build(this)
 }
