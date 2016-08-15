@@ -45,13 +45,27 @@ job('release/tag-git-repos') {
         ARGS+=('--dry-run')
       fi
 
+      # do not echo GH token to console log
+      set +x
+      ARGS+=('--token' "$GITHUB_TOKEN")
+      set -x
+
+      ARGS+=('--org' 'lsst')
+      ARGS+=('--team' 'Data Management')
+      ARGS+=('--email' 'sqre-admin@lists.lsst.org')
+      ARGS+=('--tagger' 'sqreadmin')
+      ARGS+=('--debug')
+      ARGS+=("$GIT_TAG")
+      ARGS+=("$BUILD_ID")
+
       virtualenv venv
       . venv/bin/activate
       pip install -r requirements.txt
       python setup.py install
-      set +x
+
       # do not echo GH token to console log
-      github-tag-version --org lsst --team 'Data Management' --token $GITHUB_TOKEN $GIT_TAG $BUILD_ID --email sqre-admin@lists.lsst.org --tagger sqreadmin --debug "${OPTS[@]}"
+      set +x
+      github-tag-version "${ARGS[@]}"
       '''.stripIndent()
     )
   }
