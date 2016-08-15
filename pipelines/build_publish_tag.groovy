@@ -10,9 +10,13 @@ node {
 try {
   notify.started()
 
+  // eups doesn't like dots in tags, convert to underscores
+  def EUPS_TAG = GIT_TAG.tr('.-', '_')
+
   echo "branch: ${BRANCH}"
   echo "product: ${PRODUCT}"
-  echo "tag: ${TAG}"
+  echo "[git] tag: ${GIT_TAG}"
+  echo "[eups] tag: ${EUPS_TAG}"
 
 
   stage 'build'
@@ -50,7 +54,7 @@ try {
     parameters: [
       string(name: 'EUPSPKG_SOURCE', value: 'git'),
       string(name: 'BUILD_ID', value: build_id),
-      string(name: 'TAG', value: TAG),
+      string(name: 'TAG', value: EUPS_TAG),
       string(name: 'PRODUCTS', value: PRODUCT)
     ]
 
@@ -60,7 +64,7 @@ try {
   build job: 'release/tag-git-repos',
     parameters: [
       string(name: 'BUILD_ID', value: build_id),
-      string(name: 'TAG', value: TAG),
+      string(name: 'GIT_TAG', value: GIT_TAG),
       booleanParam(name: 'DRY_RUN', value: false)
     ]
 } catch (e) {
