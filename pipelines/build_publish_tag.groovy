@@ -48,13 +48,24 @@ try {
   }
 
 
-  stage 'eups tag'
+  stage 'eups publish [tag]'
 
   build job: 'run-publish',
     parameters: [
       string(name: 'EUPSPKG_SOURCE', value: 'git'),
       string(name: 'BUILD_ID', value: build_id),
       string(name: 'TAG', value: EUPS_TAG),
+      string(name: 'PRODUCTS', value: PRODUCT)
+    ]
+
+
+  stage 'eups publish [w_latest]'
+
+  build job: 'run-publish',
+    parameters: [
+      string(name: 'EUPSPKG_SOURCE', value: 'git'),
+      string(name: 'BUILD_ID', value: build_id),
+      string(name: 'TAG', value: 'w_latest'),
       string(name: 'PRODUCTS', value: PRODUCT)
     ]
 
