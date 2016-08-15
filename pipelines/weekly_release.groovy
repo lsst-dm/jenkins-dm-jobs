@@ -1,8 +1,8 @@
 def notify = null
 node {
   git([
-    url: 'https://github.com/jhoblitt/jenkins-dm-jobs.git',
-    branch: 'tickets/DM-7154-weekly-tags'
+    url: 'https://github.com/lsst-sqre/jenkins-dm-jobs.git',
+    branch: 'master'
   ])
   notify = load 'pipelines/lib/notify.groovy'
 }
