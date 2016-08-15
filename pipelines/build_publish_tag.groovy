@@ -27,8 +27,8 @@ try {
       parameters: [
         string(name: 'BRANCH', value: BRANCH),
         string(name: 'PRODUCT', value: PRODUCT),
-        booleanParam(name: 'SKIP_DEMO', value: SKIP_DEMO),
-        booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS)
+        booleanParam(name: 'SKIP_DEMO', value: SKIP_DEMO.toBoolean()),
+        booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS.toBoolean())
       ],
       wait: true
   def jenkins_id = result.id
