@@ -18,8 +18,8 @@ try {
   def date = new java.util.Date()
   def dateStamp = dateFormat.format(date)
 
-  def tag = "w.${dateStamp}"
-  echo "generated tag: ${tag}"
+  def git_tag = "w.${dateStamp}"
+  echo "generated [git] tag: ${git_tag}"
 
 
   stage 'run build-publish-tag'
@@ -28,7 +28,7 @@ try {
     parameters: [
       string(name: 'BRANCH', value: ''),
       string(name: 'PRODUCT', value: 'lsst_distrib'),
-      string(name: 'TAG', value: tag),
+      string(name: 'GIT_TAG', value: git_tag),
       booleanParam(name: 'SKIP_DEMO', value: false),
       booleanParam(name: 'SKIP_DOCS', value: false)
     ]
