@@ -33,7 +33,7 @@ job('release/tag-git-repos') {
 
   wrappers {
     credentialsBinding {
-      string('GITHUB_TOKEN', 'github-api-token-jhoblitt')
+      string('GITHUB_TOKEN', 'github-api-token-sqreadmin')
     }
   }
 
