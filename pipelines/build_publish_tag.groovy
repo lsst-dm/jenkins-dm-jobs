@@ -15,6 +15,8 @@ try {
 
   echo "branch: ${BRANCH}"
   echo "product: ${PRODUCT}"
+  echo "skip demo: ${SKIP_DEMO}"
+  echo "skip docs: ${SKIP_DOCS}"
   echo "[git] tag: ${GIT_TAG}"
   echo "[eups] tag: ${EUPS_TAG}"
 
@@ -25,8 +27,8 @@ try {
       parameters: [
         string(name: 'BRANCH', value: BRANCH),
         string(name: 'PRODUCT', value: PRODUCT),
-        booleanParam(name: 'SKIP_DEMO', value: false),
-        booleanParam(name: 'SKIP_DOCS', value: false)
+        booleanParam(name: 'SKIP_DEMO', value: SKIP_DEMO),
+        booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS)
       ],
       wait: true
   def jenkins_id = result.id
