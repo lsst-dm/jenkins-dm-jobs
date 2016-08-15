@@ -60,7 +60,8 @@ try {
   build job: 'release/tag-git-repos',
     parameters: [
       string(name: 'BUILD_ID', value: build_id),
-      string(name: 'TAG', value: TAG)
+      string(name: 'TAG', value: TAG),
+      booleanParam(name: 'DRY_RUN', value: false)
     ]
 } catch (e) {
   // If there was an exception thrown, the build failed
