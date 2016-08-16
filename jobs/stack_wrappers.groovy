@@ -10,6 +10,10 @@ import util.StackOsMatrix
     skip_demo: false,
   ],
   [
+    product: 'lsst_apps',
+    skip_demo: false,
+  ],
+  [
     product: 'lsst_sims',
     skip_demo: true,
   ],
