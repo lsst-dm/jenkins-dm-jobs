@@ -3,6 +3,7 @@ folder('cowboy') {
 }
 
 pipelineJob('cowboy/stack') {
+  description('Re-implementation of the `stack-os-matrix` job in job-dsl & pipeline.  Presently, this job *ONLY* builds on OSX slaves.  Use this job for testing on OSX.')
 
   parameters {
     stringParam('BRANCH', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" is implicitly appended to the right side of the list, if not specified.')
