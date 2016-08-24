@@ -73,6 +73,11 @@ try {
             withEnv(["WORKSPACE=${pwd()}"]) {
               sh cleanup
             }
+
+            archiveArtifacts([
+              artifacts: "lsstsw/build/manifest.txt",
+              fingerprint: true
+            ])
           } // try
         } // dir(python)
       } // node('osx')
