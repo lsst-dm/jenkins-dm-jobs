@@ -39,6 +39,7 @@ try {
 } finally {
   echo "result: ${currentBuild.result}"
   switch(currentBuild.result) {
+    case null:
     case 'SUCCESS':
       notify.success()
       break
