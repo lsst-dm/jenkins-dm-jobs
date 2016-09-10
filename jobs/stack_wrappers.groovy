@@ -22,19 +22,17 @@ import util.StackOsMatrix
     skip_demo: true,
   ],
   [
+    product: 'lsst_py3',
+    skip_demo: true,
+    python: 'py3',
+  ],
+  [
     product: 'sims_utils',
     skip_demo: true,
     cron: 'H * * * *',
   ],
 ].each { j ->
-  def stack = new StackOsMatrix(
-    product: j['product'],
-    skip_demo: j['skip_demo']
-  )
-
-  if (j.containsKey('cron')) {
-    stack.cron = j['cron']
-  }
+  def stack = new StackOsMatrix(j)
 
   stack.build(this)
 }
