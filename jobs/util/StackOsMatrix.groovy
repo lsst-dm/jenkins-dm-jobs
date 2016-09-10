@@ -7,6 +7,7 @@ class StackOsMatrix {
   String product
   Boolean skip_demo
   String cron = 'H H/8 * * *'
+  String python = 'py2'
 
   Job build(DslFactory dslFactory) {
     dslFactory.job(product) {
@@ -38,6 +39,7 @@ class StackOsMatrix {
               currentBuild()
               predefinedProp('PRODUCT', product)
               booleanParam('SKIP_DEMO', skip_demo)
+              predefinedProp('python', python)
             }
           }
         }
