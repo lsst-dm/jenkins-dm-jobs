@@ -31,7 +31,7 @@ job("ci-ci/${name}") {
 
   triggers {
     githubPush()
-    pullRequest {
+    githubPullRequest {
       cron('H/5 * * * *')
       useGitHubHooks()
       permitAll()
