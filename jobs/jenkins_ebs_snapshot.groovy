@@ -1,8 +1,10 @@
+import util.Common
+
 def name = 'ec2-snapshot'
 def org = 'lsst-sqre'
 def slug = "${org}/${name}"
 
-job('ci-ci/jenkins-ebs-snapshot') {
+def j = job('ci-ci/jenkins-ebs-snapshot') {
   scm {
     git {
       remote {
@@ -44,9 +46,6 @@ job('ci-ci/jenkins-ebs-snapshot') {
   steps {
     shell('sh ec2-snapshot.sh')
   }
-
-  publishers {
-    // must be defined even to use the global defaults
-    hipChat {}
-  }
 }
+
+Common.addNotification(j)

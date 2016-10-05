@@ -1,3 +1,5 @@
+import util.Common
+
 def name = 'jenkins-dm-jobs'
 def org = 'lsst-sqre'
 def slug = "${org}/${name}"
@@ -6,7 +8,7 @@ folder('ci-ci') {
   description('CI for the CI system(s)')
 }
 
-job("ci-ci/${name}") {
+def j = job("ci-ci/${name}") {
   scm {
     git {
       remote {
@@ -47,9 +49,6 @@ job("ci-ci/${name}") {
   steps {
     shell('./gradlew test')
   }
-
-  publishers {
-    // must be defined even to use the global defaults
-    hipChat {}
-  }
 }
+
+Common.addNotification(j)
