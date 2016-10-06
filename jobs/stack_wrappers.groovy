@@ -29,7 +29,6 @@ import util.StackOsMatrix
   [
     product: 'sims_utils',
     skip_demo: true,
-    cron: 'H * * * *',
   ],
 ].each { j ->
   def stack = new StackOsMatrix(j)
