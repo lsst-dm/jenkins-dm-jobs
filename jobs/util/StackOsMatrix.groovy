@@ -15,6 +15,9 @@ class StackOsMatrix {
         stringParam('BRANCH', null, "Whitespace delimited list of 'refs' to attempt to build.  Priority is highest -> lowest from left to right.  'master' is implicitly appended to the right side of the list, if not specified.")
       }
 
+      // per request from user making multipushes to ci_hsc
+      quietPeriod(1800)
+
       properties {
         rebuild {
           autoRebuild()
