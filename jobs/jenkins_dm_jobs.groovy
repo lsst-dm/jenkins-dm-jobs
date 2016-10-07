@@ -1,21 +1,19 @@
 import util.Common
 
-def name = 'jenkins-dm-jobs'
-def org = 'lsst-sqre'
-def slug = "${org}/${name}"
-
 folder('ci-ci') {
   description('CI for the CI system(s)')
 }
 
-def j = job("ci-ci/${name}") {
+def j = job('ci-ci/jenkins-dm-jobs') {
+  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
+  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
+
   scm {
     git {
       remote {
-        github(slug)
-        //refspec('+refs/pull/*:refs/remotes/origin/pr/*')
+        url(repo)
       }
-      branch('*/master')
+      branch(ref)
       extensions {
         cloneOptions {
           shallow(true)
@@ -25,6 +23,7 @@ def j = job("ci-ci/${name}") {
   }
 
   properties {
+    githubProjectUrl(repo)
     rebuild {
       autoRebuild()
     }
