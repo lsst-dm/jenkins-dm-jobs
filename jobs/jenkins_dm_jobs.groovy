@@ -1,9 +1,5 @@
 import util.Common
 
-folder('ci-ci') {
-  description('CI for the CI system(s)')
-}
-
 def j = job('ci-ci/jenkins-dm-jobs') {
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
   def ref  = SEED_JOB.scm.getBranches().get(0).getName()
