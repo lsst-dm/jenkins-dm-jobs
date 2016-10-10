@@ -33,6 +33,10 @@ def j = job('ci-ci/jenkins-dm-jobs') {
   steps {
     shell('./gradlew test')
   }
+
+  publishers {
+    githubCommitNotifier()
+  }
 }
 
 Common.addNotification(j)
