@@ -28,17 +28,6 @@ def j = job('ci-ci/jenkins-dm-jobs') {
 
   triggers {
     githubPush()
-    githubPullRequest {
-      cron('H/5 * * * *')
-      useGitHubHooks()
-      permitAll()
-      // configure credential to use for GH API
-      configure { project ->
-        project / 'triggers' / 'org.jenkinsci.plugins.ghprb.GhprbTrigger' {
-          gitHubAuthId 'github-api-token-jhoblitt'
-        }
-      }
-    }
   }
 
   steps {
