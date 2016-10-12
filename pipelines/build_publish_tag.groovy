@@ -1,9 +1,14 @@
 def notify = null
 node {
-  git([
-    url: 'https://github.com/lsst-sqre/jenkins-dm-jobs.git',
-    branch: 'master'
-  ])
+  dir('jenkins-dm-jobs') {
+    // XXX the git step seemed to blowup on a branch of '*/<foo>'
+    checkout([
+      $class: 'GitSCM',
+      branches: scm.getBranches(),
+      userRemoteConfigs: scm.getUserRemoteConfigs()
+    ])
+    notify = load 'pipelines/lib/notify.groovy'
+  }
   notify = load 'pipelines/lib/notify.groovy'
 }
 

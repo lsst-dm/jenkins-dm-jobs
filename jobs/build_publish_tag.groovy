@@ -22,10 +22,18 @@ pipelineJob('release/build-publish-tag') {
   label('jenkins-master')
   keepDependencies(true)
 
+  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
+  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
+
   definition {
     cpsScm {
       scm {
-        github('lsst-sqre/jenkins-dm-jobs', '*/master')
+        git {
+          remote {
+            url(repo)
+          }
+          branch(ref)
+        }
       }
       scriptPath('pipelines/build_publish_tag.groovy')
     }

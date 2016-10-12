@@ -29,7 +29,10 @@ import util.StackOsMatrix
   [
     product: 'sims_utils',
     skip_demo: true,
-    cron: 'H * * * *',
+  ],
+  [
+    product: 'ci_hsc',
+    skip_demo: true,
   ],
 ].each { j ->
   def stack = new StackOsMatrix(j)

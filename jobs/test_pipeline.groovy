@@ -1,17 +1,8 @@
-pipelineJob('release/weekly-release') {
+pipelineJob('ci-ci/test-pipeline') {
   properties {
     rebuild {
       autoRebuild()
     }
-  }
-
-  // don't tie up a beefy build slave
-  label('jenkins-master')
-  concurrentBuild(false)
-  keepDependencies(true)
-
-  triggers {
-    cron('0 0 * * 1')
   }
 
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
@@ -27,7 +18,7 @@ pipelineJob('release/weekly-release') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/weekly_release.groovy')
+      scriptPath('pipelines/test_pipe.groovy')
     }
   }
 }
