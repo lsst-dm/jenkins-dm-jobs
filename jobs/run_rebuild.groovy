@@ -16,6 +16,7 @@ def j = job('release/run-rebuild') {
 
   label('lsst-dev')
   concurrentBuild(false)
+  customWorkspace('/home/lsstsw')
 
   multiscm {
     git {
