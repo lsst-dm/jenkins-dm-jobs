@@ -36,7 +36,7 @@ try {
         booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS.toBoolean())
       ],
       wait: true
-  def jenkins_id = result.id
+  def rebuildId = result.id
 
 
   stage 'parse bNNNN'
@@ -45,13 +45,13 @@ try {
     step ([$class: 'CopyArtifact',
           projectName: 'run-rebuild',
           filter: 'build/manifest.txt',
-          selector: [$class: 'SpecificBuildSelector', buildNumber: jenkins_id]
+          selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
           ]);
 
     def manifest = readFile 'build/manifest.txt'
-    build_id = build_id(manifest)
+    def bx = bxxxx(manifest)
 
-    echo "parsed build_id: ${build_id}"
+    echo "parsed bxxxx: ${bx}"
   }
 
 
@@ -60,7 +60,7 @@ try {
   build job: 'run-publish',
     parameters: [
       string(name: 'EUPSPKG_SOURCE', value: 'git'),
-      string(name: 'BUILD_ID', value: build_id),
+      string(name: 'BUILD_ID', value: bx),
       string(name: 'TAG', value: EUPS_TAG),
       string(name: 'PRODUCTS', value: PRODUCT)
     ]
@@ -71,7 +71,7 @@ try {
   build job: 'run-publish',
     parameters: [
       string(name: 'EUPSPKG_SOURCE', value: 'git'),
-      string(name: 'BUILD_ID', value: build_id),
+      string(name: 'BUILD_ID', value: bx),
       string(name: 'TAG', value: 'w_latest'),
       string(name: 'PRODUCTS', value: PRODUCT)
     ]
@@ -81,7 +81,7 @@ try {
 
   build job: 'release/tag-git-repos',
     parameters: [
-      string(name: 'BUILD_ID', value: build_id),
+      string(name: 'BUILD_ID', value: bx),
       string(name: 'GIT_TAG', value: GIT_TAG),
       booleanParam(name: 'DRY_RUN', value: false)
     ]
@@ -109,7 +109,7 @@ try {
 
 @NonCPS
 
-def build_id(manifest) {
-  def m = manifest =~ /(?m)^BUILD=(.*)/
+def bxxxx(manifest) {
+  def m = manifest =~ /(?m)^BUILD=(b.*)/
   m ? m[0][1] : null
 }
