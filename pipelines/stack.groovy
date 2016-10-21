@@ -27,7 +27,7 @@ try {
     injectParam(p)
   }
 
-  stage 'build' {
+  stage('build') {
     node('osx') {
       // use different workspace dirs for python 2/3 to avoid residual state
       // conflicts

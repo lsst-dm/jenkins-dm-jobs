@@ -28,7 +28,7 @@ try {
   def bx = null
   def rebuildId = null
 
-  stage 'build' {
+  stage('build') {
     def result = build job: 'run-rebuild',
         parameters: [
           string(name: 'BRANCH', value: BRANCH),
@@ -40,7 +40,7 @@ try {
     rebuildId = result.id
   }
 
-  stage 'parse bNNNN' {
+  stage('parse bNNNN') {
     node {
       step ([$class: 'CopyArtifact',
             projectName: 'run-rebuild',
@@ -55,7 +55,7 @@ try {
     }
   }
 
-  stage 'eups publish [tag]' {
+  stage('eups publish [tag]') {
     build job: 'run-publish',
       parameters: [
         string(name: 'EUPSPKG_SOURCE', value: 'git'),
@@ -65,7 +65,7 @@ try {
       ]
   }
 
-  stage 'eups publish [w_latest]' {
+  stage('eups publish [w_latest]') {
     build job: 'run-publish',
       parameters: [
         string(name: 'EUPSPKG_SOURCE', value: 'git'),
@@ -75,7 +75,7 @@ try {
       ]
   }
 
-  stage 'git tag' {
+  stage('git tag') {
     build job: 'release/tag-git-repos',
       parameters: [
         string(name: 'BUILD_ID', value: bx),

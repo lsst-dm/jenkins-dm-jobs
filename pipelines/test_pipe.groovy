@@ -15,7 +15,7 @@ node('jenkins-master') {
 try {
   notify.started()
 
-  stage 'yo' {
+  stage('yo') {
     echo 'foo'
   }
 } catch (e) {

@@ -16,7 +16,7 @@ try {
 
   def git_tag = null
 
-  stage 'generate weekly tag' {
+  stage('generate weekly tag') {
     def tz = TimeZone.getTimeZone('America/Los_Angeles')
     def dateFormat = new java.text.SimpleDateFormat('Y.w')
     dateFormat.setTimeZone(tz)
@@ -27,7 +27,7 @@ try {
     echo "generated [git] tag: ${git_tag}"
   }
 
-  stage 'run build-publish-tag' {
+  stage('run build-publish-tag') {
     retry(3) {
       build job: 'release/build-publish-tag',
         parameters: [
