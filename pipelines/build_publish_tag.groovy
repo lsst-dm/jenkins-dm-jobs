@@ -25,6 +25,7 @@ try {
   echo "[git] tag: ${GIT_TAG}"
   echo "[eups] tag: ${EUPS_TAG}"
 
+  def bx = null
 
   stage 'build' {
     def result = build job: 'run-rebuild',
@@ -47,7 +48,7 @@ try {
             ]);
 
       def manifest = readFile 'build/manifest.txt'
-      def bx = bxxxx(manifest)
+      bx = bxxxx(manifest)
 
       echo "parsed bxxxx: ${bx}"
     }
