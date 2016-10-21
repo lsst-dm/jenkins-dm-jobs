@@ -50,9 +50,9 @@ def j = matrixJob('stack-os-matrix') {
     }
     git {
       remote {
-        github('lsst-sqre/buildbot-scripts')
+        github('jhoblitt/buildbot-scripts')
       }
-      branch('*/master')
+      branch('*/tickets/DM-7807-gcc5')
       extensions {
         relativeTargetDirectory('buildbot-scripts')
         cloneOptions { shallow() }
