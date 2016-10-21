@@ -26,65 +26,61 @@ try {
   echo "[eups] tag: ${EUPS_TAG}"
 
 
-  stage 'build'
-
-  def result = build job: 'run-rebuild',
-      parameters: [
-        string(name: 'BRANCH', value: BRANCH),
-        string(name: 'PRODUCT', value: PRODUCT),
-        booleanParam(name: 'SKIP_DEMO', value: SKIP_DEMO.toBoolean()),
-        booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS.toBoolean())
-      ],
-      wait: true
-  def rebuildId = result.id
-
-
-  stage 'parse bNNNN'
-
-  node {
-    step ([$class: 'CopyArtifact',
-          projectName: 'run-rebuild',
-          filter: 'build/manifest.txt',
-          selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
-          ]);
-
-    def manifest = readFile 'build/manifest.txt'
-    def bx = bxxxx(manifest)
-
-    echo "parsed bxxxx: ${bx}"
+  stage 'build' {
+    def result = build job: 'run-rebuild',
+        parameters: [
+          string(name: 'BRANCH', value: BRANCH),
+          string(name: 'PRODUCT', value: PRODUCT),
+          booleanParam(name: 'SKIP_DEMO', value: SKIP_DEMO.toBoolean()),
+          booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS.toBoolean())
+        ],
+        wait: true
+    def rebuildId = result.id
   }
 
+  stage 'parse bNNNN' {
+    node {
+      step ([$class: 'CopyArtifact',
+            projectName: 'run-rebuild',
+            filter: 'build/manifest.txt',
+            selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
+            ]);
 
-  stage 'eups publish [tag]'
+      def manifest = readFile 'build/manifest.txt'
+      def bx = bxxxx(manifest)
 
-  build job: 'run-publish',
-    parameters: [
-      string(name: 'EUPSPKG_SOURCE', value: 'git'),
-      string(name: 'BUILD_ID', value: bx),
-      string(name: 'TAG', value: EUPS_TAG),
-      string(name: 'PRODUCTS', value: PRODUCT)
-    ]
+      echo "parsed bxxxx: ${bx}"
+    }
+  }
 
+  stage 'eups publish [tag]' {
+    build job: 'run-publish',
+      parameters: [
+        string(name: 'EUPSPKG_SOURCE', value: 'git'),
+        string(name: 'BUILD_ID', value: bx),
+        string(name: 'TAG', value: EUPS_TAG),
+        string(name: 'PRODUCTS', value: PRODUCT)
+      ]
+  }
 
-  stage 'eups publish [w_latest]'
+  stage 'eups publish [w_latest]' {
+    build job: 'run-publish',
+      parameters: [
+        string(name: 'EUPSPKG_SOURCE', value: 'git'),
+        string(name: 'BUILD_ID', value: bx),
+        string(name: 'TAG', value: 'w_latest'),
+        string(name: 'PRODUCTS', value: PRODUCT)
+      ]
+  }
 
-  build job: 'run-publish',
-    parameters: [
-      string(name: 'EUPSPKG_SOURCE', value: 'git'),
-      string(name: 'BUILD_ID', value: bx),
-      string(name: 'TAG', value: 'w_latest'),
-      string(name: 'PRODUCTS', value: PRODUCT)
-    ]
-
-
-  stage 'git tag'
-
-  build job: 'release/tag-git-repos',
-    parameters: [
-      string(name: 'BUILD_ID', value: bx),
-      string(name: 'GIT_TAG', value: GIT_TAG),
-      booleanParam(name: 'DRY_RUN', value: false)
-    ]
+  stage 'git tag' {
+    build job: 'release/tag-git-repos',
+      parameters: [
+        string(name: 'BUILD_ID', value: bx),
+        string(name: 'GIT_TAG', value: GIT_TAG),
+        booleanParam(name: 'DRY_RUN', value: false)
+      ]
+  }
 } catch (e) {
   // If there was an exception thrown, the build failed
   currentBuild.result = "FAILED"
