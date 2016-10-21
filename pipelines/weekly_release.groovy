@@ -14,16 +14,18 @@ node {
 try {
   notify.started()
 
-  stage 'generate weekly tag'
+  def git_tag = null
 
-  def tz = TimeZone.getTimeZone('America/Los_Angeles')
-  def dateFormat = new java.text.SimpleDateFormat('Y.w')
-  dateFormat.setTimeZone(tz)
-  def date = new java.util.Date()
-  def dateStamp = dateFormat.format(date)
+  stage 'generate weekly tag' {
+    def tz = TimeZone.getTimeZone('America/Los_Angeles')
+    def dateFormat = new java.text.SimpleDateFormat('Y.w')
+    dateFormat.setTimeZone(tz)
+    def date = new java.util.Date()
+    def dateStamp = dateFormat.format(date)
 
-  def git_tag = "w.${dateStamp}"
-  echo "generated [git] tag: ${git_tag}"
+    git_tag = "w.${dateStamp}"
+    echo "generated [git] tag: ${git_tag}"
+  }
 
   stage 'run build-publish-tag' {
     retry(3) {
