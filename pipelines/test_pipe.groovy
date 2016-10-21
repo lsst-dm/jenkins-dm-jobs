@@ -15,10 +15,9 @@ node('jenkins-master') {
 try {
   notify.started()
 
-  stage 'yo'
-
-  echo 'foo'
-
+  stage 'yo' {
+    echo 'foo'
+  }
 } catch (e) {
   // If there was an exception thrown, the build failed
   currentBuild.result = "FAILED"
