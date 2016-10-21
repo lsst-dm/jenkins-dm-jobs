@@ -26,6 +26,7 @@ try {
   echo "[eups] tag: ${EUPS_TAG}"
 
   def bx = null
+  def rebuildId = null
 
   stage 'build' {
     def result = build job: 'run-rebuild',
@@ -36,7 +37,7 @@ try {
           booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS.toBoolean())
         ],
         wait: true
-    def rebuildId = result.id
+    rebuildId = result.id
   }
 
   stage 'parse bNNNN' {
