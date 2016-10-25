@@ -23,7 +23,7 @@ def j = job('release/run-publish') {
 
       export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
       # setup.sh will unset $PRODUCTS
-      export PUBLISH_PRODUCTS="$PRODUCTS"
+      export PUBLISH_PRODUCTS="$PRODUCT"
 
       source "${HOME}/bin/setup.sh"
 
