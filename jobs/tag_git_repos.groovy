@@ -68,7 +68,8 @@ def j = job('release/tag-git-repos') {
       # do not echo GH token to console log
       set +x
       github-tag-version "${ARGS[@]}"
-      '''.stripIndent()
+      '''.replaceFirst("\n","").stripIndent()
+
     )
   }
 }

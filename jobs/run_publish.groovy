@@ -18,7 +18,8 @@ def j = job('release/run-publish') {
 
   steps {
     shell(
-      '''#!/bin/bash -e
+      '''
+      #!/bin/bash -e
 
       export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
       # setup.sh will unset $PRODUCTS
@@ -27,7 +28,8 @@ def j = job('release/run-publish') {
       source "${HOME}/bin/setup.sh"
 
       publish -b "$BUILD_ID" -t "$TAG" "$PUBLISH_PRODUCTS"
-      '''.stripIndent()
+      '''.replaceFirst("\n","").stripIndent()
+
     )
   }
 }
