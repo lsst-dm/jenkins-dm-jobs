@@ -61,7 +61,7 @@ try {
         string(name: 'EUPSPKG_SOURCE', value: 'git'),
         string(name: 'BUILD_ID', value: bx),
         string(name: 'TAG', value: EUPS_TAG),
-        string(name: 'PRODUCTS', value: PRODUCT)
+        string(name: 'PRODUCT', value: PRODUCT)
       ]
   }
 
@@ -71,7 +71,7 @@ try {
         string(name: 'EUPSPKG_SOURCE', value: 'git'),
         string(name: 'BUILD_ID', value: bx),
         string(name: 'TAG', value: 'w_latest'),
-        string(name: 'PRODUCTS', value: PRODUCT)
+        string(name: 'PRODUCT', value: PRODUCT)
       ]
   }
 
