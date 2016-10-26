@@ -21,6 +21,15 @@ def j = job('release/run-rebuild') {
   multiscm {
     git {
       remote {
+        github('lsst/lsstsw')
+      }
+      branch('*/master')
+      extensions {
+        cloneOptions { shallow() }
+      }
+    }
+    git {
+      remote {
         github('lsst-sqre/buildbot-scripts')
       }
       branch('*/master')
