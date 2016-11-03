@@ -1,9 +1,9 @@
 folder('cowboy') {
-  disabled()
   description('Experimental, not fully-baked, and/or "demonstration purposes only" jobs.')
 }
 
 pipelineJob('cowboy/stack') {
+  disabled()
   description('Re-implementation of the `stack-os-matrix` job in job-dsl & pipeline.  Presently, this job *ONLY* builds on OSX slaves.  Use this job for testing on OSX.')
 
   parameters {
