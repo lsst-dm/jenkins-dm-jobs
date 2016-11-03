@@ -1,4 +1,5 @@
 folder('cowboy') {
+  disabled()
   description('Experimental, not fully-baked, and/or "demonstration purposes only" jobs.')
 }
 
