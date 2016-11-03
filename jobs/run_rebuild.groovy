@@ -61,6 +61,27 @@ def j = job('release/run-rebuild') {
   }
 
   publishers {
+    postBuildScript {
+      scriptOnlyIfSuccess(false)
+      scriptOnlyIfFailure(true)
+      markBuildUnstable(false)
+      executeOn('AXES')
+      buildStep {
+        shell {
+          command(
+            '''
+            Z=$(lsof -d 200 -t)
+            if [[ ! -z $Z ]]; then
+              kill -9 $Z
+            fi
+
+            rm -rf "${WORKSPACE}/stack/.lockDir"
+            '''.replaceFirst("\n","").stripIndent()
+          )
+        }
+      }
+    }
+
     archiveArtifacts('build/manifest.txt')
   }
 }
