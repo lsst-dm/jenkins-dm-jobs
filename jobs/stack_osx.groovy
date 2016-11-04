@@ -100,7 +100,7 @@ def j = matrixJob('stack-osx') {
               kill -9 $Z
             fi
 
-            rm -rf "${WORKDIR}/lsstsw/stack/.lockDir"
+            rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
             '''.replaceFirst("\n","").stripIndent()
           )
         }
