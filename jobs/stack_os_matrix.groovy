@@ -15,7 +15,9 @@ def j = matrixJob('stack-os-matrix') {
   // manually injecting configuration for extended choices plugin, which can be
   // configured to produce space seperated values.
   configure { project ->
-    project / 'properties' / 'hudson.model.ParametersDefinitionProperty' / 'parameterDefinitions' / 'com.cwctravel.hudson.plugins.extended__choice__parameter.ExtendedChoiceParameterDefinition' {
+    def params = project / 'properties' / 'hudson.model.ParametersDefinitionProperty' / 'parameterDefinitions'
+
+    params << 'com.cwctravel.hudson.plugins.extended__choice__parameter.ExtendedChoiceParameterDefinition' {
       name 'python'
       description 'Python environment in which to build (multiple choice)'
       quoteValue false
@@ -24,6 +26,17 @@ def j = matrixJob('stack-os-matrix') {
       type 'PT_MULTI_SELECT'
       value 'py2, py3'
       defaultValue 'py2'
+      multiSelectDelimiter ' '
+    }
+    params << 'com.cwctravel.hudson.plugins.extended__choice__parameter.ExtendedChoiceParameterDefinition' {
+      name 'compiler'
+      description 'Compiler (multiple choice)'
+      quoteValue false
+      saveJSONParameterToFile false
+      visibleItemCount 3
+      type 'PT_MULTI_SELECT'
+      value 'system, devtoolset-3, devtoolset-4'
+      defaultValue 'system, devtoolset-3'
       multiSelectDelimiter ' '
     }
   }
@@ -66,9 +79,20 @@ def j = matrixJob('stack-os-matrix') {
       name('python')
       varName('python')
     }
+    dynamicAxis {
+      name('compiler')
+      varName('compiler')
+    }
   }
 
-  combinationFilter('!(label=="centos-6" && python=="py3")')
+  combinationFilter('''
+    !(
+      (label=="centos-6" && python=="py3") ||
+      (label=="centos-6" && compiler=="system") ||
+      (label=="centos-6" && compiler=="devtoolset-4") ||
+      (label=="centos-7" && compiler=="devtoolset-3")
+    )
+  '''.replaceFirst("\n","").stripIndent())
 
   wrappers {
     colorizeOutput('gnome-terminal')
