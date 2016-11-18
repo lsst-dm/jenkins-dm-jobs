@@ -1,5 +1,7 @@
 package util
 
+import javaposse.jobdsl.dsl.DslFactory
+import javaposse.jobdsl.dsl.Folder
 import javaposse.jobdsl.dsl.Job
 
 class Common {
@@ -28,6 +30,24 @@ class Common {
           authToken(null)
         }
       }
+    }
+  }
+
+  static void makeFolders(DslFactory dslFactory) {
+    dslFactory.folder('ci-ci') {
+      description('CI for the CI system(s)')
+    }
+
+    dslFactory.folder('release') {
+      description('Jobs related to software release management.')
+    }
+
+    dslFactory.folder('release/docker') {
+      description('Binary releases via docker contrainers.')
+    }
+
+    dslFactory.folder('cowboy') {
+      description('Experimental, not fully-baked, and/or "demonstration purposes only" jobs.')
     }
   }
 }

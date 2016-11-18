@@ -1,6 +1,5 @@
-folder('cowboy') {
-  description('Experimental, not fully-baked, and/or "demonstration purposes only" jobs.')
-}
+import util.Common
+Common.makeFolders(this)
 
 pipelineJob('cowboy/stack') {
   disabled()

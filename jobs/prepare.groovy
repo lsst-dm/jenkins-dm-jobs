@@ -1,6 +1,5 @@
-folder('release/docker') {
-  description('Binary releases via docker contrainers.')
-}
+import util.Common
+Common.makeFolders(this)
 
 pipelineJob('release/docker/prepare') {
   properties {
