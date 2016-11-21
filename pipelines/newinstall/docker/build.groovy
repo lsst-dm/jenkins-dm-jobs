@@ -19,7 +19,7 @@ try {
     // XXX we need to do some mangling of the PRODUCTS param for the docker tag
     // if more than one product is listed
     stage('pull') {
-      docker.image('lsstsqre/centos:6-newinstall').pull()
+      //docker.image('lsstsqre/centos:6-newinstall').pull()
       docker.image('lsstsqre/centos:7-newinstall').pull()
     }
 
@@ -43,7 +43,7 @@ try {
     if (PUBLISH) {
       stage('push') {
         docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-sqreadmin') {
-          docker.image("lsstsqre/centos:6-stack-${PRODUCTS}-${TAG}").push()
+          //docker.image("lsstsqre/centos:6-stack-${PRODUCTS}-${TAG}").push()
           docker.image("lsstsqre/centos:7-stack-${PRODUCTS}-${TAG}").push()
         }
       }
