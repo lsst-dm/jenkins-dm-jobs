@@ -9,7 +9,6 @@ node {
     ])
     notify = load 'pipelines/lib/notify.groovy'
   }
-  notify = load 'pipelines/lib/notify.groovy'
 }
 
 try {
