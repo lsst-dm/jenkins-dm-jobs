@@ -1,9 +1,7 @@
-folder('release') {
-  description('Jobs related to software release management.')
-}
+import util.Common
+Common.makeFolders(this)
 
 pipelineJob('release/build-publish-tag') {
-
   parameters {
     stringParam('BRANCH', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" is implicitly appended to the right side of the list, if not specified.')
     stringParam('PRODUCT', null, 'Whitespace delimited list of EUPS products to build.')
