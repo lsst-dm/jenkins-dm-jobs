@@ -18,6 +18,7 @@ pipelineJob('release/docker/build') {
   label('jenkins-master')
   concurrentBuild(false)
   keepDependencies(true)
+  concurrentBuild()
 
   triggers {
     dockerHubTrigger {
