@@ -15,6 +15,8 @@ try {
   notify.started()
 
   def git_tag = null
+  def eups_tag = null
+  def product = 'lsst_distrib'
 
   stage('generate weekly tag') {
     def tz = TimeZone.getTimeZone('America/Los_Angeles')
@@ -25,6 +27,10 @@ try {
 
     git_tag = "w.${dateStamp}"
     echo "generated [git] tag: ${git_tag}"
+
+    // eups doesn't like dots in tags, convert to underscores
+    eups_tag = git_tag.tr('.-', '_')
+    echo "generated [eups] tag: ${eups_tag}"
   }
 
   stage('run build-publish-tag') {
@@ -32,10 +38,20 @@ try {
       build job: 'release/build-publish-tag',
         parameters: [
           string(name: 'BRANCH', value: ''),
-          string(name: 'PRODUCT', value: 'lsst_distrib'),
+          string(name: 'PRODUCT', value: product),
           string(name: 'GIT_TAG', value: git_tag),
           booleanParam(name: 'SKIP_DEMO', value: false),
           booleanParam(name: 'SKIP_DOCS', value: false)
+        ]
+    }
+  }
+
+  stage('run docker/build') {
+    retry(3) {
+      build job: 'release/docker/build',
+        parameters: [
+          string(name: 'PRODUCT', value: product),
+          string(name: 'TAG', value: eups_tag),
         ]
     }
   }
