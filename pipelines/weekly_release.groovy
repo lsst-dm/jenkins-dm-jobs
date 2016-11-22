@@ -16,7 +16,7 @@ try {
 
   def git_tag = null
   def eups_tag = null
-  def product = 'lsst_distrib'
+  def product = 'lsst_distrib qserv_distrib'
 
   stage('generate weekly tag') {
     def tz = TimeZone.getTimeZone('America/Los_Angeles')
