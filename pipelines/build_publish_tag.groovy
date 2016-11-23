@@ -26,9 +26,10 @@ try {
 
   def bx = null
   def rebuildId = null
+  def buildJob = 'run-rebuild'
 
   stage('build') {
-    def result = build job: 'run-rebuild',
+    def result = build job: buildJob,
         parameters: [
           string(name: 'BRANCH', value: BRANCH),
           string(name: 'PRODUCT', value: PRODUCT),
@@ -42,7 +43,7 @@ try {
   stage('parse bNNNN') {
     node {
       step ([$class: 'CopyArtifact',
-            projectName: 'run-rebuild',
+            projectName: buildJob,
             filter: 'build/manifest.txt',
             selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
             ]);
@@ -82,6 +83,20 @@ try {
         booleanParam(name: 'DRY_RUN', value: false)
       ]
   }
+
+  stage('archive') {
+    node {
+      results = [
+        bnnnn: bx
+      ]
+      dumpJson('results.json', results)
+
+      archiveArtifacts([
+        artifacts: 'results.json',
+        fingerprint: true
+      ])
+    }
+  }
 } catch (e) {
   // If there was an exception thrown, the build failed
   currentBuild.result = "FAILED"
@@ -105,8 +120,15 @@ try {
 }
 
 @NonCPS
-
 def bxxxx(manifest) {
   def m = manifest =~ /(?m)^BUILD=(b.*)/
   m ? m[0][1] : null
+}
+
+@NonCPS
+def dumpJson(String filename, Map data) {
+  def json = new groovy.json.JsonBuilder(data)
+  def pretty = groovy.json.JsonOutput.prettyPrint(json.toString())
+  echo pretty
+  writeFile file: filename, text: pretty
 }

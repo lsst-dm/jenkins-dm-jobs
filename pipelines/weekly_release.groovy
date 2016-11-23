@@ -16,7 +16,12 @@ try {
 
   def git_tag = null
   def eups_tag = null
-  def product = 'lsst_distrib'
+  def product = 'lsst_distrib qserv_distrib'
+  def retries = 3
+  def bx = null
+  def rebuildId = null
+  def buildJob = 'release/build-publish-tag'
+  def publishJob = 'release/run-publish'
 
   stage('generate weekly tag') {
     def tz = TimeZone.getTimeZone('America/Los_Angeles')
@@ -34,8 +39,8 @@ try {
   }
 
   stage('run build-publish-tag') {
-    retry(3) {
-      build job: 'release/build-publish-tag',
+    retry(retries) {
+      def result = build job: buildJob,
         parameters: [
           string(name: 'BRANCH', value: ''),
           string(name: 'PRODUCT', value: product),
@@ -43,16 +48,76 @@ try {
           booleanParam(name: 'SKIP_DEMO', value: false),
           booleanParam(name: 'SKIP_DOCS', value: false)
         ]
+      rebuildId = result.id
     }
   }
 
-  stage('run docker/build') {
-    retry(3) {
+  stage('parse bNNNN') {
+    node {
+      step ([$class: 'CopyArtifact',
+            projectName: buildJob,
+            filter: 'results.json',
+            selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
+            ]);
+
+      def results = slurpJson(readFile('results.json'))
+      bx = results['bnnnn']
+
+      echo "parsed bnnnn: ${bx}"
+    }
+  }
+
+  stage('eups publish [w_latest]') {
+    retry(retries) {
+      build job: publishJob,
+        parameters: [
+          string(name: 'EUPSPKG_SOURCE', value: 'git'),
+          string(name: 'BUILD_ID', value: bx),
+          string(name: 'TAG', value: 'w_latest'),
+          string(name: 'PRODUCT', value: 'lsst_distrib')
+        ]
+    }
+  }
+
+  stage('eups publish [qserv_latest]') {
+    retry(retries) {
+      build job: publishJob,
+        parameters: [
+          string(name: 'EUPSPKG_SOURCE', value: 'git'),
+          string(name: 'BUILD_ID', value: bx),
+          string(name: 'TAG', value: 'qserv_latest'),
+          string(name: 'PRODUCT', value: 'qserv_distrib')
+        ]
+    }
+  }
+
+  stage('run release/docker/build') {
+    retry(retries) {
       build job: 'release/docker/build',
         parameters: [
-          string(name: 'PRODUCT', value: product),
+          string(name: 'PRODUCT', value: 'lsst_distrb),
           string(name: 'TAG', value: eups_tag),
         ]
+    }
+  }
+
+  stage('run qserv/docker/build') {
+    retry(retries) {
+      build job: 'release/docker/build',
+    }
+  }
+
+  stage('archive') {
+    node {
+      results = [
+        bnnnn: bx
+      ]
+      dumpJson('results.json', results)
+
+      archiveArtifacts([
+        artifacts: 'results.json',
+        fingerprint: true
+      ])
     }
   }
 } catch (e) {
@@ -75,4 +140,18 @@ try {
     default:
       notify.failure()
   }
+}
+
+@NonCPS
+def dumpJson(String filename, Map data) {
+  def json = new groovy.json.JsonBuilder(data)
+  def pretty = groovy.json.JsonOutput.prettyPrint(json.toString())
+  echo pretty
+  writeFile file: filename, text: pretty
+}
+
+@NonCPS
+def slurpJson(String data) {
+  def slurper = new groovy.json.JsonSlurper()
+  slurper.parseText(data)
 }

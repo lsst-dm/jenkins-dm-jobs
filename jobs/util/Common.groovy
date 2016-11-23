@@ -49,5 +49,11 @@ class Common {
     dslFactory.folder('cowboy') {
       description('Experimental, not fully-baked, and/or "demonstration purposes only" jobs.')
     }
+    dslFactory.folder('qserv') {
+      description('qserv specific jobs.')
+    }
+    dslFactory.folder('qserv/docker') {
+      description('Construct docker containers.')
+    }
   }
 }
