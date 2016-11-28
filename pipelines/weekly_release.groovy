@@ -103,7 +103,7 @@ try {
 
   stage('run qserv/docker/build') {
     retry(retries) {
-      build job: 'release/docker/build'
+      build job: 'qserv/docker/build'
     }
   }
 
