@@ -27,6 +27,19 @@ def j = matrixJob('stack-os-matrix') {
       multiSelectDelimiter ' '
     }
   }
+  configure { project ->
+    project / 'properties' / 'hudson.model.ParametersDefinitionProperty' / 'parameterDefinitions' / 'com.cwctravel.hudson.plugins.extended__choice__parameter.ExtendedChoiceParameterDefinition' {
+      name 'compiler'
+      description 'Compiler (multiple choice)'
+      quoteValue false
+      saveJSONParameterToFile false
+      visibleItemCount 3
+      type 'PT_MULTI_SELECT'
+      value 'system, devtoolset-3, devtoolset-4'
+      defaultValue 'system, devtoolset-3'
+      multiSelectDelimiter ' '
+    }
+  }
 
   properties {
     rebuild {
@@ -50,9 +63,9 @@ def j = matrixJob('stack-os-matrix') {
     }
     git {
       remote {
-        github('lsst-sqre/buildbot-scripts')
+        github('jhoblitt/buildbot-scripts')
       }
-      branch('*/master')
+      branch('*/tickets/DM-7807-gcc5')
       extensions {
         relativeTargetDirectory('buildbot-scripts')
         cloneOptions { shallow() }
@@ -66,9 +79,19 @@ def j = matrixJob('stack-os-matrix') {
       name('python')
       varName('python')
     }
+    dynamicAxis {
+      name('compiler')
+      varName('compiler')
+    }
   }
 
-  combinationFilter('!(label=="centos-6" && python=="py3")')
+  combinationFilter('''
+    !(
+      (label=="centos-6" && python=="py3") ||
+      (label=="centos-6" && compiler=="devtoolset-4") ||
+      (label=="centos-7" && compiler=="devtoolset-3")
+    )
+  '''.replaceFirst("\n","").stripIndent())
 
   wrappers {
     colorizeOutput('gnome-terminal')
