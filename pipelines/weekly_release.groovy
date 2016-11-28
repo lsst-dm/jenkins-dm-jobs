@@ -96,14 +96,14 @@ try {
       build job: 'release/docker/build',
         parameters: [
           string(name: 'PRODUCT', value: 'lsst_distrb'),
-          string(name: 'TAG', value: eups_tag),
+          string(name: 'TAG', value: eups_tag)
         ]
     }
   }
 
   stage('run qserv/docker/build') {
     retry(retries) {
-      build job: 'release/docker/build',
+      build job: 'release/docker/build'
     }
   }
 
