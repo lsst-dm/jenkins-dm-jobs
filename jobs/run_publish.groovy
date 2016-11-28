@@ -20,13 +20,19 @@ def j = job('release/run-publish') {
       '''
       #!/bin/bash -e
 
-      export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
-      # setup.sh will unset $PRODUCTS
-      export PUBLISH_PRODUCTS="$PRODUCT"
+      ARGS=()
+      ARGS+=('-b' "$BUILD_ID")
+      ARGS+=('-t' "$TAG")
+      # split whitespace separated EUPS products into separate array elements
+      # by not quoting
+      ARGS+=($PRODUCT)
 
+      export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
+
+      # setup.sh will unset $PRODUCTS
       source "${HOME}/bin/setup.sh"
 
-      publish -b "$BUILD_ID" -t "$TAG" "$PUBLISH_PRODUCTS"
+      publish "${ARGS[@]}"
       '''.replaceFirst("\n","").stripIndent()
 
     )
