@@ -116,7 +116,9 @@ try {
   stage('archive') {
     node {
       results = [
-        bnnnn: bx
+        bnnnn: bx,
+        git_tag: git_tag,
+        eups_tag: eups_tag
       ]
       dumpJson('results.json', results)
 
