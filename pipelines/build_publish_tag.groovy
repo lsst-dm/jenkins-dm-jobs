@@ -65,16 +65,6 @@ try {
       ]
   }
 
-  stage('eups publish [w_latest]') {
-    build job: 'run-publish',
-      parameters: [
-        string(name: 'EUPSPKG_SOURCE', value: 'git'),
-        string(name: 'BUILD_ID', value: bx),
-        string(name: 'TAG', value: 'w_latest'),
-        string(name: 'PRODUCT', value: PRODUCT)
-      ]
-  }
-
   stage('git tag') {
     build job: 'release/tag-git-repos',
       parameters: [
