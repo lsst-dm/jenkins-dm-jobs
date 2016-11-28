@@ -91,20 +91,26 @@ try {
     }
   }
 
-  stage('run release/docker/build') {
-    retry(retries) {
-      build job: 'release/docker/build',
-        parameters: [
-          string(name: 'PRODUCTS', value: 'lsst_distrib'),
-          string(name: 'TAG', value: eups_tag)
-        ]
-    }
-  }
+  stage('build containers') {
+    def container = [:]
 
-  stage('run qserv/docker/build') {
-    retry(retries) {
-      build job: 'qserv/docker/build'
+    container['run release/docker/build'] = {
+      retry(retries) {
+        build job: 'release/docker/build',
+          parameters: [
+            string(name: 'PRODUCTS', value: 'lsst_distrib'),
+            string(name: 'TAG', value: eups_tag)
+          ]
+      }
     }
+
+    container['run qserv/docker/build'] = {
+      retry(retries) {
+        build job: 'qserv/docker/build'
+      }
+    }
+
+    parallel container
   }
 
   stage('archive') {
