@@ -95,7 +95,7 @@ try {
     retry(retries) {
       build job: 'release/docker/build',
         parameters: [
-          string(name: 'PRODUCTS', value: 'lsst_distrb'),
+          string(name: 'PRODUCTS', value: 'lsst_distrib'),
           string(name: 'TAG', value: eups_tag)
         ]
     }
