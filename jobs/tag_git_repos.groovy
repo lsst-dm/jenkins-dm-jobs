@@ -63,7 +63,7 @@ def j = job('release/tag-git-repos') {
       virtualenv venv
       . venv/bin/activate
       pip install -r requirements.txt
-      python setup.py install
+      pip install .
 
       # do not echo GH token to console log
       set +x
