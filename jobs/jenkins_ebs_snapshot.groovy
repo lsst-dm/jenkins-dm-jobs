@@ -4,7 +4,7 @@ def name = 'ec2-snapshot'
 def org = 'lsst-sqre'
 def slug = "${org}/${name}"
 
-def j = job('ci-ci/jenkins-ebs-snapshot') {
+def j = job('backup/jenkins-ebs-snapshot') {
   scm {
     git {
       remote {
