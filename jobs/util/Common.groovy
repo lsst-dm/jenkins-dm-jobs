@@ -38,6 +38,10 @@ class Common {
       description('CI for the CI system(s)')
     }
 
+    dslFactory.folder('backup') {
+      description('SQRE service backup(s)')
+    }
+
     dslFactory.folder('release') {
       description('Jobs related to software release management.')
     }
