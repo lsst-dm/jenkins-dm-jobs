@@ -17,8 +17,8 @@ try {
   node('docker') {
     dir('qserv') {
       git([
-        url: 'https://github.com/lsst-sqre/qserv.git',
-        branch: 'tickets/DM-8354-qserv'
+        url: 'https://github.com/lsst/qserv.git',
+        branch: 'master'
       ])
     }
 
