@@ -17,13 +17,13 @@ try {
   node('docker') {
     dir('qserv') {
       git([
-        url: 'https://github.com/lsst-sqre/qserv.git',
-        branch: 'tickets/DM-8354-qserv'
+        url: 'https://github.com/lsst/qserv.git',
+        branch: 'master'
       ])
     }
 
-    build('1_build-latest-image.sh')
-    build('2_build-dev-image.sh')
+    build('1_build-image.sh -CD')
+    build('2_update-dev-image.sh')
   }
 } catch (e) {
   // If there was an exception thrown, the build failed
