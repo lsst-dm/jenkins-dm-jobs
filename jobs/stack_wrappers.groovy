@@ -34,6 +34,10 @@ import util.StackOsMatrix
     product: 'ci_hsc',
     skip_demo: true,
   ],
+  [
+    product: 'lsst_obs',
+    skip_demo: true,
+  ],
 ].each { j ->
   def stack = new StackOsMatrix(j)
 
