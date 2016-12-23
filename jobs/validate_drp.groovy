@@ -159,7 +159,8 @@ def j = matrixJob('validate_drp') {
 
       virtualenv venv
       . venv/bin/activate
-      pip install post-qa==1.1.0
+      pip install functools32
+      pip install post-qa==1.2.2
 
       post-qa --lsstsw "$LSSTSW" --qa-json "$OUTPUT" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
       '''.replaceFirst("\n","").stripIndent()
