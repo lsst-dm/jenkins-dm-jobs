@@ -169,20 +169,27 @@ def j = matrixJob('validate_drp') {
   }
 
   publishers {
-    postBuildScripts {
-      onlyIfBuildFails(true)
-      onlyIfBuildSucceeds(false)
-      steps {
-        shell(
-          '''
-          Z=$(lsof -d 200 -t)
-          if [[ ! -z $Z ]]; then
-            kill -9 $Z
-          fi
+    // we have to use postBuildScript here instead of the friendlier
+    // postBuildScrips (plural) in order to use executeOn(), otherwise the
+    // cleanup script is also run on the jenkins master
+    postBuildScript {
+      scriptOnlyIfSuccess(false)
+      scriptOnlyIfFailure(true)
+      markBuildUnstable(false)
+      executeOn('AXES')
+      buildStep {
+        shell {
+          command(
+            '''
+            Z=$(lsof -d 200 -t)
+            if [[ ! -z $Z ]]; then
+              kill -9 $Z
+            fi
 
-          rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
-          '''.replaceFirst("\n","").stripIndent()
-        )
+            rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
+            '''.replaceFirst("\n","").stripIndent()
+          )
+        }
       }
     }
     archiveArtifacts {
