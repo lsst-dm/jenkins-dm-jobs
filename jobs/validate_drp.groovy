@@ -1,6 +1,7 @@
 import util.Common
 
 def j = matrixJob('validate_drp') {
+  disabled()
   description('Execute validate_drp and ship the results to the squash qa-dashboard.')
 
   properties {
