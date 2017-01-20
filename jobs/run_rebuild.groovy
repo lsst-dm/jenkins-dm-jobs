@@ -1,4 +1,5 @@
 import util.Common
+Common.makeFolders(this)
 
 def j = job('release/run-rebuild') {
   parameters {
@@ -26,6 +27,7 @@ def j = job('release/run-rebuild') {
       }
       branch('*/master')
       extensions {
+        relativeTargetDirectory('lsstsw')
         cloneOptions { shallow() }
       }
     }

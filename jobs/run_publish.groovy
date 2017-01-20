@@ -1,4 +1,5 @@
 import util.Common
+Common.makeFolders(this)
 
 // note that this job *will not work* unless run-rebuild has been executed at
 // least once in order to initialize the env.
