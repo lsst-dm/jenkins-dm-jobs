@@ -17,7 +17,7 @@ def j = job('release/run-rebuild') {
 
   label('lsst-dev')
   concurrentBuild(false)
-  customWorkspace('/home/lsstsw')
+  customWorkspace('/home/lsstsw/jenkins/release')
 
   multiscm {
     git {
@@ -58,8 +58,6 @@ def j = job('release/run-rebuild') {
         export REPOSFILE="${WORKSPACE}/REPOS"
       fi
 
-      export LSSTSW="$WORKSPACE"
-
       ./buildbot-scripts/jenkins_wrapper.sh
 
       # handled by the postbuild on failure script if there is an error
@@ -91,7 +89,10 @@ def j = job('release/run-rebuild') {
       }
     }
 
-    archiveArtifacts('build/manifest.txt')
+    archiveArtifacts {
+      fingerprint()
+      pattern('lsstsw/build/manifest.txt')
+    }
   }
 }
 
