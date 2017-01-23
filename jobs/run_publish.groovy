@@ -1,5 +1,8 @@
 import util.Common
+Common.makeFolders(this)
 
+// note that this job *will not work* unless run-rebuild has been executed at
+// least once in order to initialize the env.
 def j = job('release/run-publish') {
   parameters {
     choiceParam('EUPSPKG_SOURCE', ['git', 'package'])
@@ -10,6 +13,11 @@ def j = job('release/run-publish') {
 
   label('lsst-dev')
   concurrentBuild(false)
+  customWorkspace('/home/lsstsw/jenkins/release')
+
+  environmentVariables {
+    env('EUPS_PKGROOT', '/lsst/distserver/production')
+  }
 
   wrappers {
     colorizeOutput('gnome-terminal')
@@ -30,7 +38,7 @@ def j = job('release/run-publish') {
       export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
 
       # setup.sh will unset $PRODUCTS
-      source "${HOME}/bin/setup.sh"
+      source ./lsstsw/bin/setup.sh
 
       publish "${ARGS[@]}"
       '''.replaceFirst("\n","").stripIndent()

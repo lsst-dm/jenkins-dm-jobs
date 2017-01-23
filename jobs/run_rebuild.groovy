@@ -1,4 +1,5 @@
 import util.Common
+Common.makeFolders(this)
 
 def j = job('release/run-rebuild') {
   parameters {
@@ -15,9 +16,13 @@ def j = job('release/run-rebuild') {
     }
   }
 
+  environmentVariables {
+    env('EUPS_PKGROOT', '/lsst/distserver/production')
+  }
+
   label('lsst-dev')
   concurrentBuild(false)
-  customWorkspace('/home/lsstsw')
+  customWorkspace('/home/lsstsw/jenkins/release')
 
   multiscm {
     git {
@@ -26,6 +31,7 @@ def j = job('release/run-rebuild') {
       }
       branch('*/master')
       extensions {
+        relativeTargetDirectory('lsstsw')
         cloneOptions { shallow() }
       }
     }
@@ -58,8 +64,6 @@ def j = job('release/run-rebuild') {
         export REPOSFILE="${WORKSPACE}/REPOS"
       fi
 
-      export LSSTSW="$WORKSPACE"
-
       ./buildbot-scripts/jenkins_wrapper.sh
 
       # handled by the postbuild on failure script if there is an error
@@ -91,7 +95,10 @@ def j = job('release/run-rebuild') {
       }
     }
 
-    archiveArtifacts('build/manifest.txt')
+    archiveArtifacts {
+      fingerprint()
+      pattern('lsstsw/build/manifest.txt')
+    }
   }
 }
 
