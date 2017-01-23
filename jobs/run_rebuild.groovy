@@ -16,6 +16,10 @@ def j = job('release/run-rebuild') {
     }
   }
 
+  environmentVariables {
+    env('EUPS_PKGROOT', '/lsst/distserver/production')
+  }
+
   label('lsst-dev')
   concurrentBuild(false)
   customWorkspace('/home/lsstsw/jenkins/release')

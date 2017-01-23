@@ -15,6 +15,10 @@ def j = job('release/run-publish') {
   concurrentBuild(false)
   customWorkspace('/home/lsstsw/jenkins/release')
 
+  environmentVariables {
+    env('EUPS_PKGROOT', '/lsst/distserver/production')
+  }
+
   wrappers {
     colorizeOutput('gnome-terminal')
   }
