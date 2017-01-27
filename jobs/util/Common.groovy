@@ -57,5 +57,8 @@ class Common {
     dslFactory.folder('qserv/docker') {
       description('Construct docker containers.')
     }
+    dslFactory.folder('qserv/release') {
+      description('Jobs related to DAX/qserv releases.')
+    }
   }
 }
