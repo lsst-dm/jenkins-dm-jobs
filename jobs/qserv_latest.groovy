@@ -16,7 +16,7 @@ def j = job('qserv/release/tag-qserv_latest') {
 
   steps {
     downstreamParameterized {
-      trigger('release/build_publish') {
+      trigger('release/build-publish') {
         block {
           buildStepFailure('FAILURE')
           failure('FAILURE')
