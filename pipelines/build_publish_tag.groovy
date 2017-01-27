@@ -26,7 +26,8 @@ try {
 
   def bx = null
   def rebuildId = null
-  def buildJob = 'run-rebuild'
+  def buildJob = 'release/run-rebuild'
+  def publishJob = 'release/run-publish'
 
   stage('build') {
     def result = build job: buildJob,
@@ -58,7 +59,7 @@ try {
   }
 
   stage('eups publish [tag]') {
-    build job: 'run-publish',
+    build job: publishJob,
       parameters: [
         string(name: 'EUPSPKG_SOURCE', value: 'git'),
         string(name: 'BUILD_ID', value: bx),
