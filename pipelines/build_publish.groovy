@@ -38,13 +38,15 @@ try {
 
   stage('parse bNNNN') {
     node {
+      manifest_artifact = 'lsstsw/build/manifest.txt'
+
       step ([$class: 'CopyArtifact',
             projectName: buildJob,
-            filter: 'build/manifest.txt',
+            filter: manifest_artifact,
             selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
             ]);
 
-      def manifest = readFile 'build/manifest.txt'
+      def manifest = readFile manifest_artifact
       bx = bxxxx(manifest)
 
       echo "parsed bxxxx: ${bx}"
