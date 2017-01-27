@@ -51,7 +51,7 @@ try {
     }
   }
 
-  tagProduct(bx, 'qserv_latest', 'qserv_distrib')
+  tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
 
   stage('archive') {
     node {
@@ -88,7 +88,8 @@ try {
   }
 }
 
-def tagProduct(String buildId, String eupsTag, String product) {
+def tagProduct(String buildId, String eupsTag, String product,
+               String publishJob = 'release/run-publish') {
   stage("eups publish [${eupsTag}]") {
     build job: publishJob,
       parameters: [
