@@ -19,8 +19,8 @@ try {
 
   def bx = null
   def rebuildId = null
-  def buildJob = 'run-rebuild'
-  def publishJob = 'run-publish'
+  def buildJob = 'release/run-rebuild'
+  def publishJob = 'release/run-publish'
 
   stage('build') {
     def result = build job: buildJob,
