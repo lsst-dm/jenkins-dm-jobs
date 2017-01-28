@@ -67,29 +67,9 @@ try {
     }
   }
 
-  stage('eups publish [w_latest]') {
-    retry(retries) {
-      build job: publishJob,
-        parameters: [
-          string(name: 'EUPSPKG_SOURCE', value: 'git'),
-          string(name: 'BUILD_ID', value: bx),
-          string(name: 'TAG', value: 'w_latest'),
-          string(name: 'PRODUCT', value: 'lsst_distrib')
-        ]
-    }
-  }
-
-  stage('eups publish [qserv_latest]') {
-    retry(retries) {
-      build job: publishJob,
-        parameters: [
-          string(name: 'EUPSPKG_SOURCE', value: 'git'),
-          string(name: 'BUILD_ID', value: bx),
-          string(name: 'TAG', value: 'qserv_latest'),
-          string(name: 'PRODUCT', value: 'qserv_distrib')
-        ]
-    }
-  }
+  tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+  tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+  tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
 
   stage('build containers') {
     def container = [:]
@@ -147,6 +127,19 @@ try {
       break
     default:
       notify.failure()
+  }
+}
+
+def tagProduct(String buildId, String eupsTag, String product,
+               String publishJob = 'release/run-publish') {
+  stage("eups publish [${eupsTag}]") {
+    build job: publishJob,
+      parameters: [
+        string(name: 'EUPSPKG_SOURCE', value: 'git'),
+        string(name: 'BUILD_ID', value: buildId),
+        string(name: 'TAG', value: eupsTag),
+        string(name: 'PRODUCT', value: product)
+      ]
   }
 }
 
