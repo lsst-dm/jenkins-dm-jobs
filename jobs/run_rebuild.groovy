@@ -53,6 +53,7 @@ def j = job('release/run-rebuild') {
 
   wrappers {
     colorizeOutput('gnome-terminal')
+    sshAgent('github-jenkins-versiondb')
   }
 
   steps {
