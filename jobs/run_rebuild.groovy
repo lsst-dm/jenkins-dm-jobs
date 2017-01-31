@@ -61,6 +61,10 @@ def j = job('release/run-rebuild') {
       '''
       #!/bin/bash -e
 
+      # ensure that we are using the lsstsw clone relative to the workspace
+      # and that another value for LSSTSW isn't leaking in from the env
+      export LSSTSW="${WORKSPACE}/lsstsw"
+
       if [[ -e "${WORKSPACE}/REPOS" ]]; then
         export REPOSFILE="${WORKSPACE}/REPOS"
       fi
