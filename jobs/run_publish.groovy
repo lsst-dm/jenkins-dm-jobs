@@ -17,6 +17,8 @@ def j = job('release/run-publish') {
 
   environmentVariables {
     env('EUPS_PKGROOT', '/lsst/distserver/production')
+    env('VERSIONDB_REPO', 'git@github.com:lsst/versiondb.git')
+    env('VERSIONDB_PUSH', 'true')
   }
 
   wrappers {
