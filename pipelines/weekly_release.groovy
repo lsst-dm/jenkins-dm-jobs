@@ -75,6 +75,14 @@ try {
     def container = [:]
 
     container['run release/docker/build'] = {
+      // ensure that we are using the latest version of newinstall.sh
+      // this acts as an "after the fact" canary
+      // XXX this job needs to be refactored to have proper canary builds
+      // before the git/eups tags are published.
+      retry(retries) {
+        build job: 'release/docker/newinstall'
+      }
+
       retry(retries) {
         build job: 'release/docker/build',
           parameters: [
