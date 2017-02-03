@@ -33,6 +33,20 @@ def j = matrixJob('validate_drp') {
         cloneOptions { shallow() }
       }
     }
+    // jenkins can't properly clone a git-lfs repo (yet) due to the way it
+    // invokes git.  Jenkins is managing the basic checkout but we need to do a
+    // manual `git lfs pull`.  see:
+    // https://issues.jenkins-ci.org/browse/JENKINS-30318
+    git {
+      remote {
+        github('lsst/validation_data_hsc')
+      }
+      branch('*/master')
+      extensions {
+        relativeTargetDirectory('validation_data_hsc')
+        cloneOptions { shallow() }
+      }
+    }
   }
 
   triggers {
@@ -41,7 +55,7 @@ def j = matrixJob('validate_drp') {
 
   axes {
     label('label', 'centos-7')
-    text('dataset', 'cfht')
+    text('dataset', 'cfht', 'hsc')
     text('python', 'py2')
   }
 
@@ -72,6 +86,8 @@ def j = matrixJob('validate_drp') {
     LSSTSW:    '$WORKSPACE/lsstsw',
     POSTQA:    '$WORKSPACE/post-qa',
     POSTQA_VERSION: '1.2.2',
+    // validation data sets -- avoid variable name collision with EUPS
+    HSC_DATA:  '$WORKSPACE/validation_data_hsc',
   )
 
   steps {
@@ -95,6 +111,15 @@ def j = matrixJob('validate_drp') {
     shell(
       '''
       #!/bin/bash -e
+
+      lfsconfig() {
+        git config --local lfs.batch false
+        # lfs.required must be false in order for jenkins to manage the clone
+        git config --local filter.lfs.required false
+        git config --local filter.lfs.smudge 'git-lfs smudge %f'
+        git config --local filter.lfs.clean 'git-lfs clean %f'
+        git config --local credential.helper '!f() { cat > /dev/null; echo username=; echo password=; }; f'
+      }
 
       cd "$DRP"
 
@@ -120,6 +145,17 @@ def j = matrixJob('validate_drp') {
           RUN="$VALIDATE_DRP_DIR/examples/runDecamTest.sh"
           OUTPUT="${DRP}/Decam_output_z.json"
           ;;
+        hsc)
+          RUN="$VALIDATE_DRP_DIR/examples/runHscTest.sh"
+          OUTPUT="${DRP}/data_hsc_rerun_20170105_HSC-R.json"
+
+          ( set -e
+            cd $HSC_DATA
+            lfsconfig
+            git lfs pull
+          )
+          setup -k -r $HSC_DATA
+          ;;
         *)
           >&2 echo "Unknown DATASET: $dataset"
           exit 1
@@ -129,6 +165,7 @@ def j = matrixJob('validate_drp') {
       #rm -f ~/.config/matplotlib/matplotlibrc
 
       "$RUN" --noplot
+      ln -sf "$OUTPUT" "${DRP}/output.json"
       cp "$OUTPUT" "$ARCHIVE"
       '''.replaceFirst("\n","").stripIndent()
     )
@@ -138,19 +175,6 @@ def j = matrixJob('validate_drp') {
       '''
       #!/bin/bash -e
 
-      case "$dataset" in
-        cfht)
-          OUTPUT="${DRP}/Cfht_output_r.json"
-          ;;
-        decam)
-          OUTPUT="${DRP}/Decam_output_z.json"
-          ;;
-        *)
-          >&2 echo "Unknown DATASET: $dataset"
-          exit 1
-          ;;
-      esac
-
       mkdir -p "$POSTQA"
       cd "$POSTQA"
 
@@ -159,7 +183,7 @@ def j = matrixJob('validate_drp') {
       pip install functools32
       pip install post-qa==$POSTQA_VERSION
 
-      post-qa --lsstsw "$LSSTSW" --qa-json "$OUTPUT" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
+      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
       '''.replaceFirst("\n","").stripIndent()
     )
   }
