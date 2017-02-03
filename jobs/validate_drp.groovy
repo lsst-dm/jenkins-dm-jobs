@@ -112,6 +112,27 @@ def j = matrixJob('validate_drp') {
       '''
       #!/bin/bash -e
 
+      # find the maximum number of processes that may be run on the system
+      # given the the memory per core ratio in GiB -- may be expressed in
+      # floating point.
+      target_cores() {
+        local mem_per_core=${1:-1}
+
+        # find system "available" memory in GiB
+        # XXX will not work on OSX
+        [[ $(grep MemAvailable /proc/meminfo) =~ MemAvailable:[[:space:]]*([[:digit:]]+)[[:space:]]*kB ]]
+        local sys_mem=$((BASH_REMATCH[1] / 1024**2))
+        local sys_cores
+        sys_cores=$(getconf _NPROCESSORS_ONLN)
+
+        # bash doesn't support floating point arithmetic
+        local target_cores
+        target_cores=$(echo "$sys_mem / $mem_per_core" | bc)
+        [[ $target_cores > $sys_cores ]] && target_cores=$sys_cores
+
+        echo "$target_cores"
+      }
+
       lfsconfig() {
         git config --local lfs.batch false
         # lfs.required must be false in order for jenkins to manage the clone
@@ -163,6 +184,11 @@ def j = matrixJob('validate_drp') {
       esac
 
       #rm -f ~/.config/matplotlib/matplotlibrc
+
+      # pipe_drivers mpi implementation uses one core for orchestration, so we
+      # need to set NUMPROC to the number of cores to utilize + 1
+      MEM_PER_CORE=2.0
+      export NUMPROC=$(($(target_cores $MEM_PER_CORE) + 1))
 
       "$RUN" --noplot
       ln -sf "$OUTPUT" "${DRP}/output.json"
