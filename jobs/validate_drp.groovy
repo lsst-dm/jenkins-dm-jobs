@@ -65,43 +65,43 @@ def j = matrixJob('validate_drp') {
     SKIP_DEMO: true,
     SKIP_DOCS: true,
     NO_FETCH:  false,
+    // anything in thid dir will be saved as a build artifact
+    ARCHIVE:   '$WORKSPACE/archive',
+    // cwd for running the drp script
+    DRP:       '$WORKSPACE/validate_drp',
+    LSSTSW:    '$WORKSPACE/lsstsw',
+    POSTQA:    '$WORKSPACE/post-qa',
+    POSTQA_VERSION: '1.2.2',
   )
 
   steps {
+    // cleanup
     shell(
       '''
       #!/bin/bash -e
 
-      # allow access to lsstsw from jenkins-slave user
-      #sudo -iu "build${EXECUTOR_NUMBER}" chmod a+rx /home/build${EXECUTOR_NUMBER}
-
-      ARCHIVE="${WORKSPACE}/archive"
-      DRP="${WORKSPACE}/validate_drp"
-
       # leave validate_drp results in workspace for debugging purproses but
-      # always start with a clean dir
+      # always start with clean dirs
+
       rm -rf "$ARCHIVE" "$DRP"
       mkdir -p "$ARCHIVE" "$DRP"
       '''.replaceFirst("\n","").stripIndent()
     )
+
+    // build/install validate_drp
     shell('./buildbot-scripts/jenkins_wrapper.sh')
+
+    // run drp driver script
     shell(
       '''
       #!/bin/bash -e
-
-      ARCHIVE="${WORKSPACE}/archive"
-      DRP="${WORKSPACE}/validate_drp"
-      LSSTSW=${LSSTSW:-${WORKSPACE}/lsstsw}
-      LSSTSW_BUILD_DIR=${LSSTSW_BUILD_DIR:-${LSSTSW}/build}
 
       cd "$DRP"
 
       . "${LSSTSW}/bin/setup.sh"
 
-      eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
+      eval "$(grep -E '^BUILD=' "${LSSTSW}/build/manifest.txt")"
 
-      #DEPS=(pipe_tasks obs_cfht validation_data_cfht validate_drp)
-      #DEPS=(pipe_tasks obs_decam validation_data_decam validate_drp)
       DEPS=(validate_drp)
 
       for p in "${DEPS[@]}"; do
@@ -127,19 +127,16 @@ def j = matrixJob('validate_drp') {
       esac
 
       #rm -f ~/.config/matplotlib/matplotlibrc
+
       "$RUN" --noplot
       cp "$OUTPUT" "$ARCHIVE"
       '''.replaceFirst("\n","").stripIndent()
     )
+
+    // push results to squash
     shell(
       '''
       #!/bin/bash -e
-
-      ARCHIVE="${WORKSPACE}/archive"
-      DRP="${WORKSPACE}/validate_drp"
-      POST="${WORKSPACE}/post-qa"
-      LSSTSW=${LSSTSW:-${WORKSPACE}/lsstsw}
-      LSSTSW_BUILD_DIR=${LSSTSW_BUILD_DIR:-${LSSTSW}/build}
 
       case "$dataset" in
         cfht)
@@ -154,13 +151,13 @@ def j = matrixJob('validate_drp') {
           ;;
       esac
 
-      mkdir -p "$POST"
-      cd "$POST"
+      mkdir -p "$POSTQA"
+      cd "$POSTQA"
 
       virtualenv venv
       . venv/bin/activate
       pip install functools32
-      pip install post-qa==1.2.2
+      pip install post-qa==$POSTQA_VERSION
 
       post-qa --lsstsw "$LSSTSW" --qa-json "$OUTPUT" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
       '''.replaceFirst("\n","").stripIndent()
