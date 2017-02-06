@@ -112,22 +112,49 @@ def j = matrixJob('validate_drp') {
       '''
       #!/bin/bash -e
 
+      find_mem() {
+        # Find system available memory in GiB
+        local os
+        os=$(uname)
+
+        local sys_mem=""
+        case $os in
+          Linux)
+            [[ $(grep MemAvailable /proc/meminfo) =~ \
+               MemAvailable:[[:space:]]*([[:digit:]]+)[[:space:]]*kB ]]
+            sys_mem=$((BASH_REMATCH[1] / 1024**2))
+            ;;
+          Darwin)
+            # I don't trust this fancy greppin' an' matchin' in the shell.
+            local free=$(vm_stat | grep 'Pages free:'     | \
+              tr -c -d [[:digit:]])
+            local inac=$(vm_stat | grep 'Pages inactive:' | \
+              tr -c -d [[:digit:]])
+            sys_mem=$(( (free + inac) / ( 1024 * 256 ) ))
+            ;;
+          *)
+            >&2 echo "Unknown uname: $os"
+            exit 1
+            ;;
+        esac
+
+        echo "$sys_mem"
+      }
+
       # find the maximum number of processes that may be run on the system
       # given the the memory per core ratio in GiB -- may be expressed in
       # floating point.
       target_cores() {
         local mem_per_core=${1:-1}
 
-        # find system "available" memory in GiB
-        # XXX will not work on OSX
-        [[ $(grep MemAvailable /proc/meminfo) =~ MemAvailable:[[:space:]]*([[:digit:]]+)[[:space:]]*kB ]]
-        local sys_mem=$((BASH_REMATCH[1] / 1024**2))
+        local sys_mem=$(find_mem)
         local sys_cores
         sys_cores=$(getconf _NPROCESSORS_ONLN)
 
         # bash doesn't support floating point arithmetic
         local target_cores
-        target_cores=$(echo "$sys_mem / $mem_per_core" | bc)
+        #target_cores=$(echo "$sys_mem / $mem_per_core" | bc)
+        target_cores=$(awk "BEGIN{ print int($sys_mem / $mem_per_core) }")
         [[ $target_cores > $sys_cores ]] && target_cores=$sys_cores
 
         echo "$target_cores"
