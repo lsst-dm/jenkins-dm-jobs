@@ -187,15 +187,23 @@ def j = matrixJob('validate_drp') {
       case "$dataset" in
         cfht)
           RUN="$VALIDATE_DRP_DIR/examples/runCfhtTest.sh"
-          OUTPUT="${DRP}/Cfht_output_r.json"
+          RESULTS=(
+            Cfht_output_r.json
+          )
           ;;
         decam)
           RUN="$VALIDATE_DRP_DIR/examples/runDecamTest.sh"
-          OUTPUT="${DRP}/Decam_output_z.json"
+          RESULTS=(
+            Decam_output_z.json
+          )
           ;;
         hsc)
           RUN="$VALIDATE_DRP_DIR/examples/runHscTest.sh"
-          OUTPUT="${DRP}/data_hsc_rerun_20170105_HSC-R.json"
+          RESULTS=(
+            data_hsc_rerun_20170105_HSC-I.json
+            data_hsc_rerun_20170105_HSC-R.json
+            data_hsc_rerun_20170105_HSC-Y.json
+          )
 
           ( set -e
             cd $HSC_DATA
@@ -218,8 +226,17 @@ def j = matrixJob('validate_drp') {
       export NUMPROC=$(($(target_cores $MEM_PER_CORE) + 1))
 
       "$RUN" --noplot
-      ln -sf "$OUTPUT" "${DRP}/output.json"
-      cp "$OUTPUT" "$ARCHIVE"
+
+      # XXX we are currently only submitting one filter per dataset
+      ln -sf "${DRP}/${RESULTS[0]}" "${DRP}/output.json"
+
+      # archive drp processing results
+      archive_dir="${ARCHIVE}/${dataset}"
+      mkdir -p "$archive_dir"
+
+      for r in "${RESULTS[@]}"; do
+        cp "${DRP}/${r}" "$archive_dir"
+      done
       '''.replaceFirst("\n","").stripIndent()
     )
 
