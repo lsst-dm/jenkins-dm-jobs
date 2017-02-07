@@ -1,4 +1,5 @@
 import util.Common
+Common.makeFolders(this)
 
 def job = job('ci-ci/test-freestyle') {
 

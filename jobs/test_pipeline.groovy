@@ -1,3 +1,6 @@
+import util.Common
+Common.makeFolders(this)
+
 pipelineJob('ci-ci/test-pipeline') {
   properties {
     rebuild {

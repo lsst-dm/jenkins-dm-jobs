@@ -1,3 +1,6 @@
+import util.Common
+Common.makeFolders(this)
+
 pipelineJob('qserv/release/tag-latest+dev') {
   properties {
     rebuild {
