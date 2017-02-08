@@ -1,4 +1,5 @@
 import util.Common
+Common.makeFolders(this)
 
 def j = job('ci-ci/jenkins-dm-jobs') {
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()

@@ -1,4 +1,5 @@
 import util.Common
+Common.makeFolders(this)
 
 def name = 'ec2-snapshot'
 def org = 'lsst-sqre'

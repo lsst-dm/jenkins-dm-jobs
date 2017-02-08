@@ -1,4 +1,5 @@
 import util.Common
+Common.makeFolders(this)
 
 def j = job('release/tag-git-repos') {
   parameters {

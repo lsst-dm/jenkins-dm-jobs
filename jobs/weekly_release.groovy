@@ -1,3 +1,6 @@
+import util.Common
+Common.makeFolders(this)
+
 pipelineJob('release/weekly-release') {
   properties {
     rebuild {
