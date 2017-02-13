@@ -245,6 +245,9 @@ def j = matrixJob('validate_drp') {
       '''
       #!/bin/bash -e
 
+      archive_dir="${ARCHIVE}/${dataset}"
+      mkdir -p "$archive_dir"
+
       mkdir -p "$POSTQA"
       cd "$POSTQA"
 
@@ -253,6 +256,11 @@ def j = matrixJob('validate_drp') {
       pip install functools32
       pip install post-qa==$POSTQA_VERSION
 
+      # archive post-qa output
+      # XXX --api-url, --api-user, and --api-password are required even when --test is set
+      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS" --test > "${archive_dir}/post-qa.json"
+
+      # submit post-qa
       post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
       '''.replaceFirst("\n","").stripIndent()
     )
