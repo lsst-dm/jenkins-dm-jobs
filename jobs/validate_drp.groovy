@@ -50,7 +50,10 @@ def j = matrixJob('validate_drp') {
   }
 
   triggers {
-    cron('H H/8 * * *')
+    // run once a day starting at ~19:00 project time.
+    // this is to allow a ~10 hour build window that will be completed before
+    // princeton buisness hours.
+    cron('H 19 * * *')
   }
 
   axes {
