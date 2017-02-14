@@ -61,14 +61,19 @@ def j = matrixJob('stack-osx') {
   }
 
   axes {
-    label('label', 'osx')
+    label('label', 'osx-10.11', 'osx-10.12')
     dynamicAxis {
       name('python')
       varName('python')
     }
   }
 
-  combinationFilter('!(label=="centos-6" && python=="py3")')
+  combinationFilter('''
+    !(
+      (label=="centos-6" && python=="py3") ||
+      (label=="osx-10.11" && python=="py3")
+    )
+  '''.replaceFirst("\n","").stripIndent())
 
   wrappers {
     colorizeOutput('gnome-terminal')
