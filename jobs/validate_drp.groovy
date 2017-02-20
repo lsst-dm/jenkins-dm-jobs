@@ -33,15 +33,32 @@ def j = matrixJob('validate_drp') {
         cloneOptions { shallow() }
       }
     }
+    // jenkins can't properly clone a git-lfs repo (yet) due to the way it
+    // invokes git.  Jenkins is managing the basic checkout but we need to do a
+    // manual `git lfs pull`.  see:
+    // https://issues.jenkins-ci.org/browse/JENKINS-30318
+    git {
+      remote {
+        github('lsst/validation_data_hsc')
+      }
+      branch('*/master')
+      extensions {
+        relativeTargetDirectory('validation_data_hsc')
+        cloneOptions { shallow() }
+      }
+    }
   }
 
   triggers {
-    cron('H H/8 * * *')
+    // run once a day starting at ~19:00 project time.
+    // this is to allow a ~10 hour build window that will be completed before
+    // princeton buisness hours.
+    cron('H 19 * * *')
   }
 
   axes {
     label('label', 'centos-7')
-    text('dataset', 'cfht')
+    text('dataset', 'cfht', 'hsc')
     text('python', 'py2')
   }
 
@@ -65,43 +82,102 @@ def j = matrixJob('validate_drp') {
     SKIP_DEMO: true,
     SKIP_DOCS: true,
     NO_FETCH:  false,
+    // anything in thid dir will be saved as a build artifact
+    ARCHIVE:   '$WORKSPACE/archive',
+    // cwd for running the drp script
+    DRP:       '$WORKSPACE/validate_drp',
+    LSSTSW:    '$WORKSPACE/lsstsw',
+    POSTQA:    '$WORKSPACE/post-qa',
+    POSTQA_VERSION: '1.2.2',
+    // validation data sets -- avoid variable name collision with EUPS
+    HSC_DATA:  '$WORKSPACE/validation_data_hsc',
   )
 
   steps {
+    // cleanup
     shell(
       '''
       #!/bin/bash -e
 
-      # allow access to lsstsw from jenkins-slave user
-      #sudo -iu "build${EXECUTOR_NUMBER}" chmod a+rx /home/build${EXECUTOR_NUMBER}
-
-      ARCHIVE="${WORKSPACE}/archive"
-      DRP="${WORKSPACE}/validate_drp"
-
       # leave validate_drp results in workspace for debugging purproses but
-      # always start with a clean dir
+      # always start with clean dirs
+
       rm -rf "$ARCHIVE" "$DRP"
       mkdir -p "$ARCHIVE" "$DRP"
       '''.replaceFirst("\n","").stripIndent()
     )
+
+    // build/install validate_drp
     shell('./buildbot-scripts/jenkins_wrapper.sh')
+
+    // run drp driver script
     shell(
       '''
       #!/bin/bash -e
 
-      ARCHIVE="${WORKSPACE}/archive"
-      DRP="${WORKSPACE}/validate_drp"
-      LSSTSW=${LSSTSW:-${WORKSPACE}/lsstsw}
-      LSSTSW_BUILD_DIR=${LSSTSW_BUILD_DIR:-${LSSTSW}/build}
+      find_mem() {
+        # Find system available memory in GiB
+        local os
+        os=$(uname)
+
+        local sys_mem=""
+        case $os in
+          Linux)
+            [[ $(grep MemAvailable /proc/meminfo) =~ \
+               MemAvailable:[[:space:]]*([[:digit:]]+)[[:space:]]*kB ]]
+            sys_mem=$((BASH_REMATCH[1] / 1024**2))
+            ;;
+          Darwin)
+            # I don't trust this fancy greppin' an' matchin' in the shell.
+            local free=$(vm_stat | grep 'Pages free:'     | \
+              tr -c -d [[:digit:]])
+            local inac=$(vm_stat | grep 'Pages inactive:' | \
+              tr -c -d [[:digit:]])
+            sys_mem=$(( (free + inac) / ( 1024 * 256 ) ))
+            ;;
+          *)
+            >&2 echo "Unknown uname: $os"
+            exit 1
+            ;;
+        esac
+
+        echo "$sys_mem"
+      }
+
+      # find the maximum number of processes that may be run on the system
+      # given the the memory per core ratio in GiB -- may be expressed in
+      # floating point.
+      target_cores() {
+        local mem_per_core=${1:-1}
+
+        local sys_mem=$(find_mem)
+        local sys_cores
+        sys_cores=$(getconf _NPROCESSORS_ONLN)
+
+        # bash doesn't support floating point arithmetic
+        local target_cores
+        #target_cores=$(echo "$sys_mem / $mem_per_core" | bc)
+        target_cores=$(awk "BEGIN{ print int($sys_mem / $mem_per_core) }")
+        [[ $target_cores > $sys_cores ]] && target_cores=$sys_cores
+
+        echo "$target_cores"
+      }
+
+      lfsconfig() {
+        git config --local lfs.batch false
+        # lfs.required must be false in order for jenkins to manage the clone
+        git config --local filter.lfs.required false
+        git config --local filter.lfs.smudge 'git-lfs smudge %f'
+        git config --local filter.lfs.clean 'git-lfs clean %f'
+        git config --local credential.helper '!f() { cat > /dev/null; echo username=; echo password=; }; f'
+      }
 
       cd "$DRP"
 
       . "${LSSTSW}/bin/setup.sh"
 
-      eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
+      eval "$(grep -E '^BUILD=' "${LSSTSW}/build/manifest.txt")"
 
-      #DEPS=(pipe_tasks obs_cfht validation_data_cfht validate_drp)
-      #DEPS=(pipe_tasks obs_decam validation_data_decam validate_drp)
       DEPS=(validate_drp)
 
       for p in "${DEPS[@]}"; do
@@ -114,11 +190,30 @@ def j = matrixJob('validate_drp') {
       case "$dataset" in
         cfht)
           RUN="$VALIDATE_DRP_DIR/examples/runCfhtTest.sh"
-          OUTPUT="${DRP}/Cfht_output_r.json"
+          RESULTS=(
+            Cfht_output_r.json
+          )
           ;;
         decam)
           RUN="$VALIDATE_DRP_DIR/examples/runDecamTest.sh"
-          OUTPUT="${DRP}/Decam_output_z.json"
+          RESULTS=(
+            Decam_output_z.json
+          )
+          ;;
+        hsc)
+          RUN="$VALIDATE_DRP_DIR/examples/runHscTest.sh"
+          RESULTS=(
+            data_hsc_rerun_20170105_HSC-I.json
+            data_hsc_rerun_20170105_HSC-R.json
+            data_hsc_rerun_20170105_HSC-Y.json
+          )
+
+          ( set -e
+            cd $HSC_DATA
+            lfsconfig
+            git lfs pull
+          )
+          setup -k -r $HSC_DATA
           ;;
         *)
           >&2 echo "Unknown DATASET: $dataset"
@@ -127,42 +222,49 @@ def j = matrixJob('validate_drp') {
       esac
 
       #rm -f ~/.config/matplotlib/matplotlibrc
+
+      # pipe_drivers mpi implementation uses one core for orchestration, so we
+      # need to set NUMPROC to the number of cores to utilize + 1
+      MEM_PER_CORE=2.0
+      export NUMPROC=$(($(target_cores $MEM_PER_CORE) + 1))
+
       "$RUN" --noplot
-      cp "$OUTPUT" "$ARCHIVE"
+
+      # XXX we are currently only submitting one filter per dataset
+      ln -sf "${DRP}/${RESULTS[0]}" "${DRP}/output.json"
+
+      # archive drp processing results
+      archive_dir="${ARCHIVE}/${dataset}"
+      mkdir -p "$archive_dir"
+
+      for r in "${RESULTS[@]}"; do
+        cp "${DRP}/${r}" "$archive_dir"
+      done
       '''.replaceFirst("\n","").stripIndent()
     )
+
+    // push results to squash
     shell(
       '''
       #!/bin/bash -e
 
-      ARCHIVE="${WORKSPACE}/archive"
-      DRP="${WORKSPACE}/validate_drp"
-      POST="${WORKSPACE}/post-qa"
-      LSSTSW=${LSSTSW:-${WORKSPACE}/lsstsw}
-      LSSTSW_BUILD_DIR=${LSSTSW_BUILD_DIR:-${LSSTSW}/build}
+      archive_dir="${ARCHIVE}/${dataset}"
+      mkdir -p "$archive_dir"
 
-      case "$dataset" in
-        cfht)
-          OUTPUT="${DRP}/Cfht_output_r.json"
-          ;;
-        decam)
-          OUTPUT="${DRP}/Decam_output_z.json"
-          ;;
-        *)
-          >&2 echo "Unknown DATASET: $dataset"
-          exit 1
-          ;;
-      esac
-
-      mkdir -p "$POST"
-      cd "$POST"
+      mkdir -p "$POSTQA"
+      cd "$POSTQA"
 
       virtualenv venv
       . venv/bin/activate
       pip install functools32
-      pip install post-qa==1.2.2
+      pip install post-qa==$POSTQA_VERSION
 
-      post-qa --lsstsw "$LSSTSW" --qa-json "$OUTPUT" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
+      # archive post-qa output
+      # XXX --api-url, --api-user, and --api-password are required even when --test is set
+      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS" --test > "${archive_dir}/post-qa.json"
+
+      # submit post-qa
+      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
       '''.replaceFirst("\n","").stripIndent()
     )
   }
