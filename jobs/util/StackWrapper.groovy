@@ -3,7 +3,7 @@ package util
 import javaposse.jobdsl.dsl.DslFactory
 import javaposse.jobdsl.dsl.Job
 
-class StackOsMatrix {
+class StackWrapper {
   String product
   Boolean skip_demo
   String cron = 'H H/8 * * *'
