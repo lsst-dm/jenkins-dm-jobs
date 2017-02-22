@@ -239,6 +239,12 @@ def j = matrixJob('validate_drp') {
       for r in "${RESULTS[@]}"; do
         cp "${DRP}/${r}" "$archive_dir"
       done
+
+      // compress json result files
+      ( set -e
+        cd "$archive_dir"
+        xz -9ev *
+      )
       '''.replaceFirst("\n","").stripIndent()
     )
 
