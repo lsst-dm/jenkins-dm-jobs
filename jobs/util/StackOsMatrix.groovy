@@ -63,7 +63,7 @@ class StackOsMatrix {
       combinationFilter('''
         !(
           (label=="centos-6" && python=="py3") ||
-          (label=="osx-10.11" && python=="py3")
+          (label=="osx" && python=="py3")
         )
       '''.replaceFirst("\n","").stripIndent())
 
