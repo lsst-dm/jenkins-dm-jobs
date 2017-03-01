@@ -57,7 +57,7 @@ def j = matrixJob('validate_drp') {
 
   axes {
     label('label', 'centos-7')
-    text('dataset', 'cfht', 'hsc')
+    text('dataset', 'cfht', 'hsc', 'decam')
     text('python', 'py2')
   }
 
