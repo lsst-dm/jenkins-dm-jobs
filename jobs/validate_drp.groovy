@@ -237,7 +237,14 @@ def j = matrixJob('validate_drp') {
       mkdir -p "$archive_dir"
 
       for r in "${RESULTS[@]}"; do
-        cp "${DRP}/${r}" "$archive_dir"
+        dest="${archive_dir}/${r}"
+        cp "${DRP}/${r}" "$dest"
+        # compressing an example hsc output file
+        # (cmd)       (ratio)  (time)
+        # xz -T0      0.183    0:20
+        # xz -T0 -9   0.180    1:23
+        # xz -T0 -9e  0.179    1:28
+        xz -T0 -9ev "$dest"
       done
       '''.replaceFirst("\n","").stripIndent()
     )
@@ -260,7 +267,9 @@ def j = matrixJob('validate_drp') {
 
       # archive post-qa output
       # XXX --api-url, --api-user, and --api-password are required even when --test is set
-      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS" --test > "${archive_dir}/post-qa.json"
+      postqa_output="${archive_dir}/post-qa.json"
+      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS" --test > "$postqa_output"
+      xz -T0 -9ev "$postqa_output"
 
       # submit post-qa
       post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
