@@ -87,7 +87,7 @@ def j = matrixJob('validate_drp') {
     DRP:       '$WORKSPACE/validate_drp',
     LSSTSW:    '$WORKSPACE/lsstsw',
     POSTQA:    '$WORKSPACE/post-qa',
-    POSTQA_VERSION: '1.2.2',
+    POSTQA_VERSION: '1.3.1',
     // validation data sets -- avoid variable name collision with EUPS
     HSC_DATA:  '$WORKSPACE/validation_data_hsc',
   )
@@ -268,11 +268,11 @@ def j = matrixJob('validate_drp') {
       # archive post-qa output
       # XXX --api-url, --api-user, and --api-password are required even when --test is set
       postqa_output="${archive_dir}/post-qa.json"
-      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS" --test > "$postqa_output"
+      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS" --test > "$postqa_output"
       xz -T0 -9ev "$postqa_output"
 
       # submit post-qa
-      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL/jobs/"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
+      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
       '''.replaceFirst("\n","").stripIndent()
     )
   }
