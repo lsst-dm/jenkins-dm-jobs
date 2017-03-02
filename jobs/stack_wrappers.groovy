@@ -1,4 +1,4 @@
-import util.StackOsMatrix
+import util.StackWrapper
 
 [
   [
@@ -39,7 +39,7 @@ import util.StackOsMatrix
     skip_demo: true,
   ],
 ].each { j ->
-  def stack = new StackOsMatrix(j)
+  def stack = new StackWrapper(j)
 
   stack.build(this)
 }
