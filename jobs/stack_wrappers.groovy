@@ -14,10 +14,6 @@ import util.StackOsMatrix
     skip_demo: false,
   ],
   [
-    product: 'lsst_sims',
-    skip_demo: true,
-  ],
-  [
     product: 'qserv_distrib',
     skip_demo: true,
   ],
@@ -25,10 +21,6 @@ import util.StackOsMatrix
     product: 'lsst_py3',
     skip_demo: true,
     python: 'py3',
-  ],
-  [
-    product: 'sims_utils',
-    skip_demo: true,
   ],
   [
     product: 'ci_hsc',
