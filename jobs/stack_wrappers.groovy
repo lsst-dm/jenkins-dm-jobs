@@ -1,3 +1,6 @@
+import util.Common
+Common.makeFolders(this)
+
 import util.StackOsMatrix
 
 [
@@ -29,6 +32,14 @@ import util.StackOsMatrix
   [
     product: 'lsst_obs',
     skip_demo: true,
+  ],
+  [
+    name: 'sims/build',
+    product: 'lsst_sims',
+    branch: '13.0 v13.0',
+    skip_demo: true,
+    cron: null,
+
   ],
 ].each { j ->
   def stack = new StackOsMatrix(j)
