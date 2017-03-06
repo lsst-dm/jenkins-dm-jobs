@@ -34,8 +34,10 @@ class StackOsMatrix {
       label('jenkins-master')
       keepDependencies()
 
-      triggers {
-        cron(cron)
+      if (cron) {
+        triggers {
+          cron(cron)
+        }
       }
 
       steps {
