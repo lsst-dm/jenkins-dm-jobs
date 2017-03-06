@@ -60,5 +60,8 @@ class Common {
     dslFactory.folder('qserv/release') {
       description('Jobs related to DAX/qserv releases.')
     }
+    dslFactory.folder('sims') {
+      description('LSST sims specific jobs.')
+    }
   }
 }
