@@ -32,6 +32,10 @@ class Common {
   }
 
   static void makeFolders(DslFactory dslFactory) {
+    dslFactory.folder('infrastructure') {
+      description('Infrastructure jobs')
+    }
+
     dslFactory.folder('ci-ci') {
       description('CI for the CI system(s)')
     }
