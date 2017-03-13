@@ -236,7 +236,10 @@ def j = matrixJob('validate_drp') {
       MEM_PER_CORE=2.0
       export NUMPROC=$(($(target_cores $MEM_PER_CORE) + 1))
 
+      set +e
       "$RUN" --noplot
+      run_status=$?
+      set -e
 
       # XXX we are currently only submitting one filter per dataset
       ln -sf "${DRP}/${RESULTS[0]}" "${DRP}/output.json"
@@ -248,7 +251,10 @@ def j = matrixJob('validate_drp') {
 
       for r in "${artifacts[@]}"; do
         dest="${archive_dir}/${r##*/}"
-        cp "${DRP}/${r}" "$dest"
+        # file may not exist due to an error
+        if ! cp "${DRP}/${r}" "$dest"; then
+          continue
+        fi
         # compressing an example hsc output file
         # (cmd)       (ratio)  (time)
         # xz -T0      0.183    0:20
@@ -256,6 +262,8 @@ def j = matrixJob('validate_drp') {
         # xz -T0 -9e  0.179    1:28
         xz -T0 -9ev "$dest"
       done
+
+      exit $run_status
       '''.replaceFirst("\n","").stripIndent()
     )
 
