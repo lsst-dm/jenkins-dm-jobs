@@ -192,11 +192,17 @@ def j = matrixJob('validate_drp') {
           RESULTS=(
             Cfht_output_r.json
           )
+          LOGS=(
+            'Cfht/processCcd.log'
+          )
           ;;
         decam)
           RUN="$VALIDATE_DRP_DIR/examples/runDecamTest.sh"
           RESULTS=(
             Decam_output_z.json
+          )
+          LOGS=(
+            'Decam/processCcd.log'
           )
           ;;
         hsc)
@@ -205,6 +211,9 @@ def j = matrixJob('validate_drp') {
             data_hsc_rerun_20170105_HSC-I.json
             data_hsc_rerun_20170105_HSC-R.json
             data_hsc_rerun_20170105_HSC-Y.json
+          )
+          LOGS=(
+            'job_singleFrame.log'
           )
 
           ( set -e
@@ -235,9 +244,10 @@ def j = matrixJob('validate_drp') {
       # archive drp processing results
       archive_dir="${ARCHIVE}/${dataset}"
       mkdir -p "$archive_dir"
+      artifacts=( "${RESULTS[@]}" "${LOGS[@]}" )
 
-      for r in "${RESULTS[@]}"; do
-        dest="${archive_dir}/${r}"
+      for r in "${artifacts[@]}"; do
+        dest="${archive_dir}/${r##*/}"
         cp "${DRP}/${r}" "$dest"
         # compressing an example hsc output file
         # (cmd)       (ratio)  (time)
