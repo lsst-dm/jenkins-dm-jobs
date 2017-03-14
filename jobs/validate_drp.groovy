@@ -76,7 +76,9 @@ def j = matrixJob('validate_drp') {
   }
 
   environmentVariables(
-    BRANCH:    'master',
+    // do not set 'master' as a ref as it will override a repos.yaml default
+    // branch
+    //BRANCH:    'master',
     PRODUCT:   'validate_drp',
     SKIP_DEMO: true,
     SKIP_DOCS: true,
