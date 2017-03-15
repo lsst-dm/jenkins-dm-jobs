@@ -101,7 +101,6 @@ def s3Push(String flavor) {
     virtualenv venv
     . venv/bin/activate
     pip install awscli
-
   '''.replaceFirst("\n","").stripIndent()
 
   withCredentials([[
