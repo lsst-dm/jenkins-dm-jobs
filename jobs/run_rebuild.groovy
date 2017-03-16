@@ -56,6 +56,14 @@ def j = job('release/run-rebuild') {
   wrappers {
     colorizeOutput('gnome-terminal')
     sshAgent('github-jenkins-versiondb')
+    credentialsBinding {
+      usernamePassword(
+        'AWS_ACCESS_KEY_ID',
+        'AWS_SECRET_ACCESS_KEY',
+        'aws-eups-push'
+      )
+      string('EUPS_S3_BUCKET', 'eups-push-bucket')
+    }
   }
 
   steps {
@@ -78,6 +86,24 @@ def j = job('release/run-rebuild') {
 
       # handled by the postbuild on failure script if there is an error
       rm -rf "${WORKSPACE}/REPOS"
+      '''.replaceFirst("\n","").stripIndent()
+    )
+    shell(
+      '''
+      #!/bin/bash -e
+
+      if [[ $SKIP_DOCS == "true" ]]; then
+        exit 0
+      fi
+
+      # provides DOC_PUSH_PATH
+      . ./buildbot-scripts/settings.cfg.sh
+
+      mkdir -p publish/venv
+      . publish/venv/bin/activate
+      pip install awscli
+
+      aws s3 sync "$DOC_PUSH_PATH"/ s3://$EUPS_S3_BUCKET/stack/doxygen/
       '''.replaceFirst("\n","").stripIndent()
     )
   }

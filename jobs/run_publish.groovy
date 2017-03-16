@@ -23,6 +23,14 @@ def j = job('release/run-publish') {
 
   wrappers {
     colorizeOutput('gnome-terminal')
+    credentialsBinding {
+      usernamePassword(
+        'AWS_ACCESS_KEY_ID',
+        'AWS_SECRET_ACCESS_KEY',
+        'aws-eups-push'
+      )
+      string('EUPS_S3_BUCKET', 'eups-push-bucket')
+    }
   }
 
   steps {
@@ -52,6 +60,17 @@ def j = job('release/run-publish') {
       publish "${ARGS[@]}"
       '''.replaceFirst("\n","").stripIndent()
 
+    )
+    shell(
+      '''
+      #!/bin/bash -e
+
+      mkdir -p publish/venv
+      . publish/venv/bin/activate
+      pip install awscli
+
+      aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/
+      '''.replaceFirst("\n","").stripIndent()
     )
   }
 }
