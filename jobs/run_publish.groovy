@@ -66,6 +66,7 @@ def j = job('release/run-publish') {
       #!/bin/bash -e
 
       mkdir -p publish
+      pip install virtualenv
       virtualenv publish/venv
       . publish/venv/bin/activate
       pip install awscli

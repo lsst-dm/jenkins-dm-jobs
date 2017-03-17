@@ -100,6 +100,7 @@ def j = job('release/run-rebuild') {
       . ./buildbot-scripts/settings.cfg.sh
 
       mkdir -p publish
+      pip install virtualenv
       virtualenv publish/venv
       . publish/venv/bin/activate
       pip install awscli
