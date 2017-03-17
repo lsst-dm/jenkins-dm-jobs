@@ -67,11 +67,6 @@ def j = job('release/run-publish') {
 
       # setup python env
       . "${WORKSPACE}/lsstsw/bin/setup.sh"
-
-      mkdir -p publish
-      pip install virtualenv
-      virtualenv publish/venv
-      . publish/venv/bin/activate
       pip install awscli
 
       aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/

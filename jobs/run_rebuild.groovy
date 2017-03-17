@@ -98,15 +98,10 @@ def j = job('release/run-rebuild') {
 
       # setup python env
       . "${WORKSPACE}/lsstsw/bin/setup.sh"
+      pip install awscli
 
       # provides DOC_PUSH_PATH
       . ./buildbot-scripts/settings.cfg.sh
-
-      mkdir -p publish
-      pip install virtualenv
-      virtualenv publish/venv
-      . publish/venv/bin/activate
-      pip install awscli
 
       aws s3 sync "$DOC_PUSH_PATH"/ s3://$EUPS_S3_BUCKET/stack/doxygen/
       '''.replaceFirst("\n","").stripIndent()
