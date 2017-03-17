@@ -99,7 +99,8 @@ def j = job('release/run-rebuild') {
       # provides DOC_PUSH_PATH
       . ./buildbot-scripts/settings.cfg.sh
 
-      mkdir -p publish/venv
+      mkdir -p publish
+      virtualenv publish/venv
       . publish/venv/bin/activate
       pip install awscli
 
