@@ -65,6 +65,9 @@ def j = job('release/run-publish') {
       '''
       #!/bin/bash -e
 
+      # setup python env
+      . "${WORKSPACE}/lsstsw/bin/setup.sh"
+
       mkdir -p publish
       pip install virtualenv
       virtualenv publish/venv

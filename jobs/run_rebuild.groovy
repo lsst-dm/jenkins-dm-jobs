@@ -96,6 +96,9 @@ def j = job('release/run-rebuild') {
         exit 0
       fi
 
+      # setup python env
+      . "${WORKSPACE}/lsstsw/bin/setup.sh"
+
       # provides DOC_PUSH_PATH
       . ./buildbot-scripts/settings.cfg.sh
 
