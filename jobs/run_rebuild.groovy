@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-def j = job('release/run-rebuild') {
+pipelineJob('release/run-rebuild') {
+  description('run rebuild in the canoncial LSST DM build environment.  Only us this job when preparing to publish EUPS distrib packages.)
+
   parameters {
     stringParam('BRANCH', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" is implicitly appended to the right side of the list, if not specified.')
     stringParam('PRODUCT', null, 'Whitespace delimited list of EUPS products to build.')
@@ -16,126 +18,25 @@ def j = job('release/run-rebuild') {
     }
   }
 
-  environmentVariables {
-    env('EUPS_PKGROOT', '/lsst/distserver/production')
-    env('VERSIONDB_REPO', 'git@github.com:lsst/versiondb.git')
-    env('VERSIONDB_PUSH', 'true')
-  }
-
-  label('lsst-dev')
+  // don't tie up a beefy build slave
+  label('jenkins-master')
   concurrentBuild(false)
-  customWorkspace('/home/lsstsw/jenkins/release')
+  keepDependencies(true)
 
-  multiscm {
-    git {
-      remote {
-        github('lsst/lsstsw')
-      }
-      branch('*/master')
-      extensions {
-        relativeTargetDirectory('lsstsw')
-        cloneOptions { shallow() }
-      }
-    }
-    git {
-      remote {
-        github('lsst-sqre/buildbot-scripts')
-      }
-      branch('*/master')
-      extensions {
-        relativeTargetDirectory('buildbot-scripts')
-        cloneOptions { shallow() }
-      }
-    }
-  }
+  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
+  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
 
-  triggers {
-    cron('42 1,19 * * *')
-  }
-
-  wrappers {
-    colorizeOutput('gnome-terminal')
-    sshAgent('github-jenkins-versiondb')
-    credentialsBinding {
-      usernamePassword(
-        'AWS_ACCESS_KEY_ID',
-        'AWS_SECRET_ACCESS_KEY',
-        'aws-eups-push'
-      )
-      string('EUPS_S3_BUCKET', 'eups-push-bucket')
-    }
-  }
-
-  steps {
-    shell(
-      '''
-      #!/bin/bash -e
-
-      # ensure that we are using the lsstsw clone relative to the workspace
-      # and that another value for LSSTSW isn't leaking in from the env
-      export LSSTSW="${WORKSPACE}/lsstsw"
-
-      # isolate eups cache files
-      export EUPS_USERDATA="${WORKSPACE}/.eups"
-
-      if [[ -e "${WORKSPACE}/REPOS" ]]; then
-        export REPOSFILE="${WORKSPACE}/REPOS"
-      fi
-
-      ./buildbot-scripts/jenkins_wrapper.sh
-
-      # handled by the postbuild on failure script if there is an error
-      rm -rf "${WORKSPACE}/REPOS"
-      '''.replaceFirst("\n","").stripIndent()
-    )
-    shell(
-      '''
-      #!/bin/bash -e
-
-      if [[ $SKIP_DOCS == "true" ]]; then
-        exit 0
-      fi
-
-      # setup python env
-      . "${WORKSPACE}/lsstsw/bin/setup.sh"
-      pip install awscli
-
-      # provides DOC_PUSH_PATH
-      . ./buildbot-scripts/settings.cfg.sh
-
-      aws s3 sync "$DOC_PUSH_PATH"/ s3://$EUPS_S3_BUCKET/stack/doxygen/
-      '''.replaceFirst("\n","").stripIndent()
-    )
-  }
-
-  publishers {
-    postBuildScript {
-      scriptOnlyIfSuccess(false)
-      scriptOnlyIfFailure(true)
-      markBuildUnstable(false)
-      executeOn('AXES')
-      buildStep {
-        shell {
-          command(
-            '''
-            Z=$(lsof -d 200 -t)
-            if [[ ! -z $Z ]]; then
-              kill -9 $Z
-            fi
-
-            rm -rf "${WORKSPACE}/stack/.lockDir"
-            rm -rf "${WORKSPACE}/REPOS"
-            '''.replaceFirst("\n","").stripIndent()
-          )
+  definition {
+    cpsScm {
+      scm {
+        git {
+          remote {
+            url(repo)
+          }
+          branch(ref)
         }
       }
-    }
-
-    archiveArtifacts {
-      fingerprint()
-      pattern('lsstsw/build/manifest.txt')
+      scriptPath('pipelines/release/run_rebuild.groovy')
     }
   }
 }
-
-Common.addNotification(j)
