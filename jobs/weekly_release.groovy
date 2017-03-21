@@ -30,7 +30,7 @@ pipelineJob('release/weekly-release') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/weekly_release.groovy')
+      scriptPath('pipelines/release/weekly_release.groovy')
     }
   }
 }
