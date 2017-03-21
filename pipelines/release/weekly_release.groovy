@@ -71,10 +71,11 @@ try {
   tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
   tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
 
-  stage('build containers') {
-    def container = [:]
+  stage('build binary artifacts') {
+    def artifact = [:]
 
-    container['run release/docker/build'] = {
+    // docker containers
+    artifact['run release/docker/build'] = {
       // ensure that we are using the latest version of newinstall.sh
       // this acts as an "after the fact" canary
       // XXX this job needs to be refactored to have proper canary builds
@@ -92,13 +93,23 @@ try {
       }
     }
 
-    container['run qserv/docker/build'] = {
+    artifact['run qserv/docker/build'] = {
       retry(retries) {
         build job: 'qserv/docker/build'
       }
     }
 
-    parallel container
+    artifact['run release/tarball'] = {
+      retry(retries) {
+        build job: 'release/tarball',
+          parameters: [
+            string(name: 'PRODUCT', value: 'lsst_distrib'),
+            string(name: 'EUPS_TAG', value: eups_tag)
+          ]
+      }
+    }
+
+    parallel artifact
   }
 
   stage('archive') {
