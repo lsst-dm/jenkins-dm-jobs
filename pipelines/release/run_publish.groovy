@@ -79,7 +79,12 @@ try {
           credentialsId: 'eups-push-bucket',
           variable: 'EUPS_S3_BUCKET'
         ]]) {
-          withEnv(["WORKSPACE=${pwd()}"]) {
+          def env = [
+            'EUPS_PKGROOT=/lsst/distserver/production',
+            "WORKSPACE=${pwd()}",
+          ]
+
+          withEnv(env) {
             shColor '''
               #!/bin/bash -e
 
