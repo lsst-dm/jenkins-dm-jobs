@@ -99,22 +99,24 @@ try {
           credentialsId: 'eups-push-bucket',
           variable: 'EUPS_S3_BUCKET'
         ]]) {
-          shColor '''
-            #!/bin/bash -e
+          withEnv(["WORKSPACE=${pwd()}"]) {
+            shColor '''
+              #!/bin/bash -e
 
-            if [[ $SKIP_DOCS == "true" ]]; then
-              exit 0
-            fi
+              if [[ $SKIP_DOCS == "true" ]]; then
+                exit 0
+              fi
 
-            # setup python env
-            . "${WORKSPACE}/lsstsw/bin/setup.sh"
-            pip install awscli
+              # setup python env
+              . "${WORKSPACE}/lsstsw/bin/setup.sh"
+              pip install awscli
 
-            # provides DOC_PUSH_PATH
-            . ./buildbot-scripts/settings.cfg.sh
+              # provides DOC_PUSH_PATH
+              . ./buildbot-scripts/settings.cfg.sh
 
-            aws s3 sync "$DOC_PUSH_PATH"/ s3://$EUPS_S3_BUCKET/stack/doxygen/
-          '''.replaceFirst("\n","").stripIndent()
+              aws s3 sync "$DOC_PUSH_PATH"/ s3://$EUPS_S3_BUCKET/stack/doxygen/
+            '''.replaceFirst("\n","").stripIndent()
+          }
         }
       } // stage('push docs')
     } // ws('/home/lsstsw/jenkins/release')
