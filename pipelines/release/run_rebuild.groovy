@@ -90,14 +90,14 @@ try {
       stage('push docs') {
         withCredentials([[
           $class: 'UsernamePasswordMultiBinding',
-          credentialsId: 'aws-eups-push',
+          credentialsId: 'aws-doxygen-push',
           usernameVariable: 'AWS_ACCESS_KEY_ID',
           passwordVariable: 'AWS_SECRET_ACCESS_KEY'
         ],
         [
           $class: 'StringBinding',
-          credentialsId: 'eups-push-bucket',
-          variable: 'EUPS_S3_BUCKET'
+          credentialsId: 'doxygen-push-bucket',
+          variable: 'DOXYGEN_S3_BUCKET'
         ]]) {
           withEnv(["WORKSPACE=${pwd()}"]) {
             shColor '''
@@ -114,7 +114,7 @@ try {
               # provides DOC_PUSH_PATH
               . ./buildbot-scripts/settings.cfg.sh
 
-              aws s3 sync "$DOC_PUSH_PATH"/ s3://$EUPS_S3_BUCKET/stack/doxygen/
+              aws s3 sync "$DOC_PUSH_PATH"/ s3://$DOXYGEN_S3_BUCKET/stack/doxygen/
             '''.replaceFirst("\n","").stripIndent()
           }
         }
