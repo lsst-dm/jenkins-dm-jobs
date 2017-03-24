@@ -77,6 +77,9 @@ def j = matrixJob('stack-osx') {
 
   wrappers {
     colorizeOutput('gnome-terminal')
+    credentialsBinding {
+      string('CMIRROR_S3_BUCKET', 'cmirror-s3-bucket')
+    }
   }
 
   environmentVariables(

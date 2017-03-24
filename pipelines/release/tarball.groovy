@@ -30,12 +30,32 @@ try {
             writeFile(file: shName, text: script)
 
             docker.image(imageName).pull()
-            withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
-              sh '''
-                set -e
-                chmod a+x "$RUN"
-                docker run -t -v "$(pwd)/scripts:/scripts" -v "$(pwd)/distrib:/distrib" -v "$(pwd)/build:/build" -w /build "$IMAGE" sh -c "/${RUN}"
-              '''.replaceFirst("\n","").stripIndent()
+            withCredentials([[
+              $class: 'StringBinding',
+              credentialsId: 'cmirror-s3-bucket',
+              variable: 'CMIRROR_S3_BUCKET'
+            ]]) {
+              withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
+                sh '''
+                  set -e
+
+                  if [[ -n $CMIRROR_S3_BUCKET ]]; then
+                      export CONDA_CHANNELS="http://${CMIRROR_S3_BUCKET}/pkgs/free"
+                      export MINICONDA_BASE_URL="http://${CMIRROR_S3_BUCKET}/miniconda"
+                  fi
+
+                  chmod a+x "$RUN"
+                  docker run -t \
+                    -v "$(pwd)/scripts:/scripts" \
+                    -v "$(pwd)/distrib:/distrib" \
+                    -v "$(pwd)/build:/build" \
+                    -w /build \
+                    -e CONDA_CHANNELS="$CONDA_CHANNELS" \
+                    -e MINICONDA_BASE_URL="$MINICONDA_BASE_URL" \
+                    "$IMAGE" \
+                    sh -c "/${RUN}"
+                '''.replaceFirst("\n","").stripIndent()
+              }
             }
 
             s3Push('Linux64')
@@ -55,11 +75,23 @@ try {
 
             sh 'mkdir -p distrib scripts build'
             writeFile(file: shName, text: script)
-            sh """
-              set -e
-              chmod a+x "${shName}"
-              "${shName}"
-            """.replaceFirst("\n","").stripIndent()
+            withCredentials([[
+              $class: 'StringBinding',
+              credentialsId: 'cmirror-s3-bucket',
+              variable: 'CMIRROR_S3_BUCKET'
+            ]]) {
+              sh """
+                set -e
+
+                if [[ -n $CMIRROR_S3_BUCKET ]]; then
+                    export CONDA_CHANNELS="http://${CMIRROR_S3_BUCKET}/pkgs/free"
+                    export MINICONDA_BASE_URL="http://${CMIRROR_S3_BUCKET}/miniconda"
+                fi
+
+                chmod a+x "${shName}"
+                "${shName}"
+              """.replaceFirst("\n","").stripIndent()
+            }
 
             s3Push('DarwinX86')
           } finally {
