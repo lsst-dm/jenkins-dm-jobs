@@ -16,9 +16,9 @@ try {
   def retries = 1
 
   stage('build tarballs') {
-    def flavor = [:]
+    def platform = [:]
 
-    flavor['linux64'] = {
+    platform['linux - el7'] = {
       retry(retries) {
         node('docker') {
           try {
@@ -59,7 +59,7 @@ try {
               }
             }
 
-            s3Push('Linux64')
+            s3Push('linux', 'el7')
           } finally {
             cleanup()
           }
@@ -67,7 +67,7 @@ try {
       }
     }
 
-    flavor['darwinx86'] = {
+    platform['osx - 10.11'] = {
       retry(retries) {
         node('osx-10.11') {
           try {
@@ -95,7 +95,7 @@ try {
               """.replaceFirst("\n","").stripIndent()
             }
 
-            s3Push('DarwinX86')
+            s3Push('osx', '10.11')
           } finally {
             cleanup()
           }
@@ -103,7 +103,7 @@ try {
       }
     }
 
-    parallel flavor
+    parallel platform
   }
 } catch (e) {
   // If there was an exception thrown, the build failed
@@ -127,7 +127,7 @@ try {
   }
 }
 
-def s3Push(String flavor) {
+def s3Push(String platform, String version) {
   shColor '''
     set -e
     # do not assume virtualenv is present
@@ -151,7 +151,7 @@ def s3Push(String flavor) {
     shColor """
       set -e
       . venv/bin/activate
-      aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${flavor}/
+      aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${platform}/${version}/
     """.replaceFirst("\n","").stripIndent()
   }
 }
