@@ -26,17 +26,18 @@ try {
             def shName = 'scripts/run.sh'
             def script = buildScript(PRODUCT, EUPS_TAG, '/distrib')
 
-            sh 'mkdir -p distrib scripts build'
+            shColor 'mkdir -p distrib scripts build'
             writeFile(file: shName, text: script)
 
             docker.image(imageName).pull()
+
             withCredentials([[
               $class: 'StringBinding',
               credentialsId: 'cmirror-s3-bucket',
               variable: 'CMIRROR_S3_BUCKET'
             ]]) {
               withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
-                sh '''
+                shColor '''
                   set -e
 
                   if [[ -n $CMIRROR_S3_BUCKET ]]; then
@@ -73,14 +74,15 @@ try {
             def shName = 'scripts/run.sh'
             def script = buildScript(PRODUCT, EUPS_TAG, "${WORKSPACE}/distrib")
 
-            sh 'mkdir -p distrib scripts build'
+            shColor 'mkdir -p distrib scripts build'
             writeFile(file: shName, text: script)
+
             withCredentials([[
               $class: 'StringBinding',
               credentialsId: 'cmirror-s3-bucket',
               variable: 'CMIRROR_S3_BUCKET'
             ]]) {
-              sh """
+              shColor """
                 set -e
 
                 if [[ -n $CMIRROR_S3_BUCKET ]]; then
@@ -126,7 +128,7 @@ try {
 }
 
 def s3Push(String flavor) {
-  sh '''
+  shColor '''
     set -e
     # do not assume virtualenv is present
     pip install virtualenv
@@ -146,7 +148,7 @@ def s3Push(String flavor) {
     credentialsId: 'eups-push-bucket',
     variable: 'EUPS_S3_BUCKET'
   ]]) {
-    sh """
+    shColor """
       set -e
       . venv/bin/activate
       aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${flavor}/
@@ -155,7 +157,13 @@ def s3Push(String flavor) {
 }
 
 def cleanup() {
-  sh 'rm -rf "${WORKSPACE}/build/.lockDir"'
+  shColor 'rm -rf "${WORKSPACE}/build/.lockDir"'
+}
+
+def shColor(script) {
+  wrap([$class: 'AnsiColorBuildWrapper']) {
+    sh script
+  }
 }
 
 @NonCPS
