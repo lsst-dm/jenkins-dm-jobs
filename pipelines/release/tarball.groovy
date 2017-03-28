@@ -21,14 +21,14 @@ try {
     platform['linux - el6'] = {
       retry(retries) {
         def imageName = 'lsstsqre/centos:6-newinstall'
-        linuxBuild(imageName, 'el6')
+        linuxTarballs(imageName, 'el6')
       }
     }
 
     platform['linux - el7'] = {
       retry(retries) {
         def imageName = 'lsstsqre/centos:7-newinstall'
-        linuxBuild(imageName, 'el7')
+        linuxTarballs(imageName, 'el7')
       }
     }
 
@@ -62,52 +62,93 @@ try {
   }
 }
 
-def linuxBuild(String imageName, String version) {
+def linuxTarballs(String imageName, String version) {
   node('docker') {
-    ws(version) {
-      try {
-        def shName = 'scripts/run.sh'
-        prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
+    dir(version) {
+      docker.image(imageName).pull()
+      linuxBuild(imageName, version)
+      linuxDemo(imageName, version)
+      s3Push('linux', version)
+    }
+  }
+}
 
-        docker.image(imageName).pull()
+def linuxBuild(String imageName, String version) {
+  try {
+    def shName = 'scripts/run.sh'
+    prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
 
-        withCredentials([[
-          $class: 'StringBinding',
-          credentialsId: 'cmirror-s3-bucket',
-          variable: 'CMIRROR_S3_BUCKET'
-        ]]) {
-          withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
-            sh '''
-              set -e
+    withCredentials([[
+      $class: 'StringBinding',
+      credentialsId: 'cmirror-s3-bucket',
+      variable: 'CMIRROR_S3_BUCKET'
+    ]]) {
+      withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
+        sh '''
+          set -e
 
-              chmod a+x "$RUN"
-              docker run -t \
-                -v "$(pwd)/scripts:/scripts" \
-                -v "$(pwd)/distrib:/distrib" \
-                -v "$(pwd)/build:/build" \
-                -w /build \
-                -e CONDA_CHANNELS="$CONDA_CHANNELS" \
-                -e MINICONDA_BASE_URL="$MINICONDA_BASE_URL" \
-                "$IMAGE" \
-                sh -c "/${RUN}"
-            '''.replaceFirst("\n","").stripIndent()
-          }
-        }
-
-        s3Push('linux', version)
-      } finally {
-        cleanupDocker(imageName)
+          chmod a+x "$RUN"
+          docker run -t \
+            -v "$(pwd)/scripts:/scripts" \
+            -v "$(pwd)/distrib:/distrib" \
+            -v "$(pwd)/build:/build" \
+            -w /build \
+            -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
+            "$IMAGE" \
+            sh -c "/${RUN}"
+        '''.replaceFirst("\n","").stripIndent()
       }
-    } // ws(version)
-  } // node('docker')
+    }
+  } finally {
+    cleanupDocker(imageName)
+  }
+}
+
+def linuxDemo(String imageName, String version) {
+  try {
+    def shName = 'scripts/demo.sh'
+    prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
+
+    dir('buildbot-scripts') {
+      git([
+        url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+        branch: 'master'
+      ])
+    }
+
+    withCredentials([[
+      $class: 'StringBinding',
+      credentialsId: 'cmirror-s3-bucket',
+      variable: 'CMIRROR_S3_BUCKET'
+    ]]) {
+      withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
+        sh '''
+          set -e
+
+          chmod a+x "$RUN"
+          docker run -t \
+            -v "$(pwd)/scripts:/scripts" \
+            -v "$(pwd)/distrib:/distrib" \
+            -v "$(pwd)/demo:/demo" \
+            -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
+            -w /demo \
+            -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
+            "$IMAGE" \
+            sh -c "/${RUN}"
+        '''.replaceFirst("\n","").stripIndent()
+      }
+    }
+  } finally {
+    cleanupDocker(imageName)
+  }
 }
 
 def osxBuild(String version) {
   node("osx-${version}") {
-    ws(version) {
+    dir(version) {
       try {
         def shName = 'scripts/run.sh'
-        prepare(PRODUCT, EUPS_TAG, shName, "${WORKSPACE}/distrib")
+        prepare(PRODUCT, EUPS_TAG, shName, "./distrib")
 
         withCredentials([[
           $class: 'StringBinding',
@@ -126,7 +167,7 @@ def osxBuild(String version) {
       } finally {
         cleanup()
       }
-    } // ws(version)
+    } // dir(version)
   } // node
 }
 
@@ -134,6 +175,13 @@ def prepare(String product, String eupsTag, String shName, String distribDir) {
   def script = buildScript(product, eupsTag, distribDir)
 
   shColor 'mkdir -p distrib scripts build'
+  writeFile(file: shName, text: script)
+}
+
+def prepareDemo(String product, String eupsTag, String shName, String distribDir) {
+  def script = demoScript(product, eupsTag, distribDir)
+
+  shColor 'mkdir -p demo'
   writeFile(file: shName, text: script)
 }
 
@@ -167,7 +215,7 @@ def s3Push(String platform, String version) {
 }
 
 def cleanup() {
-  shColor 'rm -rf "${WORKSPACE}/build/.lockDir"'
+  shColor 'rm -rf "./build/.lockDir"'
 }
 
 // because the uid in the docker container probably won't match the
@@ -177,12 +225,17 @@ def cleanupDocker(String imageName) {
   withEnv(["IMAGE=${imageName}"]) {
     shColor '''
       docker run -t \
-        -v "$(pwd)/scripts:/scripts" \
-        -v "$(pwd)/distrib:/distrib" \
         -v "$(pwd)/build:/build" \
         -w /build \
         "$IMAGE" \
         rm -rf /build/.lockDir
+    '''.replaceFirst("\n","").stripIndent()
+    shColor '''
+      docker run -t \
+        -v "$(pwd)/demo:/demo" \
+        -w /build \
+        "$IMAGE" \
+        rm -rf /demo
     '''.replaceFirst("\n","").stripIndent()
   }
 }
@@ -218,5 +271,35 @@ def buildScript(String products, String tag, String eupsPkgroot) {
       eups distrib create --server-dir "\$EUPS_PKGROOT" -d tarball "\$product" -t "${tag}" -vvv
     done
     eups distrib declare --server-dir "\$EUPS_PKGROOT" -t "${tag}" -vvv
+  """.replaceFirst("\n","").stripIndent()
+}
+
+@NonCPS
+def demoScript(String products, String tag, String eupsPkgroot) {
+  """
+    set -e
+
+    if [[ -n \$CMIRROR_S3_BUCKET ]]; then
+        export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
+        export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
+    fi
+
+    set -o verbose
+    if grep -q -i "CentOS release 6" /etc/redhat-release; then
+      . /opt/rh/devtoolset-3/enable
+    fi
+    set +o verbose
+
+    export EUPS_PKGROOT="${eupsPkgroot}"
+
+    curl -sSL https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh | bash -s -- -cb
+    . ./loadLSST.bash
+
+    # XXX the lsst product is declaring EUPS_PKGROOT
+    export EUPS_PKGROOT="${eupsPkgroot}"
+
+    eups distrib install ${products} -t "${tag}" -vvv
+
+    /buildbot-scripts/runManifestDemo.sh --tag "${tag}" --small
   """.replaceFirst("\n","").stripIndent()
 }
