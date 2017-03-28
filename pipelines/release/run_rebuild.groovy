@@ -40,29 +40,35 @@ try {
             "WORKSPACE=${pwd()}",
           ]
 
-          withEnv(env) {
-            sshagent (credentials: ['github-jenkins-versiondb']) {
-              shColor '''
-                #!/bin/bash -e
+          withCredentials([[
+            $class: 'StringBinding',
+            credentialsId: 'cmirror-s3-bucket',
+            variable: 'CMIRROR_S3_BUCKET'
+          ]]) {
+            withEnv(env) {
+              sshagent (credentials: ['github-jenkins-versiondb']) {
+                shColor '''
+                  #!/bin/bash -e
 
-                # ensure that we are using the lsstsw clone relative to the workspace
-                # and that another value for LSSTSW isn't leaking in from the env
-                export LSSTSW="${WORKSPACE}/lsstsw"
+                  # ensure that we are using the lsstsw clone relative to the workspace
+                  # and that another value for LSSTSW isn't leaking in from the env
+                  export LSSTSW="${WORKSPACE}/lsstsw"
 
-                # isolate eups cache files
-                export EUPS_USERDATA="${WORKSPACE}/.eups"
+                  # isolate eups cache files
+                  export EUPS_USERDATA="${WORKSPACE}/.eups"
 
-                if [[ -e "${WORKSPACE}/REPOS" ]]; then
-                  export REPOSFILE="${WORKSPACE}/REPOS"
-                fi
+                  if [[ -e "${WORKSPACE}/REPOS" ]]; then
+                    export REPOSFILE="${WORKSPACE}/REPOS"
+                  fi
 
-                ./buildbot-scripts/jenkins_wrapper.sh
+                  ./buildbot-scripts/jenkins_wrapper.sh
 
-                # handled by the postbuild on failure script if there is an error
-                rm -rf "${WORKSPACE}/REPOS"
-              '''.replaceFirst("\n","").stripIndent()
+                  # handled by the postbuild on failure script if there is an error
+                  rm -rf "${WORKSPACE}/REPOS"
+                '''.replaceFirst("\n","").stripIndent()
+              }
             }
-          }
+          } // withCredentials([[
         } finally {
           withEnv(["WORKSPACE=${pwd()}"]) {
             shColor '''

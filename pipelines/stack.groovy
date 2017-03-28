@@ -47,11 +47,17 @@ try {
             ])
           }
 
-          withEnv(["WORKSPACE=${pwd()}", 'SKIP_DOCS=true']) {
-            wrap([$class: 'AnsiColorBuildWrapper']) {
-              sh './buildbot-scripts/jenkins_wrapper.sh'
+          withCredentials([[
+            $class: 'StringBinding',
+            credentialsId: 'cmirror-s3-bucket',
+            variable: 'CMIRROR_S3_BUCKET'
+          ]]) {
+            withEnv(["WORKSPACE=${pwd()}", 'SKIP_DOCS=true']) {
+              wrap([$class: 'AnsiColorBuildWrapper']) {
+                sh './buildbot-scripts/jenkins_wrapper.sh'
+              }
             }
-          }
+          } // withCredentials([[
         } finally {
           def cleanup = '''
             if hash lsof 2>/dev/null; then

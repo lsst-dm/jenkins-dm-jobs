@@ -72,6 +72,7 @@ def j = matrixJob('validate_drp') {
         'squash-api-user'
       )
       string('SQUASH_URL', 'squash-api-url')
+      string('CMIRROR_S3_BUCKET', 'cmirror-s3-bucket')
     }
   }
 
