@@ -34,37 +34,7 @@ try {
 
     platform['osx - 10.11'] = {
       retry(retries) {
-        node('osx-10.11') {
-          try {
-            def shName = 'scripts/run.sh'
-            def script = buildScript(PRODUCT, EUPS_TAG, "${WORKSPACE}/distrib")
-
-            shColor 'mkdir -p distrib scripts build'
-            writeFile(file: shName, text: script)
-
-            withCredentials([[
-              $class: 'StringBinding',
-              credentialsId: 'cmirror-s3-bucket',
-              variable: 'CMIRROR_S3_BUCKET'
-            ]]) {
-              shColor """
-                set -e
-
-                if [[ -n $CMIRROR_S3_BUCKET ]]; then
-                    export CONDA_CHANNELS="http://${CMIRROR_S3_BUCKET}/pkgs/free"
-                    export MINICONDA_BASE_URL="http://${CMIRROR_S3_BUCKET}/miniconda"
-                fi
-
-                chmod a+x "${shName}"
-                "${shName}"
-              """.replaceFirst("\n","").stripIndent()
-            }
-
-            s3Push('osx', '10.11')
-          } finally {
-            cleanup()
-          }
-        }
+        osxBuild('10.11')
       }
     }
 
@@ -138,6 +108,42 @@ def linuxBuild(String imageName, String version) {
       }
     } // ws(version)
   } // node('docker')
+}
+
+def osxBuild(String version) {
+  node("osx-${version}") {
+    ws(version) {
+      try {
+        def shName = 'scripts/run.sh'
+        def script = buildScript(PRODUCT, EUPS_TAG, "${WORKSPACE}/distrib")
+
+        shColor 'mkdir -p distrib scripts build'
+        writeFile(file: shName, text: script)
+
+        withCredentials([[
+          $class: 'StringBinding',
+          credentialsId: 'cmirror-s3-bucket',
+          variable: 'CMIRROR_S3_BUCKET'
+        ]]) {
+          shColor """
+            set -e
+
+            if [[ -n $CMIRROR_S3_BUCKET ]]; then
+                export CONDA_CHANNELS="http://${CMIRROR_S3_BUCKET}/pkgs/free"
+                export MINICONDA_BASE_URL="http://${CMIRROR_S3_BUCKET}/miniconda"
+            fi
+
+            chmod a+x "${shName}"
+            "${shName}"
+          """.replaceFirst("\n","").stripIndent()
+        }
+
+        s3Push('osx', version)
+      } finally {
+        cleanup()
+      }
+    } // ws(version)
+  } // node
 }
 
 def s3Push(String platform, String version) {
