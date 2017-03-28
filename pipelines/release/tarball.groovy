@@ -67,10 +67,7 @@ def linuxBuild(String imageName, String version) {
     ws(version) {
       try {
         def shName = 'scripts/run.sh'
-        def script = buildScript(PRODUCT, EUPS_TAG, '/distrib')
-
-        shColor 'mkdir -p distrib scripts build'
-        writeFile(file: shName, text: script)
+        prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
 
         docker.image(imageName).pull()
 
@@ -115,10 +112,7 @@ def osxBuild(String version) {
     ws(version) {
       try {
         def shName = 'scripts/run.sh'
-        def script = buildScript(PRODUCT, EUPS_TAG, "${WORKSPACE}/distrib")
-
-        shColor 'mkdir -p distrib scripts build'
-        writeFile(file: shName, text: script)
+        prepare(PRODUCT, EUPS_TAG, shName, "${WORKSPACE}/distrib")
 
         withCredentials([[
           $class: 'StringBinding',
@@ -144,6 +138,13 @@ def osxBuild(String version) {
       }
     } // ws(version)
   } // node
+}
+
+def prepare(String product, String eupsTag, String shName, String distribDir) {
+  def script = buildScript(product, eupsTag, distribDir)
+
+  shColor 'mkdir -p distrib scripts build'
+  writeFile(file: shName, text: script)
 }
 
 def s3Push(String platform, String version) {
