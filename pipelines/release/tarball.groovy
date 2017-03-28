@@ -80,11 +80,6 @@ def linuxBuild(String imageName, String version) {
             sh '''
               set -e
 
-              if [[ -n $CMIRROR_S3_BUCKET ]]; then
-                  export CONDA_CHANNELS="http://${CMIRROR_S3_BUCKET}/pkgs/free"
-                  export MINICONDA_BASE_URL="http://${CMIRROR_S3_BUCKET}/miniconda"
-              fi
-
               chmod a+x "$RUN"
               docker run -t \
                 -v "$(pwd)/scripts:/scripts" \
@@ -121,11 +116,6 @@ def osxBuild(String version) {
         ]]) {
           shColor """
             set -e
-
-            if [[ -n $CMIRROR_S3_BUCKET ]]; then
-                export CONDA_CHANNELS="http://${CMIRROR_S3_BUCKET}/pkgs/free"
-                export MINICONDA_BASE_URL="http://${CMIRROR_S3_BUCKET}/miniconda"
-            fi
 
             chmod a+x "${shName}"
             "${shName}"
@@ -207,6 +197,11 @@ def shColor(script) {
 def buildScript(String products, String tag, String eupsPkgroot) {
   """
     set -e
+
+    if [[ -n \$CMIRROR_S3_BUCKET ]]; then
+        export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
+        export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
+    fi
 
     set -o verbose
     if grep -q -i "CentOS release 6" /etc/redhat-release; then
