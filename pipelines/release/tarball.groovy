@@ -67,7 +67,8 @@ def linuxTarballs(String imageName, String platform) {
     dir(platform) {
       docker.image(imageName).pull()
       linuxBuild(imageName)
-      linuxDemo(imageName)
+      // XXX demo isn't yet working
+      // linuxDemo(imageName)
       s3Push('redhat', platform)
     }
   }
@@ -230,6 +231,7 @@ def cleanupDocker(String imageName) {
         "$IMAGE" \
         rm -rf /build/.lockDir
     '''.replaceFirst("\n","").stripIndent()
+    /*
     shColor '''
       docker run -t \
         -v "$(pwd)/demo:/demo" \
@@ -237,6 +239,7 @@ def cleanupDocker(String imageName) {
         "$IMAGE" \
         rm -rf /demo
     '''.replaceFirst("\n","").stripIndent()
+    */
   }
 }
 
