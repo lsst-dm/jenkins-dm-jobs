@@ -62,18 +62,18 @@ try {
   }
 }
 
-def linuxTarballs(String imageName, String version) {
+def linuxTarballs(String imageName, String platform) {
   node('docker') {
-    dir(version) {
+    dir(platform) {
       docker.image(imageName).pull()
-      linuxBuild(imageName, version)
-      linuxDemo(imageName, version)
-      s3Push('linux', version)
+      linuxBuild(imageName)
+      linuxDemo(imageName)
+      s3Push('redhat', platform)
     }
   }
 }
 
-def linuxBuild(String imageName, String version) {
+def linuxBuild(String imageName) {
   try {
     def shName = 'scripts/run.sh'
     prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
@@ -104,7 +104,7 @@ def linuxBuild(String imageName, String version) {
   }
 }
 
-def linuxDemo(String imageName, String version) {
+def linuxDemo(String imageName) {
   try {
     def shName = 'scripts/demo.sh'
     prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
@@ -143,9 +143,9 @@ def linuxDemo(String imageName, String version) {
   }
 }
 
-def osxBuild(String version) {
-  node("osx-${version}") {
-    dir(version) {
+def osxBuild(String platform) {
+  node("osx-${platform}") {
+    dir(platform) {
       try {
         def shName = 'scripts/run.sh'
         prepare(PRODUCT, EUPS_TAG, shName, "./distrib")
@@ -163,11 +163,11 @@ def osxBuild(String version) {
           """.replaceFirst("\n","").stripIndent()
         }
 
-        s3Push('osx', version)
+        s3Push('osx', platform)
       } finally {
         cleanup()
       }
-    } // dir(version)
+    } // dir(platform)
   } // node
 }
 
@@ -185,7 +185,7 @@ def prepareDemo(String product, String eupsTag, String shName, String distribDir
   writeFile(file: shName, text: script)
 }
 
-def s3Push(String platform, String version) {
+def s3Push(String osfamily, String platform) {
   shColor '''
     set -e
     # do not assume virtualenv is present
@@ -209,7 +209,7 @@ def s3Push(String platform, String version) {
     shColor """
       set -e
       . venv/bin/activate
-      aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${platform}/${version}/
+      aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${osfamily}/${platform}/
     """.replaceFirst("\n","").stripIndent()
   }
 }
