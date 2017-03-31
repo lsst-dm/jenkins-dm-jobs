@@ -22,8 +22,7 @@ try {
       ])
     }
 
-    build('1_build-image.sh -CD')
-    build('2_update-dev-image.sh')
+    build('release_images.sh')
   }
 } catch (e) {
   // If there was an exception thrown, the build failed
@@ -50,7 +49,7 @@ try {
 def build(String script) {
   stage(script) {
     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-sqreadmin') {
-      dir('qserv/admin/tools/docker') {
+      dir('qserv/admin/tools/docker/lsst-dm-ci') {
         withEnv(['DOCKER_REPO=qserv/qserv']) {
           wrap([$class: 'AnsiColorBuildWrapper']) {
             sh "./$script"
