@@ -68,13 +68,27 @@ try {
 
 def linuxTarballs(String imageName, String platform) {
   node('docker') {
-    dir(platform) {
-      docker.image(imageName).pull()
-      linuxBuild(imageName)
-      // XXX demo isn't yet working
-      // linuxDemo(imageName)
-      s3Push('redhat', platform)
-    }
+    // these "credentials" aren't secrets -- just a convient way of setting
+    // globals for the instance. Thus, they don't need to be tightly scoped to a
+    // single sh step
+    withCredentials([[
+      $class: 'StringBinding',
+      credentialsId: 'cmirror-s3-bucket',
+      variable: 'CMIRROR_S3_BUCKET'
+    ],
+    [
+      $class: 'StringBinding',
+      credentialsId: 'eups-push-bucket',
+      variable: 'EUPS_S3_BUCKET'
+    ]]) {
+      dir(platform) {
+        docker.image(imageName).pull()
+        linuxBuild(imageName)
+        // XXX demo isn't yet working
+        // linuxDemo(imageName)
+        s3Push('redhat', platform)
+      }
+    } // withCredentials([[
   }
 }
 
@@ -83,26 +97,21 @@ def linuxBuild(String imageName) {
     def shName = 'scripts/run.sh'
     prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
 
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'cmirror-s3-bucket',
-      variable: 'CMIRROR_S3_BUCKET'
-    ]]) {
-      withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
-        sh '''
-          set -e
+    withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
+      sh '''
+        set -e
 
-          chmod a+x "$RUN"
-          docker run -t \
-            -v "$(pwd)/scripts:/scripts" \
-            -v "$(pwd)/distrib:/distrib" \
-            -v "$(pwd)/build:/build" \
-            -w /build \
-            -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
-            "$IMAGE" \
-            sh -c "/${RUN}"
-        '''.replaceFirst("\n","").stripIndent()
-      }
+        chmod a+x "$RUN"
+        docker run -t \
+          -v "$(pwd)/scripts:/scripts" \
+          -v "$(pwd)/distrib:/distrib" \
+          -v "$(pwd)/build:/build" \
+          -w /build \
+          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
+          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
+          "$IMAGE" \
+          sh -c "/${RUN}"
+      '''.replaceFirst("\n","").stripIndent()
     }
   } finally {
     cleanupDocker(imageName)
@@ -121,27 +130,22 @@ def linuxDemo(String imageName) {
       ])
     }
 
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'cmirror-s3-bucket',
-      variable: 'CMIRROR_S3_BUCKET'
-    ]]) {
-      withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
-        sh '''
-          set -e
+    withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
+      sh '''
+        set -e
 
-          chmod a+x "$RUN"
-          docker run -t \
-            -v "$(pwd)/scripts:/scripts" \
-            -v "$(pwd)/distrib:/distrib" \
-            -v "$(pwd)/demo:/demo" \
-            -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
-            -w /demo \
-            -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
-            "$IMAGE" \
-            sh -c "/${RUN}"
-        '''.replaceFirst("\n","").stripIndent()
-      }
+        chmod a+x "$RUN"
+        docker run -t \
+          -v "$(pwd)/scripts:/scripts" \
+          -v "$(pwd)/distrib:/distrib" \
+          -v "$(pwd)/demo:/demo" \
+          -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
+          -w /demo \
+          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
+          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
+          "$IMAGE" \
+          sh -c "/${RUN}"
+      '''.replaceFirst("\n","").stripIndent()
     }
   } finally {
     cleanupDocker(imageName)
@@ -150,29 +154,37 @@ def linuxDemo(String imageName) {
 
 def osxBuild(String platform) {
   node("osx-${platform}") {
-    dir(platform) {
-      try {
-        def shName = 'scripts/run.sh'
-        prepare(PRODUCT, EUPS_TAG, shName, "./distrib")
+    // these "credentials" aren't secrets -- just a convient way of setting
+    // globals for the instance. Thus, they don't need to be tightly scoped to a
+    // single sh step
+    withCredentials([[
+      $class: 'StringBinding',
+      credentialsId: 'cmirror-s3-bucket',
+      variable: 'CMIRROR_S3_BUCKET'
+    ],
+    [
+      $class: 'StringBinding',
+      credentialsId: 'eups-push-bucket',
+      variable: 'EUPS_S3_BUCKET'
+    ]]) {
+      dir(platform) {
+        try {
+          def shName = 'scripts/run.sh'
+          prepare(PRODUCT, EUPS_TAG, shName, "./distrib")
 
-        withCredentials([[
-          $class: 'StringBinding',
-          credentialsId: 'cmirror-s3-bucket',
-          variable: 'CMIRROR_S3_BUCKET'
-        ]]) {
           shColor """
             set -e
 
             chmod a+x "${shName}"
             "${shName}"
           """.replaceFirst("\n","").stripIndent()
-        }
 
-        s3Push('osx', platform)
-      } finally {
-        cleanup()
-      }
-    } // dir(platform)
+          s3Push('osx', platform)
+        } finally {
+          cleanup()
+        }
+      } // dir(platform)
+    } // withCredentials([[
   } // node
 }
 
@@ -205,11 +217,6 @@ def s3Push(String osfamily, String platform) {
     credentialsId: 'aws-eups-push',
     usernameVariable: 'AWS_ACCESS_KEY_ID',
     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-  ],
-  [
-    $class: 'StringBinding',
-    credentialsId: 'eups-push-bucket',
-    variable: 'EUPS_S3_BUCKET'
   ]]) {
     shColor """
       set -e
@@ -254,24 +261,9 @@ def shColor(script) {
 }
 
 @NonCPS
-def buildScript(String products, String tag, String eupsPkgroot) {
+def String buildScript(String products, String tag, String eupsPkgroot) {
+  scriptPreamble() +
   """
-    set -e
-
-    if [[ -n \$CMIRROR_S3_BUCKET ]]; then
-        export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
-        export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
-    fi
-
-    set -o verbose
-    if grep -q -i "CentOS release 6" /etc/redhat-release; then
-      . /opt/rh/devtoolset-3/enable
-    fi
-    set +o verbose
-
-    # isolate eups cache files
-    export EUPS_USERDATA="$PWD/.eups"
-
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
 
@@ -286,24 +278,9 @@ def buildScript(String products, String tag, String eupsPkgroot) {
 }
 
 @NonCPS
-def demoScript(String products, String tag, String eupsPkgroot) {
+def String demoScript(String products, String tag, String eupsPkgroot) {
+  scriptPreamble() +
   """
-    set -e
-
-    if [[ -n \$CMIRROR_S3_BUCKET ]]; then
-        export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
-        export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
-    fi
-
-    set -o verbose
-    if grep -q -i "CentOS release 6" /etc/redhat-release; then
-      . /opt/rh/devtoolset-3/enable
-    fi
-    set +o verbose
-
-    # isolate eups cache files
-    export EUPS_USERDATA="\${PWD}/.eups"
-
     export EUPS_PKGROOT="${eupsPkgroot}"
 
     curl -sSL ${newinstall_url} | bash -s -- -cb
@@ -315,5 +292,30 @@ def demoScript(String products, String tag, String eupsPkgroot) {
     eups distrib install ${products} -t "${tag}" -vvv
 
     /buildbot-scripts/runManifestDemo.sh --tag "${tag}" --small
+  """.replaceFirst("\n","").stripIndent()
+}
+
+@NonCPS
+def String scriptPreamble() {
+  """
+    set -e
+
+    if [[ -n \$CMIRROR_S3_BUCKET ]]; then
+        export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
+        export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
+    fi
+
+    if [[ -n \$EUPS_S3_BUCKET ]]; then
+        export EUPS_PKGROOT_BASE_URL="https://\${EUPS_S3_BUCKET}/stack"
+    fi
+
+    set -o verbose
+    if grep -q -i "CentOS release 6" /etc/redhat-release; then
+      . /opt/rh/devtoolset-3/enable
+    fi
+    set +o verbose
+
+    # isolate eups cache files
+    export EUPS_USERDATA="\${PWD}/.eups"
   """.replaceFirst("\n","").stripIndent()
 }
