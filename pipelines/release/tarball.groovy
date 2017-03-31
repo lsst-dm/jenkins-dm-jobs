@@ -269,6 +269,9 @@ def buildScript(String products, String tag, String eupsPkgroot) {
     fi
     set +o verbose
 
+    # isolate eups cache files
+    export EUPS_USERDATA="$PWD/.eups"
+
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
 
@@ -297,6 +300,9 @@ def demoScript(String products, String tag, String eupsPkgroot) {
       . /opt/rh/devtoolset-3/enable
     fi
     set +o verbose
+
+    # isolate eups cache files
+    export EUPS_USERDATA="\${PWD}/.eups"
 
     export EUPS_PKGROOT="${eupsPkgroot}"
 
