@@ -1,3 +1,5 @@
+import groovy.transform.Field
+
 def notify = null
 node {
   dir('jenkins-dm-jobs') {
@@ -10,6 +12,8 @@ node {
     notify = load 'pipelines/lib/notify.groovy'
   }
 }
+
+@Field String newinstall_url = 'https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh'
 
 try {
   notify.started()
@@ -265,8 +269,9 @@ def buildScript(String products, String tag, String eupsPkgroot) {
     fi
     set +o verbose
 
-    curl -sSL https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh | bash -s -- -cb
+    curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
+
     eups distrib install ${products} -t "${tag}" -vvv
 
     export EUPS_PKGROOT="${eupsPkgroot}"
@@ -295,7 +300,7 @@ def demoScript(String products, String tag, String eupsPkgroot) {
 
     export EUPS_PKGROOT="${eupsPkgroot}"
 
-    curl -sSL https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh | bash -s -- -cb
+    curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
 
     # XXX the lsst product is declaring EUPS_PKGROOT
