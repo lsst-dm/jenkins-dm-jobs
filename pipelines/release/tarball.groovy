@@ -98,7 +98,7 @@ def void linuxBuild(String imageName) {
     prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
 
     withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
-      sh '''
+      shColor '''
         set -e
 
         chmod a+x "$RUN"
@@ -111,7 +111,7 @@ def void linuxBuild(String imageName) {
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
           "$IMAGE" \
           sh -c "/${RUN}"
-      '''.replaceFirst("\n","").stripIndent()
+      '''
     }
   } finally {
     cleanupDocker(imageName)
@@ -131,7 +131,7 @@ def void linuxDemo(String imageName) {
     }
 
     withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
-      sh '''
+      shColor '''
         set -e
 
         chmod a+x "$RUN"
@@ -145,7 +145,7 @@ def void linuxDemo(String imageName) {
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
           "$IMAGE" \
           sh -c "/${RUN}"
-      '''.replaceFirst("\n","").stripIndent()
+      '''
     }
   } finally {
     cleanupDocker(imageName)
@@ -177,7 +177,7 @@ def void osxBuild(String platform) {
 
             chmod a+x "${shName}"
             "${shName}"
-          """.replaceFirst("\n","").stripIndent()
+          """
 
           s3Push('osx', platform)
         } finally {
@@ -210,7 +210,7 @@ def void s3Push(String osfamily, String platform) {
     virtualenv venv
     . venv/bin/activate
     pip install awscli
-  '''.replaceFirst("\n","").stripIndent()
+  '''
 
   withCredentials([[
     $class: 'UsernamePasswordMultiBinding',
@@ -222,7 +222,7 @@ def void s3Push(String osfamily, String platform) {
       set -e
       . venv/bin/activate
       aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${osfamily}/${platform}/
-    """.replaceFirst("\n","").stripIndent()
+    """
   }
 }
 
@@ -241,7 +241,7 @@ def void cleanupDocker(String imageName) {
         -w /build \
         "$IMAGE" \
         rm -rf /build/.lockDir
-    '''.replaceFirst("\n","").stripIndent()
+    '''
     /*
     shColor '''
       docker run -t \
@@ -249,21 +249,21 @@ def void cleanupDocker(String imageName) {
         -w /build \
         "$IMAGE" \
         rm -rf /demo
-    '''.replaceFirst("\n","").stripIndent()
+    '''
     */
   }
 }
 
 def void shColor(script) {
   wrap([$class: 'AnsiColorBuildWrapper']) {
-    sh script
+    sh dedent(script)
   }
 }
 
 @NonCPS
 def String buildScript(String products, String tag, String eupsPkgroot) {
   scriptPreamble() +
-  """
+  dedent("""
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
 
@@ -274,13 +274,13 @@ def String buildScript(String products, String tag, String eupsPkgroot) {
       eups distrib create --server-dir "\$EUPS_PKGROOT" -d tarball "\$product" -t "${tag}" -vvv
     done
     eups distrib declare --server-dir "\$EUPS_PKGROOT" -t "${tag}" -vvv
-  """.replaceFirst("\n","").stripIndent()
+  """)
 }
 
 @NonCPS
 def String demoScript(String products, String tag, String eupsPkgroot) {
   scriptPreamble() +
-  """
+  dedent("""
     export EUPS_PKGROOT="${eupsPkgroot}"
 
     curl -sSL ${newinstall_url} | bash -s -- -cb
@@ -292,12 +292,12 @@ def String demoScript(String products, String tag, String eupsPkgroot) {
     eups distrib install ${products} -t "${tag}" -vvv
 
     /buildbot-scripts/runManifestDemo.sh --tag "${tag}" --small
-  """.replaceFirst("\n","").stripIndent()
+  """)
 }
 
 @NonCPS
 def String scriptPreamble() {
-  """
+  dedent("""
     set -e
 
     if [[ -n \$CMIRROR_S3_BUCKET ]]; then
@@ -317,5 +317,13 @@ def String scriptPreamble() {
 
     # isolate eups cache files
     export EUPS_USERDATA="\${PWD}/.eups"
-  """.replaceFirst("\n","").stripIndent()
+  """)
+}
+
+@NonCPS
+def String dedent(String text) {
+  if (text == null) {
+    return null
+  }
+  text.replaceFirst("\n","").stripIndent()
 }
