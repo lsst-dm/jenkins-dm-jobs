@@ -66,7 +66,7 @@ try {
   }
 }
 
-def linuxTarballs(String imageName, String platform) {
+def void linuxTarballs(String imageName, String platform) {
   node('docker') {
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
@@ -92,7 +92,7 @@ def linuxTarballs(String imageName, String platform) {
   }
 }
 
-def linuxBuild(String imageName) {
+def void linuxBuild(String imageName) {
   try {
     def shName = 'scripts/run.sh'
     prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
@@ -118,7 +118,7 @@ def linuxBuild(String imageName) {
   }
 }
 
-def linuxDemo(String imageName) {
+def void linuxDemo(String imageName) {
   try {
     def shName = 'scripts/demo.sh'
     prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
@@ -152,7 +152,7 @@ def linuxDemo(String imageName) {
   }
 }
 
-def osxBuild(String platform) {
+def void osxBuild(String platform) {
   node("osx-${platform}") {
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
@@ -188,21 +188,21 @@ def osxBuild(String platform) {
   } // node
 }
 
-def prepare(String product, String eupsTag, String shName, String distribDir) {
+def void prepare(String product, String eupsTag, String shName, String distribDir) {
   def script = buildScript(product, eupsTag, distribDir)
 
   shColor 'mkdir -p distrib scripts build'
   writeFile(file: shName, text: script)
 }
 
-def prepareDemo(String product, String eupsTag, String shName, String distribDir) {
+def void prepareDemo(String product, String eupsTag, String shName, String distribDir) {
   def script = demoScript(product, eupsTag, distribDir)
 
   shColor 'mkdir -p demo'
   writeFile(file: shName, text: script)
 }
 
-def s3Push(String osfamily, String platform) {
+def void s3Push(String osfamily, String platform) {
   shColor '''
     set -e
     # do not assume virtualenv is present
@@ -226,14 +226,14 @@ def s3Push(String osfamily, String platform) {
   }
 }
 
-def cleanup() {
+def void cleanup() {
   shColor 'rm -rf "./build/.lockDir"'
 }
 
 // because the uid in the docker container probably won't match the
 // jenkins-slave user, the bind volume mounts end up with file ownerships that
 // prevent them from being deleted.
-def cleanupDocker(String imageName) {
+def void cleanupDocker(String imageName) {
   withEnv(["IMAGE=${imageName}"]) {
     shColor '''
       docker run -t \
@@ -254,7 +254,7 @@ def cleanupDocker(String imageName) {
   }
 }
 
-def shColor(script) {
+def void shColor(script) {
   wrap([$class: 'AnsiColorBuildWrapper']) {
     sh script
   }
