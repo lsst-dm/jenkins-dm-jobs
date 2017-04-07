@@ -40,7 +40,7 @@ try {
 
     platform['osx - 10.11'] = {
       retry(retries) {
-        osxBuild('10.11', 'clang-800.0.42.1')
+        osxBuild('10.11', '10.9', 'clang-800.0.42.1')
       }
     }
 
@@ -97,7 +97,8 @@ def void linuxTarballs(String imageName, String platform, String compiler) {
 def void linuxBuild(String imageName, String compiler) {
   try {
     def shName = 'scripts/run.sh'
-    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler) // path inside build container
+    // path inside build container
+    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null)
 
     withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
       shColor '''
@@ -123,7 +124,8 @@ def void linuxBuild(String imageName, String compiler) {
 def void linuxDemo(String imageName, String compiler) {
   try {
     def shName = 'scripts/demo.sh'
-    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler) // path inside build container
+    // path inside build container
+    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null)
 
     dir('buildbot-scripts') {
       git([
@@ -154,7 +156,11 @@ def void linuxDemo(String imageName, String compiler) {
   }
 }
 
-def void osxBuild(String platform, String compiler) {
+def void osxBuild(
+  String platform,
+  String macosx_deployment_target,
+  String compiler
+) {
   node("osx-${platform}") {
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
@@ -172,7 +178,7 @@ def void osxBuild(String platform, String compiler) {
       dir(platform) {
         try {
           def shName = 'scripts/run.sh'
-          prepare(PRODUCT, EUPS_TAG, shName, "./distrib", compiler)
+          prepare(PRODUCT, EUPS_TAG, shName, "./distrib", compiler, macosx_deployment_target)
 
           shColor """
             set -e
@@ -181,7 +187,7 @@ def void osxBuild(String platform, String compiler) {
             "${shName}"
           """
 
-          s3Push('osx', platform, compiler)
+          s3Push('osx', macosx_deployment_target, compiler)
         } finally {
           cleanup()
         }
@@ -190,8 +196,21 @@ def void osxBuild(String platform, String compiler) {
   } // node
 }
 
-def void prepare(String product, String eupsTag, String shName, String distribDir, String compiler) {
-  def script = buildScript(product, eupsTag, distribDir, compiler)
+def void prepare(
+  String product,
+  String eupsTag,
+  String shName,
+  String distribDir,
+  String compiler,
+  String macosx_deployment_target
+) {
+  def script = buildScript(
+    product,
+    eupsTag,
+    distribDir,
+    compiler,
+    macosx_deployment_target
+  )
 
   shColor 'mkdir -p distrib scripts build'
   writeFile(file: shName, text: script)
@@ -267,8 +286,14 @@ def void shColor(script) {
 // Consider moving all of this logic into an external driver script that is
 // called with parameters.
 @NonCPS
-def String buildScript(String products, String tag, String eupsPkgroot, String compiler) {
-  scriptPreamble(compiler) +
+def String buildScript(
+  String products,
+  String tag,
+  String eupsPkgroot,
+  String compiler,
+  String macosx_deployment_target
+) {
+  scriptPreamble(compiler, macosx_deployment_target) +
   dedent("""
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
@@ -284,8 +309,14 @@ def String buildScript(String products, String tag, String eupsPkgroot, String c
 }
 
 @NonCPS
-def String demoScript(String products, String tag, String eupsPkgroot, String compiler) {
-  scriptPreamble(compiler) +
+def String demoScript(
+  String products,
+  String tag,
+  String eupsPkgroot,
+  String compiler,
+  String macosx_deployment_target
+) {
+  scriptPreamble(compiler, macosx_deployment_target) +
   dedent("""
     export EUPS_PKGROOT="${eupsPkgroot}"
 
@@ -302,7 +333,10 @@ def String demoScript(String products, String tag, String eupsPkgroot, String co
 }
 
 @NonCPS
-def String scriptPreamble(String compiler) {
+def String scriptPreamble(
+  String compiler,
+  String macosx_deployment_target='10.9'
+) {
   dedent("""
     set -e
 
@@ -317,6 +351,10 @@ def String scriptPreamble(String compiler) {
 
     # isolate eups cache files
     export EUPS_USERDATA="\${PWD}/.eups"
+
+    if [[ \$(uname -s) == Darwin* ]]; then
+      export MACOSX_DEPLOYMENT_TARGET="${macosx_deployment_target}"
+    fi
     """
     + scriptCompiler(compiler)
   )
