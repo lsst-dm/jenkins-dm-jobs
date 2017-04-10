@@ -21,30 +21,37 @@ try {
   notify.started()
   def retries = 1
 
-  stage('build tarballs') {
-    def platform = [:]
+  def pyenvs = [
+    new MinicondaEnv('2', '4.2.12', '7c8e67'),
+    new MinicondaEnv('3', '4.2.12', '7c8e67'),
+  ]
 
-    platform['linux - el6'] = {
-      retry(retries) {
-        def imageName = 'lsstsqre/centos:6-newinstall'
-        linuxTarballs(imageName, 'el6', 'devtoolset-3')
+  for (py in pyenvs) {
+    stage("build ${py.slug()} tarballs") {
+      def platform = [:]
+
+      platform['el6'] = {
+        retry(retries) {
+          def imageName = 'lsstsqre/centos:6-newinstall'
+          linuxTarballs(imageName, 'el6', 'devtoolset-3', py)
+        }
       }
-    }
 
-    platform['linux - el7'] = {
-      retry(retries) {
-        def imageName = 'lsstsqre/centos:7-newinstall'
-        linuxTarballs(imageName, 'el7', 'gcc-system')
+      platform['el7'] = {
+        retry(retries) {
+          def imageName = 'lsstsqre/centos:7-newinstall'
+          linuxTarballs(imageName, 'el7', 'gcc-system', py)
+        }
       }
-    }
 
-    platform['osx - 10.11'] = {
-      retry(retries) {
-        osxBuild('10.11', '10.9', 'clang-800.0.42.1')
+      platform['osx-10.11'] = {
+        retry(retries) {
+          osxBuild('10.11', '10.9', 'clang-800.0.42.1', py)
+        }
       }
-    }
 
-    parallel platform
+      parallel platform
+    }
   }
 } catch (e) {
   // If there was an exception thrown, the build failed
@@ -68,7 +75,15 @@ try {
   }
 }
 
-def void linuxTarballs(String imageName, String platform, String compiler) {
+def void linuxTarballs(
+  String imageName,
+  String platform,
+  String compiler,
+  MinicondaEnv menv
+) {
+  def String slug = menv.slug()
+  def envId = joinPath('redhat', platform, compiler, slug)
+
   node('docker') {
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
@@ -83,22 +98,23 @@ def void linuxTarballs(String imageName, String platform, String compiler) {
       credentialsId: 'eups-push-bucket',
       variable: 'EUPS_S3_BUCKET'
     ]]) {
-      dir(platform) {
+      dir(envId) {
         docker.image(imageName).pull()
-        linuxBuild(imageName, compiler)
+        linuxBuild(imageName, compiler, menv)
         // XXX demo isn't yet working
         // linuxDemo(imageName)
-        s3Push('redhat', platform, compiler)
+
+        s3Push(envId)
       }
     } // withCredentials([[
   }
 }
 
-def void linuxBuild(String imageName, String compiler) {
+def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
   try {
     def shName = 'scripts/run.sh'
     // path inside build container
-    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null)
+    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
 
     withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
       shColor '''
@@ -125,7 +141,7 @@ def void linuxDemo(String imageName, String compiler) {
   try {
     def shName = 'scripts/demo.sh'
     // path inside build container
-    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null)
+    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
 
     dir('buildbot-scripts') {
       git([
@@ -159,8 +175,12 @@ def void linuxDemo(String imageName, String compiler) {
 def void osxBuild(
   String platform,
   String macosx_deployment_target,
-  String compiler
+  String compiler,
+  MinicondaEnv menv
 ) {
+  def String slug = menv.slug()
+  def envId = joinPath('osx', macosx_deployment_target, compiler, slug)
+
   node("osx-${platform}") {
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
@@ -175,10 +195,18 @@ def void osxBuild(
       credentialsId: 'eups-push-bucket',
       variable: 'EUPS_S3_BUCKET'
     ]]) {
-      dir(platform) {
+      dir(envId) {
         try {
           def shName = 'scripts/run.sh'
-          prepare(PRODUCT, EUPS_TAG, shName, "./distrib", compiler, macosx_deployment_target)
+          prepare(
+            PRODUCT,
+            EUPS_TAG,
+            shName,
+            "./distrib",
+            compiler,
+            macosx_deployment_target,
+            menv
+          )
 
           shColor """
             set -e
@@ -187,7 +215,7 @@ def void osxBuild(
             "${shName}"
           """
 
-          s3Push('osx', macosx_deployment_target, compiler)
+          s3Push(envId)
         } finally {
           cleanup()
         }
@@ -202,14 +230,16 @@ def void prepare(
   String shName,
   String distribDir,
   String compiler,
-  String macosx_deployment_target
+  String macosx_deployment_target,
+  MinicondaEnv menv
 ) {
   def script = buildScript(
     product,
     eupsTag,
     distribDir,
     compiler,
-    macosx_deployment_target
+    macosx_deployment_target,
+    menv
   )
 
   shColor 'mkdir -p distrib scripts build'
@@ -223,7 +253,9 @@ def void prepareDemo(String product, String eupsTag, String shName, String distr
   writeFile(file: shName, text: script)
 }
 
-def void s3Push(String osfamily, String platform, String compiler) {
+def void s3Push(String ... parts) {
+  def path = joinPath(parts)
+
   shColor '''
     set -e
     # do not assume virtualenv is present
@@ -242,7 +274,7 @@ def void s3Push(String osfamily, String platform, String compiler) {
     shColor """
       set -e
       . venv/bin/activate
-      aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${osfamily}/${platform}/${compiler}
+      aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${path}
     """
   }
 }
@@ -291,9 +323,10 @@ def String buildScript(
   String tag,
   String eupsPkgroot,
   String compiler,
-  String macosx_deployment_target
+  String macosx_deployment_target,
+  MinicondaEnv menv
 ) {
-  scriptPreamble(compiler, macosx_deployment_target) +
+  scriptPreamble(compiler, macosx_deployment_target, menv) +
   dedent("""
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
@@ -314,9 +347,10 @@ def String demoScript(
   String tag,
   String eupsPkgroot,
   String compiler,
-  String macosx_deployment_target
+  String macosx_deployment_target,
+  MinicondaEnv menv
 ) {
-  scriptPreamble(compiler, macosx_deployment_target) +
+  scriptPreamble(compiler, macosx_deployment_target, menv) +
   dedent("""
     export EUPS_PKGROOT="${eupsPkgroot}"
 
@@ -335,7 +369,8 @@ def String demoScript(
 @NonCPS
 def String scriptPreamble(
   String compiler,
-  String macosx_deployment_target='10.9'
+  String macosx_deployment_target='10.9',
+  MinicondaEnv menv
 ) {
   dedent("""
     set -e
@@ -355,6 +390,10 @@ def String scriptPreamble(
     if [[ \$(uname -s) == Darwin* ]]; then
       export MACOSX_DEPLOYMENT_TARGET="${macosx_deployment_target}"
     fi
+
+    export LSST_PYTHON_VERSION="${menv.pythonVersion}"
+    export MINICONDA_VERSION="${menv.minicondaVersion}"
+    export LSSTSW_REF="${menv.lsstswRef}"
     """
     + scriptCompiler(compiler)
   )
@@ -429,4 +468,44 @@ def String scriptCompiler(String compiler) {
   }
 
   dedent(setup)
+}
+
+class MinicondaEnv implements Serializable {
+  String pythonVersion
+  String minicondaVersion
+  String lsstswRef
+
+  // unfortunately, a constructor is required under the security sandbox
+  // See: https://issues.jenkins-ci.org/browse/JENKINS-34741
+  MinicondaEnv(String p, String m, String l) {
+    this.pythonVersion = p
+    this.minicondaVersion = m
+    this.lsstswRef = l
+  }
+
+  String slug() {
+    "miniconda${pythonVersion}-${minicondaVersion}-${lsstswRef}"
+  }
+}
+
+// The groovy String#join method is not working under the security sandbox
+// https://issues.jenkins-ci.org/browse/JENKINS-43484
+@NonCPS
+def String joinPath(String ... parts) {
+  String text = null
+
+  def n = parts.size()
+  parts.eachWithIndex { x, i ->
+    if (text == null) {
+      text = x
+    } else {
+      text += x
+    }
+
+    if (i < (n - 1)) {
+      text += '/'
+    }
+  }
+
+  return text
 }
