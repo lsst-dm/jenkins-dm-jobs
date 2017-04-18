@@ -141,7 +141,7 @@ def void linuxDemo(String imageName, String compiler) {
   try {
     def shName = 'scripts/demo.sh'
     // path inside build container
-    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
+    prepareDemo(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
 
     dir('buildbot-scripts') {
       git([
@@ -158,7 +158,6 @@ def void linuxDemo(String imageName, String compiler) {
         docker run -t \
           -v "$(pwd)/scripts:/scripts" \
           -v "$(pwd)/distrib:/distrib" \
-          -v "$(pwd)/demo:/demo" \
           -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
           -w /demo \
           -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
@@ -357,7 +356,7 @@ def String demoScript(
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
 
-    # XXX the lsst product is declaring EUPS_PKGROOT
+    # override newinstall.sh configured EUPS_PKGROOT
     export EUPS_PKGROOT="${eupsPkgroot}"
 
     eups distrib install ${products} -t "${tag}" -vvv
