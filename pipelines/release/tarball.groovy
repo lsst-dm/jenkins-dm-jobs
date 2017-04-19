@@ -105,8 +105,7 @@ def void linuxTarballs(
       dir(envId) {
         docker.image(imageName).pull()
         linuxBuild(imageName, compiler, menv)
-        // XXX demo isn't yet working
-        // linuxDemo(imageName)
+        linuxDemo(imageName, compiler, menv)
 
         s3Push(envId)
       }
@@ -117,10 +116,10 @@ def void linuxTarballs(
 def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
   try {
     def shName = 'scripts/run.sh'
+    def localImageName = "${imageName}-local"
+
     // path inside build container
     prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
-
-    def localImageName = "${imageName}-local"
 
     wrapContainer(imageName, localImageName)
 
@@ -146,9 +145,11 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
   }
 }
 
-def void linuxDemo(String imageName, String compiler) {
+def void linuxDemo(String imageName, String compiler, MinicondaEnv menv) {
   try {
     def shName = 'scripts/demo.sh'
+    def localImageName = "${imageName}-local"
+
     // path inside build container
     prepareDemo(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
 
@@ -159,7 +160,13 @@ def void linuxDemo(String imageName, String compiler) {
       ])
     }
 
-    withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
+    wrapContainer(imageName, localImageName)
+
+    withEnv([
+      "RUN=${shName}",
+      "IMAGE=${localImageName}",
+      "RUN_DEMO=${params.RUN_DEMO}",
+    ]) {
       shColor '''
         set -e
 
@@ -256,10 +263,24 @@ def void prepare(
   writeFile(file: shName, text: script)
 }
 
-def void prepareDemo(String product, String eupsTag, String shName, String distribDir, String compiler) {
-  def script = demoScript(product, eupsTag, distribDir)
+def void prepareDemo(
+  String product,
+  String eupsTag,
+  String shName,
+  String distribDir,
+  String compiler,
+  String macosx_deployment_target,
+  MinicondaEnv menv
+) {
+  def script = demoScript(
+    product,
+    eupsTag,
+    distribDir,
+    compiler,
+    macosx_deployment_target,
+    menv
+  )
 
-  shColor 'mkdir -p demo'
   writeFile(file: shName, text: script)
 }
 
@@ -348,7 +369,9 @@ def String demoScript(
 
     eups distrib install ${products} -t "${tag}" -vvv
 
-    /buildbot-scripts/runManifestDemo.sh --tag "${tag}" --small
+    if [[ $RUN_DEMO == true ]]; then
+      /buildbot-scripts/runManifestDemo.sh --tag "${tag}" --small
+    fi
   """)
 }
 
@@ -513,6 +536,9 @@ def String wrapContainer(String imageName, String tag) {
     USER    root
     RUN     groupadd -g \$GID \$GROUP
     RUN     useradd -d \$HOME -g \$GROUP -u \$UID \$USER
+
+    RUN     mkdir /demo
+    RUN     chown \$USER:\$GROUP /demo
 
     USER    \$USER
     WORKDIR \$HOME

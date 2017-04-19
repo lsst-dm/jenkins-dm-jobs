@@ -7,6 +7,7 @@ pipelineJob('release/tarball') {
   parameters {
     stringParam('PRODUCT', 'lsst_distrib', 'Whitespace delimited list of EUPS products to build.')
     stringParam('EUPS_TAG', null, 'published EUPS tag')
+    booleanParam('RUN_DEMO', false, 'Run the "stack" demo.')
   }
 
   properties {
