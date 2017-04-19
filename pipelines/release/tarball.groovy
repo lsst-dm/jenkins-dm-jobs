@@ -120,7 +120,11 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
     // path inside build container
     prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
 
-    withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
+    def localImageName = "${imageName}-local"
+
+    wrapContainer(imageName, localImageName)
+
+    withEnv(["RUN=${shName}", "IMAGE=${localImageName}"]) {
       shColor '''
         set -e
 
@@ -132,12 +136,13 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
           -w /build \
           -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
+          -u "$(id -u -n)" \
           "$IMAGE" \
           sh -c "/${RUN}"
       '''
     }
   } finally {
-    cleanupDocker(imageName)
+    cleanup()
   }
 }
 
@@ -166,12 +171,14 @@ def void linuxDemo(String imageName, String compiler) {
           -w /demo \
           -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
+          -e RUN_DEMO="$RUN_DEMO" \
+          -u "$(id -u -n)" \
           "$IMAGE" \
           sh -c "/${RUN}"
       '''
     }
   } finally {
-    cleanupDocker(imageName)
+    cleanup()
   }
 }
 
@@ -284,30 +291,6 @@ def void s3Push(String ... parts) {
 
 def void cleanup() {
   shColor 'rm -rf "./build/.lockDir"'
-}
-
-// because the uid in the docker container probably won't match the
-// jenkins-slave user, the bind volume mounts end up with file ownerships that
-// prevent them from being deleted.
-def void cleanupDocker(String imageName) {
-  withEnv(["IMAGE=${imageName}"]) {
-    shColor '''
-      docker run -t \
-        -v "$(pwd)/build:/build" \
-        -w /build \
-        "$IMAGE" \
-        rm -rf /build/.lockDir
-    '''
-    /*
-    shColor '''
-      docker run -t \
-        -v "$(pwd)/demo:/demo" \
-        -w /build \
-        "$IMAGE" \
-        rm -rf /demo
-    '''
-    */
-  }
 }
 
 def void shColor(script) {
@@ -514,4 +497,46 @@ def String joinPath(String ... parts) {
   }
 
   return text
+}
+
+def String wrapContainer(String imageName, String tag) {
+  def buildDir = 'docker'
+  def config = dedent("""
+    FROM    ${imageName}
+
+    ARG     USER
+    ARG     UID
+    ARG     GROUP
+    ARG     GID
+    ARG     HOME
+
+    USER    root
+    RUN     groupadd -g \$GID \$GROUP
+    RUN     useradd -d \$HOME -g \$GROUP -u \$UID \$USER
+
+    USER    \$USER
+    WORKDIR \$HOME
+  """)
+
+  // docker insists on recusrively checking file access under its execution
+  // path -- so run it from a dedicated dir
+  dir(buildDir) {
+    writeFile(file: 'Dockerfile', text: config)
+
+    shColor """
+      set -e
+      set -x
+
+      docker build -t "${tag}" \
+          --build-arg USER="\$(id -un)" \
+          --build-arg UID="\$(id -u)" \
+          --build-arg GROUP="\$(id -gn)" \
+          --build-arg GID="\$(id -g)" \
+          --build-arg HOME="\$HOME" \
+          .
+    """
+
+    deleteDir()
+  }
+
 }
