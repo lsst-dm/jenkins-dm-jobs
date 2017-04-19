@@ -1,3 +1,7 @@
+import groovy.transform.Field
+
+class UnsupportedCompiler extends Exception {}
+
 def notify = null
 node {
   dir('jenkins-dm-jobs') {
@@ -11,34 +15,47 @@ node {
   }
 }
 
+@Field String newinstall_url = 'https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh'
+
 try {
   notify.started()
   def retries = 1
 
-  stage('build tarballs') {
-    def platform = [:]
+  def pyenvs = [
+    new MinicondaEnv('2', '4.2.12', '7c8e67'),
+    new MinicondaEnv('3', '4.2.12', '7c8e67'),
+  ]
 
-    platform['linux - el6'] = {
-      retry(retries) {
-        def imageName = 'lsstsqre/centos:6-newinstall'
-        linuxTarballs(imageName, 'el6')
+  for (py in pyenvs) {
+    stage("build ${py.slug()} tarballs") {
+      def platform = [:]
+
+      // el6/py3 is broken
+      // https://jira.lsstcorp.org/browse/DM-10272
+      if (py.pythonVersion == '2') {
+        platform['el6'] = {
+          retry(retries) {
+            def imageName = 'lsstsqre/centos:6-newinstall'
+            linuxTarballs(imageName, 'el6', 'devtoolset-3', py)
+          }
+        }
       }
-    }
 
-    platform['linux - el7'] = {
-      retry(retries) {
-        def imageName = 'lsstsqre/centos:7-newinstall'
-        linuxTarballs(imageName, 'el7')
+      platform['el7'] = {
+        retry(retries) {
+          def imageName = 'lsstsqre/centos:7-newinstall'
+          linuxTarballs(imageName, 'el7', 'gcc-system', py)
+        }
       }
-    }
 
-    platform['osx - 10.11'] = {
-      retry(retries) {
-        osxBuild('10.11')
+      platform['osx-10.11'] = {
+        retry(retries) {
+          osxBuild('10.11', '10.9', 'clang-800.0.42.1', py)
+        }
       }
-    }
 
-    parallel platform
+      parallel platform
+    }
   }
 } catch (e) {
   // If there was an exception thrown, the build failed
@@ -62,53 +79,73 @@ try {
   }
 }
 
-def linuxTarballs(String imageName, String platform) {
+def void linuxTarballs(
+  String imageName,
+  String platform,
+  String compiler,
+  MinicondaEnv menv
+) {
+  def String slug = menv.slug()
+  def envId = joinPath('redhat', platform, compiler, slug)
+
   node('docker') {
-    dir(platform) {
-      docker.image(imageName).pull()
-      linuxBuild(imageName)
-      // XXX demo isn't yet working
-      // linuxDemo(imageName)
-      s3Push('redhat', platform)
-    }
-  }
-}
-
-def linuxBuild(String imageName) {
-  try {
-    def shName = 'scripts/run.sh'
-    prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
-
+    // these "credentials" aren't secrets -- just a convient way of setting
+    // globals for the instance. Thus, they don't need to be tightly scoped to a
+    // single sh step
     withCredentials([[
       $class: 'StringBinding',
       credentialsId: 'cmirror-s3-bucket',
       variable: 'CMIRROR_S3_BUCKET'
+    ],
+    [
+      $class: 'StringBinding',
+      credentialsId: 'eups-push-bucket',
+      variable: 'EUPS_S3_BUCKET'
     ]]) {
-      withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
-        sh '''
-          set -e
+      dir(envId) {
+        docker.image(imageName).pull()
+        linuxBuild(imageName, compiler, menv)
+        // XXX demo isn't yet working
+        // linuxDemo(imageName)
 
-          chmod a+x "$RUN"
-          docker run -t \
-            -v "$(pwd)/scripts:/scripts" \
-            -v "$(pwd)/distrib:/distrib" \
-            -v "$(pwd)/build:/build" \
-            -w /build \
-            -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
-            "$IMAGE" \
-            sh -c "/${RUN}"
-        '''.replaceFirst("\n","").stripIndent()
+        s3Push(envId)
       }
+    } // withCredentials([[
+  }
+}
+
+def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
+  try {
+    def shName = 'scripts/run.sh'
+    // path inside build container
+    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
+
+    withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
+      shColor '''
+        set -e
+
+        chmod a+x "$RUN"
+        docker run -t \
+          -v "$(pwd)/scripts:/scripts" \
+          -v "$(pwd)/distrib:/distrib" \
+          -v "$(pwd)/build:/build" \
+          -w /build \
+          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
+          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
+          "$IMAGE" \
+          sh -c "/${RUN}"
+      '''
     }
   } finally {
     cleanupDocker(imageName)
   }
 }
 
-def linuxDemo(String imageName) {
+def void linuxDemo(String imageName, String compiler) {
   try {
     def shName = 'scripts/demo.sh'
-    prepare(PRODUCT, EUPS_TAG, shName, '/distrib') // path inside build container
+    // path inside build container
+    prepareDemo(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
 
     dir('buildbot-scripts') {
       git([
@@ -117,76 +154,111 @@ def linuxDemo(String imageName) {
       ])
     }
 
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'cmirror-s3-bucket',
-      variable: 'CMIRROR_S3_BUCKET'
-    ]]) {
-      withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
-        sh '''
-          set -e
+    withEnv(["RUN=${shName}", "IMAGE=${imageName}"]) {
+      shColor '''
+        set -e
 
-          chmod a+x "$RUN"
-          docker run -t \
-            -v "$(pwd)/scripts:/scripts" \
-            -v "$(pwd)/distrib:/distrib" \
-            -v "$(pwd)/demo:/demo" \
-            -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
-            -w /demo \
-            -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
-            "$IMAGE" \
-            sh -c "/${RUN}"
-        '''.replaceFirst("\n","").stripIndent()
-      }
+        chmod a+x "$RUN"
+        docker run -t \
+          -v "$(pwd)/scripts:/scripts" \
+          -v "$(pwd)/distrib:/distrib" \
+          -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
+          -w /demo \
+          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
+          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
+          "$IMAGE" \
+          sh -c "/${RUN}"
+      '''
     }
   } finally {
     cleanupDocker(imageName)
   }
 }
 
-def osxBuild(String platform) {
-  node("osx-${platform}") {
-    dir(platform) {
-      try {
-        def shName = 'scripts/run.sh'
-        prepare(PRODUCT, EUPS_TAG, shName, "./distrib")
+def void osxBuild(
+  String platform,
+  String macosx_deployment_target,
+  String compiler,
+  MinicondaEnv menv
+) {
+  def String slug = menv.slug()
+  def envId = joinPath('osx', macosx_deployment_target, compiler, slug)
 
-        withCredentials([[
-          $class: 'StringBinding',
-          credentialsId: 'cmirror-s3-bucket',
-          variable: 'CMIRROR_S3_BUCKET'
-        ]]) {
+  node("osx-${platform}") {
+    // these "credentials" aren't secrets -- just a convient way of setting
+    // globals for the instance. Thus, they don't need to be tightly scoped to a
+    // single sh step
+    withCredentials([[
+      $class: 'StringBinding',
+      credentialsId: 'cmirror-s3-bucket',
+      variable: 'CMIRROR_S3_BUCKET'
+    ],
+    [
+      $class: 'StringBinding',
+      credentialsId: 'eups-push-bucket',
+      variable: 'EUPS_S3_BUCKET'
+    ]]) {
+      dir(envId) {
+        try {
+          def shName = 'scripts/run.sh'
+          prepare(
+            PRODUCT,
+            EUPS_TAG,
+            shName,
+            "./distrib",
+            compiler,
+            macosx_deployment_target,
+            menv
+          )
+
           shColor """
             set -e
 
             chmod a+x "${shName}"
             "${shName}"
-          """.replaceFirst("\n","").stripIndent()
-        }
+          """
 
-        s3Push('osx', platform)
-      } finally {
-        cleanup()
-      }
-    } // dir(platform)
+          s3Push(envId)
+        } finally {
+          cleanup()
+        }
+      } // dir(platform)
+    } // withCredentials([[
   } // node
 }
 
-def prepare(String product, String eupsTag, String shName, String distribDir) {
-  def script = buildScript(product, eupsTag, distribDir)
+def void prepare(
+  String product,
+  String eupsTag,
+  String shName,
+  String distribDir,
+  String compiler,
+  String macosx_deployment_target,
+  MinicondaEnv menv
+) {
+  def script = buildScript(
+    product,
+    eupsTag,
+    distribDir,
+    compiler,
+    macosx_deployment_target,
+    menv
+  )
 
   shColor 'mkdir -p distrib scripts build'
   writeFile(file: shName, text: script)
 }
 
-def prepareDemo(String product, String eupsTag, String shName, String distribDir) {
+def void prepareDemo(String product, String eupsTag, String shName, String distribDir, String compiler) {
   def script = demoScript(product, eupsTag, distribDir)
 
   shColor 'mkdir -p demo'
   writeFile(file: shName, text: script)
 }
 
-def s3Push(String osfamily, String platform) {
+def void s3Push(String ... parts) {
+  def path = joinPath(parts)
+
   shColor '''
     set -e
     # do not assume virtualenv is present
@@ -194,35 +266,30 @@ def s3Push(String osfamily, String platform) {
     virtualenv venv
     . venv/bin/activate
     pip install awscli
-  '''.replaceFirst("\n","").stripIndent()
+  '''
 
   withCredentials([[
     $class: 'UsernamePasswordMultiBinding',
     credentialsId: 'aws-eups-push',
     usernameVariable: 'AWS_ACCESS_KEY_ID',
     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-  ],
-  [
-    $class: 'StringBinding',
-    credentialsId: 'eups-push-bucket',
-    variable: 'EUPS_S3_BUCKET'
   ]]) {
     shColor """
       set -e
       . venv/bin/activate
-      aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${osfamily}/${platform}/
-    """.replaceFirst("\n","").stripIndent()
+      aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${path}
+    """
   }
 }
 
-def cleanup() {
+def void cleanup() {
   shColor 'rm -rf "./build/.lockDir"'
 }
 
 // because the uid in the docker container probably won't match the
 // jenkins-slave user, the bind volume mounts end up with file ownerships that
 // prevent them from being deleted.
-def cleanupDocker(String imageName) {
+def void cleanupDocker(String imageName) {
   withEnv(["IMAGE=${imageName}"]) {
     shColor '''
       docker run -t \
@@ -230,7 +297,7 @@ def cleanupDocker(String imageName) {
         -w /build \
         "$IMAGE" \
         rm -rf /build/.lockDir
-    '''.replaceFirst("\n","").stripIndent()
+    '''
     /*
     shColor '''
       docker run -t \
@@ -238,35 +305,35 @@ def cleanupDocker(String imageName) {
         -w /build \
         "$IMAGE" \
         rm -rf /demo
-    '''.replaceFirst("\n","").stripIndent()
+    '''
     */
   }
 }
 
-def shColor(script) {
+def void shColor(script) {
   wrap([$class: 'AnsiColorBuildWrapper']) {
-    sh script
+    sh dedent(script)
   }
 }
 
+// XXX the dynamic build script construction has evolved into a fair number of
+// nested steps and this may be difficult to comprehend in the future.
+// Consider moving all of this logic into an external driver script that is
+// called with parameters.
 @NonCPS
-def buildScript(String products, String tag, String eupsPkgroot) {
-  """
-    set -e
-
-    if [[ -n \$CMIRROR_S3_BUCKET ]]; then
-        export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
-        export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
-    fi
-
-    set -o verbose
-    if grep -q -i "CentOS release 6" /etc/redhat-release; then
-      . /opt/rh/devtoolset-3/enable
-    fi
-    set +o verbose
-
-    curl -sSL https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh | bash -s -- -cb
+def String buildScript(
+  String products,
+  String tag,
+  String eupsPkgroot,
+  String compiler,
+  String macosx_deployment_target,
+  MinicondaEnv menv
+) {
+  scriptPreamble(compiler, macosx_deployment_target, menv) +
+  dedent("""
+    curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
+
     eups distrib install ${products} -t "${tag}" -vvv
 
     export EUPS_PKGROOT="${eupsPkgroot}"
@@ -274,12 +341,41 @@ def buildScript(String products, String tag, String eupsPkgroot) {
       eups distrib create --server-dir "\$EUPS_PKGROOT" -d tarball "\$product" -t "${tag}" -vvv
     done
     eups distrib declare --server-dir "\$EUPS_PKGROOT" -t "${tag}" -vvv
-  """.replaceFirst("\n","").stripIndent()
+  """)
 }
 
 @NonCPS
-def demoScript(String products, String tag, String eupsPkgroot) {
-  """
+def String demoScript(
+  String products,
+  String tag,
+  String eupsPkgroot,
+  String compiler,
+  String macosx_deployment_target,
+  MinicondaEnv menv
+) {
+  scriptPreamble(compiler, macosx_deployment_target, menv) +
+  dedent("""
+    export EUPS_PKGROOT="${eupsPkgroot}"
+
+    curl -sSL ${newinstall_url} | bash -s -- -cb
+    . ./loadLSST.bash
+
+    # override newinstall.sh configured EUPS_PKGROOT
+    export EUPS_PKGROOT="${eupsPkgroot}"
+
+    eups distrib install ${products} -t "${tag}" -vvv
+
+    /buildbot-scripts/runManifestDemo.sh --tag "${tag}" --small
+  """)
+}
+
+@NonCPS
+def String scriptPreamble(
+  String compiler,
+  String macosx_deployment_target='10.9',
+  MinicondaEnv menv
+) {
+  dedent("""
     set -e
 
     if [[ -n \$CMIRROR_S3_BUCKET ]]; then
@@ -287,22 +383,135 @@ def demoScript(String products, String tag, String eupsPkgroot) {
         export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
     fi
 
-    set -o verbose
-    if grep -q -i "CentOS release 6" /etc/redhat-release; then
-      . /opt/rh/devtoolset-3/enable
+    if [[ -n \$EUPS_S3_BUCKET ]]; then
+        export EUPS_PKGROOT_BASE_URL="https://\${EUPS_S3_BUCKET}/stack"
     fi
-    set +o verbose
 
-    export EUPS_PKGROOT="${eupsPkgroot}"
+    # isolate eups cache files
+    export EUPS_USERDATA="\${PWD}/.eups"
 
-    curl -sSL https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh | bash -s -- -cb
-    . ./loadLSST.bash
+    # isolate conda config
+    export CONDARC="\${PWD}/.condarc"
 
-    # XXX the lsst product is declaring EUPS_PKGROOT
-    export EUPS_PKGROOT="${eupsPkgroot}"
+    if [[ \$(uname -s) == Darwin* ]]; then
+      export MACOSX_DEPLOYMENT_TARGET="${macosx_deployment_target}"
+    fi
 
-    eups distrib install ${products} -t "${tag}" -vvv
+    export LSST_PYTHON_VERSION="${menv.pythonVersion}"
+    export MINICONDA_VERSION="${menv.minicondaVersion}"
+    export LSSTSW_REF="${menv.lsstswRef}"
+    """
+    + scriptCompiler(compiler)
+  )
+}
 
-    /buildbot-scripts/runManifestDemo.sh --tag "${tag}" --small
-  """.replaceFirst("\n","").stripIndent()
+@NonCPS
+def String dedent(String text) {
+  if (text == null) {
+    return null
+  }
+  text.replaceFirst("\n","").stripIndent()
+}
+
+@NonCPS
+def String scriptCompiler(String compiler) {
+  def setup = null
+  switch(compiler) {
+    case ~/^devtoolset-\d/:
+      setup = """
+        enable_script=/opt/rh/${compiler}/enable
+        if [[ ! -e \$enable_script ]]; then
+          echo "devtoolset enable script is missing"
+          exit 1
+        fi
+        set -o verbose
+        . \$enable_script
+        set +o verbose
+      """
+      break
+    case 'gcc-system':
+      setup = '''
+        cc_path=$(type -p gcc)
+        if [[ -z $cc_path ]]; then
+          echo "compiler appears to be missing from PATH"
+          exit 1
+        fi
+        if [[ $cc_path != '/usr/bin/gcc' ]]; then
+          echo "system compiler is not default"
+          exit 1
+        fi
+      '''
+      break
+    case ~/^clang-.*/:
+      setup = """
+        target_cc_version=$compiler
+        cc_path=\$(type -p clang)
+        if [[ -z \$cc_path ]]; then
+          echo "compiler appears to be missing from PATH"
+          exit 1
+        fi
+        if [[ \$cc_path != '/usr/bin/clang' ]]; then
+          echo "system compiler is not default"
+          exit 1
+        fi
+
+        # Apple LLVM version 8.0.0 (clang-800.0.42.1)
+        if [[ ! \$(clang --version) =~ Apple[[:space:]]+LLVM[[:space:]]+version[[:space:]]+[[:digit:].]+[[:space:]]+\\((.*)\\) ]]; then
+          echo "unable to determine compiler version"
+          exit 1
+        fi
+        cc_version="\${BASH_REMATCH[1]}"
+
+        if [[ \$cc_version != \$target_cc_version ]]; then
+          echo "found clang \$cc_version but expected \$target_cc_version"
+          exit 1
+        fi
+      """
+      break
+    case null:
+    default:
+      throw new UnsupportedCompiler(compiler)
+  }
+
+  dedent(setup)
+}
+
+class MinicondaEnv implements Serializable {
+  String pythonVersion
+  String minicondaVersion
+  String lsstswRef
+
+  // unfortunately, a constructor is required under the security sandbox
+  // See: https://issues.jenkins-ci.org/browse/JENKINS-34741
+  MinicondaEnv(String p, String m, String l) {
+    this.pythonVersion = p
+    this.minicondaVersion = m
+    this.lsstswRef = l
+  }
+
+  String slug() {
+    "miniconda${pythonVersion}-${minicondaVersion}-${lsstswRef}"
+  }
+}
+
+// The groovy String#join method is not working under the security sandbox
+// https://issues.jenkins-ci.org/browse/JENKINS-43484
+@NonCPS
+def String joinPath(String ... parts) {
+  String text = null
+
+  def n = parts.size()
+  parts.eachWithIndex { x, i ->
+    if (text == null) {
+      text = x
+    } else {
+      text += x
+    }
+
+    if (i < (n - 1)) {
+      text += '/'
+    }
+  }
+
+  return text
 }
