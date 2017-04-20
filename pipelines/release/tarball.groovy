@@ -50,7 +50,7 @@ try {
 
       platform['osx-10.11'] = {
         retry(retries) {
-          osxBuild('10.11', '10.9', 'clang-800.0.42.1', py)
+          osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py)
         }
       }
 
@@ -117,92 +117,7 @@ def void linuxTarballs(
   }
 }
 
-def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
-  try {
-    def shName = 'scripts/run.sh'
-    def localImageName = "${imageName}-local"
-
-    // path inside build container
-    prepare(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
-
-    wrapContainer(imageName, localImageName)
-
-    withEnv(["RUN=${shName}", "IMAGE=${localImageName}"]) {
-      shColor '''
-        set -e
-
-        chmod a+x "$RUN"
-        docker run \
-          --storage-opt size=100G \
-          -v "$(pwd)/scripts:/scripts" \
-          -v "$(pwd)/distrib:/distrib" \
-          -v "$(pwd)/build:/build" \
-          -w /build \
-          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
-          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-          -u "$(id -u -n)" \
-          "$IMAGE" \
-          sh -c "/${RUN}"
-      '''
-    }
-  } finally {
-    cleanup()
-  }
-}
-
-def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
-  try {
-    def shName = 'scripts/smoke.sh'
-    def localImageName = "${imageName}-local"
-
-    // smoke state is left at the end of the build for possible debugging but
-    // each test needs to be run in a clean env.
-    dir('smoke') {
-      deleteDir()
-    }
-
-    // path inside build container
-    prepareSmoke(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
-
-    dir('buildbot-scripts') {
-      git([
-        url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-        branch: 'master'
-      ])
-    }
-
-    wrapContainer(imageName, localImageName)
-
-    withEnv([
-      "RUN=${shName}",
-      "IMAGE=${localImageName}",
-      "RUN_DEMO=${params.RUN_DEMO}",
-    ]) {
-      shColor '''
-        set -e
-
-        chmod a+x "$RUN"
-        docker run \
-          --storage-opt size=100G \
-          -v "$(pwd)/scripts:/scripts" \
-          -v "$(pwd)/distrib:/distrib" \
-          -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
-          -v "$(pwd)/smoke:/smoke" \
-          -w /smoke \
-          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
-          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-          -e RUN_DEMO="$RUN_DEMO" \
-          -u "$(id -u -n)" \
-          "$IMAGE" \
-          sh -c "/${RUN}"
-      '''
-    }
-  } finally {
-    cleanup()
-  }
-}
-
-def void osxBuild(
+def void osxTarballs(
   String platform,
   String macosx_deployment_target,
   String compiler,
@@ -226,37 +141,207 @@ def void osxBuild(
       variable: 'EUPS_S3_BUCKET'
     ]]) {
       dir(envId) {
-        try {
-          def shName = 'scripts/run.sh'
-          prepare(
-            PRODUCT,
-            EUPS_TAG,
-            shName,
-            "./distrib",
-            compiler,
-            macosx_deployment_target,
-            menv
-          )
+        osxBuild(macosx_deployment_target, compiler, menv)
 
-          shColor """
-            set -e
+        if (params.SMOKE) {
+          osxSmoke(macosx_deployment_target, compiler, menv)
+        }
 
-            chmod a+x "${shName}"
-            "${shName}"
-          """
-
-          if (params.PUBLISH) {
-            s3Push(envId)
-          }
-        } finally {
-          cleanup()
+        if (params.PUBLISH) {
+          s3Push(envId)
         }
       } // dir(platform)
     } // withCredentials([[
   } // node
 }
 
-def void prepare(
+def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
+  try {
+    def shBasename = 'run.sh'
+    def shPath = "${pwd()}/scripts"
+    def shName = "${shPath}/${shBasename}"
+    def localImageName = "${imageName}-local"
+
+    shColor 'mkdir -p distrib build scripts'
+
+    prepareBuild(
+      params.PRODUCT,
+      params.EUPS_TAG,
+      shName,
+      '/distrib', // path inside container
+      compiler,
+      null,
+      menv
+    )
+
+    wrapContainer(imageName, localImageName)
+
+    withEnv(["RUN=/scripts/${shBasename}", "IMAGE=${localImageName}"]) {
+      shColor '''
+        set -e
+
+        docker run \
+          --storage-opt size=100G \
+          -v "$(pwd)/scripts:/scripts" \
+          -v "$(pwd)/distrib:/distrib" \
+          -v "$(pwd)/build:/build" \
+          -w /build \
+          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
+          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
+          -u "$(id -u -n)" \
+          "$IMAGE" \
+          sh -c "$RUN"
+      '''
+    }
+  } finally {
+    cleanup()
+  }
+}
+
+def void osxBuild(
+  String macosx_deployment_target,
+  String compiler,
+  MinicondaEnv menv
+) {
+  try {
+    def shName = "${pwd()}/scripts/run.sh"
+
+    shColor 'mkdir -p distrib build scripts'
+
+    prepareBuild(
+      params.PRODUCT,
+      params.EUPS_TAG,
+      "${shName}",
+      "${pwd()}/distrib",
+      compiler,
+      macosx_deployment_target,
+      menv
+    )
+
+    dir('build') {
+      shColor """
+        set -e
+
+        "${shName}"
+      """
+    }
+  } finally {
+    cleanup()
+  }
+}
+
+def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
+  try {
+    def shBasename = 'run.sh'
+    def shPath = "${pwd()}/scripts"
+    def shName = "${shPath}/${shBasename}"
+    def localImageName = "${imageName}-local"
+
+    // smoke state is left at the end of the build for possible debugging but
+    // each test needs to be run in a clean env.
+    dir('smoke') {
+      deleteDir()
+    }
+
+    shColor 'mkdir -p smoke'
+
+    prepareSmoke(
+      params.PRODUCT,
+      params.EUPS_TAG,
+      shName,
+      '/distrib', // path inside container
+      compiler,
+      null,
+      menv,
+      '/buildbot-scripts' // path inside container
+    )
+
+    dir('buildbot-scripts') {
+      git([
+        url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+        branch: 'master'
+      ])
+    }
+
+    wrapContainer(imageName, localImageName)
+
+    withEnv([
+      "RUN=/scripts/${shBasename}",
+      "IMAGE=${localImageName}",
+      "RUN_DEMO=${params.RUN_DEMO}",
+    ]) {
+      shColor '''
+        set -e
+
+        docker run \
+          --storage-opt size=100G \
+          -v "$(pwd)/scripts:/scripts" \
+          -v "$(pwd)/distrib:/distrib" \
+          -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
+          -v "$(pwd)/smoke:/smoke" \
+          -w /smoke \
+          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
+          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
+          -e RUN_DEMO="$RUN_DEMO" \
+          -u "$(id -u -n)" \
+          "$IMAGE" \
+          sh -c "$RUN"
+      '''
+    }
+  } finally {
+    cleanup()
+  }
+}
+
+def void osxSmoke(
+  String macosx_deployment_target,
+  String compiler,
+  MinicondaEnv menv
+) {
+  try {
+    def shName = "${pwd()}/scripts/smoke.sh"
+
+    // smoke state is left at the end of the build for possible debugging but
+    // each test needs to be run in a clean env.
+    dir('smoke') {
+      deleteDir()
+    }
+
+    prepareSmoke(
+      PRODUCT,
+      EUPS_TAG,
+      shName,
+      "${pwd()}/distrib",
+      compiler,
+      macosx_deployment_target,
+      menv,
+      "${pwd()}/buildbot-scripts"
+    )
+
+    dir('buildbot-scripts') {
+      git([
+        url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+        branch: 'master'
+      ])
+    }
+
+    dir('smoke') {
+      withEnv([
+        "RUN_DEMO=${params.RUN_DEMO}",
+      ]) {
+        shColor """
+          set -e
+
+          ${shName}
+        """
+      }
+    }
+  } finally {
+    cleanup()
+  }
+}
+
+def void prepareBuild(
   String product,
   String eupsTag,
   String shName,
@@ -274,10 +359,8 @@ def void prepare(
     menv
   )
 
-  shColor 'mkdir -p distrib build'
-  dir('scripts') {
-    writeFile(file: shName, text: script)
-  }
+  writeFile(file: shName, text: script)
+  shColor "chmod a+x ${shName}"
 }
 
 def void prepareSmoke(
@@ -287,7 +370,8 @@ def void prepareSmoke(
   String distribDir,
   String compiler,
   String macosx_deployment_target,
-  MinicondaEnv menv
+  MinicondaEnv menv,
+  String ciScriptsPath
 ) {
   def script = smokeScript(
     product,
@@ -295,13 +379,12 @@ def void prepareSmoke(
     distribDir,
     compiler,
     macosx_deployment_target,
-    menv
+    menv,
+    ciScriptsPath
   )
 
-  shColor 'mkdir -p smoke'
-  dir('scripts') {
-    writeFile(file: shName, text: script)
-  }
+  writeFile(file: shName, text: script)
+  shColor "chmod a+x ${shName}"
 }
 
 def void s3Push(String ... parts) {
@@ -375,7 +458,8 @@ def String smokeScript(
   String eupsPkgroot,
   String compiler,
   String macosx_deployment_target,
-  MinicondaEnv menv
+  MinicondaEnv menv,
+  String ciScriptsPath
 ) {
   scriptPreamble(compiler, macosx_deployment_target, menv) +
   dedent("""
@@ -389,8 +473,8 @@ def String smokeScript(
 
     eups distrib install ${products} -t "${tag}" -vvv
 
-    if [[ $RUN_DEMO == true ]]; then
-      /buildbot-scripts/runManifestDemo.sh --tag "${tag}" --small
+    if [[ \$RUN_DEMO == true ]]; then
+      ${ciScriptsPath}/runManifestDemo.sh --tag "${tag}" --small
     fi
   """)
 }
