@@ -133,6 +133,7 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
 
         chmod a+x "$RUN"
         docker run \
+          --storage-opt size=100G \
           -v "$(pwd)/scripts:/scripts" \
           -v "$(pwd)/distrib:/distrib" \
           -v "$(pwd)/build:/build" \
@@ -176,6 +177,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
 
         chmod a+x "$RUN"
         docker run \
+          --storage-opt size=100G \
           -v "$(pwd)/scripts:/scripts" \
           -v "$(pwd)/distrib:/distrib" \
           -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
