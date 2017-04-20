@@ -389,6 +389,7 @@ def String scriptPreamble(
 ) {
   dedent("""
     set -e
+    set -x
 
     if [[ -n \$CMIRROR_S3_BUCKET ]]; then
         export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
