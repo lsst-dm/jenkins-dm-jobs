@@ -107,7 +107,9 @@ def void linuxTarballs(
         linuxBuild(imageName, compiler, menv)
         linuxSmoke(imageName, compiler, menv)
 
-        s3Push(envId)
+        if (params.PUBLISH) {
+          s3Push(envId)
+        }
       }
     } // withCredentials([[
   }
@@ -232,7 +234,9 @@ def void osxBuild(
             "${shName}"
           """
 
-          s3Push(envId)
+          if (params.PUBLISH) {
+            s3Push(envId)
+          }
         } finally {
           cleanup()
         }
