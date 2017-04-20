@@ -105,7 +105,7 @@ def void linuxTarballs(
       dir(envId) {
         docker.image(imageName).pull()
         linuxBuild(imageName, compiler, menv)
-        linuxDemo(imageName, compiler, menv)
+        linuxSmoke(imageName, compiler, menv)
 
         s3Push(envId)
       }
@@ -145,13 +145,13 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
   }
 }
 
-def void linuxDemo(String imageName, String compiler, MinicondaEnv menv) {
+def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
   try {
-    def shName = 'scripts/demo.sh'
+    def shName = 'scripts/smoke.sh'
     def localImageName = "${imageName}-local"
 
     // path inside build container
-    prepareDemo(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
+    prepareSmoke(PRODUCT, EUPS_TAG, shName, '/distrib', compiler, null, menv)
 
     dir('buildbot-scripts') {
       git([
@@ -175,7 +175,7 @@ def void linuxDemo(String imageName, String compiler, MinicondaEnv menv) {
           -v "$(pwd)/scripts:/scripts" \
           -v "$(pwd)/distrib:/distrib" \
           -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
-          -w /demo \
+          -w /smoke \
           -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
           -e RUN_DEMO="$RUN_DEMO" \
@@ -263,7 +263,7 @@ def void prepare(
   writeFile(file: shName, text: script)
 }
 
-def void prepareDemo(
+def void prepareSmoke(
   String product,
   String eupsTag,
   String shName,
@@ -272,7 +272,7 @@ def void prepareDemo(
   String macosx_deployment_target,
   MinicondaEnv menv
 ) {
-  def script = demoScript(
+  def script = smokeScript(
     product,
     eupsTag,
     distribDir,
@@ -349,7 +349,7 @@ def String buildScript(
 }
 
 @NonCPS
-def String demoScript(
+def String smokeScript(
   String products,
   String tag,
   String eupsPkgroot,
@@ -537,8 +537,8 @@ def String wrapContainer(String imageName, String tag) {
     RUN     groupadd -g \$GID \$GROUP
     RUN     useradd -d \$HOME -g \$GROUP -u \$UID \$USER
 
-    RUN     mkdir /demo
-    RUN     chown \$USER:\$GROUP /demo
+    RUN     mkdir /smoke
+    RUN     chown \$USER:\$GROUP /smoke
 
     USER    \$USER
     WORKDIR \$HOME
