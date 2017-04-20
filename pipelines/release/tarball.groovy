@@ -311,7 +311,7 @@ def void s3Push(String ... parts) {
     shColor """
       set -e
       . venv/bin/activate
-      aws s3 sync ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${path}
+      aws s3 sync --only-show-errors ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${path}
     """
   }
 }
