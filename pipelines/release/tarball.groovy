@@ -308,8 +308,8 @@ def void osxSmoke(
     }
 
     prepareSmoke(
-      PRODUCT,
-      EUPS_TAG,
+      params.PRODUCT,
+      params.EUPS_TAG,
       shName,
       "${pwd()}/distrib",
       compiler,
