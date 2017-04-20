@@ -105,7 +105,9 @@ def void linuxTarballs(
       dir(envId) {
         docker.image(imageName).pull()
         linuxBuild(imageName, compiler, menv)
-        linuxSmoke(imageName, compiler, menv)
+        if (params.SMOKE) {
+          linuxSmoke(imageName, compiler, menv)
+        }
 
         if (params.PUBLISH) {
           s3Push(envId)
