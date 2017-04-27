@@ -20,6 +20,7 @@ node {
 }
 
 @Field String newinstall_url = 'https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh'
+@Field String shebangtron_url = 'https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron'
 
 try {
   notify.started()
@@ -335,6 +336,7 @@ def void osxSmoke(
   dir('smoke') {
     withEnv([
       "RUN_DEMO=${params.RUN_DEMO}",
+      "FIX_SHEBANGS=true",
     ]) {
       shColor """
         set -e
@@ -476,6 +478,10 @@ def String smokeScript(
     export EUPS_PKGROOT="${eupsPkgroot}"
 
     eups distrib install ${products} -t "${tag}" -vvv
+
+    if [[ \$FIX_SHEBANGS == true ]]; then
+      curl -sSL ${shebangtron_url} | python
+    fi
 
     if [[ \$RUN_DEMO == true ]]; then
       ${ciScriptsPath}/runManifestDemo.sh --tag "${tag}" --small
