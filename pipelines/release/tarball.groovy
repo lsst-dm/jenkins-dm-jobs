@@ -243,65 +243,61 @@ def void osxBuild(
 }
 
 def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
-  try {
-    def shBasename = 'run.sh'
-    def shPath = "${pwd()}/scripts"
-    def shName = "${shPath}/${shBasename}"
-    def localImageName = "${imageName}-local"
+  def shBasename = 'run.sh'
+  def shPath = "${pwd()}/scripts"
+  def shName = "${shPath}/${shBasename}"
+  def localImageName = "${imageName}-local"
 
-    // smoke state is left at the end of the build for possible debugging but
-    // each test needs to be run in a clean env.
-    dir('smoke') {
-      deleteDir()
-    }
+  // smoke state is left at the end of the build for possible debugging but
+  // each test needs to be run in a clean env.
+  dir('smoke') {
+    deleteDir()
+  }
 
-    shColor 'mkdir -p smoke'
+  shColor 'mkdir -p smoke'
 
-    prepareSmoke(
-      params.PRODUCT,
-      params.EUPS_TAG,
-      shName,
-      '/distrib', // path inside container
-      compiler,
-      null,
-      menv,
-      '/buildbot-scripts' // path inside container
-    )
+  prepareSmoke(
+    params.PRODUCT,
+    params.EUPS_TAG,
+    shName,
+    '/distrib', // path inside container
+    compiler,
+    null,
+    menv,
+    '/buildbot-scripts' // path inside container
+  )
 
-    dir('buildbot-scripts') {
-      git([
-        url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-        branch: 'master'
-      ])
-    }
+  dir('buildbot-scripts') {
+    git([
+      url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+      branch: 'master'
+    ])
+  }
 
-    wrapContainer(imageName, localImageName)
+  wrapContainer(imageName, localImageName)
 
-    withEnv([
-      "RUN=/scripts/${shBasename}",
-      "IMAGE=${localImageName}",
-      "RUN_DEMO=${params.RUN_DEMO}",
-    ]) {
-      shColor '''
-        set -e
+  withEnv([
+    "RUN=/scripts/${shBasename}",
+    "IMAGE=${localImageName}",
+    "RUN_DEMO=${params.RUN_DEMO}",
+  ]) {
+    shColor '''
+      set -e
 
-        docker run \
-          --storage-opt size=100G \
-          -v "$(pwd)/scripts:/scripts" \
-          -v "$(pwd)/distrib:/distrib" \
-          -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
-          -v "$(pwd)/smoke:/smoke" \
-          -w /smoke \
-          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
-          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-          -e RUN_DEMO="$RUN_DEMO" \
-          -u "$(id -u -n)" \
-          "$IMAGE" \
-          sh -c "$RUN"
-      '''
-    }
-  } finally {
-    cleanup()
+      docker run \
+        --storage-opt size=100G \
+        -v "$(pwd)/scripts:/scripts" \
+        -v "$(pwd)/distrib:/distrib" \
+        -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
+        -v "$(pwd)/smoke:/smoke" \
+        -w /smoke \
+        -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
+        -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
+        -e RUN_DEMO="$RUN_DEMO" \
+        -u "$(id -u -n)" \
+        "$IMAGE" \
+        sh -c "$RUN"
+    '''
   }
 }
 
@@ -310,46 +306,42 @@ def void osxSmoke(
   String compiler,
   MinicondaEnv menv
 ) {
-  try {
-    def shName = "${pwd()}/scripts/smoke.sh"
+  def shName = "${pwd()}/scripts/smoke.sh"
 
-    // smoke state is left at the end of the build for possible debugging but
-    // each test needs to be run in a clean env.
-    dir('smoke') {
-      deleteDir()
+  // smoke state is left at the end of the build for possible debugging but
+  // each test needs to be run in a clean env.
+  dir('smoke') {
+    deleteDir()
+  }
+
+  prepareSmoke(
+    params.PRODUCT,
+    params.EUPS_TAG,
+    shName,
+    "${pwd()}/distrib",
+    compiler,
+    macosx_deployment_target,
+    menv,
+    "${pwd()}/buildbot-scripts"
+  )
+
+  dir('buildbot-scripts') {
+    git([
+      url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+      branch: 'master'
+    ])
+  }
+
+  dir('smoke') {
+    withEnv([
+      "RUN_DEMO=${params.RUN_DEMO}",
+    ]) {
+      shColor """
+        set -e
+
+        ${shName}
+      """
     }
-
-    prepareSmoke(
-      params.PRODUCT,
-      params.EUPS_TAG,
-      shName,
-      "${pwd()}/distrib",
-      compiler,
-      macosx_deployment_target,
-      menv,
-      "${pwd()}/buildbot-scripts"
-    )
-
-    dir('buildbot-scripts') {
-      git([
-        url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-        branch: 'master'
-      ])
-    }
-
-    dir('smoke') {
-      withEnv([
-        "RUN_DEMO=${params.RUN_DEMO}",
-      ]) {
-        shColor """
-          set -e
-
-          ${shName}
-        """
-      }
-    }
-  } finally {
-    cleanup()
   }
 }
 
