@@ -84,6 +84,14 @@ try {
   }
 }
 
+/**
+ * Build EUPS tarballs inside of a docker container.
+ *
+ * @param imageName docker image slug
+ * @param platform Eg., 'el7'
+ * @param compiler Eg., 'system-gcc'
+ * @param menv Miniconda object
+ */
 def void linuxTarballs(
   String imageName,
   String platform,
@@ -126,6 +134,15 @@ def void linuxTarballs(
   }
 }
 
+/**
+ * Build EUPS tarballs in a regular directory.
+ *
+ * @param imageName docker image slug
+ * @param platform build platform Eg., '10.11'
+ * @param macosx_deployment_target Eg., '10.9'
+ * @param compiler Eg., 'system-gcc'
+ * @param menv Miniconda object
+ */
 def void osxTarballs(
   String platform,
   String macosx_deployment_target,
@@ -168,6 +185,9 @@ def void osxTarballs(
   } // node
 }
 
+/**
+ * Run Linux specific tarball build.
+ */
 def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
   try {
     def shBasename = 'run.sh'
@@ -211,6 +231,9 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
   }
 }
 
+/**
+ * Run OSX specific tarball build.
+ */
 def void osxBuild(
   String macosx_deployment_target,
   String compiler,
@@ -243,6 +266,9 @@ def void osxBuild(
   }
 }
 
+/**
+ * Run Linux specific tarball smoke test(s).
+ */
 def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
   def shBasename = 'run.sh'
   def shPath = "${pwd()}/scripts"
@@ -302,6 +328,9 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
   }
 }
 
+/**
+ * Generate + write build script.
+ */
 def void osxSmoke(
   String macosx_deployment_target,
   String compiler,
@@ -347,6 +376,9 @@ def void osxSmoke(
   }
 }
 
+/**
+ * Generate + write build script.
+ */
 def void prepareBuild(
   String product,
   String eupsTag,
@@ -369,6 +401,9 @@ def void prepareBuild(
   shColor "chmod a+x ${shName}"
 }
 
+/**
+ * Generate + write smoke test script.
+ */
 def void prepareSmoke(
   String product,
   String eupsTag,
@@ -393,6 +428,10 @@ def void prepareSmoke(
   shColor "chmod a+x ${shName}"
 }
 
+/**
+ * Push {@code ./distrib} dir to an s3 bucket under the "path" formed by
+ * joining the {@code parts} parameters.
+ */
 def void s3Push(String ... parts) {
   def path = joinPath(parts)
 
@@ -419,16 +458,26 @@ def void s3Push(String ... parts) {
   }
 }
 
+/**
+ * Cleanup after a build attempt.
+ */
 def void cleanup() {
   shColor 'rm -rf "./build/.lockDir"'
 }
 
+/**
+ * Thin wrapper around {@code sh} step that strips leading whitspace and
+ * enables ANSI color codes.
+ */
 def void shColor(script) {
   wrap([$class: 'AnsiColorBuildWrapper']) {
     sh dedent(script)
   }
 }
 
+/**
+ * Generate shellscript to build EUPS distrib tarballs.
+ */
 // XXX the dynamic build script construction has evolved into a fair number of
 // nested steps and this may be difficult to comprehend in the future.
 // Consider moving all of this logic into an external driver script that is
@@ -457,6 +506,9 @@ def String buildScript(
   """)
 }
 
+/**
+ * Generate shellscript to execute a "smoke" install test.
+ */
 @NonCPS
 def String smokeScript(
   String products,
@@ -489,6 +541,9 @@ def String smokeScript(
   """)
 }
 
+/**
+ * Generate common shellscript boilerplate.
+ */
 @NonCPS
 def String scriptPreamble(
   String compiler,
@@ -526,6 +581,9 @@ def String scriptPreamble(
   )
 }
 
+/**
+ * Remove leading whitespace from a multi-line String (probably a shellscript).
+ */
 @NonCPS
 def String dedent(String text) {
   if (text == null) {
@@ -534,6 +592,12 @@ def String dedent(String text) {
   text.replaceFirst("\n","").stripIndent()
 }
 
+/**
+ * Generate shellscript to configure a C/C++ compiler.
+ *
+ * @param compiler Single String description of compiler.
+ * @return String shellscript
+ */
 @NonCPS
 def String scriptCompiler(String compiler) {
   def setup = null
@@ -597,11 +661,22 @@ def String scriptCompiler(String compiler) {
   dedent(setup)
 }
 
+/**
+ * Represents a miniconda build environment.
+ */
 class MinicondaEnv implements Serializable {
   String pythonVersion
   String minicondaVersion
   String lsstswRef
 
+  /**
+   * Constructor.
+   *
+   * @param p Python major version number. Eg., '3'
+   * @param m Miniconda version string. Eg., '4.2.12'
+   * @param l {@code lsst/lsstsw} git ref.
+   * @return MinicondaEnv
+   */
   // unfortunately, a constructor is required under the security sandbox
   // See: https://issues.jenkins-ci.org/browse/JENKINS-34741
   MinicondaEnv(String p, String m, String l) {
@@ -610,11 +685,17 @@ class MinicondaEnv implements Serializable {
     this.lsstswRef = l
   }
 
+  /**
+   * Generate a single string description of miniconda env.
+   */
   String slug() {
     "miniconda${pythonVersion}-${minicondaVersion}-${lsstswRef}"
   }
 }
 
+/**
+ * Join multiple String args togther with '/'s to resemble a filesystem path.
+ */
 // The groovy String#join method is not working under the security sandbox
 // https://issues.jenkins-ci.org/browse/JENKINS-43484
 @NonCPS
@@ -637,7 +718,14 @@ def String joinPath(String ... parts) {
   return text
 }
 
-def String wrapContainer(String imageName, String tag) {
+/**
+ * Create a thin "wrapper" container around {@code imageName} to map uid/gid of
+ * the user invoking docker into the container.
+ *
+ * @param imageName docker image slug
+ * @param tag name of tag to apply to generated image
+ */
+def void wrapContainer(String imageName, String tag) {
   def buildDir = 'docker'
   def config = dedent("""
     FROM    ${imageName}
@@ -676,5 +764,4 @@ def String wrapContainer(String imageName, String tag) {
 
     deleteDir()
   }
-
 }
