@@ -10,6 +10,7 @@ pipelineJob('release/tarball') {
     booleanParam('SMOKE', false, 'Run a post-build installation test of generated EUPS distrib traballs.')
     booleanParam('RUN_DEMO', false, 'Run the "stack" demo as part of the "smoke" installation test.')
     booleanParam('PUBLISH', false, 'Publish generated EUPS distrib tarballs.')
+    booleanParam('WIPEOUT', false, 'Completely wipe out workspace(s) before starting build.')
   }
 
   properties {

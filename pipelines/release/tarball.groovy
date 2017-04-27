@@ -4,6 +4,10 @@ class UnsupportedCompiler extends Exception {}
 
 def notify = null
 node {
+  if (params.WIPEOUT) {
+    deleteDir()
+  }
+
   dir('jenkins-dm-jobs') {
     // XXX the git step seemed to blowup on a branch of '*/<foo>'
     checkout([
@@ -89,6 +93,10 @@ def void linuxTarballs(
   def envId = joinPath('redhat', platform, compiler, slug)
 
   node('docker') {
+    if (params.WIPEOUT) {
+      deleteDir()
+    }
+
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
     // single sh step
@@ -127,6 +135,10 @@ def void osxTarballs(
   def envId = joinPath('osx', macosx_deployment_target, compiler, slug)
 
   node("osx-${platform}") {
+    if (params.WIPEOUT) {
+      deleteDir()
+    }
+
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
     // single sh step
