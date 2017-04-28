@@ -62,8 +62,7 @@ def j = matrixJob('stack-os-matrix') {
 
   axes {
     label('label',
-      'centos-6', 'centos-7',
-      'osx'
+      'centos-6', 'centos-7'
     )
     dynamicAxis {
       name('python')
