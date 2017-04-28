@@ -121,6 +121,9 @@ def j = matrixJob('stack-os-matrix') {
       fingerprint()
       pattern('lsstsw/build/manifest.txt')
     }
+    publishBuild {
+      discardOldBuilds(-1, 1000, -1, -1)
+    }
   }
 }
 
