@@ -15,7 +15,7 @@ pipelineJob('backup/s3backup-eups') {
   keepDependencies(true)
 
   triggers {
-    cron('H H/4 * * *')
+    cron('H 4 * * *')
   }
 
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
