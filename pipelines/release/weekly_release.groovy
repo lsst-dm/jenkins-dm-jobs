@@ -104,7 +104,10 @@ try {
         build job: 'release/tarball',
           parameters: [
             string(name: 'PRODUCT', value: 'lsst_distrib'),
-            string(name: 'EUPS_TAG', value: eups_tag)
+            string(name: 'EUPS_TAG', value: eups_tag),
+            booleanParam(name: 'SMOKE', value: true),
+            booleanParam(name: 'RUN_DEMO', value: true),
+            booleanParam(name: 'PUBLISH', value: true)
           ]
       }
     }
