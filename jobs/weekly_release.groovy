@@ -13,9 +13,12 @@ pipelineJob('release/weekly-release') {
   concurrentBuild(false)
   keepDependencies(true)
 
+  // disabled cron trigger to move weekly tag from monday morning -> fridays
+  /*
   triggers {
     cron('0 0 * * 5')
   }
+  */
 
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
   def ref  = SEED_JOB.scm.getBranches().get(0).getName()
