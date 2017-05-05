@@ -14,7 +14,7 @@ pipelineJob('release/weekly-release') {
   keepDependencies(true)
 
   triggers {
-    cron('0 0 * * 1')
+    cron('0 0 * * 5')
   }
 
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
