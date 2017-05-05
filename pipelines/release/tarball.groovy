@@ -24,7 +24,7 @@ node {
 
 try {
   notify.started()
-  def retries = 1
+  def retries = 3
 
   def pyenvs = [
     new MinicondaEnv('2', '4.2.12', '7c8e67'),
