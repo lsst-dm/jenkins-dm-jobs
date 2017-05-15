@@ -46,7 +46,7 @@ try {
           string(name: 'PRODUCT', value: product),
           string(name: 'GIT_TAG', value: git_tag),
           booleanParam(name: 'SKIP_DEMO', value: false),
-          booleanParam(name: 'SKIP_DOCS', value: false)
+          booleanParam(name: 'SKIP_DOCS', value: true)
         ]
       rebuildId = result.id
     }
