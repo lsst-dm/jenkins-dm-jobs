@@ -491,7 +491,7 @@ def String buildScript(
   String macosx_deployment_target,
   MinicondaEnv menv
 ) {
-  scriptPreamble(compiler, macosx_deployment_target, menv) +
+  scriptPreamble(compiler, macosx_deployment_target, menv, true) +
   dedent("""
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
@@ -519,7 +519,7 @@ def String smokeScript(
   MinicondaEnv menv,
   String ciScriptsPath
 ) {
-  scriptPreamble(compiler, macosx_deployment_target, menv) +
+  scriptPreamble(compiler, macosx_deployment_target, menv, true) +
   dedent("""
     export EUPS_PKGROOT="${eupsPkgroot}"
 
@@ -548,7 +548,8 @@ def String smokeScript(
 def String scriptPreamble(
   String compiler,
   String macosx_deployment_target='10.9',
-  MinicondaEnv menv
+  MinicondaEnv menv,
+  boolean useTarballs
 ) {
   dedent("""
     set -e
@@ -576,6 +577,7 @@ def String scriptPreamble(
     export LSST_PYTHON_VERSION="${menv.pythonVersion}"
     export MINICONDA_VERSION="${menv.minicondaVersion}"
     export LSSTSW_REF="${menv.lsstswRef}"
+    export EUPS_USE_TARBALLS="${useTarballs}"
     """
     + scriptCompiler(compiler)
   )
