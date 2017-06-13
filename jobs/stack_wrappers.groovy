@@ -23,6 +23,7 @@ import util.StackOsMatrix
   [
     product: 'ci_hsc',
     skip_demo: true,
+    python: 'py2',
   ],
   [
     product: 'lsst_obs',
