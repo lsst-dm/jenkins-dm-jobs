@@ -13,7 +13,7 @@ def j = matrixJob('stack-os-matrix') {
   // While the dynamic axes plugin will only work with space separated values
   // and neither plugin appears to be configurable.  Thus, we are resorting to
   // manually injecting configuration for extended choices plugin, which can be
-  // configured to produce space seperated values.
+  // configured to produce space separated values.
   configure { project ->
     project / 'properties' / 'hudson.model.ParametersDefinitionProperty' / 'parameterDefinitions' / 'com.cwctravel.hudson.plugins.extended__choice__parameter.ExtendedChoiceParameterDefinition' {
       name 'python'
@@ -22,7 +22,16 @@ def j = matrixJob('stack-os-matrix') {
       saveJSONParameterToFile false
       visibleItemCount 2
       type 'PT_MULTI_SELECT'
+      // if there is no comma between values, regardless of the value of
+      // `multiSelectDelimiter`, the entire string will be treated as a single
+      // option
       value 'py2, py3'
+      // with a multiSelectDelimiter of ' ', defaultValue still requires a
+      // comma between items to work correctly when a build is directly launched.
+      // However, it requires no comma when the build is triggered from another
+      // build and NO python parameter value is passed at all.
+      // TL;DR is there does not appear to be a way for a triggering job to get
+      // the default value and an explicit python parameter must be passed.
       defaultValue 'py2, py3'
       multiSelectDelimiter ' '
     }

@@ -9,8 +9,8 @@ class StackOsMatrix {
   Boolean skip_demo
   String cron = 'H H/8 * * *'
   // stack-os-matrix will break if an explicit python param is not passed
-  // XXX note that contratry to the how the default value is default, no comma
-  // seperater is used for this param when triggering a build
+  // XXX note that contrary to the how the default value is default, no comma
+  // separator is used for this param when triggering a build
   String python = 'py2 py3'
   String branch
 
