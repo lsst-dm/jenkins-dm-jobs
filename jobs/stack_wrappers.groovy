@@ -23,6 +23,7 @@ import util.StackOsMatrix
   [
     product: 'ci_hsc',
     skip_demo: true,
+    python: 'py2',
   ],
   [
     product: 'lsst_obs',
@@ -34,7 +35,7 @@ import util.StackOsMatrix
     branch: '13.0 v13.0',
     skip_demo: true,
     cron: null,
-
+    python: 'py2',
   ],
 ].each { j ->
   def stack = new StackOsMatrix(j)
