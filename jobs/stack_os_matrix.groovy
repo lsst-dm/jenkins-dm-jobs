@@ -23,7 +23,7 @@ def j = matrixJob('stack-os-matrix') {
       visibleItemCount 2
       type 'PT_MULTI_SELECT'
       value 'py2, py3'
-      defaultValue 'py2'
+      defaultValue 'py2, py3'
       multiSelectDelimiter ' '
     }
   }
