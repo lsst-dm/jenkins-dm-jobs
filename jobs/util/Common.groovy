@@ -32,6 +32,10 @@ class Common {
   }
 
   static void makeFolders(DslFactory dslFactory) {
+    dslFactory.folder('sqre') {
+      description('SQRE mission related jobs')
+    }
+
     dslFactory.folder('infrastructure') {
       description('Infrastructure jobs')
     }
