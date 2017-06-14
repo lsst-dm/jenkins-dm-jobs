@@ -1,6 +1,9 @@
 import util.Common
+Common.makeFolders(this)
 
-def j = matrixJob('validate_drp') {
+def folder = 'sqre'
+
+def j = matrixJob("${folder}/validate_drp") {
   description('Execute validate_drp and ship the results to the squash qa-dashboard.')
 
   properties {
