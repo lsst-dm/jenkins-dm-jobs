@@ -56,7 +56,7 @@ class Common {
       description('Binary releases via docker contrainers.')
     }
 
-    dslFactory.folder('cowboy') {
+    dslFactory.folder('sqre/cowboy') {
       description('Experimental, not fully-baked, and/or "demonstration purposes only" jobs.')
     }
     dslFactory.folder('qserv') {
