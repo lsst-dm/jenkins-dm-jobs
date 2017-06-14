@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('release/build-publish') {
+def folder = 'release'
+
+pipelineJob("${folder}/build-publish") {
   description('Run release/run-rebuild & release/rub-publish in series')
 
   parameters {
@@ -35,7 +37,7 @@ pipelineJob('release/build-publish') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/build_publish.groovy')
+      scriptPath("pipelines/${folder}/build_publish.groovy")
     }
   }
 }
