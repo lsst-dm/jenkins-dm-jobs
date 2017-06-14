@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('backup/qadb-dump') {
+def folder = 'sqre/backup'
+
+pipelineJob("${folder}/qadb-dump") {
   description('Backup qadb to S3.')
 
   properties {
@@ -31,12 +33,12 @@ pipelineJob('backup/qadb-dump') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/backup/qadb_dump.groovy')
+      scriptPath("pipelines/${folder}/qadb_dump.groovy")
     }
   }
 }
 
-pipelineJob('backup/build-mysqldump-to-s3') {
+pipelineJob("${folder}/build-mysqldump-to-s3") {
   description('Constructs lsstsqre/mysqldump-to-s3 container.')
 
   properties {
@@ -62,7 +64,7 @@ pipelineJob('backup/build-mysqldump-to-s3') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/backup/build_mysqldump_to_s3.groovy')
+      scriptPath("pipelines/${folder}/build_mysqldump_to_s3.groovy")
     }
   }
 }

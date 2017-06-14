@@ -44,7 +44,7 @@ class Common {
       description('CI for the CI system(s)')
     }
 
-    dslFactory.folder('backup') {
+    dslFactory.folder('sqre/backup') {
       description('SQRE service backup(s)')
     }
 
