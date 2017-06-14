@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('ci-ci/test-pipeline-docker') {
+def folder = 'sqre/ci-ci'
+
+pipelineJob("${folder}/test-pipeline-docker") {
   description('Test running a build inside a docker container.')
 
   properties {
@@ -27,7 +29,7 @@ pipelineJob('ci-ci/test-pipeline-docker') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/ci_ci/test_pipeline_docker.groovy')
+      scriptPath("pipelines/${folder}/test_pipeline_docker.groovy")
     }
   }
 }

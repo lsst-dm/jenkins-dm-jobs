@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('ci-ci/test-pipeline') {
+def folder = 'sqre/ci-ci'
+
+pipelineJob("${folder}/test-pipeline") {
   properties {
     rebuild {
       autoRebuild()
@@ -21,7 +23,7 @@ pipelineJob('ci-ci/test-pipeline') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/test_pipe.groovy')
+      scriptPath("pipelines/${folder}/test_pipe.groovy")
     }
   }
 }

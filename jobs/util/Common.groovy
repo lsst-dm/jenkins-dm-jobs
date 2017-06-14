@@ -40,7 +40,7 @@ class Common {
       description('Infrastructure jobs')
     }
 
-    dslFactory.folder('ci-ci') {
+    dslFactory.folder('sqre/ci-ci') {
       description('CI for the CI system(s)')
     }
 
