@@ -1,11 +1,13 @@
 import util.Common
 Common.makeFolders(this)
 
+def folder = 'sqre/backup'
+
 def name = 'ec2-snapshot'
 def org = 'lsst-sqre'
 def slug = "${org}/${name}"
 
-def j = job('backup/jenkins-ebs-snapshot') {
+def j = job("${folder}/jenkins-ebs-snapshot") {
   scm {
     git {
       remote {

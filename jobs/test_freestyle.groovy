@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-def job = job('ci-ci/test-freestyle') {
+def folder = 'sqre/ci-ci'
+
+def job = job("${folder}/test-freestyle") {
 
   properties {
     rebuild {

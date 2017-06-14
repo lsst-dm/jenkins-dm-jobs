@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('infrastructure/travissync') {
+def folder = 'sqre/infrastructure'
+
+pipelineJob("${folder}/travissync") {
   description('Synchronize Travis CI with GitHub.')
 
   properties {
@@ -20,7 +22,7 @@ pipelineJob('infrastructure/travissync') {
   triggers {
     cron('H * * * *')
   }
-  
+
   definition {
     cpsScm {
       scm {
@@ -31,7 +33,7 @@ pipelineJob('infrastructure/travissync') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/infrastructure/travissync.groovy')
+      scriptPath("pipelines/${folder}/travissync.groovy")
     }
   }
 }

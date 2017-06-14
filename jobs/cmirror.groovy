@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('infrastructure/update-cmirror') {
+def folder = 'sqre/infrastructure'
+
+pipelineJob("${folder}/update-cmirror") {
   description('Update S3 mirror of conda packages.')
 
   properties {
@@ -31,12 +33,12 @@ pipelineJob('infrastructure/update-cmirror') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/infrastructure/update_cmirror.groovy')
+      scriptPath("pipelines/${folder}/update_cmirror.groovy")
     }
   }
 }
 
-pipelineJob('infrastructure/build-cmirror') {
+pipelineJob("${folder}/build-cmirror") {
   description('Constructs lsstsqre/cmirror container.')
 
   properties {
@@ -62,7 +64,7 @@ pipelineJob('infrastructure/build-cmirror') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/infrastructure/build_cmirror.groovy')
+      scriptPath("pipelines/${folder}/build_cmirror.groovy")
     }
   }
 }

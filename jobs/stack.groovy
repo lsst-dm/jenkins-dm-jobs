@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('cowboy/stack') {
+def folder = 'sqre/cowboy'
+
+pipelineJob("${folder}/stack") {
   description('Re-implementation of the `stack-os-matrix` job in job-dsl & pipeline.  Presently, this job *ONLY* builds on OSX slaves.  Use this job for testing on OSX.')
 
   parameters {
@@ -43,7 +45,7 @@ pipelineJob('cowboy/stack') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/stack.groovy')
+      scriptPath("pipelines/${folder}/stack.groovy")
     }
   }
 }

@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('ci-ci/test-pipeline-write') {
+def folder = 'sqre/ci-ci'
+
+pipelineJob("${folder}/test-pipeline-write") {
   description('Test writing and archiving a file from a pipeline script.')
 
   properties {
@@ -28,7 +30,7 @@ pipelineJob('ci-ci/test-pipeline-write') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/ci_ci/test_pipeline_write.groovy')
+      scriptPath("pipelines/${folder}/test_pipeline_write.groovy")
     }
   }
 }

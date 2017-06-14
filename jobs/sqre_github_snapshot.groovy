@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('backup/nightly-sqre-github-snapshot') {
+def folder = 'sqre/backup'
+
+pipelineJob("${folder}/nightly-sqre-github-snapshot") {
   description('Nighlty mirror clones of all public github repositories.')
 
   properties {
@@ -31,12 +33,12 @@ pipelineJob('backup/nightly-sqre-github-snapshot') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/backup/nightly_sqre_github_snapshot.groovy')
+      scriptPath("pipelines/${folder}/nightly_sqre_github_snapshot.groovy")
     }
   }
 }
 
-pipelineJob('backup/build-sqre-github-snapshot') {
+pipelineJob("${folder}/build-sqre-github-snapshot") {
   description('Constructs a docker image to run sqre-github-snapshot.')
 
   properties {
@@ -62,7 +64,7 @@ pipelineJob('backup/build-sqre-github-snapshot') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/backup/build_sqre_github_snapshot.groovy')
+      scriptPath("pipelines/${folder}/build_sqre_github_snapshot.groovy")
     }
   }
 }

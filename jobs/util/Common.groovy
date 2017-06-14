@@ -32,15 +32,19 @@ class Common {
   }
 
   static void makeFolders(DslFactory dslFactory) {
-    dslFactory.folder('infrastructure') {
+    dslFactory.folder('sqre') {
+      description('SQRE mission related jobs')
+    }
+
+    dslFactory.folder('sqre/infrastructure') {
       description('Infrastructure jobs')
     }
 
-    dslFactory.folder('ci-ci') {
+    dslFactory.folder('sqre/ci-ci') {
       description('CI for the CI system(s)')
     }
 
-    dslFactory.folder('backup') {
+    dslFactory.folder('sqre/backup') {
       description('SQRE service backup(s)')
     }
 
@@ -52,7 +56,7 @@ class Common {
       description('Binary releases via docker contrainers.')
     }
 
-    dslFactory.folder('cowboy') {
+    dslFactory.folder('sqre/cowboy') {
       description('Experimental, not fully-baked, and/or "demonstration purposes only" jobs.')
     }
     dslFactory.folder('qserv') {

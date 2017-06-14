@@ -5,10 +5,6 @@ import util.StackOsMatrix
 
 [
   [
-    product: 'dax_webserv',
-    skip_demo: true,
-  ],
-  [
     product: 'lsst_distrib',
     skip_demo: false,
   ],
@@ -17,16 +13,20 @@ import util.StackOsMatrix
     skip_demo: false,
   ],
   [
-    product: 'qserv_distrib',
-    skip_demo: true,
-  ],
-  [
     product: 'ci_hsc',
     skip_demo: true,
     python: 'py2',
   ],
   [
     product: 'lsst_obs',
+    skip_demo: true,
+  ],
+  [
+    product: 'qserv/dax_webserv',
+    skip_demo: true,
+  ],
+  [
+    product: 'qserv/qserv_distrib',
     skip_demo: true,
   ],
   [
