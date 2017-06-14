@@ -22,11 +22,13 @@ import util.StackOsMatrix
     skip_demo: true,
   ],
   [
-    product: 'qserv/dax_webserv',
+    name: 'qserv/dax_webserv',
+    product: 'dax_webserv',
     skip_demo: true,
   ],
   [
-    product: 'qserv/qserv_distrib',
+    name: 'qserv/qserv_distrib',
+    product: 'qserv_distrib',
     skip_demo: true,
   ],
   [
