@@ -1,4 +1,14 @@
 /**
+ * Thin wrapper around {@code sh} step that strips leading whitspace and
+ * enables ANSI color codes.
+ */
+def void shColor(script) {
+  wrap([$class: 'AnsiColorBuildWrapper']) {
+    sh dedent(script)
+  }
+}
+
+/**
  * Create a thin "wrapper" container around {@code imageName} to map uid/gid of
  * the user invoking docker into the container.
  *

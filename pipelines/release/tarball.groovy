@@ -199,7 +199,7 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
     def shName = "${shPath}/${shBasename}"
     def localImageName = "${imageName}-local"
 
-    shColor 'mkdir -p distrib build scripts'
+    util.shColor 'mkdir -p distrib build scripts'
 
     prepareBuild(
       params.PRODUCT,
@@ -214,7 +214,7 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
     util.wrapContainer(imageName, localImageName)
 
     withEnv(["RUN=/scripts/${shBasename}", "IMAGE=${localImageName}"]) {
-      shColor '''
+      util.shColor '''
         set -e
 
         docker run \
@@ -246,7 +246,7 @@ def void osxBuild(
   try {
     def shName = "${pwd()}/scripts/run.sh"
 
-    shColor 'mkdir -p distrib build scripts'
+    util.shColor 'mkdir -p distrib build scripts'
 
     prepareBuild(
       params.PRODUCT,
@@ -259,7 +259,7 @@ def void osxBuild(
     )
 
     dir('build') {
-      shColor """
+      util.shColor """
         set -e
 
         "${shName}"
@@ -285,7 +285,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
     deleteDir()
   }
 
-  shColor 'mkdir -p smoke'
+  util.shColor 'mkdir -p smoke'
 
   prepareSmoke(
     params.PRODUCT,
@@ -312,7 +312,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
     "IMAGE=${localImageName}",
     "RUN_DEMO=${params.RUN_DEMO}",
   ]) {
-    shColor '''
+    util.shColor '''
       set -e
 
       docker run \
@@ -371,7 +371,7 @@ def void osxSmoke(
       "RUN_DEMO=${params.RUN_DEMO}",
       "FIX_SHEBANGS=true",
     ]) {
-      shColor """
+      util.shColor """
         set -e
 
         ${shName}
@@ -402,7 +402,7 @@ def void prepareBuild(
   )
 
   writeFile(file: shName, text: script)
-  shColor "chmod a+x ${shName}"
+  util.shColor "chmod a+x ${shName}"
 }
 
 /**
@@ -429,7 +429,7 @@ def void prepareSmoke(
   )
 
   writeFile(file: shName, text: script)
-  shColor "chmod a+x ${shName}"
+  util.shColor "chmod a+x ${shName}"
 }
 
 /**
@@ -439,7 +439,7 @@ def void prepareSmoke(
 def void s3Push(String ... parts) {
   def path = joinPath(parts)
 
-  shColor '''
+  util.shColor '''
     set -e
     # do not assume virtualenv is present
     pip install virtualenv
@@ -454,7 +454,7 @@ def void s3Push(String ... parts) {
     usernameVariable: 'AWS_ACCESS_KEY_ID',
     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
   ]]) {
-    shColor """
+    util.shColor """
       set -e
       . venv/bin/activate
       aws s3 sync --only-show-errors ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${path}
@@ -466,17 +466,7 @@ def void s3Push(String ... parts) {
  * Cleanup after a build attempt.
  */
 def void cleanup() {
-  shColor 'rm -rf "./build/.lockDir"'
-}
-
-/**
- * Thin wrapper around {@code sh} step that strips leading whitspace and
- * enables ANSI color codes.
- */
-def void shColor(script) {
-  wrap([$class: 'AnsiColorBuildWrapper']) {
-    sh dedent(script)
-  }
+  util.shColor 'rm -rf "./build/.lockDir"'
 }
 
 /**
