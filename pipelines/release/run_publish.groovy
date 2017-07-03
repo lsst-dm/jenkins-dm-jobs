@@ -9,6 +9,7 @@ node('jenkins-master') {
       userRemoteConfigs: scm.getUserRemoteConfigs()
     ])
     notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
   }
 }
 
@@ -45,7 +46,7 @@ try {
           variable: 'CMIRROR_S3_BUCKET'
         ]]) {
           withEnv(env) {
-            shColor '''
+            util.shColor '''
               #!/bin/bash -e
 
               # ensure that we are using the lsstsw clone relative to the workspace
@@ -68,7 +69,7 @@ try {
               source ./lsstsw/bin/setup.sh
 
               publish "${ARGS[@]}"
-            '''.replaceFirst("\n","").stripIndent()
+            '''
           }
         }// withCredentials([[
       } // stage('publish')
@@ -91,7 +92,7 @@ try {
           ]
 
           withEnv(env) {
-            shColor '''
+            util.shColor '''
               #!/bin/bash -e
 
               # setup python env
@@ -99,7 +100,7 @@ try {
               pip install awscli
 
               aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/
-            '''.replaceFirst("\n","").stripIndent()
+            '''
           }
         }
       } // stage('push packages')
@@ -124,11 +125,5 @@ try {
       break
     default:
       notify.failure()
-  }
-}
-
-def shColor(script) {
-  wrap([$class: 'AnsiColorBuildWrapper']) {
-    sh script
   }
 }

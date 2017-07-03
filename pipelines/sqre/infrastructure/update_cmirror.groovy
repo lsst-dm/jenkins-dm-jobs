@@ -7,6 +7,7 @@ node {
       userRemoteConfigs: scm.getUserRemoteConfigs()
     ])
     notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
   }
 }
 
@@ -23,10 +24,10 @@ try {
     }
 
     stage('mirror linux-64') {
-      shColor '''
+      util.shColor '''
         mkdir -p local_mirror tmp
         chmod 777 local_mirror tmp
-      '''.replaceFirst("\n","").stripIndent()
+      '''
 
       runMirror(image.id, 'https://repo.continuum.io/pkgs/free/', 'linux-64')
     }
@@ -36,7 +37,7 @@ try {
     }
 
     stage('mirror miniconda') {
-      shColor '''
+      util.shColor '''
         wget \
           --mirror \
           --continue \
@@ -48,7 +49,7 @@ try {
           -R "*armv7l.sh" \
           -R "*x86.sh" \
           https://repo.continuum.io/miniconda/
-      '''.replaceFirst("\n","").stripIndent()
+      '''
     }
 
     stage('push to s3') {
@@ -63,7 +64,7 @@ try {
         credentialsId: 'cmirror-s3-bucket',
         variable: 'CMIRROR_S3_BUCKET'
       ]]) {
-        shColor '''
+        util.shColor '''
           set -e
           # do not assume virtualenv is present
           pip install virtualenv
@@ -73,7 +74,7 @@ try {
 
           aws s3 sync --delete ./local_mirror/ s3://$CMIRROR_S3_BUCKET/pkgs/free/
           aws s3 sync --delete ./miniconda/ s3://$CMIRROR_S3_BUCKET/miniconda/
-        '''.replaceFirst("\n","").stripIndent()
+        '''
       }
     } // stage('push to s3')
   } // node
@@ -100,12 +101,16 @@ try {
 }
 
 def runMirror(String image, String upstream, String platform) {
+  def localImageName = "${image}-local"
+
+  util.wrapContainer(image, localImageName)
+
   withEnv([
-    "IMAGE=${image}",
+    "IMAGE=${localImageName}",
     "UPSTREAM=${upstream}",
     "PLATFORM=${platform}",
   ]) {
-    shColor '''
+    util.shColor '''
       docker run \
         -v $(pwd)/tmp:/tmp \
         -v $(pwd)/local_mirror:/local_mirror \
@@ -114,12 +119,6 @@ def runMirror(String image, String upstream, String platform) {
         --target-directory /local_mirror \
         --platform "$PLATFORM" \
         -vvv
-    '''.replaceFirst("\n","").stripIndent()
-  }
-}
-
-def shColor(script) {
-  wrap([$class: 'AnsiColorBuildWrapper']) {
-    sh script
+    '''
   }
 }

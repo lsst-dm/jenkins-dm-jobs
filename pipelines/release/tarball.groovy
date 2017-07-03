@@ -16,6 +16,7 @@ node {
       userRemoteConfigs: scm.getUserRemoteConfigs()
     ])
     notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
   }
 }
 
@@ -102,7 +103,7 @@ def void linuxTarballs(
   MinicondaEnv menv
 ) {
   def String slug = menv.slug()
-  def envId = joinPath('redhat', platform, compiler, slug)
+  def envId = util.joinPath('redhat', platform, compiler, slug)
 
   node('docker') {
     if (params.WIPEOUT) {
@@ -153,7 +154,7 @@ def void osxTarballs(
   MinicondaEnv menv
 ) {
   def String slug = menv.slug()
-  def envId = joinPath('osx', macosx_deployment_target, compiler, slug)
+  def envId = util.joinPath('osx', macosx_deployment_target, compiler, slug)
 
   node("osx-${platform}") {
     if (params.WIPEOUT) {
@@ -198,7 +199,7 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
     def shName = "${shPath}/${shBasename}"
     def localImageName = "${imageName}-local"
 
-    shColor 'mkdir -p distrib build scripts'
+    util.shColor 'mkdir -p distrib build scripts'
 
     prepareBuild(
       params.PRODUCT,
@@ -210,10 +211,10 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
       menv
     )
 
-    wrapContainer(imageName, localImageName)
+    util.wrapContainer(imageName, localImageName)
 
     withEnv(["RUN=/scripts/${shBasename}", "IMAGE=${localImageName}"]) {
-      shColor '''
+      util.shColor '''
         set -e
 
         docker run \
@@ -245,7 +246,7 @@ def void osxBuild(
   try {
     def shName = "${pwd()}/scripts/run.sh"
 
-    shColor 'mkdir -p distrib build scripts'
+    util.shColor 'mkdir -p distrib build scripts'
 
     prepareBuild(
       params.PRODUCT,
@@ -258,7 +259,7 @@ def void osxBuild(
     )
 
     dir('build') {
-      shColor """
+      util.shColor """
         set -e
 
         "${shName}"
@@ -284,7 +285,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
     deleteDir()
   }
 
-  shColor 'mkdir -p smoke'
+  util.shColor 'mkdir -p smoke'
 
   prepareSmoke(
     params.PRODUCT,
@@ -304,14 +305,14 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
     ])
   }
 
-  wrapContainer(imageName, localImageName)
+  util.wrapContainer(imageName, localImageName)
 
   withEnv([
     "RUN=/scripts/${shBasename}",
     "IMAGE=${localImageName}",
     "RUN_DEMO=${params.RUN_DEMO}",
   ]) {
-    shColor '''
+    util.shColor '''
       set -e
 
       docker run \
@@ -370,7 +371,7 @@ def void osxSmoke(
       "RUN_DEMO=${params.RUN_DEMO}",
       "FIX_SHEBANGS=true",
     ]) {
-      shColor """
+      util.shColor """
         set -e
 
         ${shName}
@@ -401,7 +402,7 @@ def void prepareBuild(
   )
 
   writeFile(file: shName, text: script)
-  shColor "chmod a+x ${shName}"
+  util.shColor "chmod a+x ${shName}"
 }
 
 /**
@@ -428,7 +429,7 @@ def void prepareSmoke(
   )
 
   writeFile(file: shName, text: script)
-  shColor "chmod a+x ${shName}"
+  util.shColor "chmod a+x ${shName}"
 }
 
 /**
@@ -436,9 +437,9 @@ def void prepareSmoke(
  * joining the {@code parts} parameters.
  */
 def void s3Push(String ... parts) {
-  def path = joinPath(parts)
+  def path = util.joinPath(parts)
 
-  shColor '''
+  util.shColor '''
     set -e
     # do not assume virtualenv is present
     pip install virtualenv
@@ -453,7 +454,7 @@ def void s3Push(String ... parts) {
     usernameVariable: 'AWS_ACCESS_KEY_ID',
     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
   ]]) {
-    shColor """
+    util.shColor """
       set -e
       . venv/bin/activate
       aws s3 sync --only-show-errors ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${path}
@@ -465,17 +466,7 @@ def void s3Push(String ... parts) {
  * Cleanup after a build attempt.
  */
 def void cleanup() {
-  shColor 'rm -rf "./build/.lockDir"'
-}
-
-/**
- * Thin wrapper around {@code sh} step that strips leading whitspace and
- * enables ANSI color codes.
- */
-def void shColor(script) {
-  wrap([$class: 'AnsiColorBuildWrapper']) {
-    sh dedent(script)
-  }
+  util.shColor 'rm -rf "./build/.lockDir"'
 }
 
 /**
@@ -495,7 +486,7 @@ def String buildScript(
   MinicondaEnv menv
 ) {
   scriptPreamble(compiler, macosx_deployment_target, menv, true) +
-  dedent("""
+  util.dedent("""
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
 
@@ -523,7 +514,7 @@ def String smokeScript(
   String ciScriptsPath
 ) {
   scriptPreamble(compiler, macosx_deployment_target, menv, true) +
-  dedent("""
+  util.dedent("""
     export EUPS_PKGROOT="${eupsPkgroot}"
 
     curl -sSL ${newinstall_url} | bash -s -- -cb
@@ -554,7 +545,7 @@ def String scriptPreamble(
   MinicondaEnv menv,
   boolean useTarballs
 ) {
-  dedent("""
+  util.dedent("""
     set -e
     set -x
 
@@ -584,17 +575,6 @@ def String scriptPreamble(
     """
     + scriptCompiler(compiler)
   )
-}
-
-/**
- * Remove leading whitespace from a multi-line String (probably a shellscript).
- */
-@NonCPS
-def String dedent(String text) {
-  if (text == null) {
-    return null
-  }
-  text.replaceFirst("\n","").stripIndent()
 }
 
 /**
@@ -663,7 +643,7 @@ def String scriptCompiler(String compiler) {
       throw new UnsupportedCompiler(compiler)
   }
 
-  dedent(setup)
+  util.dedent(setup)
 }
 
 /**
@@ -695,78 +675,5 @@ class MinicondaEnv implements Serializable {
    */
   String slug() {
     "miniconda${pythonVersion}-${minicondaVersion}-${lsstswRef}"
-  }
-}
-
-/**
- * Join multiple String args togther with '/'s to resemble a filesystem path.
- */
-// The groovy String#join method is not working under the security sandbox
-// https://issues.jenkins-ci.org/browse/JENKINS-43484
-@NonCPS
-def String joinPath(String ... parts) {
-  String text = null
-
-  def n = parts.size()
-  parts.eachWithIndex { x, i ->
-    if (text == null) {
-      text = x
-    } else {
-      text += x
-    }
-
-    if (i < (n - 1)) {
-      text += '/'
-    }
-  }
-
-  return text
-}
-
-/**
- * Create a thin "wrapper" container around {@code imageName} to map uid/gid of
- * the user invoking docker into the container.
- *
- * @param imageName docker image slug
- * @param tag name of tag to apply to generated image
- */
-def void wrapContainer(String imageName, String tag) {
-  def buildDir = 'docker'
-  def config = dedent("""
-    FROM    ${imageName}
-
-    ARG     USER
-    ARG     UID
-    ARG     GROUP
-    ARG     GID
-    ARG     HOME
-
-    USER    root
-    RUN     groupadd -g \$GID \$GROUP
-    RUN     useradd -d \$HOME -g \$GROUP -u \$UID \$USER
-
-    USER    \$USER
-    WORKDIR \$HOME
-  """)
-
-  // docker insists on recusrively checking file access under its execution
-  // path -- so run it from a dedicated dir
-  dir(buildDir) {
-    writeFile(file: 'Dockerfile', text: config)
-
-    shColor """
-      set -e
-      set -x
-
-      docker build -t "${tag}" \
-          --build-arg USER="\$(id -un)" \
-          --build-arg UID="\$(id -u)" \
-          --build-arg GROUP="\$(id -gn)" \
-          --build-arg GID="\$(id -g)" \
-          --build-arg HOME="\$HOME" \
-          .
-    """
-
-    deleteDir()
   }
 }

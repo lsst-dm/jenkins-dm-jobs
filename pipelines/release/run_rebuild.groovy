@@ -9,6 +9,7 @@ node('jenkins-master') {
       userRemoteConfigs: scm.getUserRemoteConfigs()
     ])
     notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
   }
 }
 
@@ -47,7 +48,7 @@ try {
           ]]) {
             withEnv(env) {
               sshagent (credentials: ['github-jenkins-versiondb']) {
-                shColor '''
+                util.shColor '''
                   #!/bin/bash -e
 
                   # ensure that we are using the lsstsw clone relative to the workspace
@@ -65,13 +66,13 @@ try {
 
                   # handled by the postbuild on failure script if there is an error
                   rm -rf "${WORKSPACE}/REPOS"
-                '''.replaceFirst("\n","").stripIndent()
+                '''
               }
             }
           } // withCredentials([[
         } finally {
           withEnv(["WORKSPACE=${pwd()}"]) {
-            shColor '''
+            util.shColor '''
               if hash lsof 2>/dev/null; then
                 Z=$(lsof -d 200 -t)
                 if [[ ! -z $Z ]]; then
@@ -83,7 +84,7 @@ try {
 
               rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
               rm -rf "${WORKSPACE}/REPOS"
-            '''.stripIndent()
+            '''
           }
 
           archiveArtifacts([
@@ -106,7 +107,7 @@ try {
           variable: 'DOXYGEN_S3_BUCKET'
         ]]) {
           withEnv(["WORKSPACE=${pwd()}"]) {
-            shColor '''
+            util.shColor '''
               #!/bin/bash -e
 
               if [[ $SKIP_DOCS == "true" ]]; then
@@ -121,7 +122,7 @@ try {
               . ./buildbot-scripts/settings.cfg.sh
 
               aws s3 sync "$DOC_PUSH_PATH"/ s3://$DOXYGEN_S3_BUCKET/stack/doxygen/
-            '''.replaceFirst("\n","").stripIndent()
+            '''
           }
         }
       } // stage('push docs')
@@ -146,11 +147,5 @@ try {
       break
     default:
       notify.failure()
-  }
-}
-
-def shColor(script) {
-  wrap([$class: 'AnsiColorBuildWrapper']) {
-    sh script
   }
 }
