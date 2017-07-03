@@ -101,8 +101,12 @@ try {
 }
 
 def runMirror(String image, String upstream, String platform) {
+  def localImageName = "${image}-local"
+
+  util.wrapContainer(image, localImageName)
+
   withEnv([
-    "IMAGE=${image}",
+    "IMAGE=${localImageName}",
     "UPSTREAM=${upstream}",
     "PLATFORM=${platform}",
   ]) {
