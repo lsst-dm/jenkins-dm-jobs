@@ -15,12 +15,12 @@ If slave is busy, wipe out individual job workspace directories for jobs that ar
 Either way, remove custom workspaces also if they aren't in use.
 **/
 
-import hudson.model.*;
-import hudson.util.*;
-import jenkins.model.*;
-import hudson.FilePath.FileCallable;
-import hudson.slaves.OfflineCause;
-import hudson.node_monitors.*;
+import hudson.model.*
+import hudson.util.*
+import jenkins.model.*
+import hudson.FilePath.FileCallable
+import hudson.slaves.OfflineCause
+import hudson.node_monitors.*
 
 // threshold is in GB and comes from a job parameter
 def threshold = 100
