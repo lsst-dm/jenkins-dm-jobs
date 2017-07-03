@@ -67,4 +67,29 @@ def void wrapContainer(String imageName, String tag) {
   }
 }
 
+/**
+ * Join multiple String args togther with '/'s to resemble a filesystem path.
+ */
+// The groovy String#join method is not working under the security sandbox
+// https://issues.jenkins-ci.org/browse/JENKINS-43484
+@NonCPS
+def String joinPath(String ... parts) {
+  String text = null
+
+  def n = parts.size()
+  parts.eachWithIndex { x, i ->
+    if (text == null) {
+      text = x
+    } else {
+      text += x
+    }
+
+    if (i < (n - 1)) {
+      text += '/'
+    }
+  }
+
+  return text
+}
+
 return this;

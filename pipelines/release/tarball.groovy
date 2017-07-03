@@ -103,7 +103,7 @@ def void linuxTarballs(
   MinicondaEnv menv
 ) {
   def String slug = menv.slug()
-  def envId = joinPath('redhat', platform, compiler, slug)
+  def envId = util.joinPath('redhat', platform, compiler, slug)
 
   node('docker') {
     if (params.WIPEOUT) {
@@ -154,7 +154,7 @@ def void osxTarballs(
   MinicondaEnv menv
 ) {
   def String slug = menv.slug()
-  def envId = joinPath('osx', macosx_deployment_target, compiler, slug)
+  def envId = util.joinPath('osx', macosx_deployment_target, compiler, slug)
 
   node("osx-${platform}") {
     if (params.WIPEOUT) {
@@ -437,7 +437,7 @@ def void prepareSmoke(
  * joining the {@code parts} parameters.
  */
 def void s3Push(String ... parts) {
-  def path = joinPath(parts)
+  def path = util.joinPath(parts)
 
   util.shColor '''
     set -e
@@ -676,29 +676,4 @@ class MinicondaEnv implements Serializable {
   String slug() {
     "miniconda${pythonVersion}-${minicondaVersion}-${lsstswRef}"
   }
-}
-
-/**
- * Join multiple String args togther with '/'s to resemble a filesystem path.
- */
-// The groovy String#join method is not working under the security sandbox
-// https://issues.jenkins-ci.org/browse/JENKINS-43484
-@NonCPS
-def String joinPath(String ... parts) {
-  String text = null
-
-  def n = parts.size()
-  parts.eachWithIndex { x, i ->
-    if (text == null) {
-      text = x
-    } else {
-      text += x
-    }
-
-    if (i < (n - 1)) {
-      text += '/'
-    }
-  }
-
-  return text
 }
