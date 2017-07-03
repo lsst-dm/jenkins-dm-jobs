@@ -187,4 +187,4 @@ skippedNodes.each{node ->
   println "\tSkipped: ${node.displayName}"
 }
 
-assert failedNodes.size() == 0
+assert failedNodes.size() == 0 : "\nFailed: ${failedNodes.size()}"
