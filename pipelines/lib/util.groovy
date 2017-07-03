@@ -1,4 +1,15 @@
 /**
+ * Remove leading whitespace from a multi-line String (probably a shellscript).
+ */
+@NonCPS
+def String dedent(String text) {
+  if (text == null) {
+    return null
+  }
+  text.replaceFirst("\n","").stripIndent()
+}
+
+/**
  * Thin wrapper around {@code sh} step that strips leading whitspace and
  * enables ANSI color codes.
  */

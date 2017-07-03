@@ -486,7 +486,7 @@ def String buildScript(
   MinicondaEnv menv
 ) {
   scriptPreamble(compiler, macosx_deployment_target, menv, true) +
-  dedent("""
+  util.dedent("""
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
 
@@ -514,7 +514,7 @@ def String smokeScript(
   String ciScriptsPath
 ) {
   scriptPreamble(compiler, macosx_deployment_target, menv, true) +
-  dedent("""
+  util.dedent("""
     export EUPS_PKGROOT="${eupsPkgroot}"
 
     curl -sSL ${newinstall_url} | bash -s -- -cb
@@ -545,7 +545,7 @@ def String scriptPreamble(
   MinicondaEnv menv,
   boolean useTarballs
 ) {
-  dedent("""
+  util.dedent("""
     set -e
     set -x
 
@@ -575,17 +575,6 @@ def String scriptPreamble(
     """
     + scriptCompiler(compiler)
   )
-}
-
-/**
- * Remove leading whitespace from a multi-line String (probably a shellscript).
- */
-@NonCPS
-def String dedent(String text) {
-  if (text == null) {
-    return null
-  }
-  text.replaceFirst("\n","").stripIndent()
 }
 
 /**
@@ -654,7 +643,7 @@ def String scriptCompiler(String compiler) {
       throw new UnsupportedCompiler(compiler)
   }
 
-  dedent(setup)
+  util.dedent(setup)
 }
 
 /**
