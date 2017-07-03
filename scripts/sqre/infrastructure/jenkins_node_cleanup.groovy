@@ -15,12 +15,43 @@ If slave is busy, wipe out individual job workspace directories for jobs that ar
 Either way, remove custom workspaces also if they aren't in use.
 **/
 
-import hudson.model.*;
-import hudson.util.*;
-import jenkins.model.*;
-import hudson.FilePath.FileCallable;
-import hudson.slaves.OfflineCause;
-import hudson.node_monitors.*;
+import hudson.model.*
+import hudson.util.*
+import jenkins.model.*
+import hudson.FilePath.FileCallable
+import hudson.slaves.OfflineCause
+import hudson.node_monitors.*
+import groovy.transform.InheritConstructors
+
+@InheritConstructors
+class CleanupException extends Exception {}
+
+@InheritConstructors
+class Node extends CleanupException {
+  hudson.model.Slave node
+
+  Node(hudson.model.Slave node) {
+    super()
+    this.node = node
+  }
+
+  Node(hudson.model.Slave node, String m) {
+    super(m)
+    this.node = node
+  }
+
+  Node(hudson.model.Slave node, String m, Throwable t) {
+    super(m, t)
+    this.node = node
+  }
+}
+
+@InheritConstructors
+class Failed extends Node {}
+@InheritConstructors
+class Offline extends Node {}
+@InheritConstructors
+class Skipped extends Node {}
 
 // threshold is in GB and comes from a job parameter
 def threshold = 100
@@ -60,9 +91,8 @@ ArrayList allJobs() {
   }
 }
 
-def failedNodes = []
-def offlineNodes = []
-def skippedNodes = []
+def nodeStatus = [:].withDefault {[]}
+def prevOffline = false
 
 for (node in Jenkins.instance.nodes) {
   try {
@@ -71,15 +101,11 @@ for (node in Jenkins.instance.nodes) {
     def computer = node.toComputer()
     // a null channel indicates that the node is offline
     if (computer.getChannel() == null) {
-      offlineNodes << node
-      println "Node ${node.displayName} is offline"
-      continue
+      throw new Offline(node)
     }
 
     if (node.assignedLabels.find{ it.expression in skippedLabels }) {
-      skippedNodes << node
-      println "Skipping ${node.displayName} based on labels"
-      continue
+      throw new Skipped(node, "based on label(s)")
     }
 
     def size = DiskSpaceMonitor.DESCRIPTOR.get(computer).size
@@ -89,7 +115,7 @@ for (node in Jenkins.instance.nodes) {
             + ", free space: " + roundedSize
             + "GB. Idle: ${computer.isIdle()}")
 
-    def prevOffline = computer.isOffline()
+    prevOffline = computer.isOffline()
     if (prevOffline && computer.getOfflineCauseReason().startsWith('disk cleanup from job')) {
       // previous run screwed up, ignore it and clear it at the end
       prevOffline = false
@@ -97,9 +123,7 @@ for (node in Jenkins.instance.nodes) {
 
     // skip nodes with sufficent disk space
     if (roundedSize >= threshold) {
-      skippedNodes << node
-      println "Skipping ${node.displayName} based on disk threshhold"
-      continue
+      throw new Skipped(node, "disk threshhold")
     }
 
     // mark node as offline
@@ -115,7 +139,7 @@ for (node in Jenkins.instance.nodes) {
       // it's idle so delete everything under workspace
       def workspaceDir = node.getWorkspaceRoot()
       if (!deleteRemote(workspaceDir, true)) {
-        failedNodes << node
+        throw new Failed(node, "delete failed")
       }
 
       // delete custom workspaces on the navie assumption that any job could
@@ -126,13 +150,13 @@ for (node in Jenkins.instance.nodes) {
       custom.each { item ->
         // note that #child claims to deal with abs and rel paths
         if (!deleteRemote(node.getRootPath().child(item.customWorkspace()), false)) {
-          failedNodes << node
+          throw new Failed(node, "delete failed")
         }
       }
 
       extraDirectoriesToDelete.each {
         if (!deleteRemote(node.getRootPath().child(it), false)) {
-          failedNodes << node
+          throw new Failed(node, "delete failed")
         }
       }
     } else {
@@ -161,30 +185,40 @@ for (node in Jenkins.instance.nodes) {
         }
 
         if (!deleteRemote(workspacePath, false)) {
-          failedNodes << node
+          throw new Failed(node, "delete failed")
         }
       }
     }
-
-    if (!prevOffline) {
-      computer.setTemporarilyOffline(false, null)
-    }
   } catch (Throwable t) {
-    println "Error with ${node.displayName}: ${t}"
-    failedNodes << node
+    switch (t) {
+      case Offline:
+        nodeStatus['offlineNodes'] << t
+        break
+      case Skipped:
+        nodeStatus['skippedNodes'] << t
+        break
+      default:
+        // includes Failed
+        nodeStatus['failedNodes'] << t
+    }
+  } finally {
+    if (!prevOffline) {
+      node.toComputer().setTemporarilyOffline(false, null)
+    }
   }
 }
 
+println ''
 println '### SUMMARY'
 
-failedNodes.each{node ->
-  println "\tERRORS with: ${node.displayName}"
-}
-offlineNodes.each{node ->
-  println "\tOffline: ${node.displayName}"
-}
-skippedNodes.each{node ->
-  println "\tSkipped: ${node.displayName}"
+nodeStatus.each { status ->
+  println "  * ${status.key}:"
+
+  status.value.each { e ->
+    println "    - ${e.node.displayName} ${e}"
+  }
 }
 
-assert failedNodes.size() == 0
+def borked = nodeStatus['failedNodes']?.size()
+
+assert borked == 0 : "\nFailed: ${borked}"
