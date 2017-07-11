@@ -18,6 +18,11 @@ import util.StackOsMatrix
     python: 'py2',
   ],
   [
+    product: 'ci_ctio0m9',
+    skip_demo: true,
+    python: 'py2',
+  ],
+  [
     product: 'lsst_obs',
     skip_demo: true,
   ],
