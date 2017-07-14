@@ -22,6 +22,8 @@ try {
   def rebuildId = null
   def buildJob = 'release/build-publish-tag'
   def publishJob = 'release/run-publish'
+  def year = null
+  def week = null
 
   stage('generate weekly tag') {
     def tz = TimeZone.getTimeZone('America/Los_Angeles')
@@ -36,6 +38,9 @@ try {
     // eups doesn't like dots in tags, convert to underscores
     eups_tag = git_tag.tr('.-', '_')
     echo "generated [eups] tag: ${eups_tag}"
+
+    year = new java.text.SimpleDateFormat('Y').setTimeZone(tz).format(date)
+    week = new java.text.SimpleDateFormat('w').setTimeZone(tz).format(date)
   }
 
   stage('run build-publish-tag') {
@@ -113,6 +118,18 @@ try {
     }
 
     parallel artifact
+  }
+
+  stage('build jupyterlabdemo image') {
+    retry(retries) {
+      build job: 'sqre/infrastructure/build-jupyterlabdemo',
+        parameters: [
+          choiceParam(name: 'BTYPE', value: 'w')
+          stringParam(name: 'YEAR', value: year)
+          stringParam(name: 'WEEK', value: week)
+          choiceParam(name: 'PYVER', value: '3')
+        ]
+    }
   }
 
   stage('archive') {
