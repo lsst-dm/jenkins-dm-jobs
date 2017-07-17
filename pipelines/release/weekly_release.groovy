@@ -25,22 +25,23 @@ try {
   def year = null
   def week = null
 
-  stage('generate weekly tag') {
-    def tz = TimeZone.getTimeZone('America/Los_Angeles')
-    def dateFormat = new java.text.SimpleDateFormat('Y.w')
-    dateFormat.setTimeZone(tz)
-    def date = new java.util.Date()
-    def dateStamp = dateFormat.format(date)
+  stage('format weekly tag') {
+    if (!params.YEAR) {
+      error 'YEAR parameter is required'
+    }
+    if (!params.WEEK) {
+      error 'WEEK parameter is required'
+    }
 
-    git_tag = "w.${dateStamp}"
+    year = params.YEAR
+    week = params.WEEK
+
+    git_tag = "w.${year}.${week}"
     echo "generated [git] tag: ${git_tag}"
 
     // eups doesn't like dots in tags, convert to underscores
     eups_tag = git_tag.tr('.-', '_')
     echo "generated [eups] tag: ${eups_tag}"
-
-    year = new java.text.SimpleDateFormat('Y').setTimeZone(tz).format(date)
-    week = new java.text.SimpleDateFormat('w').setTimeZone(tz).format(date)
   }
 
   stage('run build-publish-tag') {
