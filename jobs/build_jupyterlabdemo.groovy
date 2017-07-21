@@ -21,7 +21,7 @@ pipelineJob("${folder}/build-jupyterlabdemo") {
 
   label('jenkins-master')
   keepDependencies(true)
-  concurrentBuild()
+  concurrentBuild(false)
 
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
   def ref  = SEED_JOB.scm.getBranches().get(0).getName()
