@@ -3,14 +3,11 @@ Common.makeFolders(this)
 
 def folder = 'sqre/infrastructure'
 
-pipelineJob("${folder}/build-jupyterlabdemo") {
-  description('Constructs docker jupyterlabdemo images.')
+pipelineJob("${folder}/build-stacktest") {
+  description('Constructs docker images with EUPS tarballs.')
 
   parameters {
-    choiceParam('BTYPE', ['w', 'r'], 'Type of build: release|weekly')
-    stringParam('YEAR', null, 'Gregorian calendar year.')
-    stringParam('WEEK', null, 'Week of Gregorian calendar year.')
-    choiceParam('PYVER', ['3', '2'], 'Python major version')
+    stringParam('TAG', null, 'EUPS distrib tag name. Eg. w_2016_08')
   }
 
   properties {
@@ -36,7 +33,7 @@ pipelineJob("${folder}/build-jupyterlabdemo") {
           branch(ref)
         }
       }
-      scriptPath("pipelines/${folder}/build_jupyterlabdemo.groovy")
+      scriptPath("pipelines/${folder}/build_stacktest.groovy")
     }
   }
 }

@@ -123,6 +123,13 @@ try {
 
   stage('build jupyterlabdemo image') {
     retry(retries) {
+      build job: 'sqre/infrastructure/build-stacktest',
+        parameters: [
+          string(name: 'TAG', value: eups_tag)
+        ]
+    }
+
+    retry(retries) {
       build job: 'sqre/infrastructure/build-jupyterlabdemo',
         parameters: [
           choiceParam(name: 'BTYPE', value: 'w'),
