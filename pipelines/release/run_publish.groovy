@@ -34,7 +34,7 @@ try {
         }
 
         def env = [
-          'EUPS_PKGROOT=/lsst/distserver/production',
+          "EUPS_PKGROOT=${pwd()}/distrib",
           'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
           'VERSIONDB_PUSH=true',
           "WORKSPACE=${pwd()}",
@@ -87,7 +87,7 @@ try {
           variable: 'EUPS_S3_BUCKET'
         ]]) {
           def env = [
-            'EUPS_PKGROOT=/lsst/distserver/production',
+            "EUPS_PKGROOT=${pwd()}/distrib",
             "WORKSPACE=${pwd()}",
           ]
 
