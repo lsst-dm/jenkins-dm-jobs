@@ -82,7 +82,7 @@ def j = matrixJob('stack-os-matrix') {
   combinationFilter('''
     !(
       (label=="centos-6" && python=="py3") ||
-      (label=="osx-10.11" && python=="py2")
+      (label=="osx" && python=="py2")
     )
   '''.replaceFirst("\n","").stripIndent())
 
