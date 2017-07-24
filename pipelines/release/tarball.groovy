@@ -54,14 +54,11 @@ try {
         }
       }
 
-      // disable osx builds while osx nodes are inaccessible
-      /*
       platform['osx-10.11'] = {
         retry(retries) {
           osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py)
         }
       }
-      */
 
       parallel platform
     }

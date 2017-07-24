@@ -71,7 +71,7 @@ def j = matrixJob('stack-os-matrix') {
 
   axes {
     label('label',
-      'centos-6', 'centos-7'
+      'centos-6', 'centos-7', 'osx'
     )
     dynamicAxis {
       name('python')
@@ -82,7 +82,7 @@ def j = matrixJob('stack-os-matrix') {
   combinationFilter('''
     !(
       (label=="centos-6" && python=="py3") ||
-      (label=="osx-10.11" && python=="py3")
+      (label=="osx-10.11" && python=="py2")
     )
   '''.replaceFirst("\n","").stripIndent())
 
