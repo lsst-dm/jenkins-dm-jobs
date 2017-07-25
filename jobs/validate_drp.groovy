@@ -96,7 +96,7 @@ def j = matrixJob("${folder}/validate_drp") {
     POSTQA_VERSION: '1.3.1',
     // validation data sets -- avoid variable name collision with EUPS
     HSC_DATA:  '$WORKSPACE/validation_data_hsc',
-    JEKNINS_DEBUG: 'true',
+    JENKINS_DEBUG: 'true',
   )
 
   steps {
