@@ -267,6 +267,12 @@ def j = matrixJob("${folder}/validate_drp") {
       run_status=$?
       set -e
 
+      # bail out if the drp output file is missing
+      if [[ ! -e  "${DRP}/${RESULTS[0]}" ]]; then
+        echo "drp result file does not exist: ${DRP}/${RESULTS[0]}"
+        exit 1
+      fi
+
       # XXX we are currently only submitting one filter per dataset
       ln -sf "${DRP}/${RESULTS[0]}" "${DRP}/output.json"
 
@@ -302,6 +308,12 @@ def j = matrixJob("${folder}/validate_drp") {
       #!/bin/bash -e
 
       [[ $JENKINS_DEBUG == true ]] && set -o xtrace
+
+      # bail out if the drp output file is missing
+      if [[ ! -e  "${DRP}/output.json" ]]; then
+        echo "drp result file does not exist: ${DRP}/output.json"
+        exit 1
+      fi
 
       archive_dir="${ARCHIVE}/${dataset}"
       mkdir -p "$archive_dir"
