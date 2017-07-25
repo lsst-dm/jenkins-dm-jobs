@@ -184,7 +184,8 @@ def j = matrixJob("${folder}/validate_drp") {
         # Remove local configuration of lfs.batch.  This was once required to
         # be false with the sqre lfs server.  However, `false` will not break a
         # lfs pull.
-        git config --local --unset lfs.batch
+        # git-config will exit 5 when trying to unset an undefined key
+        git config --local --unset lfs.batch || true
         # lfs.required must be false in order for jenkins to manage the clone
         git config --local filter.lfs.required false
         git config --local filter.lfs.smudge 'git-lfs smudge %f'
