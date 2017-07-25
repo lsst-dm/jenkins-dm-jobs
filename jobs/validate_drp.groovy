@@ -266,6 +266,9 @@ def j = matrixJob("${folder}/validate_drp") {
       for r in "${artifacts[@]}"; do
         dest="${archive_dir}/${r##*/}"
         # file may not exist due to an error
+        if [[ ! -e "${DRP}/${r}" ]]; then
+          continue
+        fi
         if ! cp "${DRP}/${r}" "$dest"; then
           continue
         fi
