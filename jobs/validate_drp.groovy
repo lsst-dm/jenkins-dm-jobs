@@ -96,6 +96,7 @@ def j = matrixJob("${folder}/validate_drp") {
     POSTQA_VERSION: '1.3.1',
     // validation data sets -- avoid variable name collision with EUPS
     HSC_DATA:  '$WORKSPACE/validation_data_hsc',
+    JEKNINS_DEBUG: 'true',
   )
 
   steps {
@@ -103,6 +104,8 @@ def j = matrixJob("${folder}/validate_drp") {
     shell(
       '''
       #!/bin/bash -e
+
+      [[ $JENKINS_DEBUG == true ]] && set -o xtrace
 
       # leave validate_drp results in workspace for debugging purproses but
       # always start with clean dirs
@@ -113,12 +116,21 @@ def j = matrixJob("${folder}/validate_drp") {
     )
 
     // build/install validate_drp
-    shell('./buildbot-scripts/jenkins_wrapper.sh')
+    shell('''
+      #!/bin/bash -e
+
+      [[ $JENKINS_DEBUG == true ]] && set -o xtrace
+
+      ./buildbot-scripts/jenkins_wrapper.sh
+      '''.replaceFirst("\n","").stripIndent()
+    )
 
     // run drp driver script
     shell(
       '''
       #!/bin/bash -e
+
+      [[ $JENKINS_DEBUG == true ]] && set -o xtrace
 
       find_mem() {
         # Find system available memory in GiB
@@ -266,6 +278,9 @@ def j = matrixJob("${folder}/validate_drp") {
       for r in "${artifacts[@]}"; do
         dest="${archive_dir}/${r##*/}"
         # file may not exist due to an error
+        if [[ ! -e "${DRP}/${r}" ]]; then
+          continue
+        fi
         if ! cp "${DRP}/${r}" "$dest"; then
           continue
         fi
@@ -285,6 +300,8 @@ def j = matrixJob("${folder}/validate_drp") {
     shell(
       '''
       #!/bin/bash -e
+
+      [[ $JENKINS_DEBUG == true ]] && set -o xtrace
 
       archive_dir="${ARCHIVE}/${dataset}"
       mkdir -p "$archive_dir"
