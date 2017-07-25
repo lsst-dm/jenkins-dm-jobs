@@ -104,6 +104,8 @@ def j = matrixJob("${folder}/validate_drp") {
       '''
       #!/bin/bash -e
 
+      [[ $JENKINS_DEBUG == true ]] && set -o xtrace
+
       # leave validate_drp results in workspace for debugging purproses but
       # always start with clean dirs
 
@@ -113,12 +115,21 @@ def j = matrixJob("${folder}/validate_drp") {
     )
 
     // build/install validate_drp
-    shell('./buildbot-scripts/jenkins_wrapper.sh')
+    shell('''
+      #!/bin/bash -e
+
+      [[ $JENKINS_DEBUG == true ]] && set -o xtrace
+
+      ./buildbot-scripts/jenkins_wrapper.sh
+      '''.replaceFirst("\n","").stripIndent()
+    )
 
     // run drp driver script
     shell(
       '''
       #!/bin/bash -e
+
+      [[ $JENKINS_DEBUG == true ]] && set -o xtrace
 
       find_mem() {
         # Find system available memory in GiB
@@ -288,6 +299,8 @@ def j = matrixJob("${folder}/validate_drp") {
     shell(
       '''
       #!/bin/bash -e
+
+      [[ $JENKINS_DEBUG == true ]] && set -o xtrace
 
       archive_dir="${ARCHIVE}/${dataset}"
       mkdir -p "$archive_dir"
