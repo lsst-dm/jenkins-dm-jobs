@@ -195,7 +195,12 @@ def j = matrixJob("${folder}/validate_drp") {
 
       cd "$DRP"
 
+      # do not xtrace (if set) into setup.sh to avoid bloating the jenkins
+      # console log
+      SHOPTS=$(set +o)
+      set +o xtrace
       . "${LSSTSW}/bin/setup.sh"
+      eval "$SHOPTS"
 
       eval "$(grep -E '^BUILD=' "${LSSTSW}/build/manifest.txt")"
 
@@ -267,6 +272,8 @@ def j = matrixJob("${folder}/validate_drp") {
       "$RUN" --noplot
       run_status=$?
       set -e
+
+      echo "${RUN##*/} - exit status: ${run_status}"
 
       # archive drp processing results
       # process artifacts *before* bailing out if the drp run failed
