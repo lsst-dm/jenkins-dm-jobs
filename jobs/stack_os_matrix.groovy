@@ -54,7 +54,7 @@ def j = matrixJob('stack-os-matrix') {
       branch('*/master')
       extensions {
         relativeTargetDirectory('lsstsw')
-        cloneOptions { shallow() }
+        // cloneOptions { shallow() }
       }
     }
     git {
@@ -64,7 +64,7 @@ def j = matrixJob('stack-os-matrix') {
       branch('*/master')
       extensions {
         relativeTargetDirectory('buildbot-scripts')
-        cloneOptions { shallow() }
+        // cloneOptions { shallow() }
       }
     }
   }
