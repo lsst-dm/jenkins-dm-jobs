@@ -273,6 +273,8 @@ def j = matrixJob("${folder}/validate_drp") {
       run_status=$?
       set -e
 
+      echo "${RUN##*/} - exit status: ${run_status}"
+
       # archive drp processing results
       # process artifacts *before* bailing out if the drp run failed
       archive_dir="${ARCHIVE}/${dataset}"
