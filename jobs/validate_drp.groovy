@@ -268,16 +268,8 @@ def j = matrixJob("${folder}/validate_drp") {
       run_status=$?
       set -e
 
-      # bail out if the drp output file is missing
-      if [[ ! -e  "${DRP}/${RESULTS[0]}" ]]; then
-        echo "drp result file does not exist: ${DRP}/${RESULTS[0]}"
-        exit 1
-      fi
-
-      # XXX we are currently only submitting one filter per dataset
-      ln -sf "${DRP}/${RESULTS[0]}" "${DRP}/output.json"
-
       # archive drp processing results
+      # process artifacts *before* bailing out if the drp run failed
       archive_dir="${ARCHIVE}/${dataset}"
       mkdir -p "$archive_dir"
       artifacts=( "${RESULTS[@]}" "${LOGS[@]}" )
@@ -298,6 +290,15 @@ def j = matrixJob("${folder}/validate_drp") {
         # xz -T0 -9e  0.179    1:28
         xz -T0 -9ev "$dest"
       done
+
+      # bail out if the drp output file is missing
+      if [[ ! -e  "${DRP}/${RESULTS[0]}" ]]; then
+        echo "drp result file does not exist: ${DRP}/${RESULTS[0]}"
+        exit 1
+      fi
+
+      # XXX we are currently only submitting one filter per dataset
+      ln -sf "${DRP}/${RESULTS[0]}" "${DRP}/output.json"
 
       exit $run_status
       '''.replaceFirst("\n","").stripIndent()
