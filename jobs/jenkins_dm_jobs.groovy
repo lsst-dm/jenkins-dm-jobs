@@ -13,11 +13,13 @@ def j = job("${folder}/jenkins-dm-jobs") {
         url(repo)
       }
       branch(ref)
+      /*
       extensions {
         cloneOptions {
           shallow(true)
         }
       }
+      */
     }
   }
 

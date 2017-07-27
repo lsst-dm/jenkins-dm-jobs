@@ -23,7 +23,7 @@ def j = matrixJob("${folder}/validate_drp") {
       branch('*/master')
       extensions {
         relativeTargetDirectory('lsstsw')
-        cloneOptions { shallow() }
+        // cloneOptions { shallow() }
       }
     }
     git {
@@ -33,7 +33,7 @@ def j = matrixJob("${folder}/validate_drp") {
       branch('*/master')
       extensions {
         relativeTargetDirectory('buildbot-scripts')
-        cloneOptions { shallow() }
+        // cloneOptions { shallow() }
       }
     }
     // jenkins can't properly clone a git-lfs repo (yet) due to the way it
@@ -47,7 +47,7 @@ def j = matrixJob("${folder}/validate_drp") {
       branch('*/master')
       extensions {
         relativeTargetDirectory('validation_data_hsc')
-        cloneOptions { shallow() }
+        // cloneOptions { shallow() }
       }
     }
   }

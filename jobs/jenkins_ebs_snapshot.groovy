@@ -15,11 +15,13 @@ def j = job("${folder}/jenkins-ebs-snapshot") {
         //refspec('+refs/pull/*:refs/remotes/origin/pr/*')
       }
       branch('*/master')
+      /*
       extensions {
         cloneOptions {
           shallow(true)
         }
       }
+      */
     }
   }
 
