@@ -529,6 +529,11 @@ def String smokeScript(
     if [[ \$RUN_DEMO == true ]]; then
       ${ciScriptsPath}/runManifestDemo.sh --tag "${tag}" --small
     fi
+
+    git clone https://github.com/lsst/base.git
+    cd base
+    setup -k -r .
+    scon
   """)
 }
 
