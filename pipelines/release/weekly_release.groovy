@@ -100,8 +100,10 @@ try {
     }
 
     artifact['run qserv/docker/build'] = {
-      retry(retries) {
-        build job: 'qserv/docker/build'
+      catchError {
+        retry(retries) {
+          build job: 'qserv/docker/build'
+        }
       }
     }
 
