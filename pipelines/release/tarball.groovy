@@ -533,7 +533,7 @@ def String smokeScript(
     git clone https://github.com/lsst/base.git
     cd base
     setup -k -r .
-    scon
+    scons
   """)
 }
 
