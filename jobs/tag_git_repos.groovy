@@ -27,6 +27,8 @@ def j = job('release/tag-git-repos') {
   steps {
     shell(
       '''
+      #!/bin/bash -e
+
       ARGS=()
       if [[ $DRY_RUN == "true" ]]; then
         ARGS+=('--dry-run')
