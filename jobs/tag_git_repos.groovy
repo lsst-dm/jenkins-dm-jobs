@@ -41,13 +41,14 @@ def j = job('release/tag-git-repos') {
       ARGS+=('--team' 'Data Management')
       ARGS+=('--email' 'sqre-admin@lists.lsst.org')
       ARGS+=('--tagger' 'sqreadmin')
+      ARGS+=('--fail-fast')
       ARGS+=('--debug')
       ARGS+=("$GIT_TAG")
       ARGS+=("$BUILD_ID")
 
       virtualenv venv
       . venv/bin/activate
-      pip install sqre-codekit==3.0.0
+      pip install sqre-codekit==3.1.0
 
       # do not echo GH token to console log
       set +x
