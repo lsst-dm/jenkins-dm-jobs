@@ -41,6 +41,7 @@ def j = job('release/tag-git-repos') {
       ARGS+=('--team' 'Data Management')
       ARGS+=('--email' 'sqre-admin@lists.lsst.org')
       ARGS+=('--tagger' 'sqreadmin')
+      ARGS+=('--fail-fast')
       ARGS+=('--debug')
       ARGS+=("$GIT_TAG")
       ARGS+=("$BUILD_ID")
