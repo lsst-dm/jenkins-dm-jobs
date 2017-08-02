@@ -47,7 +47,7 @@ def j = job('release/tag-git-repos') {
 
       virtualenv venv
       . venv/bin/activate
-      pip install sqre-codekit==3.0.0
+      pip install sqre-codekit==3.1.0
 
       # do not echo GH token to console log
       set +x
