@@ -15,7 +15,7 @@ try {
   notify.started()
 
   // eups doesn't like dots in tags, convert to underscores
-  def EUPS_TAG = GIT_TAG.tr('.-', '_')
+  def EUPS_TAG = GIT_TAG.tr('.', '_')
 
   echo "branch: ${BRANCH}"
   echo "product: ${PRODUCT}"

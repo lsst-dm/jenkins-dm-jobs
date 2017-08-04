@@ -40,7 +40,7 @@ try {
     echo "generated [git] tag: ${git_tag}"
 
     // eups doesn't like dots in tags, convert to underscores
-    eups_tag = git_tag.tr('.-', '_')
+    eups_tag = git_tag.tr('.', '_')
     echo "generated [eups] tag: ${eups_tag}"
   }
 
