@@ -19,7 +19,7 @@ try {
   node('docker') {
     stage('checkout') {
       git([
-        url: 'https://github.com/lsst-sqre/nginx-ssl-proxy",
+        url: 'https://github.com/lsst-sqre/nginx-ssl-proxy',
         branch: 'master'
       ])
     }
