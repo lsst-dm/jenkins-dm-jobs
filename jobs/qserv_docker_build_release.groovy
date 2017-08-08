@@ -1,7 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('qserv/docker/build') {
+def folder = 'qserv/docker'
+
+pipelineJob("${folder}/build-release") {
   properties {
     rebuild {
       autoRebuild()
@@ -25,7 +27,7 @@ pipelineJob('qserv/docker/build') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/qserv/docker/build.groovy')
+      scriptPath("pipelines/${folder}/build_release.groovy")
     }
   }
 }
