@@ -74,9 +74,9 @@ try {
     }
   }
 
-  tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
-  tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
-  tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+  util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+  util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+  util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
 
   stage('build binary artifacts') {
     def artifact = [:]
@@ -177,18 +177,5 @@ try {
       break
     default:
       notify.failure()
-  }
-}
-
-def tagProduct(String buildId, String eupsTag, String product,
-               String publishJob = 'release/run-publish') {
-  stage("eups publish [${eupsTag}]") {
-    build job: publishJob,
-      parameters: [
-        string(name: 'EUPSPKG_SOURCE', value: 'git'),
-        string(name: 'BUILD_ID', value: buildId),
-        string(name: 'TAG', value: eupsTag),
-        string(name: 'PRODUCT', value: product)
-      ]
   }
 }

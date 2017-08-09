@@ -119,4 +119,26 @@ def LazyMap slurpJson(String data) {
   slurper.parseText(data)
 }
 
+
+/**
+ * Create an EUPS distrib tag
+ *
+ * @param buildId bNNNN
+ * @param eupsTag tag name
+ * @param product whitespace delimited string of products to tag
+ * @param publishJob job to trigger (does the actual work)
+ */
+def tagProduct(String buildId, String eupsTag, String product,
+               String publishJob = 'release/run-publish') {
+  stage("eups publish [${eupsTag}]") {
+    build job: publishJob,
+      parameters: [
+        string(name: 'EUPSPKG_SOURCE', value: 'git'),
+        string(name: 'BUILD_ID', value: buildId),
+        string(name: 'TAG', value: eupsTag),
+        string(name: 'PRODUCT', value: product)
+      ]
+  }
+}
+
 return this;
