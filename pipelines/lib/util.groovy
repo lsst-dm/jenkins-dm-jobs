@@ -92,4 +92,53 @@ def String joinPath(String ... parts) {
   return text
 }
 
+/**
+ * Serialize a Map to a JSON string and write it to a file.
+ *
+ * @param filename output filename
+ * @param data Map to serialize
+ */
+@NonCPS
+def dumpJson(String filename, Map data) {
+  def json = new groovy.json.JsonBuilder(data)
+  def pretty = groovy.json.JsonOutput.prettyPrint(json.toString())
+  echo pretty
+  writeFile file: filename, text: pretty
+}
+
+/**
+ * Serialize a Map to a JSON string and write it to a file.
+ *
+ * @param filename output filename
+ * @param data Map to serialize
+ * @return LazyMap parsed JSON object
+ */
+@NonCPS
+def LazyMap slurpJson(String data) {
+  def slurper = new groovy.json.JsonSlurper()
+  slurper.parseText(data)
+}
+
+
+/**
+ * Create an EUPS distrib tag
+ *
+ * @param buildId bNNNN
+ * @param eupsTag tag name
+ * @param product whitespace delimited string of products to tag
+ * @param publishJob job to trigger (does the actual work)
+ */
+def tagProduct(String buildId, String eupsTag, String product,
+               String publishJob = 'release/run-publish') {
+  stage("eups publish [${eupsTag}]") {
+    build job: publishJob,
+      parameters: [
+        string(name: 'EUPSPKG_SOURCE', value: 'git'),
+        string(name: 'BUILD_ID', value: buildId),
+        string(name: 'TAG', value: eupsTag),
+        string(name: 'PRODUCT', value: product)
+      ]
+  }
+}
+
 return this;

@@ -8,6 +8,7 @@ node {
       userRemoteConfigs: scm.getUserRemoteConfigs()
     ])
     notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
   }
 }
 
@@ -66,16 +67,16 @@ try {
             selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
             ]);
 
-      def results = slurpJson(readFile('results.json'))
+      def results = util.slurpJson(readFile('results.json'))
       bx = results['bnnnn']
 
       echo "parsed bnnnn: ${bx}"
     }
   }
 
-  tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
-  tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
-  tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+  util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+  util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+  util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
 
   stage('build binary artifacts') {
     def artifact = [:]
@@ -107,16 +108,19 @@ try {
       }
     }
 
-    artifact['run release/tarball'] = {
-      retry(retries) {
-        build job: 'release/tarball',
-          parameters: [
-            string(name: 'PRODUCT', value: 'lsst_distrib'),
-            string(name: 'EUPS_TAG', value: eups_tag),
-            booleanParam(name: 'SMOKE', value: true),
-            booleanParam(name: 'RUN_DEMO', value: true),
-            booleanParam(name: 'PUBLISH', value: true)
-          ]
+    for (pyver in ['2', '3']) {
+      artifact["run release/tarball py${pyver}"] = {
+        retry(retries) {
+          build job: 'release/tarball',
+            parameters: [
+              string(name: 'PRODUCT', value: 'lsst_distrib'),
+              string(name: 'EUPS_TAG', value: eups_tag),
+              booleanParam(name: 'SMOKE', value: true),
+              booleanParam(name: 'RUN_DEMO', value: true),
+              booleanParam(name: 'PUBLISH', value: true)
+              choiceParam(name: 'PYVER', value: pyver)
+            ]
+        }
       }
     }
 
@@ -149,7 +153,7 @@ try {
         git_tag: git_tag,
         eups_tag: eups_tag
       ]
-      dumpJson('results.json', results)
+      util.dumpJson('results.json', results)
 
       archiveArtifacts([
         artifacts: 'results.json',
@@ -177,31 +181,4 @@ try {
     default:
       notify.failure()
   }
-}
-
-def tagProduct(String buildId, String eupsTag, String product,
-               String publishJob = 'release/run-publish') {
-  stage("eups publish [${eupsTag}]") {
-    build job: publishJob,
-      parameters: [
-        string(name: 'EUPSPKG_SOURCE', value: 'git'),
-        string(name: 'BUILD_ID', value: buildId),
-        string(name: 'TAG', value: eupsTag),
-        string(name: 'PRODUCT', value: product)
-      ]
-  }
-}
-
-@NonCPS
-def dumpJson(String filename, Map data) {
-  def json = new groovy.json.JsonBuilder(data)
-  def pretty = groovy.json.JsonOutput.prettyPrint(json.toString())
-  echo pretty
-  writeFile file: filename, text: pretty
-}
-
-@NonCPS
-def slurpJson(String data) {
-  def slurper = new groovy.json.JsonSlurper()
-  slurper.parseText(data)
 }

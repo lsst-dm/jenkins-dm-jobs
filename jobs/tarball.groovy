@@ -11,6 +11,7 @@ pipelineJob('release/tarball') {
     booleanParam('RUN_DEMO', false, 'Run the "stack" demo as part of the "smoke" installation test.')
     booleanParam('PUBLISH', false, 'Publish generated EUPS distrib tarballs.')
     booleanParam('WIPEOUT', false, 'Completely wipe out workspace(s) before starting build.')
+    choiceParam('PYVER', ['3', '2'], 'Python major version')
   }
 
   properties {
