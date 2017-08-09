@@ -27,9 +27,12 @@ try {
   notify.started()
   def retries = 3
 
+  if (!params.PYVER) {
+    error 'PYVER parameter is required'
+  }
+
   def pyenvs = [
-    new MinicondaEnv('2', '4.2.12', '7c8e67'),
-    new MinicondaEnv('3', '4.2.12', '7c8e67'),
+    new MinicondaEnv(params.PYVER, '4.2.12', '7c8e67'),
   ]
 
   for (py in pyenvs) {

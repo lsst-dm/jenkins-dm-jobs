@@ -108,16 +108,19 @@ try {
       }
     }
 
-    artifact['run release/tarball'] = {
-      retry(retries) {
-        build job: 'release/tarball',
-          parameters: [
-            string(name: 'PRODUCT', value: 'lsst_distrib'),
-            string(name: 'EUPS_TAG', value: eups_tag),
-            booleanParam(name: 'SMOKE', value: true),
-            booleanParam(name: 'RUN_DEMO', value: true),
-            booleanParam(name: 'PUBLISH', value: true)
-          ]
+    for (pyver in ['2', '3']) {
+      artifact["run release/tarball py${pyver}"] = {
+        retry(retries) {
+          build job: 'release/tarball',
+            parameters: [
+              string(name: 'PRODUCT', value: 'lsst_distrib'),
+              string(name: 'EUPS_TAG', value: eups_tag),
+              booleanParam(name: 'SMOKE', value: true),
+              booleanParam(name: 'RUN_DEMO', value: true),
+              booleanParam(name: 'PUBLISH', value: true)
+              choiceParam(name: 'PYVER', value: pyver)
+            ]
+        }
       }
     }
 
