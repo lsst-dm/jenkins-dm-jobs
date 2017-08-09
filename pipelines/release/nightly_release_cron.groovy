@@ -43,7 +43,7 @@ try {
     build job: triggeredJob,
       parameters: [
         stringParam(name: 'YEAR', value: year),
-        stringParam(name: 'MONTH', value: month)
+        stringParam(name: 'MONTH', value: month),
         stringParam(name: 'DAY', value: day)
       ]
   }
