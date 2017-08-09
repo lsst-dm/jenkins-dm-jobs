@@ -14,7 +14,7 @@ node {
 try {
   notify.started()
 
-  def triggerJob = 'release/nightly-release'
+  def releaseJob = 'release/nightly-release'
   def year = null
   def month = null
   def day = null
@@ -40,7 +40,7 @@ try {
   }
 
   stage('run nightly-release') {
-    build job: triggeredJob,
+    build job: releaseJob,
       parameters: [
         stringParam(name: 'YEAR', value: year),
         stringParam(name: 'MONTH', value: month),
