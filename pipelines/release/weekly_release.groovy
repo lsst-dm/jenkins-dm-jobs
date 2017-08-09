@@ -8,6 +8,7 @@ node {
       userRemoteConfigs: scm.getUserRemoteConfigs()
     ])
     notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
   }
 }
 
@@ -66,7 +67,7 @@ try {
             selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
             ]);
 
-      def results = slurpJson(readFile('results.json'))
+      def results = util.slurpJson(readFile('results.json'))
       bx = results['bnnnn']
 
       echo "parsed bnnnn: ${bx}"
@@ -149,7 +150,7 @@ try {
         git_tag: git_tag,
         eups_tag: eups_tag
       ]
-      dumpJson('results.json', results)
+      util.dumpJson('results.json', results)
 
       archiveArtifacts([
         artifacts: 'results.json',
@@ -190,18 +191,4 @@ def tagProduct(String buildId, String eupsTag, String product,
         string(name: 'PRODUCT', value: product)
       ]
   }
-}
-
-@NonCPS
-def dumpJson(String filename, Map data) {
-  def json = new groovy.json.JsonBuilder(data)
-  def pretty = groovy.json.JsonOutput.prettyPrint(json.toString())
-  echo pretty
-  writeFile file: filename, text: pretty
-}
-
-@NonCPS
-def slurpJson(String data) {
-  def slurper = new groovy.json.JsonSlurper()
-  slurper.parseText(data)
 }
