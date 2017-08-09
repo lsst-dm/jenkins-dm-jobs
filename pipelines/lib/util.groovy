@@ -114,7 +114,7 @@ def dumpJson(String filename, Map data) {
  * @return LazyMap parsed JSON object
  */
 @NonCPS
-def LazyMap slurpJson(String data) {
+def slurpJson(String data) {
   def slurper = new groovy.json.JsonSlurper()
   slurper.parseText(data)
 }
