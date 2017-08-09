@@ -39,9 +39,9 @@ try {
       error 'DAY parameter is required'
     }
 
-    year = params.YEAR
-    month = params.MONTH
-    day = params.DAY
+    year = params.YEAR.padLeft(4, "0")
+    month = params.MONTH.padLeft(2, "0")
+    day = params.DAY.padLeft(2, "0")
 
     gitTag = "d.${year}.${month}.${day}"
     // echo "generated [git] tag: ${gitTag}"

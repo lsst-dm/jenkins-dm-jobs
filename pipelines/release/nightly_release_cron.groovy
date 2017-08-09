@@ -23,11 +23,11 @@ try {
     def tz = TimeZone.getTimeZone('America/Los_Angeles')
     def date = new java.util.Date()
 
-    def yearFormat = new java.text.SimpleDateFormat('Y')
+    def yearFormat = new java.text.SimpleDateFormat('YYYY')
     yearFormat.setTimeZone(tz)
-    def monthFormat = new java.text.SimpleDateFormat('M')
+    def monthFormat = new java.text.SimpleDateFormat('MM')
     monthFormat.setTimeZone(tz)
-    def dayFormat = new java.text.SimpleDateFormat('d')
+    def dayFormat = new java.text.SimpleDateFormat('dd')
     dayFormat.setTimeZone(tz)
 
     year = yearFormat.format(date)
