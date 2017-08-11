@@ -22,9 +22,9 @@ try {
     def tz = TimeZone.getTimeZone('America/Los_Angeles')
     def date = new java.util.Date()
 
-    def yearFormat = new java.text.SimpleDateFormat('Y')
+    def yearFormat = new java.text.SimpleDateFormat('YYYY')
     yearFormat.setTimeZone(tz)
-    def weekFormat = new java.text.SimpleDateFormat('w')
+    def weekFormat = new java.text.SimpleDateFormat('ww')
     weekFormat.setTimeZone(tz)
 
     year = yearFormat.format(date)
