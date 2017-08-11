@@ -34,8 +34,8 @@ try {
       error 'WEEK parameter is required'
     }
 
-    year = params.YEAR
-    week = params.WEEK
+    year = params.YEAR.padLeft(4, "0")
+    week = params.WEEK.padLeft(2, "0")
 
     git_tag = "w.${year}.${week}"
     echo "generated [git] tag: ${git_tag}"
