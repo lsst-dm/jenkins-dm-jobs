@@ -90,7 +90,8 @@ try {
           string(name: 'EUPS_TAG', value: eupsTag),
           booleanParam(name: 'SMOKE', value: true),
           booleanParam(name: 'RUN_DEMO', value: true),
-          booleanParam(name: 'PUBLISH', value: true)
+          booleanParam(name: 'PUBLISH', value: true),
+          string(name: 'PYVER', value: '3')
         ]
     }
   }
