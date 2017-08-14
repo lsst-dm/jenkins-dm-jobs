@@ -118,7 +118,7 @@ try {
               booleanParam(name: 'SMOKE', value: true),
               booleanParam(name: 'RUN_DEMO', value: true),
               booleanParam(name: 'PUBLISH', value: true),
-              choiceParam(name: 'PYVER', value: pyver)
+              string(name: 'PYVER', value: pyver)
             ]
         }
       }
@@ -138,10 +138,10 @@ try {
     retry(retries) {
       build job: 'sqre/infrastructure/build-jupyterlabdemo',
         parameters: [
-          choiceParam(name: 'BTYPE', value: 'w'),
+          string(name: 'BTYPE', value: 'w'),
           stringParam(name: 'YEAR', value: year),
           stringParam(name: 'WEEK', value: week),
-          choiceParam(name: 'PYVER', value: '3')
+          string(name: 'PYVER', value: '3')
         ]
     }
   }
