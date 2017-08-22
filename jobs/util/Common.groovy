@@ -21,7 +21,6 @@ class Common {
           includeTestSummary(false)
           includeCustomMessage(true)
           customMessage('(<${BUILD_URL}/console|Console>)')
-          buildServerUrl(null)
           sendAs(null)
           commitInfoChoice('NONE')
           teamDomain(null)
