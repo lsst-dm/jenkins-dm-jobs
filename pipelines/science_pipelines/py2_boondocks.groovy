@@ -1,6 +1,3 @@
-// XXX this is a copy of stack_os_matrix.groovy
-// A generic factory should be created if this becomes a long-lived pipeline.
-
 def notify = null
 
 node('jenkins-master') {
