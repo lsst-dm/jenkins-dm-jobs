@@ -72,5 +72,8 @@ class Common {
     dslFactory.folder('sims') {
       description('LSST sims specific jobs.')
     }
+    dslFactory.folder('science-pipelines') {
+      description('Science Pipelines / witchcraft.')
+    }
   }
 }
