@@ -141,4 +141,80 @@ def tagProduct(String buildId, String eupsTag, String product,
   }
 }
 
+/**
+ * Run a lsstsw build.
+ *
+ * @param label Node label to run on
+ * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
+ */
+def lsstswBuild(String label, String python) {
+  node(label) {
+    // use different workspace dirs for python 2/3 to avoid residual state
+    // conflicts
+    def slug = "${label}.${python}"
+
+    dir(slug) {
+      try {
+        dir('lsstsw') {
+          git([
+            url: 'https://github.com/lsst/lsstsw.git',
+            branch: 'master'
+          ])
+        }
+
+        dir('buildbot-scripts') {
+          git([
+            url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+            branch: 'master'
+          ])
+        }
+
+        withCredentials([[
+          $class: 'StringBinding',
+          credentialsId: 'cmirror-s3-bucket',
+          variable: 'CMIRROR_S3_BUCKET'
+        ]]) {
+          withEnv([
+            "WORKSPACE=${pwd()}",
+            'SKIP_DOCS=true',
+            "python=${python}"
+          ]) {
+            util.shColor './buildbot-scripts/jenkins_wrapper.sh'
+          }
+        } // withCredentials([[
+      } finally {
+        def cleanup = '''
+          if hash lsof 2>/dev/null; then
+            Z=$(lsof -d 200 -t)
+            if [[ ! -z $Z ]]; then
+              kill -9 $Z
+            fi
+          else
+            echo "lsof is missing; unable to kill rebuild related processes."
+          fi
+
+          rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
+        '''.stripIndent()
+
+        withEnv(["WORKSPACE=${pwd()}"]) {
+          util.shColor cleanup
+        }
+      } // try
+    } // dir(slug)
+
+    def lsstsw = "${slug}/lsstsw"
+    def lsstsw_build_dir = "${lsstsw}/build"
+    def manifestPath = "${lsstsw_build_dir}/manifest.txt"
+    def archive = [
+      manifestPath,
+    ]
+
+    archiveArtifacts([
+      artifacts: archive.join(', '),
+      allowEmptyArchive: true,
+      fingerprint: true
+    ])
+  } // node(label)
+}
+
 return this;

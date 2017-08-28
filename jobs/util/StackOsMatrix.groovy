@@ -8,11 +8,8 @@ class StackOsMatrix {
   String product
   Boolean skip_demo
   String cron = 'H H/8 * * *'
-  // stack-os-matrix will break if an explicit python param is not passed
-  // XXX note that contrary to the how the default value is default, no comma
-  // separator is used for this param when triggering a build
-  String python = 'py2 py3'
   String branch
+  String triggerJob = 'stack-os-matrix'
 
   Job build(DslFactory dslFactory) {
     if (! name) {
@@ -45,7 +42,7 @@ class StackOsMatrix {
 
       steps {
         downstreamParameterized {
-          trigger('stack-os-matrix') {
+          trigger(triggerJob) {
             block {
               buildStepFailure('FAILURE')
               failure('FAILURE')
@@ -53,7 +50,6 @@ class StackOsMatrix {
             parameters {
               currentBuild()
               booleanParam('SKIP_DEMO', skip_demo)
-              predefinedProp('python', python)
             }
           }
         }
