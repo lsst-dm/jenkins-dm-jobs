@@ -177,7 +177,8 @@ def lsstswBuild(String label, String python) {
           withEnv([
             "WORKSPACE=${pwd()}",
             'SKIP_DOCS=true',
-            "python=${python}"
+            "python=${python}",
+            "LSST_JUNIT_PREFIX=${slug}"
           ]) {
             util.shColor './buildbot-scripts/jenkins_wrapper.sh'
           }
@@ -205,9 +206,41 @@ def lsstswBuild(String label, String python) {
     def lsstsw = "${slug}/lsstsw"
     def lsstsw_build_dir = "${lsstsw}/build"
     def manifestPath = "${lsstsw_build_dir}/manifest.txt"
+    def statusPath = "${lsstsw_build_dir}/status.yaml"
     def archive = [
       manifestPath,
+      statusPath
     ]
+
+    if (fileExists(statusPath)) {
+      def status = readYaml(file: statusPath)
+
+      def products = status['built']
+      // if there is a "failed_at" product, check it for a junit file too
+      if (status['failed_at']) {
+        products << status['failed_at']
+      }
+
+      def reports = []
+      products.each { item ->
+        def name = item['name']
+        def xml = "${lsstsw_build_dir}/${name}/tests/.tests/pytest-${name}.xml"
+        if (fileExists(xml)) {
+          reports << xml
+        }
+      }
+
+      if (reports) {
+        // note that junit will ignore files with timestamps before the start
+        // of the build
+        step([
+          $class: 'JUnitResultArchiver',
+          testResults: reports.join(', ')
+        ])
+
+        archive += reports
+      }
+    }
 
     archiveArtifacts([
       artifacts: archive.join(', '),
