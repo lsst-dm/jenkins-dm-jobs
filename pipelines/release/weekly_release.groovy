@@ -100,6 +100,9 @@ try {
       }
     }
 
+    // disabled
+    // see: https://jira.lsstcorp.org/browse/DM-11586
+    /*
     artifact['run qserv/docker/build'] = {
       catchError {
         retry(retries) {
@@ -107,6 +110,7 @@ try {
         }
       }
     }
+    */
 
     for (pyver in ['2', '3']) {
       artifact["run release/tarball py${pyver}"] = {
