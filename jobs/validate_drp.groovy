@@ -61,7 +61,7 @@ def j = matrixJob("${folder}/validate_drp") {
   axes {
     label('label', 'centos-7')
     text('dataset', 'cfht', 'hsc', 'decam')
-    text('python', 'py2')
+    text('python', 'py3')
   }
 
   combinationFilter('!(label=="centos-6" && python=="py3")')
