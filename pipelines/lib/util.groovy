@@ -209,7 +209,8 @@ def lsstswBuild(String label, String python) {
     def statusPath = "${lsstsw_build_dir}/status.yaml"
     def archive = [
       manifestPath,
-      statusPath
+      statusPath,
+      "${lsstsw_build_dir}/*/*.log",
     ]
 
     if (fileExists(statusPath)) {
