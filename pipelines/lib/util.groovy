@@ -234,10 +234,12 @@ def lsstswBuild(String label, String python) {
       if (reports) {
         // note that junit will ignore files with timestamps before the start
         // of the build
-        step([
-          $class: 'JUnitResultArchiver',
-          testResults: reports.join(', ')
-        ])
+        catchError {
+          step([
+            $class: 'JUnitResultArchiver',
+            testResults: reports.join(', ')
+          ])
+        }
 
         archive += reports
       }
