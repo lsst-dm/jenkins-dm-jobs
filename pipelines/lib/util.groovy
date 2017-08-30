@@ -14,7 +14,7 @@ def String dedent(String text) {
  * enables ANSI color codes.
  */
 def void shColor(script) {
-  wrap([$class: 'AnsiColorBuildWrapper']) {
+  ansiColor('gnome-terminal') {
     sh dedent(script)
   }
 }
