@@ -153,55 +153,55 @@ def lsstswBuild(String label, String python) {
     // conflicts
     def slug = "${label}.${python}"
 
-    dir(slug) {
-      try {
-        dir('lsstsw') {
-          git([
-            url: 'https://github.com/lsst/lsstsw.git',
-            branch: 'master'
-          ])
-        }
-
-        dir('buildbot-scripts') {
-          git([
-            url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-            branch: 'master'
-          ])
-        }
-
-        withCredentials([[
-          $class: 'StringBinding',
-          credentialsId: 'cmirror-s3-bucket',
-          variable: 'CMIRROR_S3_BUCKET'
-        ]]) {
-          withEnv([
-            "WORKSPACE=${pwd()}",
-            'SKIP_DOCS=true',
-            "python=${python}",
-            "LSST_JUNIT_PREFIX=${slug}"
-          ]) {
-            util.shColor './buildbot-scripts/jenkins_wrapper.sh'
+    catchError {
+      dir(slug) {
+        try {
+          dir('lsstsw') {
+            git([
+              url: 'https://github.com/lsst/lsstsw.git',
+              branch: 'master'
+            ])
           }
-        } // withCredentials([[
-      } finally {
-        def cleanup = '''
-          if hash lsof 2>/dev/null; then
-            Z=$(lsof -d 200 -t)
-            if [[ ! -z $Z ]]; then
-              kill -9 $Z
-            fi
-          else
-            echo "lsof is missing; unable to kill rebuild related processes."
-          fi
 
-          rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
-        '''.stripIndent()
+          dir('buildbot-scripts') {
+            git([
+              url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+              branch: 'master'
+            ])
+          }
 
-        withEnv(["WORKSPACE=${pwd()}"]) {
-          util.shColor cleanup
-        }
-      } // try
-    } // dir(slug)
+          withCredentials([[
+            $class: 'StringBinding',
+            credentialsId: 'cmirror-s3-bucket',
+            variable: 'CMIRROR_S3_BUCKET'
+          ]]) {
+            withEnv([
+              "WORKSPACE=${pwd()}",
+              'SKIP_DOCS=true',
+              "python=${python}",
+              "LSST_JUNIT_PREFIX=${slug}"
+            ]) {
+              util.shColor './buildbot-scripts/jenkins_wrapper.sh'
+            }
+          } // withCredentials([[
+        } finally {
+          withEnv(["WORKSPACE=${pwd()}"]) {
+            util.shColor '''
+              if hash lsof 2>/dev/null; then
+                Z=$(lsof -d 200 -t)
+                if [[ ! -z $Z ]]; then
+                  kill -9 $Z
+                fi
+              else
+                echo "lsof is missing; unable to kill rebuild related processes."
+              fi
+
+              rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
+            '''
+          }
+        } // try
+      } // dir(slug)
+    } // catchError
 
     def lsstsw = "${slug}/lsstsw"
     def lsstsw_build_dir = "${lsstsw}/build"
@@ -210,39 +210,44 @@ def lsstswBuild(String label, String python) {
     def archive = [
       manifestPath,
       statusPath,
-      "${lsstsw_build_dir}/*/*.log",
     ]
 
-    if (fileExists(statusPath)) {
-      def status = readYaml(file: statusPath)
+    try {
+      if (fileExists(statusPath)) {
+        def status = readYaml(file: statusPath)
 
-      def products = status['built']
-      // if there is a "failed_at" product, check it for a junit file too
-      if (status['failed_at']) {
-        products << status['failed_at']
-      }
-
-      def reports = []
-      products.each { item ->
-        def name = item['name']
-        def xml = "${lsstsw_build_dir}/${name}/tests/.tests/pytest-${name}.xml"
-        if (fileExists(xml)) {
-          reports << xml
+        def products = status['built']
+        // if there is a "failed_at" product, check it for a junit file too
+        if (status['failed_at']) {
+          products << status['failed_at']
         }
-      }
 
-      if (reports) {
-        // note that junit will ignore files with timestamps before the start
-        // of the build
-        catchError {
-          step([
-            $class: 'JUnitResultArchiver',
-            testResults: reports.join(', ')
+        def reports = []
+        products.each { item ->
+          def name = item['name']
+          def xml = "${lsstsw_build_dir}/${name}/tests/.tests/pytest-${name}.xml"
+          if (fileExists(xml)) {
+            reports << xml
+          }
+
+          archive += "${lsstsw_build_dir}/${name}/*.log"
+        }
+
+        if (reports) {
+          // note that junit will ignore files with timestamps before the start
+          // of the build
+          junit([
+            testResults: reports.join(', '),
+            allowEmptyResults: true,
           ])
-        }
 
-        archive += reports
+          archive += reports
+        }
       }
+    } catch (e) {
+      // As a last resort, find product build dirs with a wildcard.  This might
+      // match logs for products that _are not_ part of the current build.
+      archive += "${lsstsw_build_dir}/*/*.log"
     }
 
     archiveArtifacts([
