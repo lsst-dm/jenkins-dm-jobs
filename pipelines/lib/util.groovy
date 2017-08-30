@@ -153,7 +153,7 @@ def lsstswBuild(String label, String python) {
     // conflicts
     def slug = "${label}.${python}"
 
-    catchError {
+    try {
       dir(slug) {
         try {
           dir('lsstsw') {
@@ -201,60 +201,61 @@ def lsstswBuild(String label, String python) {
           }
         } // try
       } // dir(slug)
-    } // catchError
+    } finally {
+      def lsstsw = "${slug}/lsstsw"
+      def lsstsw_build_dir = "${lsstsw}/build"
+      def manifestPath = "${lsstsw_build_dir}/manifest.txt"
+      def statusPath = "${lsstsw_build_dir}/status.yaml"
+      def archive = [
+        manifestPath,
+        statusPath,
+      ]
 
-    def lsstsw = "${slug}/lsstsw"
-    def lsstsw_build_dir = "${lsstsw}/build"
-    def manifestPath = "${lsstsw_build_dir}/manifest.txt"
-    def statusPath = "${lsstsw_build_dir}/status.yaml"
-    def archive = [
-      manifestPath,
-      statusPath,
-    ]
+      try {
+        if (fileExists(statusPath)) {
+          def status = readYaml(file: statusPath)
 
-    try {
-      if (fileExists(statusPath)) {
-        def status = readYaml(file: statusPath)
-
-        def products = status['built']
-        // if there is a "failed_at" product, check it for a junit file too
-        if (status['failed_at']) {
-          products << status['failed_at']
-        }
-
-        def reports = []
-        products.each { item ->
-          def name = item['name']
-          def xml = "${lsstsw_build_dir}/${name}/tests/.tests/pytest-${name}.xml"
-          if (fileExists(xml)) {
-            reports << xml
+          def products = status['built']
+          // if there is a "failed_at" product, check it for a junit file too
+          if (status['failed_at']) {
+            products << status['failed_at']
           }
 
-          archive += "${lsstsw_build_dir}/${name}/*.log"
+          def reports = []
+          products.each { item ->
+            def name = item['name']
+            def xml = "${lsstsw_build_dir}/${name}/tests/.tests/pytest-${name}.xml"
+            if (fileExists(xml)) {
+              reports << xml
+            }
+
+            archive += "${lsstsw_build_dir}/${name}/*.log"
+          }
+
+          if (reports) {
+            // note that junit will ignore files with timestamps before the start
+            // of the build
+            junit([
+              testResults: reports.join(', '),
+              allowEmptyResults: true,
+            ])
+
+            archive += reports
+          }
         }
-
-        if (reports) {
-          // note that junit will ignore files with timestamps before the start
-          // of the build
-          junit([
-            testResults: reports.join(', '),
-            allowEmptyResults: true,
-          ])
-
-          archive += reports
-        }
-      }
-    } catch (e) {
-      // As a last resort, find product build dirs with a wildcard.  This might
-      // match logs for products that _are not_ part of the current build.
-      archive += "${lsstsw_build_dir}/*/*.log"
-    }
-
-    archiveArtifacts([
-      artifacts: archive.join(', '),
-      allowEmptyArchive: true,
-      fingerprint: true
-    ])
+      } catch (e) {
+        // As a last resort, find product build dirs with a wildcard.  This might
+        // match logs for products that _are not_ part of the current build.
+        archive += "${lsstsw_build_dir}/*/*.log"
+        throw e
+      } finally {
+        archiveArtifacts([
+          artifacts: archive.join(', '),
+          allowEmptyArchive: true,
+          fingerprint: true
+        ])
+      } // try
+    } // try
   } // node(label)
 }
 
