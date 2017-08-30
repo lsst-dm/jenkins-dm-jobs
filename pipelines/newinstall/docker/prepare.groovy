@@ -9,6 +9,7 @@ node('jenkins-master') {
       userRemoteConfigs: scm.getUserRemoteConfigs()
     ])
     notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
   }
 }
 
@@ -37,9 +38,7 @@ try {
         ./bin/packer build --only=docker-centos-6,docker-centos-7 centos_packerprep.json
       '''.stripIndent()
 
-      wrap([$class: 'AnsiColorBuildWrapper']) {
-        rvm make
-      }
+      rvm(make)
     }
 
     stage('push') {
@@ -72,6 +71,6 @@ try {
 }
 
 def rvm(String commands) {
-  sh "bash -c 'source /etc/profile.d/rvm.sh && rvm install 2.2 > /dev/null 2>&1'"
-  sh "bash -c 'source /etc/profile.d/rvm.sh && rvm use 2.2 && ${commands}'"
+  util.shColor "bash -c 'source /etc/profile.d/rvm.sh && rvm install 2.2 > /dev/null 2>&1'"
+  util.shColor "bash -c 'source /etc/profile.d/rvm.sh && rvm use 2.2 && ${commands}'"
 }
