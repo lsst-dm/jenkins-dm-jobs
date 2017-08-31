@@ -146,7 +146,7 @@ for (node in Jenkins.instance.nodes) {
       // have run on this node in the past
 
       // select all jobs with a custom workspace
-      def custom = allJobs.findAll { item -> item.getCustomWorkspace() }
+      def custom = allJobs().findAll { item -> item.getCustomWorkspace() }
       custom.each { item ->
         // note that #child claims to deal with abs and rel paths
         if (!deleteRemote(node.getRootPath().child(item.customWorkspace()), false)) {
@@ -163,7 +163,7 @@ for (node in Jenkins.instance.nodes) {
       // node has at least one active job
 
       // find all jobs that are *not* building
-      def idleJobs = allJobs.findAll { item -> !item.isBuilding() }
+      def idleJobs = allJobs().findAll { item -> !item.isBuilding() }
 
       idleJobs.each { item ->
         def jobName = item.getFullDisplayName()
@@ -189,7 +189,7 @@ for (node in Jenkins.instance.nodes) {
         }
       }
     }
-  } catch (Throwable t) {
+  } catch (Node t) {
     switch (t) {
       case Offline:
         nodeStatus['offlineNodes'] << t
