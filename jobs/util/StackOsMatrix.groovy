@@ -7,7 +7,7 @@ class StackOsMatrix {
   String name
   String product
   Boolean skip_demo
-  String cron = 'H H/8 * * *'
+  String cron = 'H H(0-4) * * *'
   String branch
   String triggerJob = 'stack-os-matrix'
 
