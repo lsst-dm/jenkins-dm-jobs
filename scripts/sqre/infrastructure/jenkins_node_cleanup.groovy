@@ -189,7 +189,7 @@ for (node in Jenkins.instance.nodes) {
         }
       }
     }
-  } catch (Throwable t) {
+  } catch (Node t) {
     switch (t) {
       case Offline:
         nodeStatus['offlineNodes'] << t
