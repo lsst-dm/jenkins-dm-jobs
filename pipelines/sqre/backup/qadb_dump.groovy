@@ -5,7 +5,9 @@ node('jenkins-master') {
     checkout([
       $class: 'GitSCM',
       branches: scm.getBranches(),
-      userRemoteConfigs: scm.getUserRemoteConfigs()
+      userRemoteConfigs: scm.getUserRemoteConfigs(),
+      changelog: false,
+      poll: false
     ])
     notify = load 'pipelines/lib/notify.groovy'
   }
