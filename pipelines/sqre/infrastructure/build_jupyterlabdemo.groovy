@@ -1,5 +1,6 @@
 def notify = null
-node {
+
+node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',

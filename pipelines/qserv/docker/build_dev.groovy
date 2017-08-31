@@ -1,5 +1,6 @@
 def notify = null
-node {
+
+node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     // XXX the git step seemed to blowup on a branch of '*/<foo>'
     checkout([
