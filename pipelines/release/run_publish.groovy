@@ -23,14 +23,18 @@ try {
         dir('lsstsw') {
           git([
             url: 'https://github.com/lsst/lsstsw.git',
-            branch: 'master'
+            branch: 'master',
+            changelog: false,
+            poll: false
           ])
         }
 
         dir('buildbot-scripts') {
           git([
             url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-            branch: 'master'
+            branch: 'master',
+            changelog: false,
+            poll: false
           ])
         }
 
