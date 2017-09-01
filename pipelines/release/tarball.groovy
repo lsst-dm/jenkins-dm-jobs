@@ -325,6 +325,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
         -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
         -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
         -e RUN_DEMO="$RUN_DEMO" \
+        -e FIX_SHEBANGS=true \
         -u "$(id -u -n)" \
         "$IMAGE" \
         sh -c "$RUN"
