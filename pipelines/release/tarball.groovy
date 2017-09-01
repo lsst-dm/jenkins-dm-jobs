@@ -25,7 +25,7 @@ node {
 
 try {
   notify.started()
-  def retries = 3
+  def retries = 1
 
   if (!params.PYVER) {
     error 'PYVER parameter is required'
