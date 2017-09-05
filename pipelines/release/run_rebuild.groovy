@@ -89,6 +89,7 @@ try {
 
           archiveArtifacts([
             artifacts: "lsstsw/build/manifest.txt",
+            allowEmptyArchive: true,
             fingerprint: true
           ])
         } // try
