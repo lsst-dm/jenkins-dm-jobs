@@ -55,8 +55,10 @@ class Skipped extends Node {}
 
 // threshold is in GB and comes from a job parameter
 def threshold = 100
-// don't clean docker slaves
-def skippedLabels = [ 'lsst-dev' ]
+def skippedLabels = [
+  'lsst-dev',
+  'snowflake',
+]
 // additional paths under slave's root path that should be removed if found
 def extraDirectoriesToDelete = []
 
