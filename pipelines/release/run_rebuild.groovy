@@ -16,8 +16,8 @@ node('jenkins-master') {
 try {
   notify.started()
 
-  node('lsst-dev') {
-    ws('/home/lsstsw/jenkins/release') {
+  node('jenkins-snowflake-1') {
+    ws('snowflake/release') {
       stage('build') {
         try {
           dir('lsstsw') {
@@ -126,8 +126,8 @@ try {
           }
         }
       } // stage('push docs')
-    } // ws('/home/lsstsw/jenkins/release')
-  } // node('lsst-dev')
+    } // ws
+  } // node
 } catch (e) {
   // If there was an exception thrown, the build failed
   currentBuild.result = "FAILED"
