@@ -38,6 +38,7 @@ try {
             "EUPS_PKGROOT=${pwd()}/distrib",
             'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
             'VERSIONDB_PUSH=true',
+            'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
             "WORKSPACE=${pwd()}",
           ]
 
