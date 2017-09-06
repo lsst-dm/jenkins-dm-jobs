@@ -77,10 +77,16 @@ try {
         '''
 
         catchError {
-          util.shColor 'aws s3 sync ./local_mirror/ s3://$CMIRROR_S3_BUCKET/pkgs/free/'
+          util.shColor '''
+            . venv/bin/activate
+            aws s3 sync ./local_mirror/ s3://$CMIRROR_S3_BUCKET/pkgs/free/'
+          '''
         }
         catchError {
-          util.shColor 'aws s3 sync ./miniconda/ s3://$CMIRROR_S3_BUCKET/miniconda/'
+          util.shColor '''
+            . venv/bin/activate
+            aws s3 sync ./miniconda/ s3://$CMIRROR_S3_BUCKET/miniconda/'
+          '''
         }
       }
     } // stage('push to s3')
