@@ -74,10 +74,14 @@ try {
           virtualenv venv
           . venv/bin/activate
           pip install awscli
-
-          aws s3 sync --delete ./local_mirror/ s3://$CMIRROR_S3_BUCKET/pkgs/free/
-          aws s3 sync --delete ./miniconda/ s3://$CMIRROR_S3_BUCKET/miniconda/
         '''
+
+        catchError {
+          util.shColor 'aws s3 sync ./local_mirror/ s3://$CMIRROR_S3_BUCKET/pkgs/free/'
+        }
+        catchError {
+          util.shColor 'aws s3 sync ./miniconda/ s3://$CMIRROR_S3_BUCKET/miniconda/'
+        }
       }
     } // stage('push to s3')
   } // node
