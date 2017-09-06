@@ -45,6 +45,7 @@ try {
             "VERSIONDB_PUSH=${versiondbPush}",
             'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
             "WORKSPACE=${pwd()}",
+            'python=py3',
           ]
 
           withCredentials([[
