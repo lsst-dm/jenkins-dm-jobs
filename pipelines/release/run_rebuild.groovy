@@ -16,6 +16,11 @@ node('jenkins-master') {
 try {
   notify.started()
 
+  def versiondbPush = 'true'
+  if (params.NO_VERSIONDB_PUSH) {
+    versiondbPush = 'false'
+  }
+
   node('jenkins-snowflake-1') {
     ws('snowflake/release') {
       stage('build') {
@@ -37,7 +42,7 @@ try {
           def env = [
             "EUPS_PKGROOT=${pwd()}/distrib",
             'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
-            'VERSIONDB_PUSH=true',
+            "VERSIONDB_PUSH=${versiondbPush}",
             'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
             "WORKSPACE=${pwd()}",
           ]
