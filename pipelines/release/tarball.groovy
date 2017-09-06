@@ -9,11 +9,12 @@ node {
   }
 
   dir('jenkins-dm-jobs') {
-    // XXX the git step seemed to blowup on a branch of '*/<foo>'
     checkout([
       $class: 'GitSCM',
       branches: scm.getBranches(),
-      userRemoteConfigs: scm.getUserRemoteConfigs()
+      userRemoteConfigs: scm.getUserRemoteConfigs(),
+      changelog: false,
+      poll: false
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
