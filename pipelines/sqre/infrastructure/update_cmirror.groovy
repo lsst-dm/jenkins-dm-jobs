@@ -128,6 +128,7 @@ def runMirror(String image, String upstream, String platform) {
         -v $(pwd)/tmp:/tmp \
         -v $(pwd)/local_mirror:/local_mirror \
         "$IMAGE" \
+        --num-threads 0 \
         --upstream-channel "$UPSTREAM" \
         --target-directory /local_mirror \
         --platform "$PLATFORM" \
