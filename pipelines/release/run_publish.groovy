@@ -16,8 +16,8 @@ node('jenkins-master') {
 try {
   notify.started()
 
-  node('lsst-dev') {
-    ws('/home/lsstsw/jenkins/release') {
+  node('jenkins-snowflake-1') {
+    ws('snowflake/release') {
       stage('publish') {
         dir('lsstsw') {
           git([
@@ -35,8 +35,6 @@ try {
 
         def env = [
           "EUPS_PKGROOT=${pwd()}/distrib",
-          'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
-          'VERSIONDB_PUSH=true',
           "WORKSPACE=${pwd()}",
         ]
 
@@ -75,37 +73,41 @@ try {
       } // stage('publish')
 
       stage('push packages') {
-        withCredentials([[
-          $class: 'UsernamePasswordMultiBinding',
-          credentialsId: 'aws-eups-push',
-          usernameVariable: 'AWS_ACCESS_KEY_ID',
-          passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-        ],
-        [
-          $class: 'StringBinding',
-          credentialsId: 'eups-push-bucket',
-          variable: 'EUPS_S3_BUCKET'
-        ]]) {
-          def env = [
-            "EUPS_PKGROOT=${pwd()}/distrib",
-            "WORKSPACE=${pwd()}",
-          ]
+        unless (params.NO_PUSH) {
+          withCredentials([[
+            $class: 'UsernamePasswordMultiBinding',
+            credentialsId: 'aws-eups-push',
+            usernameVariable: 'AWS_ACCESS_KEY_ID',
+            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+          ],
+          [
+            $class: 'StringBinding',
+            credentialsId: 'eups-push-bucket',
+            variable: 'EUPS_S3_BUCKET'
+          ]]) {
+            def env = [
+              "EUPS_PKGROOT=${pwd()}/distrib",
+              "WORKSPACE=${pwd()}",
+            ]
 
-          withEnv(env) {
-            util.shColor '''
-              #!/bin/bash -e
+            withEnv(env) {
+              util.shColor '''
+                #!/bin/bash -e
 
-              # setup python env
-              . "${WORKSPACE}/lsstsw/bin/setup.sh"
-              pip install awscli
+                # setup python env
+                . "${WORKSPACE}/lsstsw/bin/setup.sh"
+                pip install awscli
 
-              aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/
-            '''
+                aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/
+              '''
+            }
           }
+        } else {
+          echo "skipping s3 push."
         }
       } // stage('push packages')
-    } // ws('/home/lsstsw/jenkins/release')
-  } // node('lsst-dev')
+    } // ws
+  } // node
 } catch (e) {
   // If there was an exception thrown, the build failed
   currentBuild.result = "FAILED"

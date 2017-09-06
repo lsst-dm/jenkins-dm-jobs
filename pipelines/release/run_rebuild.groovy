@@ -16,8 +16,13 @@ node('jenkins-master') {
 try {
   notify.started()
 
-  node('lsst-dev') {
-    ws('/home/lsstsw/jenkins/release') {
+  def versiondbPush = 'true'
+  if (params.NO_VERSIONDB_PUSH) {
+    versiondbPush = 'false'
+  }
+
+  node('jenkins-snowflake-1') {
+    ws('snowflake/release') {
       stage('build') {
         try {
           dir('lsstsw') {
@@ -37,8 +42,10 @@ try {
           def env = [
             "EUPS_PKGROOT=${pwd()}/distrib",
             'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
-            'VERSIONDB_PUSH=true',
+            "VERSIONDB_PUSH=${versiondbPush}",
+            'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
             "WORKSPACE=${pwd()}",
+            'python=py3',
           ]
 
           withCredentials([[
@@ -89,6 +96,7 @@ try {
 
           archiveArtifacts([
             artifacts: "lsstsw/build/manifest.txt",
+            allowEmptyArchive: true,
             fingerprint: true
           ])
         } // try
@@ -126,8 +134,8 @@ try {
           }
         }
       } // stage('push docs')
-    } // ws('/home/lsstsw/jenkins/release')
-  } // node('lsst-dev')
+    } // ws
+  } // node
 } catch (e) {
   // If there was an exception thrown, the build failed
   currentBuild.result = "FAILED"
