@@ -17,13 +17,13 @@ node('jenkins-master') {
 try {
   notify.started()
 
-  def git_tag = null
-  def eups_tag = null
+  def gitTag = null
+  def eupsTag = null
   def product = 'lsst_distrib qserv_distrib'
   def retries = 3
   def bx = null
   def rebuildId = null
-  def buildJob = 'release/build-publish-tag'
+  def buildJob = 'release/run-rebuild'
   def publishJob = 'release/run-publish'
   def year = null
   def week = null
@@ -39,26 +39,24 @@ try {
     year = params.YEAR.padLeft(4, "0")
     week = params.WEEK.padLeft(2, "0")
 
-    git_tag = "w.${year}.${week}"
-    echo "generated [git] tag: ${git_tag}"
+    gitTag = "w.${year}.${week}"
+    echo "generated [git] tag: ${gitTag}"
 
     // eups doesn't like dots in tags, convert to underscores
-    eups_tag = git_tag.tr('.', '_')
-    echo "generated [eups] tag: ${eups_tag}"
+    eupsTag = gitTag.tr('.', '_')
+    echo "generated [eups] tag: ${eupsTag}"
   }
 
-  stage('run build-publish-tag') {
-    retry(retries) {
-      def result = build job: buildJob,
-        parameters: [
-          string(name: 'BRANCH', value: ''),
-          string(name: 'PRODUCT', value: product),
-          string(name: 'GIT_TAG', value: git_tag),
-          booleanParam(name: 'SKIP_DEMO', value: false),
-          booleanParam(name: 'SKIP_DOCS', value: true)
-        ]
-      rebuildId = result.id
-    }
+  stage('build') {
+    def result = build job: buildJob,
+      parameters: [
+        string(name: 'BRANCH', value: BRANCH),
+        string(name: 'PRODUCT', value: PRODUCT),
+        booleanParam(name: 'SKIP_DEMO', value: SKIP_DEMO.toBoolean()),
+        booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS.toBoolean())
+      ],
+      wait: true
+    rebuildId = result.id
   }
 
   stage('parse bNNNN') {
@@ -76,9 +74,35 @@ try {
     }
   }
 
-  util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
-  util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
-  util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+  stage('eups publish') {
+    def pub = [:]
+
+    pub[eupsTag] = { util.tagProduct(bx, eupsTag, product, publishJob) }
+    pub['w_latest'] = {
+      util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+    }
+    pub['qserv_latest'] = {
+      util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+    }
+    pub['qserv-dev'] = {
+      util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+    }
+
+    parallel pub
+  }
+
+  stage('wait for s3 sync') {
+    sleep time: 15, unit: 'MINUTES'
+  }
+
+  stage('git tag') {
+    build job: 'release/tag-git-repos',
+      parameters: [
+        string(name: 'BUILD_ID', value: bx),
+        string(name: 'GIT_TAG', value: gitTag),
+        booleanParam(name: 'DRY_RUN', value: false)
+      ]
+  }
 
   stage('build binary artifacts') {
     def artifact = [:]
@@ -97,7 +121,7 @@ try {
         build job: 'release/docker/build',
           parameters: [
             string(name: 'PRODUCTS', value: 'lsst_distrib'),
-            string(name: 'TAG', value: eups_tag)
+            string(name: 'TAG', value: eupsTag)
           ]
       }
     }
@@ -120,7 +144,7 @@ try {
           build job: 'release/tarball',
             parameters: [
               string(name: 'PRODUCT', value: 'lsst_distrib'),
-              string(name: 'EUPS_TAG', value: eups_tag),
+              string(name: 'EUPS_TAG', value: eupsTag),
               booleanParam(name: 'SMOKE', value: true),
               booleanParam(name: 'RUN_DEMO', value: true),
               booleanParam(name: 'PUBLISH', value: true),
@@ -133,11 +157,15 @@ try {
     parallel artifact
   }
 
+  stage('wait for s3 sync') {
+    sleep time: 15, unit: 'MINUTES'
+  }
+
   stage('build jupyterlabdemo image') {
     retry(retries) {
       build job: 'sqre/infrastructure/build-stacktest',
         parameters: [
-          string(name: 'TAG', value: eups_tag)
+          string(name: 'TAG', value: eupsTag)
         ]
     }
 
@@ -156,8 +184,8 @@ try {
     node {
       results = [
         bnnnn: bx,
-        git_tag: git_tag,
-        eups_tag: eups_tag
+        git_tag: gitTag,
+        eups_tag: eupsTag
       ]
       util.dumpJson('results.json', results)
 
