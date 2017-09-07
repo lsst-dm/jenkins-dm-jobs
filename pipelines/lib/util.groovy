@@ -152,57 +152,59 @@ def lsstswBuild(String label, String python) {
     def slug = "${label}.${python}"
 
     try {
-      dir(slug) {
-        try {
-          dir('lsstsw') {
-            git([
-              url: 'https://github.com/lsst/lsstsw.git',
-              branch: 'master',
-              changelog: false,
-              poll: false
-            ])
-          }
-
-          dir('buildbot-scripts') {
-            git([
-              url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-              branch: 'master',
-              changelog: false,
-              poll: false
-            ])
-          }
-
-          withCredentials([[
-            $class: 'StringBinding',
-            credentialsId: 'cmirror-s3-bucket',
-            variable: 'CMIRROR_S3_BUCKET'
-          ]]) {
-            withEnv([
-              "WORKSPACE=${pwd()}",
-              'SKIP_DOCS=true',
-              "python=${python}",
-              "LSST_JUNIT_PREFIX=${slug}"
-            ]) {
-              util.shColor './buildbot-scripts/jenkins_wrapper.sh'
+      timeout(time: 5, unit: 'HOURS') {
+        dir(slug) {
+          try {
+            dir('lsstsw') {
+              git([
+                url: 'https://github.com/lsst/lsstsw.git',
+                branch: 'master',
+                changelog: false,
+                poll: false
+              ])
             }
-          } // withCredentials([[
-        } finally {
-          withEnv(["WORKSPACE=${pwd()}"]) {
-            util.shColor '''
-              if hash lsof 2>/dev/null; then
-                Z=$(lsof -d 200 -t)
-                if [[ ! -z $Z ]]; then
-                  kill -9 $Z
-                fi
-              else
-                echo "lsof is missing; unable to kill rebuild related processes."
-              fi
 
-              rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
-            '''
-          }
-        } // try
-      } // dir(slug)
+            dir('buildbot-scripts') {
+              git([
+                url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+                branch: 'master',
+                changelog: false,
+                poll: false
+              ])
+            }
+
+            withCredentials([[
+              $class: 'StringBinding',
+              credentialsId: 'cmirror-s3-bucket',
+              variable: 'CMIRROR_S3_BUCKET'
+            ]]) {
+              withEnv([
+                "WORKSPACE=${pwd()}",
+                'SKIP_DOCS=true',
+                "python=${python}",
+                "LSST_JUNIT_PREFIX=${slug}"
+              ]) {
+                util.shColor './buildbot-scripts/jenkins_wrapper.sh'
+              }
+            } // withCredentials([[
+          } finally {
+            withEnv(["WORKSPACE=${pwd()}"]) {
+              util.shColor '''
+                if hash lsof 2>/dev/null; then
+                  Z=$(lsof -d 200 -t)
+                  if [[ ! -z $Z ]]; then
+                    kill -9 $Z
+                  fi
+                else
+                  echo "lsof is missing; unable to kill rebuild related processes."
+                fi
+
+                rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
+              '''
+            }
+          } // try
+        } // dir(slug)
+      } // timeout
     } finally {
       def lsstsw = "${slug}/lsstsw"
       def lsstsw_build_dir = "${lsstsw}/build"
