@@ -17,13 +17,12 @@ node('jenkins-master') {
 try {
   notify.started()
 
-  def gitTag = null
   def eupsTag = null
   def product = 'lsst_distrib qserv_distrib'
   def retries = 3
   def bx = null
   def rebuildId = null
-  def buildJob = 'release/build-publish'
+  def buildJob = 'release/run-rebuild'
   def publishJob = 'release/run-publish'
 
   def year = null
@@ -45,26 +44,19 @@ try {
     month = params.MONTH.padLeft(2, "0")
     day = params.DAY.padLeft(2, "0")
 
-    gitTag = "d.${year}.${month}.${day}"
-    // echo "generated [git] tag: ${gitTag}"
-
-    // eups doesn't like dots in tags, convert to underscores
-    eupsTag = gitTag.tr('.', '_')
     echo "generated [eups] tag: ${eupsTag}"
   }
 
-  stage('run build-publish') {
-    retry(retries) {
-      def result = build job: buildJob,
-        parameters: [
-          string(name: 'BRANCH', value: ''),
-          string(name: 'PRODUCT', value: product),
-          string(name: 'EUPS_TAG', value: eupsTag),
-          booleanParam(name: 'SKIP_DEMO', value: false),
-          booleanParam(name: 'SKIP_DOCS', value: true)
-        ]
-      rebuildId = result.id
-    }
+  stage('build') {
+    def result = build job: buildJob,
+      parameters: [
+        string(name: 'BRANCH', value: BRANCH),
+        string(name: 'PRODUCT', value: PRODUCT),
+        booleanParam(name: 'SKIP_DEMO', value: SKIP_DEMO.toBoolean()),
+        booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS.toBoolean())
+      ],
+      wait: true
+    rebuildId = result.id
   }
 
   stage('parse bNNNN') {
@@ -82,7 +74,18 @@ try {
     }
   }
 
-  util.tagProduct(bx, 'd_latest', 'lsst_distrib', publishJob)
+  stage('eups publish') {
+    def pub = [:]
+
+    pub[eupsTag] = { util.tagProduct(bx, eupsTag, product, publishJob) }
+    pub['d_latest'] = { util.tagProduct(bx, 'd_latest', product, publishJob) }
+
+    parallel pub
+  }
+
+  stage('wait for s3 sync') {
+    sleep time: 15, unit: 'MINUTES'
+  }
 
   stage('build binary artifacts') {
     retry(retries) {

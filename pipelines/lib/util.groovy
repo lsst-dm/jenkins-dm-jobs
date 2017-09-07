@@ -130,15 +130,13 @@ def slurpJson(String data) {
  */
 def tagProduct(String buildId, String eupsTag, String product,
                String publishJob = 'release/run-publish') {
-  stage("eups publish [${eupsTag}]") {
-    build job: publishJob,
-      parameters: [
-        string(name: 'EUPSPKG_SOURCE', value: 'git'),
-        string(name: 'BUILD_ID', value: buildId),
-        string(name: 'TAG', value: eupsTag),
-        string(name: 'PRODUCT', value: product)
-      ]
-  }
+  build job: publishJob,
+    parameters: [
+      string(name: 'EUPSPKG_SOURCE', value: 'git'),
+      string(name: 'BUILD_ID', value: buildId),
+      string(name: 'TAG', value: eupsTag),
+      string(name: 'PRODUCT', value: product)
+    ]
 }
 
 /**
