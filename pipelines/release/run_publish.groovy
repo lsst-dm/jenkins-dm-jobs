@@ -78,7 +78,7 @@ try {
       } // stage('publish')
 
       stage('push packages') {
-        unless (params.NO_PUSH) {
+        if (! params.NO_PUSH) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-eups-push',
