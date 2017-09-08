@@ -44,6 +44,7 @@ try {
     month = params.MONTH.padLeft(2, "0")
     day = params.DAY.padLeft(2, "0")
 
+    eupsTag = "d_${year}_${month}_${day}"
     echo "generated [eups] tag: ${eupsTag}"
   }
 
