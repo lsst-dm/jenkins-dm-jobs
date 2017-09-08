@@ -62,16 +62,18 @@ try {
 
   stage('parse bNNNN') {
     node {
-      step ([$class: 'CopyArtifact',
+      manifest_artifact = 'lsstsw/build/manifest.txt'
+
+      step([$class: 'CopyArtifact',
             projectName: buildJob,
-            filter: 'results.json',
+            filter: manifest_artifact,
             selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
-            ]);
+            ])
 
-      def results = util.slurpJson(readFile('results.json'))
-      bx = results['bnnnn']
+      def manifest = readFile manifest_artifact
+      bx = bxxxx(manifest)
 
-      echo "parsed bnnnn: ${bx}"
+      echo "parsed bxxxx: ${bx}"
     }
   }
 
