@@ -71,7 +71,7 @@ try {
             ])
 
       def manifest = readFile manifest_artifact
-      bx = bxxxx(manifest)
+      bx = util.bxxxx(manifest)
 
       echo "parsed bxxxx: ${bx}"
     }
