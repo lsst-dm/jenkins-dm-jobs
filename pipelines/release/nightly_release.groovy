@@ -50,7 +50,6 @@ try {
   stage('build') {
     def result = build job: buildJob,
       parameters: [
-        string(name: 'BRANCH', value: 'master'),
         string(name: 'PRODUCT', value: product),
         booleanParam(name: 'SKIP_DEMO', value: false),
         booleanParam(name: 'SKIP_DOCS', value: true),
