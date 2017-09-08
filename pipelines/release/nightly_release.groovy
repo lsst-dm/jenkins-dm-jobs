@@ -48,14 +48,16 @@ try {
   }
 
   stage('build') {
-    def result = build job: buildJob,
-      parameters: [
-        string(name: 'PRODUCT', value: product),
-        booleanParam(name: 'SKIP_DEMO', value: false),
-        booleanParam(name: 'SKIP_DOCS', value: true),
-      ],
-      wait: true
-    rebuildId = result.id
+    retry(retries) {
+      def result = build job: buildJob,
+        parameters: [
+          string(name: 'PRODUCT', value: product),
+          booleanParam(name: 'SKIP_DEMO', value: false),
+          booleanParam(name: 'SKIP_DOCS', value: true),
+        ],
+        wait: true
+      rebuildId = result.id
+    }
   }
 
   stage('parse bNNNN') {
@@ -76,8 +78,16 @@ try {
   stage('eups publish') {
     def pub = [:]
 
-    pub[eupsTag] = { util.tagProduct(bx, eupsTag, product, publishJob) }
-    pub['d_latest'] = { util.tagProduct(bx, 'd_latest', product, publishJob) }
+    pub[eupsTag] = {
+      retry(retries) {
+        util.tagProduct(bx, eupsTag, product, publishJob)
+      }
+    }
+    pub['d_latest'] = {
+      retry(retries) {
+        util.tagProduct(bx, 'd_latest', product, publishJob)
+      }
+    }
 
     parallel pub
   }
