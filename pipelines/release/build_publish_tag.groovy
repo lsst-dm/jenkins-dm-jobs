@@ -10,6 +10,7 @@ node('jenkins-master') {
       poll: false
     ])
     notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/notify.groovy'
   }
 }
 
@@ -112,12 +113,6 @@ try {
     default:
       notify.failure()
   }
-}
-
-@NonCPS
-def bxxxx(manifest) {
-  def m = manifest =~ /(?m)^BUILD=(b.*)/
-  m ? m[0][1] : null
 }
 
 @NonCPS

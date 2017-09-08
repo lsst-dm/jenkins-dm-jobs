@@ -263,4 +263,16 @@ def lsstswBuild(String label, String python) {
   } // node(label)
 }
 
+/**
+ * Parse bNNNN out of a manifest.txt format String.
+ *
+ * @param manifest.txt as a String
+ * @return String
+ */
+@NonCPS
+def String bxxxx(String manifest) {
+  def m = manifest =~ /(?m)^BUILD=(b.*)/
+  m ? m[0][1] : null
+}
+
 return this;
