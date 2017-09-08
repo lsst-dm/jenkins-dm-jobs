@@ -50,10 +50,10 @@ try {
   stage('build') {
     def result = build job: buildJob,
       parameters: [
-        string(name: 'BRANCH', value: BRANCH),
-        string(name: 'PRODUCT', value: PRODUCT),
-        booleanParam(name: 'SKIP_DEMO', value: SKIP_DEMO.toBoolean()),
-        booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS.toBoolean())
+        string(name: 'BRANCH', value: 'master'),
+        string(name: 'PRODUCT', value: product),
+        booleanParam(name: 'SKIP_DEMO', value: false),
+        booleanParam(name: 'SKIP_DOCS', value: false),
       ],
       wait: true
     rebuildId = result.id
