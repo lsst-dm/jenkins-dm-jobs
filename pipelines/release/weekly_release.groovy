@@ -48,15 +48,16 @@ try {
   }
 
   stage('build') {
-    def result = build job: buildJob,
-      parameters: [
-        string(name: 'BRANCH', value: 'master'),
-        string(name: 'PRODUCT', value: product),
-        booleanParam(name: 'SKIP_DEMO', value: false),
-        booleanParam(name: 'SKIP_DOCS', value: false),
-      ],
-      wait: true
-    rebuildId = result.id
+    retry(retries) {
+      def result = build job: buildJob,
+        parameters: [
+          string(name: 'PRODUCT', value: product),
+          booleanParam(name: 'SKIP_DEMO', value: false),
+          booleanParam(name: 'SKIP_DOCS', value: false),
+        ],
+        wait: true
+      rebuildId = result.id
+    }
   }
 
   stage('parse bNNNN') {
@@ -77,15 +78,25 @@ try {
   stage('eups publish') {
     def pub = [:]
 
-    pub[eupsTag] = { util.tagProduct(bx, eupsTag, product, publishJob) }
+    pub[eupsTag] = {
+      retry(retries) {
+        util.tagProduct(bx, eupsTag, product, publishJob)
+      }
+    }
     pub['w_latest'] = {
-      util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+      retry(retries) {
+        util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+      }
     }
     pub['qserv_latest'] = {
-      util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+      retry(retries) {
+        util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+      }
     }
     pub['qserv-dev'] = {
-      util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+      retry(retries) {
+        util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+      }
     }
 
     parallel pub
@@ -96,12 +107,14 @@ try {
   }
 
   stage('git tag') {
-    build job: 'release/tag-git-repos',
-      parameters: [
-        string(name: 'BUILD_ID', value: bx),
-        string(name: 'GIT_TAG', value: gitTag),
-        booleanParam(name: 'DRY_RUN', value: false)
-      ]
+    retry(retries) {
+      build job: 'release/tag-git-repos',
+        parameters: [
+          string(name: 'BUILD_ID', value: bx),
+          string(name: 'GIT_TAG', value: gitTag),
+          booleanParam(name: 'DRY_RUN', value: false)
+        ]
+    }
   }
 
   stage('build binary artifacts') {
