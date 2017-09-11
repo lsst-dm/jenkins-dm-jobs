@@ -110,6 +110,7 @@ try {
 
   stage('git tag') {
     retry(retries) {
+      // needs eups distrib tag to be sync'd from s3 -> k8s volume
       build job: 'release/tag-git-repos',
         parameters: [
           string(name: 'BUILD_ID', value: bx),
@@ -119,28 +120,8 @@ try {
     }
   }
 
-  stage('build binary artifacts') {
+  stage('build eups tarballs') {
     def artifact = [:]
-
-    // docker containers
-    artifact['run release/docker/build'] = {
-      // ensure that we are using the latest version of newinstall.sh
-      // this acts as an "after the fact" canary
-      // XXX this job needs to be refactored to have proper canary builds
-      // before the git/eups tags are published.
-      retry(retries) {
-        build job: 'release/docker/newinstall'
-      }
-
-      retry(retries) {
-        build job: 'release/docker/build',
-          parameters: [
-            string(name: 'PRODUCTS', value: 'lsst_distrib'),
-            string(name: 'TAG', value: eupsTag)
-          ]
-      }
-    }
-
     // disabled
     // see: https://jira.lsstcorp.org/browse/DM-11586
     /*
@@ -176,15 +157,18 @@ try {
     sleep time: 15, unit: 'MINUTES'
   }
 
-  stage('build jupyterlabdemo image') {
+  stage('build stack image') {
     retry(retries) {
-      build job: 'sqre/infrastructure/build-stacktest',
+      build job: 'release/docker/build-stacktest',
         parameters: [
           string(name: 'TAG', value: eupsTag)
         ]
     }
+  }
 
+  stage('build jupyterlabdemo image') {
     retry(retries) {
+      // based on lsstsqre/stack image
       build job: 'sqre/infrastructure/build-jupyterlabdemo',
         parameters: [
           string(name: 'BTYPE', value: 'w'),
