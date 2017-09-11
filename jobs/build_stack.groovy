@@ -1,9 +1,9 @@
 import util.Common
 Common.makeFolders(this)
 
-def folder = 'sqre/infrastructure'
+def folder = 'release/docker'
 
-pipelineJob("${folder}/build-stacktest") {
+pipelineJob("${folder}/build-stack") {
   description('Constructs docker images with EUPS tarballs.')
 
   parameters {
@@ -33,7 +33,7 @@ pipelineJob("${folder}/build-stacktest") {
           branch(ref)
         }
       }
-      scriptPath("pipelines/${folder}/build_stacktest.groovy")
+      scriptPath("pipelines/${folder}/build_stack.groovy")
     }
   }
 }
