@@ -17,6 +17,7 @@ node('jenkins-master') {
 try {
   notify.started()
 
+  def gitTag = null
   def eupsTag = null
   def product = 'lsst_distrib qserv_distrib'
   def retries = 3
@@ -44,7 +45,11 @@ try {
     month = params.MONTH.padLeft(2, "0")
     day = params.DAY.padLeft(2, "0")
 
-    eupsTag = "d_${year}_${month}_${day}"
+    gitTag = "d.${year}.${month}.${dday}"
+    echo "generated [git] tag: ${gitTag}"
+
+    // eups doesn't like dots in tags, convert to underscores
+    eupsTag = gitTag.tr('.', '_')
     echo "generated [eups] tag: ${eupsTag}"
   }
 
@@ -99,7 +104,20 @@ try {
     sleep time: 15, unit: 'MINUTES'
   }
 
-  stage('build binary artifacts') {
+  // NOOP / DRY_RUN
+  stage('git tag') {
+    retry(retries) {
+      // needs eups distrib tag to be sync'd from s3 -> k8s volume
+      build job: 'release/tag-git-repos',
+        parameters: [
+          string(name: 'BUILD_ID', value: bx),
+          string(name: 'GIT_TAG', value: gitTag),
+          booleanParam(name: 'DRY_RUN', value: true)
+        ]
+    }
+  }
+
+  stage('build eups tarballs') {
     retry(retries) {
       build job: 'release/tarball',
         parameters: [
@@ -109,6 +127,19 @@ try {
           booleanParam(name: 'RUN_DEMO', value: true),
           booleanParam(name: 'PUBLISH', value: true),
           string(name: 'PYVER', value: '3')
+        ]
+    }
+  }
+
+  stage('wait for s3 sync') {
+    sleep time: 15, unit: 'MINUTES'
+  }
+
+  stage('build stack image') {
+    retry(retries) {
+      build job: 'release/docker/build-stacktest',
+        parameters: [
+          string(name: 'TAG', value: eupsTag)
         ]
     }
   }
