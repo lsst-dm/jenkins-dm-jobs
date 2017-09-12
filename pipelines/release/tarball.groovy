@@ -36,7 +36,7 @@ try {
     new MinicondaEnv(params.PYVER, '4.2.12', '7c8e67'),
   ]
 
-  for (py in pyenvs) {
+  pyenvs.each { py ->
     stage("build ${py.slug()} tarballs") {
       def platform = [:]
 

@@ -134,7 +134,7 @@ try {
     }
     */
 
-    for (pyver in ['2', '3']) {
+    ['2', '3'].each { pyver ->
       artifact["run release/tarball py${pyver}"] = {
         retry(retries) {
           build job: 'release/tarball',
