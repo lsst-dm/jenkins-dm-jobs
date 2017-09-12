@@ -19,7 +19,7 @@ try {
 
   def tag = params.TAG
   def baseImage = 'lsstsqre/centos:7-stackbase'
-  def hubRepo = 'lsstsqre/stack'
+  def hubRepo = 'lsstsqre/centos'
   def slug = "${hubRepo}:7-stack-lsst_distrib-${params.TAG}"
 
   if (!params.TAG) {
