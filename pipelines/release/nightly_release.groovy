@@ -45,7 +45,7 @@ try {
     month = params.MONTH.padLeft(2, "0")
     day = params.DAY.padLeft(2, "0")
 
-    gitTag = "d.${year}.${month}.${dday}"
+    gitTag = "d.${year}.${month}.${day}"
     echo "generated [git] tag: ${gitTag}"
 
     // eups doesn't like dots in tags, convert to underscores
