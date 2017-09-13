@@ -31,7 +31,7 @@ try {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          util.shColor "./bld '${params.BTYPE}' '${params.YEAR}' '${params.WEEK}' '${params.PYVER}'"
+          util.shColor "./bld '${params.TAG}'"
         }
       }
     }
