@@ -159,7 +159,7 @@ try {
 
   stage('build stack image') {
     retry(retries) {
-      build job: 'release/docker/build-stacktest',
+      build job: 'release/docker/build-stack',
         parameters: [
           string(name: 'TAG', value: eupsTag)
         ]
