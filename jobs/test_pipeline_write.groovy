@@ -30,7 +30,7 @@ pipelineJob("${folder}/test-pipeline-write") {
           branch(ref)
         }
       }
-      scriptPath("pipelines/${folder}/test_pipeline_write.groovy")
+      scriptPath("pipelines/sqre/ci_ci/test_pipeline_write.groovy")
     }
   }
 }
