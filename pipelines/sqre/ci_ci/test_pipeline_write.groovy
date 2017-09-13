@@ -18,7 +18,7 @@ try {
 
   stage('write json') {
     node {
-      def stuff = [
+      def results = [
         foo: 'bar',
         baz: 'quix',
       ]
