@@ -29,7 +29,7 @@ pipelineJob("${folder}/test-pipeline-docker") {
           branch(ref)
         }
       }
-      scriptPath("pipelines/${folder}/test_pipeline_docker.groovy")
+      scriptPath("pipelines/sqre/ci_ci/test_pipeline_docker.groovy")
     }
   }
 }
