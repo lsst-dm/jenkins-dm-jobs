@@ -171,10 +171,8 @@ try {
       // based on lsstsqre/stack image
       build job: 'sqre/infrastructure/build-jupyterlabdemo',
         parameters: [
-          string(name: 'BTYPE', value: 'w'),
-          stringParam(name: 'YEAR', value: year),
-          stringParam(name: 'WEEK', value: week),
-          string(name: 'PYVER', value: '3')
+          string(name: 'TAG', value: eupsTag),
+          booleanParam(name: 'NO_PUSH', value: false),
         ]
     }
   }
