@@ -8,6 +8,7 @@ pipelineJob("${folder}/build-jupyterlabdemo") {
 
   parameters {
     stringParam('TAG', null, 'eups distrib tag')
+    booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
   }
 
   properties {

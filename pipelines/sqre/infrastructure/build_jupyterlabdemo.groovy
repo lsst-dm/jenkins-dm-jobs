@@ -27,11 +27,18 @@ try {
 
     stage('build+push') {
       dir('jupyterlab') {
-        docker.withRegistry(
-          'https://index.docker.io/v1/',
-          'dockerhub-sqreadmin'
-        ) {
-          util.shColor "./bld '${params.TAG}'"
+        if (! params.NO_PUSH) {
+          docker.withRegistry(
+            'https://index.docker.io/v1/',
+            'dockerhub-sqreadmin'
+          ) {
+            util.shColor "./bld '${params.TAG}'"
+          }
+        } else {
+          util.shColor """
+            ./bld -d '${params.TAG}'
+            docker build .
+          """
         }
       }
     }
