@@ -7,10 +7,8 @@ pipelineJob("${folder}/build-jupyterlabdemo") {
   description('Constructs docker jupyterlabdemo images.')
 
   parameters {
-    choiceParam('BTYPE', ['w', 'r'], 'Type of build: release|weekly')
-    stringParam('YEAR', null, 'Gregorian calendar year.')
-    stringParam('WEEK', null, 'Week of Gregorian calendar year.')
-    choiceParam('PYVER', ['3', '2'], 'Python major version')
+    stringParam('TAG', null, 'eups distrib tag')
+    booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
   }
 
   properties {
