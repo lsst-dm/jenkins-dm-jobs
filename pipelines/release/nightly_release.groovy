@@ -150,7 +150,7 @@ try {
       build job: 'sqre/infrastructure/build-jupyterlabdemo',
         parameters: [
           string(name: 'TAG', value: eupsTag),
-          booleanParam(name: 'NO_PUSH', value: true),
+          booleanParam(name: 'NO_PUSH', value: false),
         ]
     }
   }
