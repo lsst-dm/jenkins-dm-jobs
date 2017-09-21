@@ -75,9 +75,6 @@ try {
                   fi
 
                   ./buildbot-scripts/jenkins_wrapper.sh
-
-                  # handled by the postbuild on failure script if there is an error
-                  rm -rf "${WORKSPACE}/REPOS"
                 '''
               }
             }
