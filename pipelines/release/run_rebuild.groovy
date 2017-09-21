@@ -60,15 +60,7 @@ try {
           ]]) {
             withEnv(env) {
               sshagent (credentials: ['github-jenkins-versiondb']) {
-                util.shColor '''
-                  #!/bin/bash -e
-
-                  if [[ -e "${WORKSPACE}/REPOS" ]]; then
-                    export REPOSFILE="${WORKSPACE}/REPOS"
-                  fi
-
-                  ./buildbot-scripts/jenkins_wrapper.sh
-                '''
+                util.shColor './buildbot-scripts/jenkins_wrapper.sh'
               }
             }
           } // withCredentials([[
@@ -85,7 +77,6 @@ try {
               fi
 
               rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
-              rm -rf "${WORKSPACE}/REPOS"
             '''
           }
 
