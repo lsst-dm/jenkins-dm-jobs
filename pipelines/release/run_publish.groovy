@@ -52,10 +52,6 @@ try {
             util.shColor '''
               #!/bin/bash -e
 
-              # ensure that we are using the lsstsw clone relative to the workspace
-              # and that another value for LSSTSW isn't leaking in from the env
-              export LSSTSW="${WORKSPACE}/lsstsw"
-
               # isolate eups cache files
               export EUPS_USERDATA="${WORKSPACE}/.eups"
 
