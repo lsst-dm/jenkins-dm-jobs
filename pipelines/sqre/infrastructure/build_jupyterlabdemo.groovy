@@ -32,12 +32,25 @@ try {
             'https://index.docker.io/v1/',
             'dockerhub-sqreadmin'
           ) {
-            util.shColor "./bld -p '${params.PYVER}' -b '${params.BASE_IMAGE}' -n '${params.IMAGE_NAME}' -t '${params.TAG_PREFIX}' '${params.TAG}'"
+            util.shColor """
+              ./bld \
+               -p '${params.PYVER}' \
+               -b '${params.BASE_IMAGE}' \
+               -n '${params.IMAGE_NAME}' \
+               -t '${params.TAG_PREFIX}' \
+               '${params.TAG}'
+            """
           }
         } else {
           util.shColor """
-            ./bld -d '${params.PYVER}' -b '${params.BASE_IMAGE}' -n '${params.IMAGE_NAME}' -t '${params.TAG_PREFIX}' '${params.TAG}'
-            docker build .
+              ./bld \
+               -d \
+               -p '${params.PYVER}' \
+               -b '${params.BASE_IMAGE}' \
+               -n '${params.IMAGE_NAME}' \
+               -t '${params.TAG_PREFIX}' \
+               '${params.TAG}'
+              docker build .
           """
         }
       }
