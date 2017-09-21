@@ -25,67 +25,19 @@ try {
   node('jenkins-snowflake-1') {
     ws('snowflake/release') {
       stage('build') {
-        try {
-          dir('lsstsw') {
-            git([
-              url: 'https://github.com/lsst/lsstsw.git',
-              branch: 'master',
-              changelog: false,
-              poll: false
-            ])
-          }
-
-          dir('buildbot-scripts') {
-            git([
-              url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-              branch: 'master',
-              changelog: false,
-              poll: false
-            ])
-          }
-
-          def env = [
-            "EUPS_PKGROOT=${pwd()}/distrib",
-            'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
-            "VERSIONDB_PUSH=${versiondbPush}",
-            'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
-            "WORKSPACE=${pwd()}",
-            'python=py3',
-          ]
-
-          withCredentials([[
-            $class: 'StringBinding',
-            credentialsId: 'cmirror-s3-bucket',
-            variable: 'CMIRROR_S3_BUCKET'
-          ]]) {
-            withEnv(env) {
-              sshagent (credentials: ['github-jenkins-versiondb']) {
-                util.shColor './buildbot-scripts/jenkins_wrapper.sh'
-              }
-            }
-          } // withCredentials([[
-        } finally {
-          withEnv(["WORKSPACE=${pwd()}"]) {
-            util.shColor '''
-              if hash lsof 2>/dev/null; then
-                Z=$(lsof -d 200 -t)
-                if [[ ! -z $Z ]]; then
-                  kill -9 $Z
-                fi
-              else
-                echo "lsof is missing; unable to kill rebuild related processes."
-              fi
-
-              rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
-            '''
-          }
-
-          archiveArtifacts([
-            artifacts: "lsstsw/build/manifest.txt",
-            allowEmptyArchive: true,
-            fingerprint: true
-          ])
-        } // try
+        withEnv([
+          "EUPS_PKGROOT=${pwd()}/distrib",
+          'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
+          "VERSIONDB_PUSH=${versiondbPush}",
+          'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
+          'SKIP_DOCS=false',
+          "LSST_JUNIT_PREFIX=centos-7.py3",
+          'python=py3',
+         ]) {
+          sshagent (credentials: ['github-jenkins-versiondb']) {
+            util.jenkinsWrapper()
+          } // sshagent
+        } // withEnv
       } // stage('build')
 
       stage('push docs') {

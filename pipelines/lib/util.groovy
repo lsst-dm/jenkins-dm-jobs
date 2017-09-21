@@ -155,8 +155,8 @@ def lsstswBuild(String label, String python) {
       dir(slug) {
         withEnv([
           'SKIP_DOCS=true',
-          "python=${python}",
           "LSST_JUNIT_PREFIX=${slug}",
+          "python=${python}",
         ]) {
           jenkinsWrapper()
         }
@@ -217,7 +217,8 @@ def jenkinsWrapper() {
       }
     } // try
   } finally {
-    def lsstsw = "${pwd()}/lsstsw"
+    // archive does not like a leading `./`
+    def lsstsw = 'lsstsw'
     def lsstsw_build_dir = "${lsstsw}/build"
     def manifestPath = "${lsstsw_build_dir}/manifest.txt"
     def statusPath = "${lsstsw_build_dir}/status.yaml"
