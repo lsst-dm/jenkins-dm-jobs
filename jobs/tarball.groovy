@@ -22,7 +22,7 @@ pipelineJob('release/tarball') {
 
   // don't tie up a beefy build slave
   label('jenkins-master')
-  concurrentBuild(false)
+  concurrentBuild(true)
   keepDependencies(true)
 
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
