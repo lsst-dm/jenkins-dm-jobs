@@ -37,10 +37,10 @@ try {
     new MinicondaEnv(params.PYVER, '4.3.21', '10a4fa6'),
   ]
 
-  pyenvs.each { py ->
-    stage("build ${py.slug()} tarballs") {
-      def platform = [:]
+  stage("build tarballs") {
+    def platform = [:]
 
+    pyenvs.each { py ->
       // el6/py3 is broken
       // https://jira.lsstcorp.org/browse/DM-10272
       if (py.pythonVersion == '2') {
@@ -64,9 +64,9 @@ try {
           osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py)
         }
       }
-
-      parallel platform
     }
+
+    parallel platform
   }
 } catch (e) {
   // If there was an exception thrown, the build failed
