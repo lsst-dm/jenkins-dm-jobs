@@ -44,7 +44,7 @@ try {
       // el6/py3 is broken
       // https://jira.lsstcorp.org/browse/DM-10272
       if (py.pythonVersion == '2') {
-        platform['el6'] = {
+        platform["centos-6.${py.slug()}"] = {
           retry(retries) {
             def imageName = 'lsstsqre/centos:6-newinstall'
             linuxTarballs(imageName, 'el6', 'devtoolset-3', py)
@@ -52,14 +52,14 @@ try {
         }
       }
 
-      platform['el7'] = {
+      platform["centos-7.${py.slug()}"] = {
         retry(retries) {
           def imageName = 'lsstsqre/centos:7-newinstall'
           linuxTarballs(imageName, 'el7', 'gcc-system', py)
         }
       }
 
-      platform['osx-10.11'] = {
+      platform["osx-10.11.${py.slug()}"] = {
         retry(retries) {
           osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py)
         }
