@@ -20,7 +20,7 @@ try {
   stage('build') {
     def matrix = [:]
 
-    addToMatrix(matrix, 'centos-6', 'py2')
+    addToMatrix(matrix, 'centos-6', 'py3')
     addToMatrix(matrix, 'centos-7', 'py2')
     addToMatrix(matrix, 'centos-7', 'py3')
     addToMatrix(matrix, 'osx', 'py3')
