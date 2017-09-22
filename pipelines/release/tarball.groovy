@@ -41,14 +41,10 @@ try {
     def platform = [:]
 
     pyenvs.each { py ->
-      // el6/py3 is broken
-      // https://jira.lsstcorp.org/browse/DM-10272
-      if (py.pythonVersion == '2') {
-        platform["centos-6.${py.slug()}"] = {
-          retry(retries) {
-            def imageName = 'lsstsqre/centos:6-newinstall'
-            linuxTarballs(imageName, 'el6', 'devtoolset-3', py)
-          }
+      platform["centos-6.${py.slug()}"] = {
+        retry(retries) {
+          def imageName = 'lsstsqre/centos:6-newinstall'
+          linuxTarballs(imageName, 'el6', 'devtoolset-3', py)
         }
       }
 
