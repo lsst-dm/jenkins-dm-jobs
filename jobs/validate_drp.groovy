@@ -62,7 +62,7 @@ def j = matrixJob("${folder}/validate_drp") {
     label('label', 'centos-7')
     // hsc & decam are disabled as they are currently broken
     //text('dataset', 'cfht', 'hsc', 'decam')
-    text('dataset', 'cfht', 'hsc')
+    text('dataset', 'cfht')
     text('python', 'py3')
   }
 
