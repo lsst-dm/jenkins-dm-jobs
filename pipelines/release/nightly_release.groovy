@@ -117,18 +117,44 @@ try {
     }
   }
 
-  stage('build eups tarballs') {
-    retry(retries) {
-      build job: 'release/tarball',
-        parameters: [
-          string(name: 'PRODUCT', value: 'lsst_distrib'),
-          string(name: 'EUPS_TAG', value: eupsTag),
-          booleanParam(name: 'SMOKE', value: true),
-          booleanParam(name: 'RUN_DEMO', value: true),
-          booleanParam(name: 'PUBLISH', value: true),
-          string(name: 'PYVER', value: '3')
-        ]
+  stage("build eups tarballs") {
+    def operatingsystem = [
+      'centos-7',
+      'centos-6',
+      'osx-10.11',
+    ]
+
+    def pyenv = [
+      new MinicondaEnv('2', '4.2.12', '7c8e67'), // keep until v14_0
+      new MinicondaEnv('3', '4.2.12', '7c8e67'), // keep until v14_0
+      new MinicondaEnv('2', '4.3.21', '10a4fa6'),
+      new MinicondaEnv('3', '4.3.21', '10a4fa6'),
+    ]
+
+    def platform = [:]
+
+    operatingsystem.each { os ->
+      pyenv.each { py ->
+        platform["${os}.${py.slug()}"] = {
+          retry(retries) {
+            build job: 'release/tarball',
+              parameters: [
+                string(name: 'PRODUCT', value: 'lsst_distrib'),
+                string(name: 'EUPS_TAG', value: eupsTag),
+                booleanParam(name: 'SMOKE', value: true),
+                booleanParam(name: 'RUN_DEMO', value: true),
+                booleanParam(name: 'PUBLISH', value: true),
+                string(name: 'PYVER', value: py.pythonVersion),
+                string(name: 'MINIVER', value: py.minicondaVersion),
+                string(name: 'LSSTSW_REF', value: py.lsstswRef),
+                string(name: 'OS', value: os),
+              ]
+          }
+        }
+      }
     }
+
+    parallel platform
   }
 
   stage('wait for s3 sync') {
@@ -188,5 +214,37 @@ try {
       break
     default:
       notify.failure()
+  }
+}
+
+/**
+ * Represents a miniconda build environment.
+ */
+class MinicondaEnv implements Serializable {
+  String pythonVersion
+  String minicondaVersion
+  String lsstswRef
+
+  /**
+   * Constructor.
+   *
+   * @param p Python major version number. Eg., '3'
+   * @param m Miniconda version string. Eg., '4.2.12'
+   * @param l {@code lsst/lsstsw} git ref.
+   * @return MinicondaEnv
+   */
+  // unfortunately, a constructor is required under the security sandbox
+  // See: https://issues.jenkins-ci.org/browse/JENKINS-34741
+  MinicondaEnv(String p, String m, String l) {
+    this.pythonVersion = p
+    this.minicondaVersion = m
+    this.lsstswRef = l
+  }
+
+  /**
+   * Generate a single string description of miniconda env.
+   */
+  String slug() {
+    "miniconda${pythonVersion}-${minicondaVersion}-${lsstswRef}"
   }
 }

@@ -26,43 +26,44 @@ node {
 
 try {
   notify.started()
-  def retries = 1
 
-  if (!params.PYVER) {
-    error 'PYVER parameter is required'
-  }
-
-  def pyenvs = [
-    new MinicondaEnv(params.PYVER, '4.2.12', '7c8e67'), // keep until v14_0
-    new MinicondaEnv(params.PYVER, '4.3.21', '10a4fa6'),
+  def requiredParams = [
+    'PRODUCT',
+    'EUPS_TAG',
+    'PYVER',
+    'MINIVER',
+    'LSSTSW_REF',
+    'OS',
   ]
 
-  stage("build tarballs") {
-    def platform = [:]
+  requiredParams.each { it ->
+    if (!params.get(it)) {
+      error "${it} parameter is required"
+    }
+  }
 
-    pyenvs.each { py ->
-      platform["centos-6.${py.slug()}"] = {
-        retry(retries) {
-          def imageName = 'lsstsqre/centos:6-newinstall'
-          linuxTarballs(imageName, 'el6', 'devtoolset-3', py)
-        }
-      }
+  def pyenv = new MinicondaEnv(params.PYVER, params.MINIVER, params.LSSTSW_REF)
 
-      platform["centos-7.${py.slug()}"] = {
-        retry(retries) {
-          def imageName = 'lsstsqre/centos:7-newinstall'
-          linuxTarballs(imageName, 'el7', 'gcc-system', py)
-        }
-      }
+  stage("build tarball") {
+    def config = null
 
-      platform["osx-10.11.${py.slug()}"] = {
-        retry(retries) {
-          osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py)
-        }
-      }
+    switch(params.OS) {
+      case 'centos-7':
+        def imageName = 'lsstsqre/centos:7-newinstall'
+        config = { linuxTarballs(imageName, 'el7', 'gcc-system', pyenv) }
+        break
+      case 'centos-6':
+        def imageName = 'lsstsqre/centos:6-newinstall'
+        config = { linuxTarballs(imageName, 'el6', 'devtoolset-3', pyenv) }
+        break
+      case 'osx-10.11':
+        config = { osxTarballs('10.11', '10.9', 'clang-800.0.42.1', pyenv) }
+        break
+      default:
+        error "unsupported platform: ${params.PLATFORM}"
     }
 
-    parallel platform
+    config()
   }
 } catch (e) {
   // If there was an exception thrown, the build failed
