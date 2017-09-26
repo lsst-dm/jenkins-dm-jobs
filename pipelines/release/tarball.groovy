@@ -3,7 +3,7 @@ import groovy.transform.Field
 class UnsupportedCompiler extends Exception {}
 
 def notify = null
-node {
+node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
   }
@@ -42,22 +42,22 @@ try {
     }
   }
 
-  def pyenv = new MinicondaEnv(params.PYVER, params.MINIVER, params.LSSTSW_REF)
+  def py = new MinicondaEnv(params.PYVER, params.MINIVER, params.LSSTSW_REF)
 
-  stage("build tarball") {
+  stage("${params.OS}.${py.slug()}") {
     def config = null
 
     switch(params.OS) {
       case 'centos-7':
         def imageName = 'lsstsqre/centos:7-newinstall'
-        config = { linuxTarballs(imageName, 'el7', 'gcc-system', pyenv) }
+        config = { linuxTarballs(imageName, 'el7', 'gcc-system', py) }
         break
       case 'centos-6':
         def imageName = 'lsstsqre/centos:6-newinstall'
-        config = { linuxTarballs(imageName, 'el6', 'devtoolset-3', pyenv) }
+        config = { linuxTarballs(imageName, 'el6', 'devtoolset-3', py) }
         break
       case 'osx-10.11':
-        config = { osxTarballs('10.11', '10.9', 'clang-800.0.42.1', pyenv) }
+        config = { osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py) }
         break
       default:
         error "unsupported platform: ${params.PLATFORM}"
