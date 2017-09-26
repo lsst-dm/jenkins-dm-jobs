@@ -534,12 +534,38 @@ def String smokeScript(
     if [[ \$RUN_DEMO == true ]]; then
       ${ciScriptsPath}/runManifestDemo.sh --tag "${tag}" --small
     fi
+  """ + '''
+    #
+    # use the same version of base that was just installed to rule out source
+    # compatibility issues.
+    #
+    # match:
+    # - 13 as 13
+    # - 13.0 as 13.0
+    # - 13.0+1 as 13.0
+    # - 13.0-10-g692d0a9 as 692d0a9
+    #
+    # Eg.
+    #    13.0-10-692d0a9 d_2017_09_14 ... current d_2017_09_13
+    #
+    # note that py2.7 compat is required -- the lambda can be dropped under
+    # py3.5+
+    BASE_REF=$(eups list base | python -c "
+import sys,re;
+for line in sys.stdin:
+  foo = re.sub(r'^\\s*(?:[\\d.-]+g(\\S+)|([\\d.]+)\\+?[\\d]*)\\s+.*', lambda m: m.group(1) or m.group(2), line)
+  if foo is line:
+    sys.exit(1)
+  print(foo)
+")
 
+    # sadly, git will not clone by sha1 -- only branch/tag names are allowed
     git clone https://github.com/lsst/base.git
     cd base
+    git checkout "$BASE_REF"
     setup -k -r .
     scons
-  """)
+  ''')
 }
 
 /**
