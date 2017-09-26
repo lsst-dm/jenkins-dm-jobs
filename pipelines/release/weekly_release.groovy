@@ -49,14 +49,16 @@ try {
 
   stage('build') {
     retry(retries) {
-      def result = build job: buildJob,
-        parameters: [
-          string(name: 'PRODUCT', value: product),
-          booleanParam(name: 'SKIP_DEMO', value: false),
-          booleanParam(name: 'SKIP_DOCS', value: true),
-        ],
-        wait: true
-      rebuildId = result.id
+      timeout(time: 6, unit: 'HOURS') {
+        def result = build job: buildJob,
+          parameters: [
+            string(name: 'PRODUCT', value: product),
+            booleanParam(name: 'SKIP_DEMO', value: false),
+            booleanParam(name: 'SKIP_DOCS', value: true),
+          ],
+          wait: true
+        rebuildId = result.id
+      }
     }
   }
 
@@ -82,22 +84,30 @@ try {
 
     pub[eupsTag] = {
       retry(retries) {
-        util.tagProduct(bx, eupsTag, product, publishJob)
+        timeout(time: 1, unit: 'HOURS') {
+          util.tagProduct(bx, eupsTag, product, publishJob)
+        }
       }
     }
     pub['w_latest'] = {
       retry(retries) {
-        util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+        timeout(time: 1, unit: 'HOURS') {
+          util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+        }
       }
     }
     pub['qserv_latest'] = {
       retry(retries) {
-        util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+        timeout(time: 1, unit: 'HOURS') {
+          util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+        }
       }
     }
     pub['qserv-dev'] = {
       retry(retries) {
-        util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+        timeout(time: 1, unit: 'HOURS') {
+          util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+        }
       }
     }
 
@@ -110,13 +120,15 @@ try {
 
   stage('git tag') {
     retry(retries) {
-      // needs eups distrib tag to be sync'd from s3 -> k8s volume
-      build job: 'release/tag-git-repos',
-        parameters: [
-          string(name: 'BUILD_ID', value: bx),
-          string(name: 'GIT_TAG', value: gitTag),
-          booleanParam(name: 'DRY_RUN', value: false)
-        ]
+      timeout(time: 1, unit: 'HOURS') {
+        // needs eups distrib tag to be sync'd from s3 -> k8s volume
+        build job: 'release/tag-git-repos',
+          parameters: [
+            string(name: 'BUILD_ID', value: bx),
+            string(name: 'GIT_TAG', value: gitTag),
+            booleanParam(name: 'DRY_RUN', value: false)
+          ]
+      }
     }
   }
 
@@ -140,18 +152,20 @@ try {
       pyenv.each { py ->
         platform["${os}.${py.slug()}"] = {
           retry(retries) {
-            build job: 'release/tarball',
-              parameters: [
-                string(name: 'PRODUCT', value: 'lsst_distrib'),
-                string(name: 'EUPS_TAG', value: eupsTag),
-                booleanParam(name: 'SMOKE', value: true),
-                booleanParam(name: 'RUN_DEMO', value: true),
-                booleanParam(name: 'PUBLISH', value: true),
-                string(name: 'PYVER', value: py.pythonVersion),
-                string(name: 'MINIVER', value: py.minicondaVersion),
-                string(name: 'LSSTSW_REF', value: py.lsstswRef),
-                string(name: 'OS', value: os),
-              ]
+            timeout(time: 6, unit: 'HOURS') {
+              build job: 'release/tarball',
+                parameters: [
+                  string(name: 'PRODUCT', value: 'lsst_distrib'),
+                  string(name: 'EUPS_TAG', value: eupsTag),
+                  booleanParam(name: 'SMOKE', value: true),
+                  booleanParam(name: 'RUN_DEMO', value: true),
+                  booleanParam(name: 'PUBLISH', value: true),
+                  string(name: 'PYVER', value: py.pythonVersion),
+                  string(name: 'MINIVER', value: py.minicondaVersion),
+                  string(name: 'LSSTSW_REF', value: py.lsstswRef),
+                  string(name: 'OS', value: os),
+                ]
+            }
           }
         }
       }
@@ -178,21 +192,25 @@ try {
 
   stage('build stack image') {
     retry(retries) {
-      build job: 'release/docker/build-stack',
-        parameters: [
-          string(name: 'TAG', value: eupsTag)
-        ]
+      timeout(time: 1, unit: 'HOURS') {
+        build job: 'release/docker/build-stack',
+          parameters: [
+            string(name: 'TAG', value: eupsTag)
+          ]
+      }
     }
   }
 
   stage('build jupyterlabdemo image') {
     retry(retries) {
-      // based on lsstsqre/stack image
-      build job: 'sqre/infrastructure/build-jupyterlabdemo',
-        parameters: [
-          string(name: 'TAG', value: eupsTag),
-          booleanParam(name: 'NO_PUSH', value: false),
-        ]
+      timeout(time: 1, unit: 'HOURS') {
+        // based on lsstsqre/stack image
+        build job: 'sqre/infrastructure/build-jupyterlabdemo',
+          parameters: [
+            string(name: 'TAG', value: eupsTag),
+            booleanParam(name: 'NO_PUSH', value: false),
+          ]
+      }
     }
   }
 

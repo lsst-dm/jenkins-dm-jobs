@@ -63,7 +63,9 @@ try {
         error "unsupported platform: ${params.PLATFORM}"
     }
 
-    config()
+    timeout(time: 6, unit: 'HOURS') {
+      config()
+    }
   }
 } catch (e) {
   // If there was an exception thrown, the build failed
