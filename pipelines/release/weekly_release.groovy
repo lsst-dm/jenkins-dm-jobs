@@ -18,203 +18,204 @@ try {
   notify.started()
 
   try {
-    def gitTag = null
-    def eupsTag = null
-    def product = 'lsst_distrib qserv_distrib'
-    def retries = 3
-    def bx = null
-    def rebuildId = null
-    def buildJob = 'release/run-rebuild'
-    def publishJob = 'release/run-publish'
-    def year = null
-    def week = null
+    timeout(time: 30, unit: 'HOURS') {
+      def gitTag = null
+      def eupsTag = null
+      def product = 'lsst_distrib qserv_distrib'
+      def retries = 3
+      def bx = null
+      def rebuildId = null
+      def buildJob = 'release/run-rebuild'
+      def publishJob = 'release/run-publish'
+      def year = null
+      def week = null
 
-    stage('format weekly tag') {
-      if (!params.YEAR) {
-        error 'YEAR parameter is required'
-      }
-      if (!params.WEEK) {
-        error 'WEEK parameter is required'
-      }
-
-      year = params.YEAR.padLeft(4, "0")
-      week = params.WEEK.padLeft(2, "0")
-
-      gitTag = "w.${year}.${week}"
-      echo "generated [git] tag: ${gitTag}"
-
-      // eups doesn't like dots in tags, convert to underscores
-      eupsTag = gitTag.tr('.', '_')
-      echo "generated [eups] tag: ${eupsTag}"
-    }
-
-    stage('build') {
-      retry(retries) {
-        timeout(time: 6, unit: 'HOURS') {
-          def result = build job: buildJob,
-            parameters: [
-              string(name: 'PRODUCT', value: product),
-              booleanParam(name: 'SKIP_DEMO', value: false),
-              booleanParam(name: 'SKIP_DOCS', value: true),
-            ],
-            wait: true
-          rebuildId = result.id
+      stage('format weekly tag') {
+        if (!params.YEAR) {
+          error 'YEAR parameter is required'
         }
-      }
-    }
-
-    stage('parse bNNNN') {
-      node {
-        manifest_artifact = 'lsstsw/build/manifest.txt'
-
-        step([$class: 'CopyArtifact',
-              projectName: buildJob,
-              filter: manifest_artifact,
-              selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
-              ])
-
-        def manifest = readFile manifest_artifact
-        bx = util.bxxxx(manifest)
-
-        echo "parsed bxxxx: ${bx}"
-      }
-    }
-
-    stage('eups publish') {
-      def pub = [:]
-
-      pub[eupsTag] = {
-        retry(retries) {
-          timeout(time: 1, unit: 'HOURS') {
-            util.tagProduct(bx, eupsTag, product, publishJob)
-          }
+        if (!params.WEEK) {
+          error 'WEEK parameter is required'
         }
+
+        year = params.YEAR.padLeft(4, "0")
+        week = params.WEEK.padLeft(2, "0")
+
+        gitTag = "w.${year}.${week}"
+        echo "generated [git] tag: ${gitTag}"
+
+        // eups doesn't like dots in tags, convert to underscores
+        eupsTag = gitTag.tr('.', '_')
+        echo "generated [eups] tag: ${eupsTag}"
       }
-      pub['w_latest'] = {
+
+      stage('build') {
         retry(retries) {
-          timeout(time: 1, unit: 'HOURS') {
-            util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
-          }
-        }
-      }
-      pub['qserv_latest'] = {
-        retry(retries) {
-          timeout(time: 1, unit: 'HOURS') {
-            util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
-          }
-        }
-      }
-      pub['qserv-dev'] = {
-        retry(retries) {
-          timeout(time: 1, unit: 'HOURS') {
-            util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+          timeout(time: 6, unit: 'HOURS') {
+            def result = build job: buildJob,
+              parameters: [
+                string(name: 'PRODUCT', value: product),
+                booleanParam(name: 'SKIP_DEMO', value: false),
+                booleanParam(name: 'SKIP_DOCS', value: true),
+              ],
+              wait: true
+            rebuildId = result.id
           }
         }
       }
 
-      parallel pub
-    }
+      stage('parse bNNNN') {
+        node {
+          manifest_artifact = 'lsstsw/build/manifest.txt'
 
-    stage('wait for s3 sync') {
-      sleep time: 15, unit: 'MINUTES'
-    }
+          step([$class: 'CopyArtifact',
+                projectName: buildJob,
+                filter: manifest_artifact,
+                selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
+                ])
 
-    stage('git tag') {
-      retry(retries) {
-        timeout(time: 1, unit: 'HOURS') {
-          // needs eups distrib tag to be sync'd from s3 -> k8s volume
-          build job: 'release/tag-git-repos',
-            parameters: [
-              string(name: 'BUILD_ID', value: bx),
-              string(name: 'GIT_TAG', value: gitTag),
-              booleanParam(name: 'DRY_RUN', value: false)
-            ]
+          def manifest = readFile manifest_artifact
+          bx = util.bxxxx(manifest)
+
+          echo "parsed bxxxx: ${bx}"
         }
       }
-    }
 
-    stage("build eups tarballs") {
-      def operatingsystem = [
-        'centos-7',
-        'centos-6',
-        'osx-10.11',
-      ]
+      stage('eups publish') {
+        def pub = [:]
 
-      def pyenv = [
-        new MinicondaEnv('2', '4.2.12', '7c8e67'), // keep until v14_0
-        new MinicondaEnv('3', '4.2.12', '7c8e67'), // keep until v14_0
-        new MinicondaEnv('2', '4.3.21', '10a4fa6'),
-        new MinicondaEnv('3', '4.3.21', '10a4fa6'),
-      ]
+        pub[eupsTag] = {
+          retry(retries) {
+            timeout(time: 1, unit: 'HOURS') {
+              util.tagProduct(bx, eupsTag, product, publishJob)
+            }
+          }
+        }
+        pub['w_latest'] = {
+          retry(retries) {
+            timeout(time: 1, unit: 'HOURS') {
+              util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+            }
+          }
+        }
+        pub['qserv_latest'] = {
+          retry(retries) {
+            timeout(time: 1, unit: 'HOURS') {
+              util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+            }
+          }
+        }
+        pub['qserv-dev'] = {
+          retry(retries) {
+            timeout(time: 1, unit: 'HOURS') {
+              util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+            }
+          }
+        }
 
-      def platform = [:]
+        parallel pub
+      }
 
-      operatingsystem.each { os ->
-        pyenv.each { py ->
-          platform["${os}.${py.slug()}"] = {
-            retry(retries) {
-              timeout(time: 6, unit: 'HOURS') {
-                build job: 'release/tarball',
-                  parameters: [
-                    string(name: 'PRODUCT', value: 'lsst_distrib'),
-                    string(name: 'EUPS_TAG', value: eupsTag),
-                    booleanParam(name: 'SMOKE', value: true),
-                    booleanParam(name: 'RUN_DEMO', value: true),
-                    booleanParam(name: 'PUBLISH', value: true),
-                    string(name: 'PYVER', value: py.pythonVersion),
-                    string(name: 'MINIVER', value: py.minicondaVersion),
-                    string(name: 'LSSTSW_REF', value: py.lsstswRef),
-                    string(name: 'OS', value: os),
-                  ]
+      stage('wait for s3 sync') {
+        sleep time: 15, unit: 'MINUTES'
+      }
+
+      stage('git tag') {
+        retry(retries) {
+          timeout(time: 1, unit: 'HOURS') {
+            // needs eups distrib tag to be sync'd from s3 -> k8s volume
+            build job: 'release/tag-git-repos',
+              parameters: [
+                string(name: 'BUILD_ID', value: bx),
+                string(name: 'GIT_TAG', value: gitTag),
+                booleanParam(name: 'DRY_RUN', value: false)
+              ]
+          }
+        }
+      }
+
+      stage("build eups tarballs") {
+        def operatingsystem = [
+          'centos-7',
+          'centos-6',
+          'osx-10.11',
+        ]
+
+        def pyenv = [
+          new MinicondaEnv('2', '4.2.12', '7c8e67'), // keep until v14_0
+          new MinicondaEnv('3', '4.2.12', '7c8e67'), // keep until v14_0
+          new MinicondaEnv('2', '4.3.21', '10a4fa6'),
+          new MinicondaEnv('3', '4.3.21', '10a4fa6'),
+        ]
+
+        def platform = [:]
+
+        operatingsystem.each { os ->
+          pyenv.each { py ->
+            platform["${os}.${py.slug()}"] = {
+              retry(retries) {
+                timeout(time: 6, unit: 'HOURS') {
+                  build job: 'release/tarball',
+                    parameters: [
+                      string(name: 'PRODUCT', value: 'lsst_distrib'),
+                      string(name: 'EUPS_TAG', value: eupsTag),
+                      booleanParam(name: 'SMOKE', value: true),
+                      booleanParam(name: 'RUN_DEMO', value: true),
+                      booleanParam(name: 'PUBLISH', value: true),
+                      string(name: 'PYVER', value: py.pythonVersion),
+                      string(name: 'MINIVER', value: py.minicondaVersion),
+                      string(name: 'LSSTSW_REF', value: py.lsstswRef),
+                      string(name: 'OS', value: os),
+                    ]
+                }
               }
             }
           }
         }
+
+        parallel platform
       }
 
-      parallel platform
-    }
+      // disabled
+      // see: https://jira.lsstcorp.org/browse/DM-11586
+      /*
+      artifact['run qserv/docker/build'] = {
+        catchError {
+          retry(retries) {
+            build job: 'qserv/docker/build'
+          }
+        }
+      }
+      */
 
-    // disabled
-    // see: https://jira.lsstcorp.org/browse/DM-11586
-    /*
-    artifact['run qserv/docker/build'] = {
-      catchError {
+      stage('wait for s3 sync') {
+        sleep time: 15, unit: 'MINUTES'
+      }
+
+      stage('build stack image') {
         retry(retries) {
-          build job: 'qserv/docker/build'
+          timeout(time: 1, unit: 'HOURS') {
+            build job: 'release/docker/build-stack',
+              parameters: [
+                string(name: 'TAG', value: eupsTag)
+              ]
+          }
         }
       }
-    }
-    */
 
-    stage('wait for s3 sync') {
-      sleep time: 15, unit: 'MINUTES'
-    }
-
-    stage('build stack image') {
-      retry(retries) {
-        timeout(time: 1, unit: 'HOURS') {
-          build job: 'release/docker/build-stack',
-            parameters: [
-              string(name: 'TAG', value: eupsTag)
-            ]
+      stage('build jupyterlabdemo image') {
+        retry(retries) {
+          timeout(time: 1, unit: 'HOURS') {
+            // based on lsstsqre/stack image
+            build job: 'sqre/infrastructure/build-jupyterlabdemo',
+              parameters: [
+                string(name: 'TAG', value: eupsTag),
+                booleanParam(name: 'NO_PUSH', value: false),
+              ]
+          }
         }
       }
-    }
-
-    stage('build jupyterlabdemo image') {
-      retry(retries) {
-        timeout(time: 1, unit: 'HOURS') {
-          // based on lsstsqre/stack image
-          build job: 'sqre/infrastructure/build-jupyterlabdemo',
-            parameters: [
-              string(name: 'TAG', value: eupsTag),
-              booleanParam(name: 'NO_PUSH', value: false),
-            ]
-        }
-      }
-    }
-
+    } // timeout
   } finally {
     stage('archive') {
       results = []
