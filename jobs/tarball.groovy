@@ -12,6 +12,9 @@ pipelineJob('release/tarball') {
     booleanParam('PUBLISH', false, 'Publish generated EUPS distrib tarballs.')
     booleanParam('WIPEOUT', false, 'Completely wipe out workspace(s) before starting build.')
     choiceParam('PYVER', ['3', '2'], 'Python major version')
+    choiceParam('MINIVER', ['4.3.21', '4.2.12'], 'Miniconda installer version')
+    choiceParam('LSSTSW_REF', ['10a4fa6', '7c8e67'], 'LSST conda package set ref')
+    choiceParam('OS', ['centos-7', 'centos-6', 'osx-10.11'], 'LSST conda package set ref')
   }
 
   properties {

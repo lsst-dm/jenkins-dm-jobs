@@ -49,14 +49,16 @@ try {
 
   stage('build') {
     retry(retries) {
-      def result = build job: buildJob,
-        parameters: [
-          string(name: 'PRODUCT', value: product),
-          booleanParam(name: 'SKIP_DEMO', value: false),
-          booleanParam(name: 'SKIP_DOCS', value: true),
-        ],
-        wait: true
-      rebuildId = result.id
+      timeout(time: 6, unit: 'HOURS') {
+        def result = build job: buildJob,
+          parameters: [
+            string(name: 'PRODUCT', value: product),
+            booleanParam(name: 'SKIP_DEMO', value: false),
+            booleanParam(name: 'SKIP_DOCS', value: true),
+          ],
+          wait: true
+        rebuildId = result.id
+      }
     }
   }
 
@@ -82,22 +84,30 @@ try {
 
     pub[eupsTag] = {
       retry(retries) {
-        util.tagProduct(bx, eupsTag, product, publishJob)
+        timeout(time: 1, unit: 'HOURS') {
+          util.tagProduct(bx, eupsTag, product, publishJob)
+        }
       }
     }
     pub['w_latest'] = {
       retry(retries) {
-        util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+        timeout(time: 1, unit: 'HOURS') {
+          util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
+        }
       }
     }
     pub['qserv_latest'] = {
       retry(retries) {
-        util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+        timeout(time: 1, unit: 'HOURS') {
+          util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
+        }
       }
     }
     pub['qserv-dev'] = {
       retry(retries) {
-        util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+        timeout(time: 1, unit: 'HOURS') {
+          util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+        }
       }
     }
 
@@ -110,48 +120,71 @@ try {
 
   stage('git tag') {
     retry(retries) {
-      // needs eups distrib tag to be sync'd from s3 -> k8s volume
-      build job: 'release/tag-git-repos',
-        parameters: [
-          string(name: 'BUILD_ID', value: bx),
-          string(name: 'GIT_TAG', value: gitTag),
-          booleanParam(name: 'DRY_RUN', value: false)
-        ]
+      timeout(time: 1, unit: 'HOURS') {
+        // needs eups distrib tag to be sync'd from s3 -> k8s volume
+        build job: 'release/tag-git-repos',
+          parameters: [
+            string(name: 'BUILD_ID', value: bx),
+            string(name: 'GIT_TAG', value: gitTag),
+            booleanParam(name: 'DRY_RUN', value: false)
+          ]
+      }
     }
   }
 
-  stage('build eups tarballs') {
-    def artifact = [:]
-    // disabled
-    // see: https://jira.lsstcorp.org/browse/DM-11586
-    /*
-    artifact['run qserv/docker/build'] = {
-      catchError {
-        retry(retries) {
-          build job: 'qserv/docker/build'
+  stage("build eups tarballs") {
+    def operatingsystem = [
+      'centos-7',
+      'centos-6',
+      'osx-10.11',
+    ]
+
+    def pyenv = [
+      new MinicondaEnv('2', '4.2.12', '7c8e67'), // keep until v14_0
+      new MinicondaEnv('3', '4.2.12', '7c8e67'), // keep until v14_0
+      new MinicondaEnv('2', '4.3.21', '10a4fa6'),
+      new MinicondaEnv('3', '4.3.21', '10a4fa6'),
+    ]
+
+    def platform = [:]
+
+    operatingsystem.each { os ->
+      pyenv.each { py ->
+        platform["${os}.${py.slug()}"] = {
+          retry(retries) {
+            timeout(time: 6, unit: 'HOURS') {
+              build job: 'release/tarball',
+                parameters: [
+                  string(name: 'PRODUCT', value: 'lsst_distrib'),
+                  string(name: 'EUPS_TAG', value: eupsTag),
+                  booleanParam(name: 'SMOKE', value: true),
+                  booleanParam(name: 'RUN_DEMO', value: true),
+                  booleanParam(name: 'PUBLISH', value: true),
+                  string(name: 'PYVER', value: py.pythonVersion),
+                  string(name: 'MINIVER', value: py.minicondaVersion),
+                  string(name: 'LSSTSW_REF', value: py.lsstswRef),
+                  string(name: 'OS', value: os),
+                ]
+            }
+          }
         }
       }
     }
-    */
 
-    ['2', '3'].each { pyver ->
-      artifact["run release/tarball py${pyver}"] = {
-        retry(retries) {
-          build job: 'release/tarball',
-            parameters: [
-              string(name: 'PRODUCT', value: 'lsst_distrib'),
-              string(name: 'EUPS_TAG', value: eupsTag),
-              booleanParam(name: 'SMOKE', value: true),
-              booleanParam(name: 'RUN_DEMO', value: true),
-              booleanParam(name: 'PUBLISH', value: true),
-              string(name: 'PYVER', value: pyver)
-            ]
-        }
-      }
-    }
-
-    parallel artifact
+    parallel platform
   }
+
+  // disabled
+  // see: https://jira.lsstcorp.org/browse/DM-11586
+  /*
+  artifact['run qserv/docker/build'] = {
+    catchError {
+      retry(retries) {
+        build job: 'qserv/docker/build'
+      }
+    }
+  }
+  */
 
   stage('wait for s3 sync') {
     sleep time: 15, unit: 'MINUTES'
@@ -159,21 +192,25 @@ try {
 
   stage('build stack image') {
     retry(retries) {
-      build job: 'release/docker/build-stack',
-        parameters: [
-          string(name: 'TAG', value: eupsTag)
-        ]
+      timeout(time: 1, unit: 'HOURS') {
+        build job: 'release/docker/build-stack',
+          parameters: [
+            string(name: 'TAG', value: eupsTag)
+          ]
+      }
     }
   }
 
   stage('build jupyterlabdemo image') {
     retry(retries) {
-      // based on lsstsqre/stack image
-      build job: 'sqre/infrastructure/build-jupyterlabdemo',
-        parameters: [
-          string(name: 'TAG', value: eupsTag),
-          booleanParam(name: 'NO_PUSH', value: false),
-        ]
+      timeout(time: 1, unit: 'HOURS') {
+        // based on lsstsqre/stack image
+        build job: 'sqre/infrastructure/build-jupyterlabdemo',
+          parameters: [
+            string(name: 'TAG', value: eupsTag),
+            booleanParam(name: 'NO_PUSH', value: false),
+          ]
+      }
     }
   }
 
@@ -211,5 +248,37 @@ try {
       break
     default:
       notify.failure()
+  }
+}
+
+/**
+ * Represents a miniconda build environment.
+ */
+class MinicondaEnv implements Serializable {
+  String pythonVersion
+  String minicondaVersion
+  String lsstswRef
+
+  /**
+   * Constructor.
+   *
+   * @param p Python major version number. Eg., '3'
+   * @param m Miniconda version string. Eg., '4.2.12'
+   * @param l {@code lsst/lsstsw} git ref.
+   * @return MinicondaEnv
+   */
+  // unfortunately, a constructor is required under the security sandbox
+  // See: https://issues.jenkins-ci.org/browse/JENKINS-34741
+  MinicondaEnv(String p, String m, String l) {
+    this.pythonVersion = p
+    this.minicondaVersion = m
+    this.lsstswRef = l
+  }
+
+  /**
+   * Generate a single string description of miniconda env.
+   */
+  String slug() {
+    "miniconda${pythonVersion}-${minicondaVersion}-${lsstswRef}"
   }
 }
