@@ -3,7 +3,7 @@ import groovy.transform.Field
 class UnsupportedCompiler extends Exception {}
 
 def notify = null
-node {
+node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
   }
