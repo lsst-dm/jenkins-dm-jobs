@@ -312,6 +312,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
     "RUN=/scripts/${shBasename}",
     "IMAGE=${localImageName}",
     "RUN_DEMO=${params.RUN_DEMO}",
+    "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
   ]) {
     util.shColor '''
       set -e
@@ -326,6 +327,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
         -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
         -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
         -e RUN_DEMO="$RUN_DEMO" \
+        -e RUN_SCONS_CHECK="$RUN_SCONS_CHECK" \
         -e FIX_SHEBANGS=true \
         -u "$(id -u -n)" \
         "$IMAGE" \
@@ -371,6 +373,7 @@ def void osxSmoke(
   dir('smoke') {
     withEnv([
       "RUN_DEMO=${params.RUN_DEMO}",
+      "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
       "FIX_SHEBANGS=true",
     ]) {
       util.shColor """
@@ -543,28 +546,38 @@ def String smokeScript(
     # - 13 as 13
     # - 13.0 as 13.0
     # - 13.0+1 as 13.0
+    # - 2.9.1.lsst1+1 as 2.9.1.lsst1
     # - 13.0-10-g692d0a9 as 692d0a9
+    # - 13.0-10-g692d0a9+1 as 692d0a9
+    # - master-gd7f6e4dbf2+24 as d7f6e4dbf2
+    # - 3.11.lsst1-2-g6ae2b7a as 6ae2b7a
     #
     # Eg.
     #    13.0-10-692d0a9 d_2017_09_14 ... current d_2017_09_13
     #
     # note that py2.7 compat is required -- the lambda can be dropped under
     # py3.5+
-    BASE_REF=$(eups list base | python -c "
+    estring2ref() {
+      python -c "
 import sys,re;
 for line in sys.stdin:
-  foo = re.sub(r'^\\s*(?:[\\d.-]+g(\\S+)|([\\d.]+)\\+?[\\d]*)\\s+.*', lambda m: m.group(1) or m.group(2), line)
+  foo = re.sub(r'^\\s*(?:[\\w.-]+g([a-zA-Z0-9]+)|([\\w.-]+))(?:\\+[\\d]+)?\\s+.*', lambda m: m.group(1) or m.group(2), line)
   if foo is line:
     sys.exit(1)
   print(foo)
-")
+"
+    }
 
-    # sadly, git will not clone by sha1 -- only branch/tag names are allowed
-    git clone https://github.com/lsst/base.git
-    cd base
-    git checkout "$BASE_REF"
-    setup -k -r .
-    scons
+    if [[ \$RUN_SCONS_CHECK == true ]]; then
+      BASE_REF=$(eups list base | estring2ref)
+
+      # sadly, git will not clone by sha1 -- only branch/tag names are allowed
+      git clone https://github.com/lsst/base.git
+      cd base
+      git checkout "$BASE_REF"
+      setup -k -r .
+      scons
+    fi
   ''')
 }
 
