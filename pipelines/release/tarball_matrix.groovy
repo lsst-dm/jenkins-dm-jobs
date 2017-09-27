@@ -58,6 +58,7 @@ try {
                     string(name: 'EUPS_TAG', value: params.EUPS_TAG),
                     booleanParam(name: 'SMOKE', value: params.SMOKE),
                     booleanParam(name: 'RUN_DEMO', value: params.RUN_DEMO),
+                    booleanParam(name: 'RUN_SCONS_CHECK', value: params.RUN_SCONS_CHECK),
                     booleanParam(name: 'PUBLISH', value: params.PUBLISH),
                     booleanParam(name: 'WIPEOUT', value: params.WIPEOUT),
                     string(name: 'PYVER', value: py.pythonVersion),

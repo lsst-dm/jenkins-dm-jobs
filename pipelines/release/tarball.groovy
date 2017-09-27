@@ -312,6 +312,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
     "RUN=/scripts/${shBasename}",
     "IMAGE=${localImageName}",
     "RUN_DEMO=${params.RUN_DEMO}",
+    "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
   ]) {
     util.shColor '''
       set -e
@@ -326,6 +327,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
         -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
         -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
         -e RUN_DEMO="$RUN_DEMO" \
+        -e RUN_SCONS_CHECK="$RUN_SCONS_CHECK" \
         -e FIX_SHEBANGS=true \
         -u "$(id -u -n)" \
         "$IMAGE" \
@@ -371,6 +373,7 @@ def void osxSmoke(
   dir('smoke') {
     withEnv([
       "RUN_DEMO=${params.RUN_DEMO}",
+      "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
       "FIX_SHEBANGS=true",
     ]) {
       util.shColor """
@@ -565,14 +568,16 @@ for line in sys.stdin:
 "
     }
 
-    BASE_REF=$(eups list base | estring2ref)
+    if [[ \$RUN_SCONS_CHECK == true ]]; then
+      BASE_REF=$(eups list base | estring2ref)
 
-    # sadly, git will not clone by sha1 -- only branch/tag names are allowed
-    git clone https://github.com/lsst/base.git
-    cd base
-    git checkout "$BASE_REF"
-    setup -k -r .
-    scons
+      # sadly, git will not clone by sha1 -- only branch/tag names are allowed
+      git clone https://github.com/lsst/base.git
+      cd base
+      git checkout "$BASE_REF"
+      setup -k -r .
+      scons
+    fi
   ''')
 }
 
