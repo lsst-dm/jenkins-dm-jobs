@@ -17,13 +17,14 @@ node('jenkins-master') {
 try {
   notify.started()
 
+  def gitTag = null
+  def eupsTag = null
+  def bx = null
+
   try {
     timeout(time: 30, unit: 'HOURS') {
-      def gitTag = null
-      def eupsTag = null
       def product = 'lsst_distrib qserv_distrib'
       def retries = 3
-      def bx = null
       def rebuildId = null
       def buildJob = 'release/run-rebuild'
       def publishJob = 'release/run-publish'
