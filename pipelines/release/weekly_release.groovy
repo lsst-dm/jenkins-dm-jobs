@@ -220,7 +220,7 @@ try {
     } // timeout
   } finally {
     stage('archive') {
-      results = []
+      results = [:]
       if (bx) {
         results['bnnn'] = bx
       }
