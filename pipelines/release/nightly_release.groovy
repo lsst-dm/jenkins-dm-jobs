@@ -211,7 +211,7 @@ try {
       if (gitTag) {
         results['git_tag'] = gitTag
       }
-      if (euptsTag) {
+      if (eupsTag) {
         results['eups_tag'] = eupsTag
       }
 
