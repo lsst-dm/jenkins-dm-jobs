@@ -6,7 +6,7 @@ import util.CleanBuild
 [
   [
     name: 'science-pipelines/lsst_distrib',
-    product: 'lsst_distrib',
+    product: 'lsst_distrib ci_hsc',
     skipDemo: false,
     skipDocs: false,
     seedJob: SEED_JOB,
