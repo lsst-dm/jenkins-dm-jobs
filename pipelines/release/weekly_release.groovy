@@ -66,7 +66,7 @@ try {
       }
 
       stage('parse bNNNN') {
-        node {
+        node('jenkins-master') {
           manifest_artifact = 'lsstsw/build/manifest.txt'
 
           step([$class: 'CopyArtifact',
@@ -220,23 +220,27 @@ try {
     } // timeout
   } finally {
     stage('archive') {
-      results = [:]
-      if (bx) {
-        results['bnnn'] = bx
-      }
-      if (gitTag) {
-        results['git_tag'] = gitTag
-      }
-      if (eupsTag) {
-        results['eups_tag'] = eupsTag
-      }
+      def resultsFile = 'results.json'
 
-      util.dumpJson('results.json', results)
+      node('jenkins-master') {
+        results = [:]
+        if (bx) {
+          results['bnnn'] = bx
+        }
+        if (gitTag) {
+          results['git_tag'] = gitTag
+        }
+        if (eupsTag) {
+          results['eups_tag'] = eupsTag
+        }
 
-      archiveArtifacts([
-        artifacts: 'results.json',
-        fingerprint: true
-      ])
+        util.dumpJson(resultsFile, results)
+
+        archiveArtifacts([
+          artifacts: resultsFile,
+          fingerprint: true
+        ])
+      }
     }
   } // try
 } catch (e) {
