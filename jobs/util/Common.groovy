@@ -69,9 +69,11 @@ class Common {
     dslFactory.folder('qserv/release') {
       description('Jobs related to DAX/qserv releases.')
     }
+    /*
     dslFactory.folder('sims') {
       description('LSST sims specific jobs.')
     }
+    */
     dslFactory.folder('science-pipelines') {
       description('Science Pipelines / witchcraft.')
     }
