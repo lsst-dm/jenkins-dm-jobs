@@ -144,8 +144,9 @@ def tagProduct(String buildId, String eupsTag, String product,
  *
  * @param label Node label to run on
  * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
+ * @param wipteout Delete all existing state before starting build
  */
-def lsstswBuild(String label, String python) {
+def lsstswBuild(String label, String python, Boolean wipeout=false) {
   def slug = "${label}.${python}"
 
   node(label) {
@@ -153,6 +154,10 @@ def lsstswBuild(String label, String python) {
       // use different workspace dirs for python 2/3 to avoid residual state
       // conflicts
       dir(slug) {
+        if (wipeout) {
+          deleteDir()
+        }
+
         withEnv([
           'SKIP_DOCS=true',
           "LSST_JUNIT_PREFIX=${slug}",
