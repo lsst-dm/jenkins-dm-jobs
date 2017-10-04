@@ -17,7 +17,7 @@ String duration() {
 }
 
 String slackMessage(String detail) {
-  "${env.JOB_NAME} - #${env.BUILD_NUMBER} ${detail} (<${env.BUILD_URL}|Open>) (<${env.BUILD_URL}/console|Console>)"
+  "${env.JOB_NAME} - #${env.BUILD_NUMBER} ${detail} (<${env.RUN_DISPLAY_URL}|Open>)"
 }
 
 String slackStartMessage() {

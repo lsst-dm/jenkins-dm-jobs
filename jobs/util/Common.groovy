@@ -20,7 +20,7 @@ class Common {
           startNotification(true)
           includeTestSummary(false)
           includeCustomMessage(true)
-          customMessage('(<${BUILD_URL}/console|Console>)')
+          customMessage('(<${RUN_DISPLAY_URL}/console|Console>)')
           sendAs(null)
           commitInfoChoice('NONE')
           teamDomain(null)
