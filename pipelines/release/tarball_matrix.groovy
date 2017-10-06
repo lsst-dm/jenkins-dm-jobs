@@ -60,7 +60,7 @@ try {
                     booleanParam(name: 'RUN_DEMO', value: params.RUN_DEMO),
                     booleanParam(name: 'RUN_SCONS_CHECK', value: params.RUN_SCONS_CHECK),
                     booleanParam(name: 'PUBLISH', value: params.PUBLISH),
-                    booleanParam(name: 'WIPEOUT', value: params.WIPEOUT),
+                    booleanParam(name: 'WIPEOUT', value: false),
                     string(name: 'PYVER', value: py.pythonVersion),
                     string(name: 'MINIVER', value: py.minicondaVersion),
                     string(name: 'LSSTSW_REF', value: py.lsstswRef),
