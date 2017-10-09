@@ -67,6 +67,9 @@ try {
               . ./buildbot-scripts/settings.cfg.sh
 
               aws s3 cp --recursive "$DOC_PUSH_PATH"/ s3://$DOXYGEN_S3_BUCKET/stack/doxygen/
+
+              # prevent unbounded accumulation of doc builds
+              rm -rf "$DOC_PUSH_PATH"
             '''
           }
         }
