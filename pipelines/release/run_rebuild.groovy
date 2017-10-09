@@ -30,7 +30,6 @@ try {
           'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
           "VERSIONDB_PUSH=${versiondbPush}",
           'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
-          'SKIP_DOCS=false',
           "LSST_JUNIT_PREFIX=centos-7.py3",
           'python=py3',
          ]) {
