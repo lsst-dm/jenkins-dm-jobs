@@ -10,7 +10,7 @@ node('jenkins-master') {
       poll: false
     ])
     notify = load 'pipelines/lib/notify.groovy'
-    util = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
   }
 }
 
