@@ -61,7 +61,7 @@ try {
 
               # setup python env
               . "${WORKSPACE}/lsstsw/bin/setup.sh"
-              pip install awscli
+              pip install --upgrade awscli==1.11.167
 
               # provides DOC_PUSH_PATH
               . ./buildbot-scripts/settings.cfg.sh
