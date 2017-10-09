@@ -66,7 +66,7 @@ try {
               # provides DOC_PUSH_PATH
               . ./buildbot-scripts/settings.cfg.sh
 
-              aws s3 cp "$DOC_PUSH_PATH"/ s3://$DOXYGEN_S3_BUCKET/stack/doxygen/
+              aws s3 cp --recursive "$DOC_PUSH_PATH"/ s3://$DOXYGEN_S3_BUCKET/stack/doxygen/
             '''
           }
         }
