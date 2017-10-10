@@ -57,7 +57,7 @@ try {
               parameters: [
                 string(name: 'PRODUCT', value: product),
                 booleanParam(name: 'SKIP_DEMO', value: false),
-                booleanParam(name: 'SKIP_DOCS', value: true),
+                booleanParam(name: 'SKIP_DOCS', value: false),
               ],
               wait: true
             rebuildId = result.id
