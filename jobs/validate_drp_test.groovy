@@ -93,7 +93,7 @@ def j = matrixJob("${folder}/validate_drp-test") {
     DRP:       '$WORKSPACE/validate_drp',
     LSSTSW:    '$WORKSPACE/lsstsw',
     POSTQA:    '$WORKSPACE/post-qa',
-    POSTQA_VERSION: '1.4.0b2',
+    POSTQA_VERSION: '1.3.1',
     // validation data sets -- avoid variable name collision with EUPS
     HSC_DATA:  '$WORKSPACE/validation_data_hsc',
     JENKINS_DEBUG: 'true',
