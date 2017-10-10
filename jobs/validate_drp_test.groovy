@@ -60,7 +60,7 @@ def j = matrixJob("${folder}/validate_drp-test") {
 
   axes {
     label('label', 'centos-7')
-    text('dataset', 'cfht')
+    text('dataset', 'cfht', 'hsc')
     text('python', 'py3')
   }
 
