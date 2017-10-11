@@ -81,20 +81,6 @@ def j = matrixJob("${folder}/validate_drp") {
     }
   }
 
-  wrappers {
-    colorizeOutput('gnome-terminal')
-    credentialsBinding {
-      usernamePassword(
-        'SQUASH_NEW_USER',
-        'SQUASH_NEW_PASS',
-        'squash-new-api-user'
-      )
-      string('SQUASH_NEW_URL', 'squash-new-api-url')
-      string('CMIRROR_S3_BUCKET', 'cmirror-s3-bucket')
-    }
-  }
-
-
   environmentVariables(
     // do not set 'master' as a ref as it will override a repos.yaml default
     // branch
@@ -357,9 +343,8 @@ def j = matrixJob("${folder}/validate_drp") {
       post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS" --test > "$postqa_output"
       xz -T0 -9ev "$postqa_output"
 
-      # submit post-qa (temporarily sending to the current and to the new production enviroments)
+      # submit post-qa 
       post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
-      post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_NEW_URL"  --api-user "$SQUASH_NEW_USER" --api-password "$SQUASH_NEW_PASS"
       '''.replaceFirst("\n","").stripIndent()
     )
   }
