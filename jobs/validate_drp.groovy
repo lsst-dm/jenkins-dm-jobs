@@ -95,7 +95,7 @@ def j = matrixJob("${folder}/validate_drp") {
     DRP:       '$WORKSPACE/validate_drp',
     LSSTSW:    '$WORKSPACE/lsstsw',
     POSTQA:    '$WORKSPACE/post-qa',
-    POSTQA_VERSION: '1.3.1',
+    POSTQA_VERSION: '1.3.2',
     // validation data sets -- avoid variable name collision with EUPS
     HSC_DATA:  '$WORKSPACE/validation_data_hsc',
     JENKINS_DEBUG: 'true',
@@ -343,7 +343,7 @@ def j = matrixJob("${folder}/validate_drp") {
       post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS" --test > "$postqa_output"
       xz -T0 -9ev "$postqa_output"
 
-      # submit post-qa
+      # submit post-qa 
       post-qa --lsstsw "$LSSTSW" --qa-json "${DRP}/output.json" --api-url "$SQUASH_URL"  --api-user "$SQUASH_USER" --api-password "$SQUASH_PASS"
       '''.replaceFirst("\n","").stripIndent()
     )
