@@ -6,7 +6,7 @@ import javaposse.jobdsl.dsl.Job
 class CleanBuild {
   String name
   String product
-  String branch
+  String branch = ''
   Boolean skipDemo = true
   Boolean skipDocs = true
   String cron = 'H 19 * * *'
