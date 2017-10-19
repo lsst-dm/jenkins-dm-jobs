@@ -194,6 +194,25 @@ def jenkinsWrapper() {
         ])
       }
 
+      // workspace relative dir for dot files to prevent bleed through between
+      // jobs and subsequent builds.
+      dir('home') {
+        deleteDir()
+
+        // this is a lazy way to recreate the directory
+        writeFile(file: '.dummy', text: '')
+      }
+
+      // cleanup *all* conda cached package info
+      [
+        'lsstsw/miniconda/conda-meta',
+        'lsstsw/miniconda/pkgs',
+      ].each { it ->
+        dir(it) {
+          deleteDir()
+        }
+      }
+
       withCredentials([[
         $class: 'StringBinding',
         credentialsId: 'cmirror-s3-bucket',
@@ -201,6 +220,7 @@ def jenkinsWrapper() {
       ]]) {
         withEnv([
           "WORKSPACE=${pwd()}",
+          "HOME=${pwd()}/home",
         ]) {
           util.shColor './buildbot-scripts/jenkins_wrapper.sh'
         }
