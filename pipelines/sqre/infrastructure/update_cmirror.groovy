@@ -31,8 +31,13 @@ try {
       '''
     }
 
-    mirror(image.id, 'https://repo.continuum.io/pkgs/free/', 'linux-64')
-    mirror(image.id, 'https://repo.continuum.io/pkgs/free/', 'osx-64')
+    [
+      'linux-64',
+      'osx-64',
+      'noarch',
+    ].each { platform ->
+      mirror(image.id, 'https://repo.continuum.io/pkgs/free/', platform)
+    }
 
     stage('mirror miniconda') {
       util.shColor '''
