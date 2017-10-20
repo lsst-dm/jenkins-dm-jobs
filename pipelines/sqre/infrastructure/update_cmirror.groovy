@@ -22,21 +22,21 @@ try {
   node('docker') {
     def image = docker.image("${hub_repo}:latest")
 
-    stage('pull') {
+    stage('prepare') {
       image.pull()
-    }
 
-    stage('mirror linux-64') {
       util.shColor '''
         mkdir -p local_mirror tmp
         chmod 777 local_mirror tmp
       '''
-
-      runMirror(image.id, 'https://repo.continuum.io/pkgs/free/', 'linux-64')
     }
 
-    stage('mirror osx-64') {
-      runMirror(image.id, 'https://repo.continuum.io/pkgs/free/', 'osx-64')
+    [
+      'linux-64',
+      'osx-64',
+      'noarch',
+    ].each { platform ->
+      mirror(image.id, 'https://repo.continuum.io/pkgs/free/', platform)
     }
 
     stage('mirror miniconda') {
@@ -113,10 +113,29 @@ try {
   }
 }
 
-def runMirror(String image, String upstream, String platform) {
-  def localImageName = "${image}-local"
+def mirror(String imageId, String upstream, String platform) {
+  stage("mirror ${platform}") {
+    runMirror(imageId, 'https://repo.continuum.io/pkgs/free/', 'osx-64')
+  }
+}
 
-  util.wrapContainer(image, localImageName)
+def runMirror(String imageId, String upstream, String platform) {
+  def localImageName = "${imageId}-local"
+
+  util.wrapContainer(imageId, localImageName)
+
+  // archive a copy of the upstream repodata.json at (or as close to as is
+  // possible) the time conda-mirror is run.  This may be useful for debugging
+  // suspected repodata.json issues as conda-mirror completely rewrites the
+  // packages section of this file.
+  dir("repodata/${platform}") {
+    util.shColor "wget ${upstream}/${platform}/repodata.json"
+  }
+
+  archiveArtifacts([
+    artifacts: 'repodata/**/*',
+    fingerprint: true,
+  ])
 
   withEnv([
     "IMAGE=${localImageName}",
