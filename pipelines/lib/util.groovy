@@ -221,6 +221,7 @@ def jenkinsWrapper() {
         withEnv([
           "WORKSPACE=${pwd()}",
           "HOME=${pwd()}/home",
+          "EUPS_USERDATA=${pwd()}/home/.eups_userdata",
         ]) {
           util.shColor './buildbot-scripts/jenkins_wrapper.sh'
         }
