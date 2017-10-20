@@ -118,6 +118,19 @@ def runMirror(String image, String upstream, String platform) {
 
   util.wrapContainer(image, localImageName)
 
+  // archive a copy of the upstream repodata.json at (or as close to as is
+  // possible) the time conda-mirror is run.  This may be useful for debugging
+  // suspected repodata.json issues as conda-mirror completely rewrites the
+  // packages section of this file.
+  dir("repodata/${platform}") {
+    util.shColor "wget ${upstream}/${platform}/repodata.json"
+  }
+
+  archiveArtifacts([
+    artifacts: 'repodata/**/*',
+    fingerprint: true,
+  ])
+
   withEnv([
     "IMAGE=${localImageName}",
     "UPSTREAM=${upstream}",
