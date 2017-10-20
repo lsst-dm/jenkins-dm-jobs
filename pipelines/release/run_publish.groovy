@@ -89,6 +89,7 @@ try {
             def env = [
               "EUPS_PKGROOT=${pwd()}/distrib",
               "WORKSPACE=${pwd()}",
+              "HOME=${pwd()}/home",
             ]
 
             withEnv(env) {
