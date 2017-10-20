@@ -51,7 +51,11 @@ try {
           credentialsId: 'doxygen-push-bucket',
           variable: 'DOXYGEN_S3_BUCKET'
         ]]) {
-          withEnv(["WORKSPACE=${pwd()}"]) {
+          withEnv([
+            "EUPS_PKGROOT=${pwd()}/distrib",
+            "WORKSPACE=${pwd()}",
+            "HOME=${pwd()}/home",
+          ]) {
             util.shColor '''
               #!/bin/bash -e
 
