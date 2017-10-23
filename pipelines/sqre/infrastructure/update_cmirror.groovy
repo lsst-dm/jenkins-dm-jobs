@@ -129,7 +129,7 @@ def runMirror(String imageId, String upstream, String platform) {
   // suspected repodata.json issues as conda-mirror completely rewrites the
   // packages section of this file.
   dir("repodata/${platform}") {
-    util.shColor "wget ${upstream}/${platform}/repodata.json"
+    util.shColor "wget ${upstream}${platform}/repodata.json"
   }
 
   archiveArtifacts([
