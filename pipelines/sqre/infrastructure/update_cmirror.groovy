@@ -29,6 +29,11 @@ try {
         mkdir -p local_mirror tmp
         chmod 777 local_mirror tmp
       '''
+
+      // cleanup download repodata.json files between builds
+      dir('repodata') {
+        deleteDir()
+      }
     }
 
     [
