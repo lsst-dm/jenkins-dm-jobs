@@ -120,7 +120,7 @@ try {
 
 def mirror(String imageId, String upstream, String platform) {
   stage("mirror ${platform}") {
-    runMirror(imageId, 'https://repo.continuum.io/pkgs/free/', 'osx-64')
+    runMirror(imageId, 'https://repo.continuum.io/pkgs/free/', platform)
   }
 }
 
