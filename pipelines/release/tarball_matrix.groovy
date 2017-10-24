@@ -65,6 +65,7 @@ try {
                     string(name: 'MINIVER', value: py.minicondaVersion),
                     string(name: 'LSSTSW_REF', value: py.lsstswRef),
                     string(name: 'OS', value: os),
+                    string(name: 'TIMEOUT', value: '6'), // hours
                   ]
               }
             }

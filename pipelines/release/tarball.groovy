@@ -34,6 +34,7 @@ try {
     'MINIVER',
     'LSSTSW_REF',
     'OS',
+    'TIMEOUT',
   ]
 
   requiredParams.each { it ->
@@ -43,28 +44,23 @@ try {
   }
 
   def py = new MinicondaEnv(params.PYVER, params.MINIVER, params.LSSTSW_REF)
+  def timeout = params.TIMEOUT.toString()
 
   stage("${params.OS}.${py.slug()}") {
-    def config = null
-
     switch(params.OS) {
       case 'centos-7':
         def imageName = 'lsstsqre/centos:7-newinstall'
-        config = { linuxTarballs(imageName, 'el7', 'gcc-system', py) }
+        linuxTarballs(imageName, 'el7', 'gcc-system', py, timeout)
         break
       case 'centos-6':
         def imageName = 'lsstsqre/centos:6-newinstall'
-        config = { linuxTarballs(imageName, 'el6', 'devtoolset-3', py) }
+        linuxTarballs(imageName, 'el6', 'devtoolset-3', py, timeout)
         break
       case 'osx-10.11':
-        config = { osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py) }
+        osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py, timeout)
         break
       default:
         error "unsupported platform: ${params.PLATFORM}"
-    }
-
-    timeout(time: 6, unit: 'HOURS') {
-      config()
     }
   }
 } catch (e) {
@@ -96,17 +92,19 @@ try {
  * @param platform Eg., 'el7'
  * @param compiler Eg., 'system-gcc'
  * @param menv Miniconda object
+ * @param timeout int build timeout in hours
  */
 def void linuxTarballs(
   String imageName,
   String platform,
   String compiler,
-  MinicondaEnv menv
+  MinicondaEnv menv,
+  int timeout
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('redhat', platform, compiler, slug)
 
-  node('docker') {
+  def run = {
     if (params.WIPEOUT) {
       deleteDir()
     }
@@ -136,6 +134,12 @@ def void linuxTarballs(
         }
       }
     } // withCredentials([[
+  } // run()
+
+  node('docker') {
+    timeout(time: timeout, unit: 'HOURS') {
+      run()
+    }
   }
 }
 
@@ -147,17 +151,19 @@ def void linuxTarballs(
  * @param macosx_deployment_target Eg., '10.9'
  * @param compiler Eg., 'system-gcc'
  * @param menv Miniconda object
+ * @param timeout int build timeout in hours
  */
 def void osxTarballs(
   String platform,
   String macosx_deployment_target,
   String compiler,
-  MinicondaEnv menv
+  MinicondaEnv menv,
+  int timeout
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('osx', macosx_deployment_target, compiler, slug)
 
-  node("osx-${platform}") {
+  def run = {
     if (params.WIPEOUT) {
       deleteDir()
     }
@@ -187,7 +193,13 @@ def void osxTarballs(
         }
       } // dir(platform)
     } // withCredentials([[
-  } // node
+  } // run()
+
+  node("osx-${platform}") {
+    timeout(time: timeout, unit: 'HOURS') {
+      run()
+    }
+  }
 }
 
 /**
