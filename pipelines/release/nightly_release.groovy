@@ -151,21 +151,20 @@ try {
           pyenv.each { py ->
             platform["${os}.${py.slug()}"] = {
               retry(retries) {
-                timeout(time: 6, unit: 'HOURS') {
-                  build job: 'release/tarball',
-                    parameters: [
-                      string(name: 'PRODUCT', value: 'lsst_distrib'),
-                      string(name: 'EUPS_TAG', value: eupsTag),
-                      booleanParam(name: 'SMOKE', value: true),
-                      booleanParam(name: 'RUN_DEMO', value: true),
-                      booleanParam(name: 'RUN_SCONS_CHECK', value: true),
-                      booleanParam(name: 'PUBLISH', value: true),
-                      string(name: 'PYVER', value: py.pythonVersion),
-                      string(name: 'MINIVER', value: py.minicondaVersion),
-                      string(name: 'LSSTSW_REF', value: py.lsstswRef),
-                      string(name: 'OS', value: os),
-                    ]
-                }
+                build job: 'release/tarball',
+                  parameters: [
+                    string(name: 'PRODUCT', value: 'lsst_distrib'),
+                    string(name: 'EUPS_TAG', value: eupsTag),
+                    booleanParam(name: 'SMOKE', value: true),
+                    booleanParam(name: 'RUN_DEMO', value: true),
+                    booleanParam(name: 'RUN_SCONS_CHECK', value: true),
+                    booleanParam(name: 'PUBLISH', value: true),
+                    string(name: 'PYVER', value: py.pythonVersion),
+                    string(name: 'MINIVER', value: py.minicondaVersion),
+                    string(name: 'LSSTSW_REF', value: py.lsstswRef),
+                    string(name: 'OS', value: os),
+                    string(name: 'TIMEOUT', value: '6'), // hours
+                  ]
               }
             }
           }
