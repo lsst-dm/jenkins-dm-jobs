@@ -44,7 +44,7 @@ try {
   }
 
   def py = new MinicondaEnv(params.PYVER, params.MINIVER, params.LSSTSW_REF)
-  def timeout = params.TIMEOUT.toString()
+  def timeout = params.TIMEOUT.toInteger()
 
   stage("${params.OS}.${py.slug()}") {
     switch(params.OS) {
@@ -99,7 +99,7 @@ def void linuxTarballs(
   String platform,
   String compiler,
   MinicondaEnv menv,
-  int timeout
+  Integer timeout
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('redhat', platform, compiler, slug)
@@ -158,7 +158,7 @@ def void osxTarballs(
   String macosx_deployment_target,
   String compiler,
   MinicondaEnv menv,
-  int timeout
+  Integer timeout
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('osx', macosx_deployment_target, compiler, slug)
