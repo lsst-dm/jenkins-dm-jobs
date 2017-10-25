@@ -44,20 +44,20 @@ try {
   }
 
   def py = new MinicondaEnv(params.PYVER, params.MINIVER, params.LSSTSW_REF)
-  def timeout = params.TIMEOUT.toInteger()
+  def timelimit = params.TIMEOUT.toInteger()
 
   stage("${params.OS}.${py.slug()}") {
     switch(params.OS) {
       case 'centos-7':
         def imageName = 'lsstsqre/centos:7-newinstall'
-        linuxTarballs(imageName, 'el7', 'gcc-system', py, timeout)
+        linuxTarballs(imageName, 'el7', 'gcc-system', py, timelimit)
         break
       case 'centos-6':
         def imageName = 'lsstsqre/centos:6-newinstall'
-        linuxTarballs(imageName, 'el6', 'devtoolset-3', py, timeout)
+        linuxTarballs(imageName, 'el6', 'devtoolset-3', py, timelimit)
         break
       case 'osx-10.11':
-        osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py, timeout)
+        osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py, timelimit)
         break
       default:
         error "unsupported platform: ${params.PLATFORM}"
@@ -99,7 +99,7 @@ def void linuxTarballs(
   String platform,
   String compiler,
   MinicondaEnv menv,
-  Integer timeout
+  Integer timelimit
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('redhat', platform, compiler, slug)
@@ -137,7 +137,7 @@ def void linuxTarballs(
   } // run()
 
   node('docker') {
-    timeout(time: timeout, unit: 'HOURS') {
+    timeout(time: timelimit, unit: 'HOURS') {
       run()
     }
   }
@@ -158,7 +158,7 @@ def void osxTarballs(
   String macosx_deployment_target,
   String compiler,
   MinicondaEnv menv,
-  Integer timeout
+  Integer timelimit
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('osx', macosx_deployment_target, compiler, slug)
@@ -196,7 +196,7 @@ def void osxTarballs(
   } // run()
 
   node("osx-${platform}") {
-    timeout(time: timeout, unit: 'HOURS') {
+    timeout(time: timelimit, unit: 'HOURS') {
       run()
     }
   }
