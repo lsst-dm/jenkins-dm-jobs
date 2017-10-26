@@ -39,8 +39,6 @@ try {
       ]
 
       def pyenv = [
-        new MinicondaEnv('2', '4.2.12', '7c8e67'), // keep until v14_0
-        new MinicondaEnv('3', '4.2.12', '7c8e67'), // keep until v14_0
         new MinicondaEnv('2', '4.3.21', '10a4fa6'),
         new MinicondaEnv('3', '4.3.21', '10a4fa6'),
       ]
