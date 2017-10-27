@@ -182,12 +182,10 @@ try {
 
       stage('build stack image') {
         retry(retries) {
-          timeout(time: 1, unit: 'HOURS') {
-            build job: 'release/docker/build-stack',
-              parameters: [
-                string(name: 'TAG', value: eupsTag)
-              ]
-          }
+          build job: 'release/docker/build-stack',
+            parameters: [
+              string(name: 'TAG', value: eupsTag)
+            ]
         }
       }
 
