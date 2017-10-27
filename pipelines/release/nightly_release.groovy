@@ -96,16 +96,12 @@ try {
 
         pub[eupsTag] = {
           retry(retries) {
-            timeout(time: 1, unit: 'HOURS') {
-              util.tagProduct(bx, eupsTag, product, publishJob)
-            }
+            util.tagProduct(bx, eupsTag, product, publishJob)
           }
         }
         pub['d_latest'] = {
           retry(retries) {
-            timeout(time: 1, unit: 'HOURS') {
-              util.tagProduct(bx, 'd_latest', product, publishJob)
-            }
+            util.tagProduct(bx, 'd_latest', product, publishJob)
           }
         }
 

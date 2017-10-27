@@ -87,30 +87,22 @@ try {
 
         pub[eupsTag] = {
           retry(retries) {
-            timeout(time: 1, unit: 'HOURS') {
-              util.tagProduct(bx, eupsTag, product, publishJob)
-            }
+            util.tagProduct(bx, eupsTag, product, publishJob)
           }
         }
         pub['w_latest'] = {
           retry(retries) {
-            timeout(time: 1, unit: 'HOURS') {
-              util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
-            }
+            util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
           }
         }
         pub['qserv_latest'] = {
           retry(retries) {
-            timeout(time: 1, unit: 'HOURS') {
-              util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
-            }
+            util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
           }
         }
         pub['qserv-dev'] = {
           retry(retries) {
-            timeout(time: 1, unit: 'HOURS') {
-              util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
-            }
+            util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
           }
         }
 

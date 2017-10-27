@@ -17,7 +17,9 @@ node('jenkins-master') {
 try {
   notify.started()
 
-  node('jenkins-snowflake-1') {
+  def timelimit = params.TIMEOUT.toInteger()
+
+  def run = {
     ws('snowflake/release') {
       stage('publish') {
         dir('lsstsw') {
@@ -109,7 +111,13 @@ try {
         }
       } // stage('push packages')
     } // ws
-  } // node
+  } // run
+
+  node('jenkins-snowflake-1') {
+    timeout(time: timelimit, unit: 'HOURS') {
+      run()
+    }
+  }
 } catch (e) {
   // If there was an exception thrown, the build failed
   currentBuild.result = "FAILED"
