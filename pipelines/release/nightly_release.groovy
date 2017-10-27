@@ -180,14 +180,12 @@ try {
 
       stage('build jupyterlabdemo image') {
         retry(retries) {
-          timeout(time: 1, unit: 'HOURS') {
-            // based on lsstsqre/stack image
-            build job: 'sqre/infrastructure/build-jupyterlabdemo',
-              parameters: [
-                string(name: 'TAG', value: eupsTag),
-                booleanParam(name: 'NO_PUSH', value: false),
-              ]
-          }
+          // based on lsstsqre/stack image
+          build job: 'sqre/infrastructure/build-jupyterlabdemo',
+            parameters: [
+              string(name: 'TAG', value: eupsTag),
+              booleanParam(name: 'NO_PUSH', value: false),
+            ]
         }
       }
     } // timeout

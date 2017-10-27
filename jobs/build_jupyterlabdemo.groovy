@@ -13,6 +13,7 @@ pipelineJob("${folder}/build-jupyterlabdemo") {
     stringParam('BASE_IMAGE', 'lsstsqre/centos', 'Base Docker image')
     stringParam('IMAGE_NAME', 'lsstsqre/jld-lab', 'Output image name')
     stringParam('TAG_PREFIX', '7-stack-lsst_distrib-', 'Tag prefix')
+    stringParam('TIMEOUT', '1', 'build timeout in hours')
   }
 
   properties {
