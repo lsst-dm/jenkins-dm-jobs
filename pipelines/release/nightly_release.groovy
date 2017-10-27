@@ -58,16 +58,16 @@ try {
 
       stage('build') {
         retry(retries) {
-          timeout(time: 6, unit: 'HOURS') {
-            def result = build job: buildJob,
-              parameters: [
-                string(name: 'PRODUCT', value: product),
-                booleanParam(name: 'SKIP_DEMO', value: false),
-                booleanParam(name: 'SKIP_DOCS', value: false),
-              ],
-              wait: true
-            rebuildId = result.id
-          }
+          def result = build job: buildJob,
+            parameters: [
+              string(name: 'PRODUCT', value: product),
+              booleanParam(name: 'SKIP_DEMO', value: false),
+              booleanParam(name: 'SKIP_DOCS', value: false),
+              string(name: 'TIMEOUT', value: '6'), // hours
+
+            ],
+            wait: true
+          rebuildId = result.id
         }
       }
 

@@ -22,7 +22,9 @@ try {
     versiondbPush = 'false'
   }
 
-  node('jenkins-snowflake-1') {
+  def timelimit = params.TIMEOUT.toInteger()
+
+  def run = {
     ws('snowflake/release') {
       stage('build') {
         withEnv([
@@ -76,7 +78,13 @@ try {
         }
       } // stage('push docs')
     } // ws
-  } // node
+  } // run
+
+  node('jenkins-snowflake-1') {
+    timeout(time: timelimit, unit: 'HOURS') {
+      run()
+    }
+  }
 } catch (e) {
   // If there was an exception thrown, the build failed
   currentBuild.result = "FAILED"
