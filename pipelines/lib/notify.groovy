@@ -52,4 +52,32 @@ def failure() {
   slackSend color: 'danger', message: slackFailureMessage()
 }
 
+def wrap(Closure run) {
+  try {
+    notify.started()
+
+    run()
+  } catch (e) {
+    // If there was an exception thrown, the build failed
+    currentBuild.result = "FAILED"
+    throw e
+  } finally {
+    echo "result: ${currentBuild.result}"
+    switch(currentBuild.result) {
+      case null:
+      case 'SUCCESS':
+        notify.success()
+        break
+      case 'ABORTED':
+        notify.aborted()
+        break
+      case 'FAILURE':
+        notify.failure()
+        break
+      default:
+        notify.failure()
+    }
+  }
+}
+
 return this;
