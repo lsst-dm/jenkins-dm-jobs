@@ -15,6 +15,8 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  def timelimit = params.TIMEOUT.toInteger()
+
   withCredentials([[
     $class: 'StringBinding',
     credentialsId: 'github-api-token-sqreadmin',
@@ -54,6 +56,8 @@ notify.wrap {
 
   // python 2.7 is required
   node('centos-7') {
-    run()
+    timeout(time: timelimit, unit: 'HOURS') {
+      run()
+    }
   }
 } // notify.wrap

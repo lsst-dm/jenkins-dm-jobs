@@ -114,15 +114,13 @@ try {
 
       stage('git tag') {
         retry(retries) {
-          timeout(time: 1, unit: 'HOURS') {
-            // needs eups distrib tag to be sync'd from s3 -> k8s volume
-            build job: 'release/tag-git-repos',
-              parameters: [
-                string(name: 'BUILD_ID', value: bx),
-                string(name: 'GIT_TAG', value: gitTag),
-                booleanParam(name: 'DRY_RUN', value: false)
-              ]
-          }
+          // needs eups distrib tag to be sync'd from s3 -> k8s volume
+          build job: 'release/tag-git-repos',
+            parameters: [
+              string(name: 'BUILD_ID', value: bx),
+              string(name: 'GIT_TAG', value: gitTag),
+              booleanParam(name: 'DRY_RUN', value: false)
+            ]
         }
       }
 
