@@ -92,7 +92,7 @@ try {
  * @param platform Eg., 'el7'
  * @param compiler Eg., 'system-gcc'
  * @param menv Miniconda object
- * @param timeout int build timeout in hours
+ * @param timelimit Integer build timeout in hours
  */
 def void linuxTarballs(
   String imageName,
@@ -151,7 +151,7 @@ def void linuxTarballs(
  * @param macosx_deployment_target Eg., '10.9'
  * @param compiler Eg., 'system-gcc'
  * @param menv Miniconda object
- * @param timeout int build timeout in hours
+ * @param timelmit Integer build timeout in hours
  */
 def void osxTarballs(
   String platform,

@@ -9,6 +9,7 @@ pipelineJob('release/run-rebuild') {
     stringParam('PRODUCT', null, 'Whitespace delimited list of EUPS products to build.')
     booleanParam('SKIP_DEMO', false, 'Do not run the demo after all packages have completed building.')
     booleanParam('SKIP_DOCS', false, 'Do not build and publish documentation.')
+    stringParam('TIMEOUT', '6', 'build timeout in hours')
     // enable for debugging only
     // booleanParam('NO_VERSIONDB_PUSH', true, 'Skip push to remote versiondb repo.')
   }

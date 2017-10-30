@@ -52,16 +52,15 @@ try {
 
       stage('build') {
         retry(retries) {
-          timeout(time: 6, unit: 'HOURS') {
-            def result = build job: buildJob,
-              parameters: [
-                string(name: 'PRODUCT', value: product),
-                booleanParam(name: 'SKIP_DEMO', value: false),
-                booleanParam(name: 'SKIP_DOCS', value: false),
-              ],
-              wait: true
-            rebuildId = result.id
-          }
+          def result = build job: buildJob,
+            parameters: [
+              string(name: 'PRODUCT', value: product),
+              booleanParam(name: 'SKIP_DEMO', value: false),
+              booleanParam(name: 'SKIP_DOCS', value: false),
+              string(name: 'TIMEOUT', value: '6'), // hours
+            ],
+            wait: true
+          rebuildId = result.id
         }
       }
 
@@ -87,30 +86,22 @@ try {
 
         pub[eupsTag] = {
           retry(retries) {
-            timeout(time: 1, unit: 'HOURS') {
-              util.tagProduct(bx, eupsTag, product, publishJob)
-            }
+            util.tagProduct(bx, eupsTag, product, publishJob)
           }
         }
         pub['w_latest'] = {
           retry(retries) {
-            timeout(time: 1, unit: 'HOURS') {
-              util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
-            }
+            util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
           }
         }
         pub['qserv_latest'] = {
           retry(retries) {
-            timeout(time: 1, unit: 'HOURS') {
-              util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
-            }
+            util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
           }
         }
         pub['qserv-dev'] = {
           retry(retries) {
-            timeout(time: 1, unit: 'HOURS') {
-              util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
-            }
+            util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
           }
         }
 
@@ -123,15 +114,13 @@ try {
 
       stage('git tag') {
         retry(retries) {
-          timeout(time: 1, unit: 'HOURS') {
-            // needs eups distrib tag to be sync'd from s3 -> k8s volume
-            build job: 'release/tag-git-repos',
-              parameters: [
-                string(name: 'BUILD_ID', value: bx),
-                string(name: 'GIT_TAG', value: gitTag),
-                booleanParam(name: 'DRY_RUN', value: false)
-              ]
-          }
+          // needs eups distrib tag to be sync'd from s3 -> k8s volume
+          build job: 'release/tag-git-repos',
+            parameters: [
+              string(name: 'BUILD_ID', value: bx),
+              string(name: 'GIT_TAG', value: gitTag),
+              booleanParam(name: 'DRY_RUN', value: false)
+            ]
         }
       }
 
@@ -193,25 +182,21 @@ try {
 
       stage('build stack image') {
         retry(retries) {
-          timeout(time: 1, unit: 'HOURS') {
-            build job: 'release/docker/build-stack',
-              parameters: [
-                string(name: 'TAG', value: eupsTag)
-              ]
-          }
+          build job: 'release/docker/build-stack',
+            parameters: [
+              string(name: 'TAG', value: eupsTag)
+            ]
         }
       }
 
       stage('build jupyterlabdemo image') {
         retry(retries) {
-          timeout(time: 1, unit: 'HOURS') {
-            // based on lsstsqre/stack image
-            build job: 'sqre/infrastructure/build-jupyterlabdemo',
-              parameters: [
-                string(name: 'TAG', value: eupsTag),
-                booleanParam(name: 'NO_PUSH', value: false),
-              ]
-          }
+          // based on lsstsqre/stack image
+          build job: 'sqre/infrastructure/build-jupyterlabdemo',
+            parameters: [
+              string(name: 'TAG', value: eupsTag),
+              booleanParam(name: 'NO_PUSH', value: false),
+            ]
         }
       }
     } // timeout

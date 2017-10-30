@@ -17,7 +17,9 @@ node('jenkins-master') {
 try {
   notify.started()
 
-  node('docker') {
+  def timelimit = params.TIMEOUT.toInteger()
+
+  def run = {
     stage('checkout') {
       git([
         url: 'https://github.com/lsst-sqre/jupyterlabdemo',
@@ -54,6 +56,12 @@ try {
           """
         }
       }
+    }
+  } // run
+
+  node('docker') {
+    timeout(time: timelimit, unit: 'HOURS') {
+      run()
     }
   }
 } catch (e) {

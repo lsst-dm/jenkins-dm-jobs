@@ -127,15 +127,22 @@ def slurpJson(String data) {
  * @param eupsTag tag name
  * @param product whitespace delimited string of products to tag
  * @param publishJob job to trigger (does the actual work)
+ * @param timelimit Integer build timeout in hours
  */
-def tagProduct(String buildId, String eupsTag, String product,
-               String publishJob = 'release/run-publish') {
+def tagProduct(
+  String buildId,
+  String eupsTag,
+  String product,
+  String publishJob = 'release/run-publish',
+  Integer timelimit = 1
+) {
   build job: publishJob,
     parameters: [
       string(name: 'EUPSPKG_SOURCE', value: 'git'),
       string(name: 'BUILD_ID', value: buildId),
       string(name: 'TAG', value: eupsTag),
-      string(name: 'PRODUCT', value: product)
+      string(name: 'PRODUCT', value: product),
+      string(name: 'TIMEOUT', value: timelimit.toString()), // hours
     ]
 }
 

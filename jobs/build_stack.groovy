@@ -8,6 +8,7 @@ pipelineJob("${folder}/build-stack") {
 
   parameters {
     stringParam('TAG', null, 'EUPS distrib tag name. Eg. w_2016_08')
+    stringParam('TIMEOUT', '1', 'build timeout in hours')
   }
 
   properties {
