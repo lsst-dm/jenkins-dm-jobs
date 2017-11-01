@@ -54,7 +54,7 @@ def failure() {
 
 def wrap(Closure run) {
   try {
-    notify.started()
+    started()
 
     run()
   } catch (e) {
@@ -66,16 +66,16 @@ def wrap(Closure run) {
     switch(currentBuild.result) {
       case null:
       case 'SUCCESS':
-        notify.success()
+        success()
         break
       case 'ABORTED':
-        notify.aborted()
+        aborted()
         break
       case 'FAILURE':
-        notify.failure()
+        failure()
         break
       default:
-        notify.failure()
+        failure()
     }
   }
 }
