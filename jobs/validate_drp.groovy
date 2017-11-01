@@ -64,7 +64,7 @@ def j = matrixJob("${folder}/validate_drp") {
     //text('dataset', 'cfht', 'hsc', 'decam')
     text('dataset', 'cfht', 'hsc')
     text('python', 'py3')
-    text('BRANCH', '', 'tickets/DM-12253') // '' == master
+    text('BRANCH', '', 'verify_port') // '' == master
   }
 
   combinationFilter('!(label=="centos-6" && python=="py3")')
