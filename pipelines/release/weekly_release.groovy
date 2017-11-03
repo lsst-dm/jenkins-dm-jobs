@@ -23,7 +23,9 @@ try {
 
   try {
     timeout(time: 30, unit: 'HOURS') {
-      def product = 'lsst_distrib qserv_distrib'
+      def product         = 'lsst_distrib qserv_distrib validate_drp'
+      def tarballProducts = 'lsst_distrib validate_drp'
+
       def retries = 3
       def rebuildId = null
       def buildJob = 'release/run-rebuild'
@@ -144,7 +146,7 @@ try {
               retry(retries) {
                 build job: 'release/tarball',
                   parameters: [
-                    string(name: 'PRODUCT', value: 'lsst_distrib'),
+                    string(name: 'PRODUCT', value: tarballProducts),
                     string(name: 'EUPS_TAG', value: eupsTag),
                     booleanParam(name: 'SMOKE', value: true),
                     booleanParam(name: 'RUN_DEMO', value: true),
@@ -184,7 +186,8 @@ try {
         retry(retries) {
           build job: 'release/docker/build-stack',
             parameters: [
-              string(name: 'TAG', value: eupsTag)
+              string(name: 'PRODUCT', value: tarballProducts),
+              string(name: 'TAG', value: eupsTag),
             ]
         }
       }
