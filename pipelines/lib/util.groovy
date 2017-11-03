@@ -327,4 +327,60 @@ def String bxxxx(String manifest) {
   m ? m[0][1] : null
 }
 
+/**
+ * Validate that required parameters were passed from the job and raise an
+ * error on any that are missing.
+ *
+ * @param rps List of required job parameters
+ */
+def void requireParams(List rps) {
+  rps.each { it ->
+    if (!params.get(it)) {
+      error "${it} parameter is required"
+    }
+  }
+}
+
+/**
+ * Empty directories by deleting and recreating them.
+ *
+ * @param dirs List of directories to empty
+*/
+def void emptyDirs(List eds) {
+  eds.each { d ->
+    dir(d) {
+      deleteDir()
+      // a file operation is needed to cause the dir() step to recreate the dir
+      writeFile(file: '.dummy', text: '')
+    }
+  }
+}
+
+/**
+ * XXX this method was developed during the validate_drp conversion to pipeline
+ * but is currently unusued.  It has been preserved as it might be useful in
+ * other jobs.
+ *
+ * Write a copy of `manifest.txt`.
+ *
+ * @param rebuildId String `run-rebuild` build id.
+ * @param filename String Output filename.
+ */
+def void getManifest(String rebuildId, String filename) {
+  def manifest_artifact = 'lsstsw/build/manifest.txt'
+  def buildJob          = 'release/run-rebuild'
+
+  step([$class: 'CopyArtifact',
+        projectName: buildJob,
+        filter: manifest_artifact,
+        selector: [
+          $class: 'SpecificBuildSelector',
+          buildNumber: rebuildId // wants a string
+        ],
+      ])
+
+  def manifest = readFile manifest_artifact
+  writeFile(file: filename, text: manifest)
+}
+
 return this;
