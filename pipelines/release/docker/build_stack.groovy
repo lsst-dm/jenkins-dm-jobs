@@ -14,19 +14,26 @@ node('jenkins-master') {
   }
 }
 
-try {
-  notify.started()
+notify.wrap {
+  def requiredParams = [
+    'PRODUCT',
+    'TAG',
+    'TIMEOUT',
+  ]
 
+  requiredParams.each { p ->
+    if (!params.get(p)) {
+      error "${p} parameter is required"
+    }
+  }
+
+  def product = params.PRODUCT
   def tag = params.TAG
+  def timelimit = params.TIMEOUT.toInteger()
+
   def baseImage = 'lsstsqre/centos:7-stackbase'
   def hubRepo = 'lsstsqre/centos'
   def slug = "${hubRepo}:7-stack-lsst_distrib-${params.TAG}"
-
-  if (!params.TAG) {
-    error 'TAG parameter is required'
-  }
-
-  def timelimit = params.TIMEOUT.toInteger()
 
   def run = {
     stage('checkout') {
@@ -42,7 +49,12 @@ try {
     }
 
     stage('build') {
-      util.shColor "docker build --build-arg TAG=\"${tag}\" -t \"${slug}\" ."
+      util.shColor """
+        docker build \
+          --build-arg PRODUCT=\"${product}\" \
+          --build-arg TAG=\"${tag}\" \
+          -t \"${slug}\" .
+        """
     }
 
     stage('push') {
@@ -60,24 +72,4 @@ try {
       run()
     }
   }
-} catch (e) {
-  // If there was an exception thrown, the build failed
-  currentBuild.result = "FAILED"
-  throw e
-} finally {
-  echo "result: ${currentBuild.result}"
-  switch(currentBuild.result) {
-    case null:
-    case 'SUCCESS':
-      notify.success()
-      break
-    case 'ABORTED':
-      notify.aborted()
-      break
-    case 'FAILURE':
-      notify.failure()
-      break
-    default:
-      notify.failure()
-  }
-}
+} // notify.wrap
