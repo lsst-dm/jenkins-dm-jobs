@@ -507,12 +507,12 @@ def String buildScript(
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
 
-    for prod in "${products}"; do
+    for prod in ${products}; do
       eups distrib install ${products} -t "${tag}" -vvv
     done
 
     export EUPS_PKGROOT="${eupsPkgroot}"
-    for prod in "${products}"; do
+    for prod in ${products}; do
       eups distrib create --server-dir "\$EUPS_PKGROOT" -d tarball "\$product" -t "${tag}" -vvv
     done
     eups distrib declare --server-dir "\$EUPS_PKGROOT" -t "${tag}" -vvv
@@ -542,7 +542,7 @@ def String smokeScript(
     # override newinstall.sh configured EUPS_PKGROOT
     export EUPS_PKGROOT="${eupsPkgroot}"
 
-    for prod in "${products}"; do
+    for prod in ${products}; do
       eups distrib install ${products} -t "${tag}" -vvv
     done
 
