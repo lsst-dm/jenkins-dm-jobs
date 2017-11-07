@@ -513,7 +513,7 @@ def String buildScript(
 
     export EUPS_PKGROOT="${eupsPkgroot}"
     for prod in ${products}; do
-      eups distrib create --server-dir "\$EUPS_PKGROOT" -d tarball "\$product" -t "${tag}" -vvv
+      eups distrib create --server-dir "\$EUPS_PKGROOT" -d tarball "\$prod" -t "${tag}" -vvv
     done
     eups distrib declare --server-dir "\$EUPS_PKGROOT" -t "${tag}" -vvv
   """)
