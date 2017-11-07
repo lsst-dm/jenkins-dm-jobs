@@ -259,6 +259,10 @@ def jenkinsWrapper() {
       manifestPath,
       statusPath,
     ]
+    def record = [
+      '*.log',
+      '*.failed',
+    ]
 
     try {
       if (fileExists(statusPath)) {
@@ -278,7 +282,9 @@ def jenkinsWrapper() {
             reports << xml
           }
 
-          archive += "${lsstsw_build_dir}/${name}/*.log"
+          record.each { pattern ->
+            archive += "${lsstsw_build_dir}/${name}/**/${pattern}"
+          }
         }
 
         if (reports) {
@@ -295,7 +301,9 @@ def jenkinsWrapper() {
     } catch (e) {
       // As a last resort, find product build dirs with a wildcard.  This might
       // match logs for products that _are not_ part of the current build.
-      archive += "${lsstsw_build_dir}/*/*.log"
+      record.each { pattern ->
+        archive += "${lsstsw_build_dir}/**/${pattern}"
+      }
       throw e
     } finally {
       archiveArtifacts([
