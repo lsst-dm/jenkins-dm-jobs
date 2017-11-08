@@ -246,7 +246,7 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
     withEnv([
       "RUN=/build/scripts/${shBasename}",
       "IMAGE=${localImageName}",
-      "BUILDIR=${buildDir}",
+      "BUILDDIR=${buildDir}",
       "DISTDIR=${distDir}",
     ]) {
       util.shColor '''
