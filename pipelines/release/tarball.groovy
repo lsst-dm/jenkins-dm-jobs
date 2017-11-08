@@ -508,7 +508,7 @@ def String buildScript(
     . ./loadLSST.bash
 
     for prod in ${products}; do
-      eups distrib install --no-server-tags "\$prod" -t "${tag}" -vvv
+      eups distrib install "\$prod" -t "${tag}" -vvv
     done
 
     export EUPS_PKGROOT="${eupsPkgroot}"
@@ -543,7 +543,7 @@ def String smokeScript(
     export EUPS_PKGROOT="${eupsPkgroot}"
 
     for prod in ${products}; do
-      eups distrib install --no-server-tags "\$prod" -t "${tag}" -vvv
+      eups distrib install "\$prod" -t "${tag}" -vvv
     done
 
     if [[ \$FIX_SHEBANGS == true ]]; then
