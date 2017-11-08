@@ -206,13 +206,30 @@ def void osxTarballs(
  * Run Linux specific tarball build.
  */
 def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
-  try {
-    def shBasename = 'run.sh'
-    def shPath = "${pwd()}/scripts"
-    def shName = "${shPath}/${shBasename}"
-    def localImageName = "${imageName}-local"
+  def buildDir = "${pwd()}/build"
+  def distDir  = "${pwd()}/distrib"
+  def shDir    = "${buildDir}/scripts"
 
-    util.shColor 'mkdir -p distrib build scripts'
+  def shBasename = 'run.sh'
+  def shName = "${shDir}/${shBasename}"
+  def localImageName = "${imageName}-local"
+
+  try {
+    [
+      buildDir,
+      distDir,
+      shDir,
+    ].each { d ->
+      dir(d) {
+        writeFile(file: '.dummy', text: '')
+      }
+    }
+
+    // sanitize build dir to ensure log collection is for the current build
+    // only
+    dir("${buildDir}/stack/current/EupsBuildDir") {
+      deleteDir()
+    }
 
     prepareBuild(
       params.PRODUCT,
@@ -226,15 +243,19 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
 
     util.wrapContainer(imageName, localImageName)
 
-    withEnv(["RUN=/scripts/${shBasename}", "IMAGE=${localImageName}"]) {
+    withEnv([
+      "RUN=/build/scripts/${shBasename}",
+      "IMAGE=${localImageName}",
+      "BUILDIR=${buildDir}",
+      "DISTDIR=${distDir}",
+    ]) {
       util.shColor '''
         set -e
 
         docker run \
           --storage-opt size=100G \
-          -v "$(pwd)/scripts:/scripts" \
-          -v "$(pwd)/distrib:/distrib" \
-          -v "$(pwd)/build:/build" \
+          -v "${BUILDDIR}:/build" \
+          -v "${DISTDIR}:/distrib" \
           -w /build \
           -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
@@ -242,11 +263,12 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
           "$IMAGE" \
           sh -c "$RUN"
       '''
-    }
+    } // withEnv
   } finally {
-    cleanup()
+    record(buildDir)
+    cleanup(buildDir)
   }
-}
+} // linuxBuild
 
 /**
  * Run OSX specific tarball build.
@@ -256,10 +278,28 @@ def void osxBuild(
   String compiler,
   MinicondaEnv menv
 ) {
-  try {
-    def shName = "${pwd()}/scripts/run.sh"
+  def buildDir = "${pwd()}/build"
+  def distDir  = "${pwd()}/distrib"
+  def shDir    = "${buildDir}/scripts"
 
-    util.shColor 'mkdir -p distrib build scripts'
+  def shName = "${shDir}/run.sh"
+
+  try {
+    [
+      buildDir,
+      distDir,
+      shDir,
+    ].each { d ->
+      dir(d) {
+        writeFile(file: '.dummy', text: '')
+      }
+    }
+
+    // sanitize build dir to ensure log collection is for the current build
+    // only
+    dir("${buildDir}/stack/current/EupsBuildDir") {
+      deleteDir()
+    }
 
     prepareBuild(
       params.PRODUCT,
@@ -271,7 +311,7 @@ def void osxBuild(
       menv
     )
 
-    dir('build') {
+    dir(buildDir) {
       util.shColor """
         set -e
 
@@ -279,74 +319,84 @@ def void osxBuild(
       """
     }
   } finally {
-    cleanup()
+    record(buildDir)
+    cleanup(buildDir)
   }
-}
+} // osxBuild
 
 /**
  * Run Linux specific tarball smoke test(s).
  */
 def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
+  def smokeDir = "${pwd()}/smoke"
+  def distDir = "${pwd()}/distrib"
+  def shDir = "${smokeDir}/scripts"
+  def ciDir = "${pwd()}/buildbot-scripts"
+
   def shBasename = 'run.sh'
-  def shPath = "${pwd()}/scripts"
-  def shName = "${shPath}/${shBasename}"
+  def shName = "${shDir}/${shBasename}"
   def localImageName = "${imageName}-local"
 
-  // smoke state is left at the end of the build for possible debugging but
-  // each test needs to be run in a clean env.
-  dir('smoke') {
-    deleteDir()
+  try {
+    // smoke state is left at the end of the build for possible debugging but
+    // each test needs to be run in a clean env.
+    dir(smokeDir) {
+      deleteDir()
+      writeFile(file: '.dummy', text: '')
+    }
+
+    prepareSmoke(
+      params.PRODUCT,
+      params.EUPS_TAG,
+      shName,
+      '/distrib', // path inside container
+      compiler,
+      null,
+      menv,
+      '/buildbot-scripts' // path inside container
+    )
+
+    dir(ciDir) {
+      git([
+        url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+        branch: 'master'
+      ])
+    }
+
+    util.wrapContainer(imageName, localImageName)
+
+    withEnv([
+      "RUN=/smoke/scripts/${shBasename}",
+      "IMAGE=${localImageName}",
+      "RUN_DEMO=${params.RUN_DEMO}",
+      "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
+      "SMOKEDIR=${smokeDir}",
+      "DISTDIR=${distDir}",
+      "CIDIR=${ciDir}",
+    ]) {
+      util.shColor '''
+        set -e
+
+        docker run \
+          --storage-opt size=100G \
+          -v "${SMOKEDIR}:/smoke" \
+          -v "${DISTDIR}:/distrib" \
+          -v "${CIDIR}:/buildbot-scripts" \
+          -w /smoke \
+          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
+          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
+          -e RUN_DEMO="$RUN_DEMO" \
+          -e RUN_SCONS_CHECK="$RUN_SCONS_CHECK" \
+          -e FIX_SHEBANGS=true \
+          -u "$(id -u -n)" \
+          "$IMAGE" \
+          sh -c "$RUN"
+      '''
+    } // withEnv
+  } finally {
+    record(smokeDir)
   }
-
-  util.shColor 'mkdir -p smoke'
-
-  prepareSmoke(
-    params.PRODUCT,
-    params.EUPS_TAG,
-    shName,
-    '/distrib', // path inside container
-    compiler,
-    null,
-    menv,
-    '/buildbot-scripts' // path inside container
-  )
-
-  dir('buildbot-scripts') {
-    git([
-      url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-      branch: 'master'
-    ])
-  }
-
-  util.wrapContainer(imageName, localImageName)
-
-  withEnv([
-    "RUN=/scripts/${shBasename}",
-    "IMAGE=${localImageName}",
-    "RUN_DEMO=${params.RUN_DEMO}",
-    "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
-  ]) {
-    util.shColor '''
-      set -e
-
-      docker run \
-        --storage-opt size=100G \
-        -v "$(pwd)/scripts:/scripts" \
-        -v "$(pwd)/distrib:/distrib" \
-        -v "$(pwd)/buildbot-scripts:/buildbot-scripts" \
-        -v "$(pwd)/smoke:/smoke" \
-        -w /smoke \
-        -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
-        -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-        -e RUN_DEMO="$RUN_DEMO" \
-        -e RUN_SCONS_CHECK="$RUN_SCONS_CHECK" \
-        -e FIX_SHEBANGS=true \
-        -u "$(id -u -n)" \
-        "$IMAGE" \
-        sh -c "$RUN"
-    '''
-  }
-}
+} // linuxSmoke
 
 /**
  * Generate + write build script.
@@ -356,46 +406,52 @@ def void osxSmoke(
   String compiler,
   MinicondaEnv menv
 ) {
+  def smokeDir = "${pwd()}/smoke"
   def shName = "${pwd()}/scripts/smoke.sh"
+  def ciDir = "${pwd()}/buildbot-scripts"
 
-  // smoke state is left at the end of the build for possible debugging but
-  // each test needs to be run in a clean env.
-  dir('smoke') {
-    deleteDir()
-  }
-
-  prepareSmoke(
-    params.PRODUCT,
-    params.EUPS_TAG,
-    shName,
-    "${pwd()}/distrib",
-    compiler,
-    macosx_deployment_target,
-    menv,
-    "${pwd()}/buildbot-scripts"
-  )
-
-  dir('buildbot-scripts') {
-    git([
-      url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-      branch: 'master'
-    ])
-  }
-
-  dir('smoke') {
-    withEnv([
-      "RUN_DEMO=${params.RUN_DEMO}",
-      "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
-      "FIX_SHEBANGS=true",
-    ]) {
-      util.shColor """
-        set -e
-
-        ${shName}
-      """
+  try {
+    // smoke state is left at the end of the build for possible debugging but
+    // each test needs to be run in a clean env.
+    dir(smokeDir) {
+      deleteDir()
     }
+
+    prepareSmoke(
+      params.PRODUCT,
+      params.EUPS_TAG,
+      shName,
+      "${pwd()}/distrib",
+      compiler,
+      macosx_deployment_target,
+      menv,
+      ciDir,
+    )
+
+    dir(ciDir) {
+      git([
+        url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+        branch: 'master'
+      ])
+    }
+
+    dir(smokeDir) {
+      withEnv([
+        "RUN_DEMO=${params.RUN_DEMO}",
+        "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
+        "FIX_SHEBANGS=true",
+      ]) {
+        util.shColor """
+          set -e
+
+          ${shName}
+        """
+      }
+    }
+  } finally {
+    record(smokeDir)
   }
-}
+} // osxSmoke
 
 /**
  * Generate + write build script.
@@ -480,10 +536,41 @@ def void s3Push(String ... parts) {
 }
 
 /**
+ *  Record logs
+ */
+def void record(String buildDir) {
+  def eupsBuildDir = "${buildDir}/stack/current/EupsBuildDir"
+
+  def archive = [
+    '**/*.log',
+    '**/*.failed',
+  ]
+
+  def reports = [
+    '**/pytest-*.xml',
+  ]
+
+  dir(eupsBuildDir) {
+    archiveArtifacts([
+      artifacts: archive.join(', '),
+      allowEmptyArchive: true,
+      fingerprint: true
+    ])
+
+    junit([
+      testResults: reports.join(', '),
+      allowEmptyResults: true,
+    ])
+  }
+}
+
+/**
  * Cleanup after a build attempt.
  */
-def void cleanup() {
-  util.shColor 'rm -rf "./build/.lockDir"'
+def void cleanup(String buildDir) {
+  dir("${buildDir}/.lockDir") {
+    deleteDir()
+  }
 }
 
 /**
