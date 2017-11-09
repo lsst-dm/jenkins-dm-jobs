@@ -199,7 +199,8 @@ try {
             parameters: [
               string(name: 'TAG', value: eupsTag),
               booleanParam(name: 'NO_PUSH', value: false),
-            ]
+            ],
+            wait: false
         }
       }
     } // timeout
