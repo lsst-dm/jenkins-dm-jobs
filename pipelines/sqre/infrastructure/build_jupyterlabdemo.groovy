@@ -77,11 +77,26 @@ try {
       break
     case 'ABORTED':
       notify.aborted()
+      pingAdamAborted()
       break
     case 'FAILURE':
       notify.failure()
+      pingAdamFailure()
       break
     default:
       notify.failure()
+      pingAdamFailure()
   }
+}
+
+def void pingAdam(String msg) {
+  slackSend color: 'danger', message: "<@U2VGYJN92> ${msg)}"
+}
+
+def void pingAdamAborted() {
+  pingAdam(notify.slackAbortedMessage()
+}
+
+def void pingAdamFailure() {
+  pingAdam(notify.slackFailureMessage()
 }
