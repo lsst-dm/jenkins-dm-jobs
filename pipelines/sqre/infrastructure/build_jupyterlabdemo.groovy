@@ -90,7 +90,7 @@ try {
 }
 
 def void pingAdam(String msg) {
-  slackSend color: 'danger', message: "<@U2VGYJN92> ${msg)}"
+  slackSend color: 'danger', message: "<@U2VGYJN92> ${msg}"
 }
 
 def void pingAdamAborted() {
