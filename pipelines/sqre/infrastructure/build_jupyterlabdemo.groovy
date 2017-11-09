@@ -94,9 +94,9 @@ def void pingAdam(String msg) {
 }
 
 def void pingAdamAborted() {
-  pingAdam(notify.slackAbortedMessage()
+  pingAdam(notify.slackAbortedMessage())
 }
 
 def void pingAdamFailure() {
-  pingAdam(notify.slackFailureMessage()
+  pingAdam(notify.slackFailureMessage())
 }
