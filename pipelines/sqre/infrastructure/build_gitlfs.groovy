@@ -23,7 +23,7 @@ notify.wrap {
   node('docker') {
     stage('checkout') {
       git([
-        url: "https://github.com/${github_repo}",
+        url: "https://github.com/${githubRepo}",
         branch: githubRef,
       ])
     }
