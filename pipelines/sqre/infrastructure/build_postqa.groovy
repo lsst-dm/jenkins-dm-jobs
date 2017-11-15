@@ -19,7 +19,7 @@ notify.wrap {
   def hubRepo    = 'lsstsqre/postqa'
   def githubRepo = 'lsst-sqre/docker-postqa'
   def githubRef  = 'master'
-  def postqaVer  = '1.3.2'
+  def postqaVer  = '1.3.3'
 
   node('docker') {
     stage('checkout') {
