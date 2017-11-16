@@ -26,7 +26,6 @@ notify.wrap {
     'EUPS_TAG',
     'BUILD_ID',
     'TIMEOUT',
-    'NO_PUSH',
   ]
 
   util.requireParams(required)
