@@ -34,8 +34,14 @@ notify.wrap {
     cfht: {
       drp('cfht')
     },
+    cfht_verify_port: {
+      drp('cfht', 'verify_port', false)
+    },
     hsc: {
       drp('hsc')
+    },
+    hsc_verify_port: {
+      drp('hsc', 'verify_port', false)
     },
   ]
 
