@@ -17,6 +17,7 @@ notify.wrap {
     def gitRepo = 'https://github.com/lsst/validation_data_cfht'
     def gitRef  = 'master'
     def runs    = 5
+    def repoDir = 'validation_data_cfg'
 
     try {
       ['1.5.5', '2.3.4'].each { lfsVer ->
