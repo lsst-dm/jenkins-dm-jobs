@@ -13,7 +13,7 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  requiredParams(['LFS_VER', 'RUNS'])
+  util.requiredParams(['LFS_VER', 'RUNS'])
 
   def lfsVer  = params.LFS_VER
   def runs    = params.RUNS
