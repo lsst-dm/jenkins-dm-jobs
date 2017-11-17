@@ -25,6 +25,14 @@ import util.CleanBuild
     skipDocs: true,
     seedJob: SEED_JOB,
   ],
+  [
+    name: 'sims/lsst_sims',
+    product: 'lsst_sims',
+    branch: 'w_2017_45',
+    skipDemo: true,
+    skipDocs: true,
+    seedJob: SEED_JOB,
+  ],
 ].each { j ->
   def clean = new CleanBuild(j)
 
