@@ -501,6 +501,7 @@ def void runDrp(
     "DATASET=${dataset}",
     "DATASET_DIR=${datasetDir}",
     "DATASET_ARCHIVE_DIR=${datasetArchiveDir}",
+    "JENKINS_DEBUG=true",
   ]) {
     run()
   }
