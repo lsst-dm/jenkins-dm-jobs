@@ -18,9 +18,11 @@ notify.wrap {
   def lfsVer  = params.LFS_VER
   def runs    = params.RUNS.toInteger()
 
-  def gitRepo = 'https://github.com/lsst/validation_data_cfht'
-  def gitRef  = 'master'
-  def repoDir = 'validation_data_cfht'
+  def gitRepo         = 'https://github.com/lsst/validation_data_cfht'
+  def gitRef          = 'master'
+  def repoDirCached   = 'validation_data_cfht-cached'
+  def repoDirLfs      = 'validation_data_cfht-lfs'
+  def resultsBasename = 'results'
 
   def matrix = [:]
 
@@ -28,15 +30,33 @@ notify.wrap {
     matrix[tag] = {
       node('docker') {
         try {
-          def hub     = "docker.io/lsstsqre/gitlfs:${tag}"
-          def local   = "${hub}-local"
-          def workDir = pwd()
+          def hub             = "docker.io/lsstsqre/gitlfs:${tag}"
+          def local           = "${hub}-local"
+          def workDir         = pwd()
+          def resultsDir      = "${workDir}resultsBasename}"
 
           wrapContainer(hub, local)
           def image = docker.image(local)
 
+          // pre-create results dir
+          dir(resultsDir) {
+            writeFile(file: '.dummy', text: '')
+          }
+
+          // only hit github once
+          dir(repoDirCached) {
+            git([
+              url: gitRepo,
+              branch: gitRef,
+              changelog: false,
+              poll: false
+            ])
+          }
+
+          util.shColor "cp -ra ${repoDirCached} ${repoDirLfs}"
+
           runs.times {
-            dir(repoDir) {
+            dir(repoDirLfs) {
               git([
                 url: gitRepo,
                 branch: gitRef,
@@ -44,7 +64,7 @@ notify.wrap {
                 poll: false
               ])
 
-              image.inside("-v ${workDir}:/results") {
+              image.inside("-v ${resultsDir}:/results") {
                 // make lfs 1.5.5 work...
                 util.shColor '''
                   git config --local --add credential.helper '!f() { cat > /dev/null; echo username=; echo password=; }; f'
@@ -65,8 +85,10 @@ notify.wrap {
           } // times
         } finally {
           archiveArtifacts([
-            artifacts: "**/lfspull*.txt",
+            artifacts: "${resultsBasename}/**/lfspull*.txt",
+            excludes: '**/*.dummy',
           ])
+
           deleteDir()
         }
       } // node
