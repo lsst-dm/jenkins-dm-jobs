@@ -22,52 +22,60 @@ notify.wrap {
   def gitRef  = 'master'
   def repoDir = 'validation_data_cfht'
 
+  def matrix = [:]
+
   lfsVer.split().each { tag ->
-    node('docker') {
-      try {
-        def hub     = "docker.io/lsstsqre/gitlfs:${tag}"
-        def local   = "${hub}-local"
-        def workDir = pwd()
+    matrix[tag] = {
+      node('docker') {
+        try {
+          def hub     = "docker.io/lsstsqre/gitlfs:${tag}"
+          def local   = "${hub}-local"
+          def workDir = pwd()
 
-        wrapContainer(hub, local)
-        def image = docker.image(local)
+          wrapContainer(hub, local)
+          def image = docker.image(local)
 
-        runs.times {
-          dir(repoDir) {
-            git([
-              url: gitRepo,
-              branch: gitRef,
-              changelog: false,
-              poll: false
-            ])
+          runs.times {
+            dir(repoDir) {
+              git([
+                url: gitRepo,
+                branch: gitRef,
+                changelog: false,
+                poll: false
+              ])
 
-            image.inside("-v ${workDir}:/results") {
-              // make lfs 1.5.5 work...
-              util.shColor '''
-                git config --local --add credential.helper '!f() { cat > /dev/null; echo username=; echo password=; }; f'
-              '''
+              image.inside("-v ${workDir}:/results") {
+                // make lfs 1.5.5 work...
+                util.shColor '''
+                  git config --local --add credential.helper '!f() { cat > /dev/null; echo username=; echo password=; }; f'
+                '''
 
-              util.shColor """
-                /usr/bin/time \
-                  --format='%e' \
-                  --output=/results/lfspull-${tag}.txt \
-                  --append \
-                  git lfs pull origin
-              """
-            }
+                util.shColor """
+                  /usr/bin/time \
+                    --format='%e' \
+                    --output=/results/lfspull-${tag}.txt \
+                    --append \
+                    git lfs pull origin
+                """
+              }
 
-            // cleanup before next iteration
-            deleteDir()
-          } // dir
-        } // times
-      } finally {
-        archiveArtifacts([
-          artifacts: "**/lfspull*.txt",
-        ])
-        deleteDir()
-      }
-    } // node
+              // cleanup before next iteration
+              deleteDir()
+            } // dir
+          } // times
+        } finally {
+          archiveArtifacts([
+            artifacts: "**/lfspull*.txt",
+          ])
+          deleteDir()
+        }
+      } // node
+    } // matrix
   } // each
+
+  stage('benchmark') {
+    parallel matrix
+  }
 } // notify.wrap
 
 def void wrapContainer(String imageName, String tag) {
