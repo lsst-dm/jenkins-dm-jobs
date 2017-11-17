@@ -13,18 +13,18 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  node('docker') {
-    requiredParams(['LFS_VER', 'RUNS'])
+  requiredParams(['LFS_VER', 'RUNS'])
 
-    def lfsVer  = params.LFS_VER
-    def runs    = params.RUNS
+  def lfsVer  = params.LFS_VER
+  def runs    = params.RUNS
 
-    def gitRepo = 'https://github.com/lsst/validation_data_cfht'
-    def gitRef  = 'master'
-    def repoDir = 'validation_data_cfht'
+  def gitRepo = 'https://github.com/lsst/validation_data_cfht'
+  def gitRef  = 'master'
+  def repoDir = 'validation_data_cfht'
 
-    try {
-      [lfsVer].each { tag ->
+  lfsVer.split().each { tag ->
+    node('docker') {
+      try {
         def hub     = "docker.io/lsstsqre/gitlfs:${tag}"
         def local   = "${hub}-local"
         def workDir = pwd()
@@ -60,14 +60,14 @@ notify.wrap {
             deleteDir()
           } // dir
         } // times
-      } // each
-    } finally {
-      archiveArtifacts([
-        artifacts: "**/lfspull*.txt",
-      ])
-      deleteDir()
-    }
-  } // node
+      } finally {
+        archiveArtifacts([
+          artifacts: "**/lfspull*.txt",
+        ])
+        deleteDir()
+      }
+    } // node
+  } // each
 } // notify.wrap
 
 def void wrapContainer(String imageName, String tag) {
