@@ -602,6 +602,7 @@ def void runPostqa(
     "PRODUCT=validate_drp",
     "dataset=${datasetSlug}",
     "label=${label}",
+    "JENKINS_DEBUG=true",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
