@@ -16,7 +16,7 @@ notify.wrap {
   util.requireParams(['LFS_VER', 'RUNS'])
 
   def lfsVer  = params.LFS_VER
-  def runs    = params.RUNS
+  def runs    = params.RUNS.toInteger()
 
   def gitRepo = 'https://github.com/lsst/validation_data_cfht'
   def gitRef  = 'master'
