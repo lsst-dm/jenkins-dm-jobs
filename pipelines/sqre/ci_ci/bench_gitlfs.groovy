@@ -33,7 +33,7 @@ notify.wrap {
           def hub             = "docker.io/lsstsqre/gitlfs:${tag}"
           def local           = "${hub}-local"
           def workDir         = pwd()
-          def resultsDir      = "${workDir}resultsBasename}"
+          def resultsDir      = "${workDir}/${resultsBasename}"
 
           wrapContainer(hub, local)
           def image = docker.image(local)
