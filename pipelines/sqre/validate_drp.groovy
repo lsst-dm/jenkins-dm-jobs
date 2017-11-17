@@ -453,11 +453,6 @@ def void runDrp(
       MEM_PER_CORE=2.0
       export NUMPROC=$(($(target_cores $MEM_PER_CORE) + 1))
 
-      # XXX testing cfht/decam dataset timeouts
-      if [[ $DATASET != "hsc" ]]; then
-        export NUMPROC=1
-      fi
-
       set +e
       "$RUN" --noplot
       run_status=$?
