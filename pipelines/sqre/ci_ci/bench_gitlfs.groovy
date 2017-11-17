@@ -14,15 +14,20 @@ node('jenkins-master') {
 
 notify.wrap {
   node('docker') {
+    requiredParams(['LFS_VER', 'RUNS'])
+
+    def lfsVer  = params.LFS_VER
+    def runs    = params.RUNS
+
     def gitRepo = 'https://github.com/lsst/validation_data_cfht'
     def gitRef  = 'master'
-    def runs    = 5
     def repoDir = 'validation_data_cfht'
 
     try {
-      ['1.5.5', '2.3.4'].each { lfsVer ->
-        def hub = "docker.io/lsstsqre/gitlfs:${lfsVer}"
-        def local = "${hub}-local"
+      [lfsVer].each { tag ->
+        def hub     = "docker.io/lsstsqre/gitlfs:${tag}"
+        def local   = "${hub}-local"
+        def workDir = pwd()
 
         wrapContainer(hub, local)
         def image = docker.image(local)
@@ -36,7 +41,7 @@ notify.wrap {
               poll: false
             ])
 
-            image.inside("-v ${pwd()}:/results") {
+            image.inside("-v ${workDir}:/results") {
               // make lfs 1.5.5 work...
               util.shColor '''
                 git config --local --add credential.helper '!f() { cat > /dev/null; echo username=; echo password=; }; f'
@@ -45,7 +50,7 @@ notify.wrap {
               util.shColor """
                 /usr/bin/time \
                   --format='%e' \
-                  --output=/results/lfspull-${lfsVer}.txt \
+                  --output=/results/lfspull-${tag}.txt \
                   --append \
                   git lfs pull origin
               """
