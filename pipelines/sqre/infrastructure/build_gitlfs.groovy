@@ -1,5 +1,3 @@
-def notify = null
-
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -10,6 +8,7 @@ node('jenkins-master') {
       poll: false
     ])
     notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
   }
 }
 
