@@ -4,6 +4,13 @@ Common.makeFolders(this)
 def folder = 'sqre/ci-ci'
 
 pipelineJob("${folder}/bench-gitlfs") {
+  description('Benchmark git lfs version.')
+
+  parameters {
+    stringParam('LFS_VER', '2.3.4', 'git lfs version')
+    stringParam('RUNS', '3', 'number of repeated benchmarking runs')
+  }
+
   properties {
     rebuild {
       autoRebuild()
