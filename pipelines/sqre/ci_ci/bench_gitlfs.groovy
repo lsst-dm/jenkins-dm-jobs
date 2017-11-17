@@ -17,7 +17,7 @@ notify.wrap {
     def gitRepo = 'https://github.com/lsst/validation_data_cfht'
     def gitRef  = 'master'
     def runs    = 5
-    def repoDir = 'validation_data_cfg'
+    def repoDir = 'validation_data_cfht'
 
     try {
       ['1.5.5', '2.3.4'].each { lfsVer ->
@@ -36,7 +36,12 @@ notify.wrap {
               poll: false
             ])
 
-            image.inside {
+            image.inside("-v ${pwd()}:/results") {
+              // make lfs 1.5.5 work...
+              util.shColor '''
+                git config --local --add credential.helper '!f() { cat > /dev/null; echo username=; echo password=; };'
+              '''
+
               util.shColor """
                 /usr/bin/time \
                   --format='%e' \
