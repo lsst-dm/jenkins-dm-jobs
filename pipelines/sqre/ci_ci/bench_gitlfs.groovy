@@ -39,7 +39,7 @@ notify.wrap {
             image.inside("-v ${pwd()}:/results") {
               // make lfs 1.5.5 work...
               util.shColor '''
-                git config --local --add credential.helper '!f() { cat > /dev/null; echo username=; echo password=; };'
+                git config --local --add credential.helper '!f() { cat > /dev/null; echo username=; echo password=; }; f'
               '''
 
               util.shColor """
