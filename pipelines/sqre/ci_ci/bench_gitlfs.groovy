@@ -45,7 +45,7 @@ notify.wrap {
               util.shColor """
                 /usr/bin/time \
                   --format='%e' \
-                  --output=\${WORKSPACE}/lfspull-${lfsVer}.txt \
+                  --output=/results/lfspull-${lfsVer}.txt \
                   --append \
                   git lfs pull origin
               """
