@@ -150,15 +150,17 @@ def void drp(
         } // inside
 
         // push results to squash
-        runPostqa(
-          "${runDir}/output.json",
-          fakeLsstswDir,
-          postqaVer,
-          "${postqaDir}/post-qa.json",
-          datasetSlug,
-          docImage,
-          noPush
-        )
+        if (doPostqa) {
+          runPostqa(
+            "${runDir}/output.json",
+            fakeLsstswDir,
+            postqaVer,
+            "${postqaDir}/post-qa.json",
+            datasetSlug,
+            docImage,
+            noPush
+          )
+        }
       } // dir
     } finally {
       // collect artifacats
