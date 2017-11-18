@@ -34,8 +34,14 @@ notify.wrap {
     cfht: {
       drp('cfht')
     },
+    cfht_verify_port: {
+      drp('cfht', 'verify_port', false)
+    },
     hsc: {
       drp('hsc')
+    },
+    hsc_verify_port: {
+      drp('hsc', 'verify_port', false)
     },
   ]
 
@@ -150,15 +156,17 @@ def void drp(
         } // inside
 
         // push results to squash
-        runPostqa(
-          "${runDir}/output.json",
-          fakeLsstswDir,
-          postqaVer,
-          "${postqaDir}/post-qa.json",
-          datasetSlug,
-          docImage,
-          noPush
-        )
+        if (doPostqa) {
+          runPostqa(
+            "${runDir}/output.json",
+            fakeLsstswDir,
+            postqaVer,
+            "${postqaDir}/post-qa.json",
+            datasetSlug,
+            docImage,
+            noPush
+          )
+        }
       } // dir
     } finally {
       // collect artifacats
@@ -453,11 +461,6 @@ def void runDrp(
       MEM_PER_CORE=2.0
       export NUMPROC=$(($(target_cores $MEM_PER_CORE) + 1))
 
-      # XXX testing cfht/decam dataset timeouts
-      if [[ $DATASET != "hsc" ]]; then
-        export NUMPROC=1
-      fi
-
       set +e
       "$RUN" --noplot
       run_status=$?
@@ -506,6 +509,7 @@ def void runDrp(
     "DATASET=${dataset}",
     "DATASET_DIR=${datasetDir}",
     "DATASET_ARCHIVE_DIR=${datasetArchiveDir}",
+    "JENKINS_DEBUG=true",
   ]) {
     run()
   }
@@ -604,6 +608,7 @@ def void runPostqa(
     "PRODUCT=validate_drp",
     "dataset=${datasetSlug}",
     "label=${label}",
+    "JENKINS_DEBUG=true",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
