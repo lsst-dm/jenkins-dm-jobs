@@ -166,7 +166,8 @@ def void drp(
             postqaVer,
             "${postqaDir}/post-qa.json",
             datasetSlug,
-            docImage,
+            // docImage, // XXX DM-12669
+            '0xdeadbeef',
             noPush
           )
         }
