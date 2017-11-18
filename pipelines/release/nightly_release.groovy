@@ -194,14 +194,15 @@ try {
       }
 
       stage('validate_drp') {
-        retry(retries) {
+        retry(1) {
           // based on lsstsqre/stack image
           build job: 'sqre/validate_drp',
             parameters: [
               string(name: 'EUPS_TAG', value: eupsTag),
               string(name: 'BUILD_ID', value: bx),
               booleanParam(name: 'NO_PUSH', value: false),
-            ]
+            ],
+            wait: false
         }
       }
     } // timeout
