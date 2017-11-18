@@ -28,7 +28,7 @@ import util.CleanBuild
   [
     name: 'sims/lsst_sims',
     product: 'lsst_sims',
-    branch: 'w_2017_45',
+    branch: 'w.2017.45',
     skipDemo: true,
     skipDocs: true,
     seedJob: SEED_JOB,
