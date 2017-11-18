@@ -32,16 +32,16 @@ notify.wrap {
 
   def matrix = [
     cfht: {
-      drp('cfht')
+      drp('cfht', 'master', true, 3, 1)
     },
     cfht_verify_port: {
-      drp('cfht', 'verify_port', false)
+      drp('cfht', 'verify_port', false, 3, 1)
     },
     hsc: {
-      drp('hsc')
+      drp('hsc', 'master', true, 3, 15)
     },
     hsc_verify_port: {
-      drp('hsc', 'verify_port', false)
+      drp('hsc', 'verify_port', false, 3, 15)
     },
   ]
 
@@ -56,16 +56,19 @@ notify.wrap {
  * @param datasetSlug String short name of dataset
  * @param drpRef String validate_drp git repo ref. Defaults to 'master'
  * @param doPostqa Boolean Enables/disables running of post-qa. Defaults to
+ * @param retries Integer Number of times to retry after a failure
+ * @param timelimit Integer Maximum number of hours per 'try'
  * 'true'
  */
 def void drp(
   String datasetSlug,
   String drpRef = 'master',
-  Boolean doPostqa = true
+  Boolean doPostqa = true,
+  Integer retries = 3,
+  Integer timelimit = 12
 ) {
   def eupsTag   = params.EUPS_TAG
   def buildId   = params.BUILD_ID
-  def timelimit = params.TIMEOUT.toInteger()
   def noPush    = params.NO_PUSH
 
   def datasetInfo = datasetLookup(datasetSlug)
@@ -181,17 +184,34 @@ def void drp(
       deleteDir()
     }
 
-    timeout(time: timelimit, unit: 'HOURS') {
-      // create a unique sub-workspace for each parallel branch
-      def runSlug = datasetSlug
-      if (drpRef != 'master') {
-        runSlug += "-" + drpRef.tr('.', '_')
-      }
+    // retrying is important as there is a good chance that the dataset will
+    // fill the disk up
+    retry(retries) {
+      try {
+        timeout(time: timelimit, unit: 'HOURS') {
+          // create a unique sub-workspace for each parallel branch
+          def runSlug = datasetSlug
+          if (drpRef != 'master') {
+            runSlug += "-" + drpRef.tr('.', '_')
+          }
 
-      run(runSlug)
-    } // timeout
+          run(runSlug)
+        } // timeout
+      } catch(e) {
+        runNodeCleanup()
+        throw e
+      }
+    } // retry
   } // node
 } // drp
+
+/**
+ * Trigger jenkins-node-cleanup (disk space) and wait for it to complete.
+ */
+def void runNodeCleanup() {
+  build job: 'sqre/infrastructure/jenkins-node-cleanup',
+    wait: true
+}
 
 /**
  * XXX this type of configuration data probably should be in an external config
