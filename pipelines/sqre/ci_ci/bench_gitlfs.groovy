@@ -53,17 +53,14 @@ notify.wrap {
             ])
           }
 
-          util.shColor "cp -ra ${repoDirCached} ${repoDirLfs}"
+          runs.times { n ->
+            echo "sample #${n+1}"
 
-          runs.times {
+            // stage cached git repo
+            util.shColor "cp -ra ${repoDirCached} ${repoDirLfs}"
+
+            // run lfs
             dir(repoDirLfs) {
-              git([
-                url: gitRepo,
-                branch: gitRef,
-                changelog: false,
-                poll: false
-              ])
-
               image.inside("-v ${resultsDir}:/results") {
                 // make lfs 1.5.5 work...
                 util.shColor '''
