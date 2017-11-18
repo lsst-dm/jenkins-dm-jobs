@@ -7,7 +7,7 @@ pipelineJob("${folder}/bench-gitlfs") {
   description('Benchmark git lfs version.')
 
   parameters {
-    stringParam('LFS_VER', '2.3.4', 'git lfs version')
+    stringParam('LFS_VER', '1.5.5 2.3.4', 'git lfs version(s) -- space seperated')
     stringParam('RUNS', '3', 'number of repeated benchmarking runs')
   }
 
