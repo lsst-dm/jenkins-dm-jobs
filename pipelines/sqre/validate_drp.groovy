@@ -179,16 +179,16 @@ def void drp(
     }
   } // run
 
-  node('docker') {
-    if (params.WIPEOUT) {
-      deleteDir()
-    }
-
-    // retrying is important as there is a good chance that the dataset will
-    // fill the disk up
-    retry(retries) {
-      try {
+  // retrying is important as there is a good chance that the dataset will
+  // fill the disk up
+  retry(retries) {
+    try {
+      node('docker') {
         timeout(time: timelimit, unit: 'HOURS') {
+          if (params.WIPEOUT) {
+            deleteDir()
+          }
+
           // create a unique sub-workspace for each parallel branch
           def runSlug = datasetSlug
           if (drpRef != 'master') {
@@ -197,12 +197,12 @@ def void drp(
 
           run(runSlug)
         } // timeout
-      } catch(e) {
-        runNodeCleanup()
-        throw e
-      }
-    } // retry
-  } // node
+      } // node
+    } catch(e) {
+      runNodeCleanup()
+      throw e
+    }
+  } // retry
 } // drp
 
 /**
