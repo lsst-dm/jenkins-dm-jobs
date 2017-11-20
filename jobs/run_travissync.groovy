@@ -14,7 +14,7 @@ pipelineJob("${folder}/travissync") {
 
   label('travissync')
   keepDependencies(true)
-  concurrentBuild()
+  concurrentBuild(false)
 
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
   def ref  = SEED_JOB.scm.getBranches().get(0).getName()
