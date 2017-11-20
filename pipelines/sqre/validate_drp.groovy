@@ -25,7 +25,6 @@ notify.wrap {
   def required = [
     'EUPS_TAG',
     'BUILD_ID',
-    'TIMEOUT',
   ]
 
   util.requireParams(required)
