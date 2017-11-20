@@ -68,6 +68,21 @@ def void wrapContainer(String imageName, String tag) {
 }
 
 /**
+ * Invoke block inside of a "wrapper" container.  See: wrapContainer
+ *
+ * @param docImage String name of docker image
+ * @param run Closure Invoked inside of wrapper container
+ */
+def insideWrap(String docImage, Closure run) {
+  def docLocal = "${docImage}-local"
+
+  wrapContainer(docImage, docLocal)
+  def image = docker.image(docLocal)
+
+  image.inside { run() }
+}
+
+/**
  * Join multiple String args togther with '/'s to resemble a filesystem path.
  */
 // The groovy String#join method is not working under the security sandbox
