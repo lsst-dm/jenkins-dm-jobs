@@ -13,6 +13,14 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  // the timeout should be <= the cron triggering interval to prevent builds
+  // pilling up in the backlog.
+  timeout(time: 59, unit: 'MINUTES') {
+    doTravissync()
+  }
+} // notify.wrap
+
+def void doTravissync() {
   def image = null
   def hub_repo = 'lsstsqre/travissync'
 
@@ -34,4 +42,4 @@ notify.wrap {
       }
     }
   }
-} // notify.wrap
+} // doTravissync
