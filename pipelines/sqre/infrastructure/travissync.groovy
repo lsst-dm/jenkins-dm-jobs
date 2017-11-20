@@ -1,5 +1,3 @@
-def notify = null
-
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -10,12 +8,19 @@ node('jenkins-master') {
       poll: false
     ])
     notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
   }
 }
 
-try {
-  notify.started()
+notify.wrap {
+  // the timeout should be <= the cron triggering interval to prevent builds
+  // pilling up in the backlog.
+  timeout(time: 59, unit: 'MINUTES') {
+    doTravissync()
+  }
+} // notify.wrap
 
+def void doTravissync() {
   def image = null
   def hub_repo = 'lsstsqre/travissync'
 
@@ -37,24 +42,4 @@ try {
       }
     }
   }
-} catch (e) {
-  // If there was an exception thrown, the build failed
-  currentBuild.result = "FAILED"
-  throw e
-} finally {
-  echo "result: ${currentBuild.result}"
-  switch(currentBuild.result) {
-    case null:
-    case 'SUCCESS':
-      notify.success()
-      break
-    case 'ABORTED':
-      notify.aborted()
-      break
-    case 'FAILURE':
-      notify.failure()
-      break
-    default:
-      notify.failure()
-  }
-}
+} // doTravissync
