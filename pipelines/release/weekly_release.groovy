@@ -1,5 +1,3 @@
-def notify = null
-
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -14,9 +12,7 @@ node('jenkins-master') {
   }
 }
 
-try {
-  notify.started()
-
+notify.wrap {
   def gitTag = null
   def eupsTag = null
   def bx = null
@@ -116,16 +112,18 @@ try {
 
       stage('git tag') {
         retry(retries) {
-          // needs eups distrib tag to be sync'd from s3 -> k8s volume
-          util.githubTagVersion(
-            params.GIT_TAG,
-            params.BUILD_ID,
-            [
-              '--dry-run': false,
-              '--team': ['Data Management', 'External'],
-            ]
-          )
-        }
+          node('docker') {
+            // needs eups distrib tag to be sync'd from s3 -> k8s volume
+            util.githubTagVersion(
+              params.GIT_TAG,
+              params.BUILD_ID,
+              [
+                '--dry-run': false,
+                '--team': ['Data Management', 'External'],
+              ]
+            )
+          } // node
+        } // retry
       }
 
       stage("build eups tarballs") {
@@ -244,27 +242,7 @@ try {
       }
     }
   } // try
-} catch (e) {
-  // If there was an exception thrown, the build failed
-  currentBuild.result = "FAILED"
-  throw e
-} finally {
-  echo "result: ${currentBuild.result}"
-  switch(currentBuild.result) {
-    case null:
-    case 'SUCCESS':
-      notify.success()
-      break
-    case 'ABORTED':
-      notify.aborted()
-      break
-    case 'FAILURE':
-      notify.failure()
-      break
-    default:
-      notify.failure()
-  }
-}
+} // notify.wrap
 
 /**
  * Represents a miniconda build environment.
