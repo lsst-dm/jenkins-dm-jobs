@@ -398,9 +398,15 @@ def void getManifest(String rebuildId, String filename) {
   writeFile(file: filename, text: manifest)
 }
 /**
+ * Run the `github-tag-version` script from `sqre-codekit` with parameters.
  *
- *
- * @param
+ * @param gitTag String name of git tag to create
+ * @param buildId String bNNNN/manifest id to select repos/refs to tag
+ * @param options Map script option flags.  These are merged with an internal
+ * set of defaults.  Truthy values are considered as an active flag while the
+ * literal `true` constant indicates a boolean flag.  Falsey values result in
+ * the flag being omitted.  Lists/Arrays result in the flag being specified
+ * multiple times.
  */
 def void githubTagVersion(String gitTag, String buildId, Map options) {
   def timelimit = 1
