@@ -119,7 +119,7 @@ notify.wrap {
               bx,
               [
                 '--dry-run': false,
-                '--team': ['Data Management', 'External'],
+                '--team': ['Data Management', 'DM Externals'],
               ]
             )
           } // node
