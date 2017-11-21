@@ -68,6 +68,21 @@ def void wrapContainer(String imageName, String tag) {
 }
 
 /**
+ * Invoke block inside of a "wrapper" container.  See: wrapContainer
+ *
+ * @param docImage String name of docker image
+ * @param run Closure Invoked inside of wrapper container
+ */
+def insideWrap(String docImage, Closure run) {
+  def docLocal = "${docImage}-local"
+
+  wrapContainer(docImage, docLocal)
+  def image = docker.image(docLocal)
+
+  image.inside { run() }
+}
+
+/**
  * Join multiple String args togther with '/'s to resemble a filesystem path.
  */
 // The groovy String#join method is not working under the security sandbox
@@ -382,5 +397,77 @@ def void getManifest(String rebuildId, String filename) {
   def manifest = readFile manifest_artifact
   writeFile(file: filename, text: manifest)
 }
+/**
+ *
+ *
+ * @param
+ */
+def void githubTagVersion(String gitTag, String buildId, Map options) {
+  def timelimit = 1
+  def docImage  = 'docker.io/lsstsqre/codekit:3.1.0'
+  def prog = 'github-tag-version'
+  def defaultOptions = [
+    '--dry-run': true,
+    '--org': 'lsst',
+    '--team': 'Data Management',
+    '--email': 'sqre-admin@lists.lsst.org',
+    '--tagger': 'sqreadmin',
+    '--token':  '$GITHUB_TOKEN',
+    '--fail-fast': true,
+    '--debug': true,
+  ]
+
+  options = defaultOptions + options
+
+  def mapToFlags = { opt ->
+    def flags = ''
+
+    opt.each { k,v ->
+      if (v) {
+        // leading space to seperate from from flags
+        if (flags != '') {
+          flags += ' '
+        }
+        if (v == true) {
+          // its a boolean flag
+          flags += k
+        } else {
+          // its a flag with an arg
+          flags += "${k} \"${v}\""
+        }
+      }
+    }
+
+    return flags
+  }
+
+  cmd = "${prog} ${mapToFlags(options)} ${gitTag} ${buildId}"
+
+  def run = {
+    util.insideWrap(docImage) {
+      withEnv(["CMD=${cmd}"]) {
+        withCredentials([[
+          $class: 'StringBinding',
+          credentialsId: 'github-api-token-sqreadmin',
+          variable: 'GITHUB_TOKEN'
+        ]]) {
+          util.shColor '''
+            #!/bin/bash -e
+
+            set -o xtrace
+
+            eval $CMD
+          '''
+        } // withCredentials
+      } // withEnv
+    } // util.insideWrap
+  } // run
+
+  node('docker') {
+    timeout(time: timelimit, unit: 'HOURS') {
+      run()
+    }
+  }
+} // githubTagVersion
 
 return this;
