@@ -112,16 +112,18 @@ notify.wrap {
 
       stage('git tag') {
         retry(retries) {
-          // needs eups distrib tag to be sync'd from s3 -> k8s volume
-          util.githubTagVersion(
-            params.GIT_TAG,
-            params.BUILD_ID,
-            [
-              '--dry-run': false,
-              '--team': ['Data Management', 'External'],
-            ]
-          )
-        }
+          node('docker') {
+            // needs eups distrib tag to be sync'd from s3 -> k8s volume
+            util.githubTagVersion(
+              params.GIT_TAG,
+              params.BUILD_ID,
+              [
+                '--dry-run': false,
+                '--team': ['Data Management', 'External'],
+              ]
+            )
+          } // node
+        } // retry
       }
 
       stage("build eups tarballs") {
