@@ -116,8 +116,8 @@ notify.wrap {
           node('docker') {
             // needs eups distrib tag to be sync'd from s3 -> k8s volume
             util.githubTagVersion(
-              params.GIT_TAG,
-              params.BUILD_ID,
+              gitTag,
+              bx,
               [
                 '--dry-run': true,
                 '--team': ['Data Management', 'External'],
