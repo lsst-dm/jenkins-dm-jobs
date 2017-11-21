@@ -420,46 +420,42 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
   options = defaultOptions + options
 
   def mapToFlags = { opt ->
-    def flags = ''
+    def flags = []
 
     opt.each { k,v ->
       if (v) {
-        // leading space to seperate from from flags
-        if (flags != '') {
-          flags += ' '
-        }
         if (v == true) {
           // its a boolean flag
           flags += k
         } else {
           // its a flag with an arg
-          flags += "${k} \"${v}\""
+          if (v instanceof List) {
+            // its a flag with multiple values
+            v.each { nested ->
+              flags += "${k} \"${nested}\""
+            }
+          } else {
+            // its a flag with a single value
+            flags += "${k} \"${v}\""
+          }
         }
       }
     }
 
-    return flags
+    return flags.join(' ')
   }
 
   cmd = "${prog} ${mapToFlags(options)} ${gitTag} ${buildId}"
 
   def run = {
     util.insideWrap(docImage) {
-      withEnv(["CMD=${cmd}"]) {
-        withCredentials([[
-          $class: 'StringBinding',
-          credentialsId: 'github-api-token-sqreadmin',
-          variable: 'GITHUB_TOKEN'
-        ]]) {
-          util.shColor '''
-            #!/bin/bash -e
-
-            set -o xtrace
-
-            eval $CMD
-          '''
-        } // withCredentials
-      } // withEnv
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'github-api-token-sqreadmin',
+        variable: 'GITHUB_TOKEN'
+      ]]) {
+        util.shColor cmd
+      } // withCredentials
     } // util.insideWrap
   } // run
 
