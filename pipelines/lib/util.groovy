@@ -73,13 +73,13 @@ def void wrapContainer(String imageName, String tag) {
  * @param docImage String name of docker image
  * @param run Closure Invoked inside of wrapper container
  */
-def insideWrap(String docImage, Closure run) {
+def insideWrap(String docImage, String args=null, Closure run) {
   def docLocal = "${docImage}-local"
 
   wrapContainer(docImage, docLocal)
   def image = docker.image(docLocal)
 
-  image.inside { run() }
+  image.inside(args) { run() }
 }
 
 /**
