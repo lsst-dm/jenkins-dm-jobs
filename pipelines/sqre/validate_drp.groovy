@@ -129,18 +129,20 @@ def void drp(
           // clone and build validate_drp from source
           dir(drpDir) {
             // the simplier git step doesn't support 'CleanBeforeCheckout'
-            checkout(
-              scm: [
-                $class: 'GitSCM',
-                branches: [[name: "*/${drpRef}"]],
-                doGenerateSubmoduleConfigurations: false,
-                extensions: [[$class: 'CleanBeforeCheckout']],
-                submoduleCfg: [],
-                userRemoteConfigs: [[url: drpRepo]]
-              ],
-              changelog: false,
-              poll: false,
-            )
+            timeout(time: datasetInfo['cloneTime'], unit: 'MINUTES') {
+              checkout(
+                scm: [
+                  $class: 'GitSCM',
+                  branches: [[name: "*/${drpRef}"]],
+                  doGenerateSubmoduleConfigurations: false,
+                  extensions: [[$class: 'CleanBeforeCheckout']],
+                  submoduleCfg: [],
+                  userRemoteConfigs: [[url: drpRepo]]
+                ],
+                changelog: false,
+                poll: false,
+              )
+            } // timeout
 
             // XXX DM-12663 validate_drp must be built from source / be
             // writable by the jenkins role user -- the version installed in
@@ -148,13 +150,15 @@ def void drp(
             buildDrp(homeDir, drpDir, runSlug)
           } // dir
 
-          runDrp(
-            drpDir,
-            runDir,
-            datasetInfo['dataset'],
-            datasetDir,
-            datasetArchiveDir
-          )
+          timeout(time: datasetInfo['runTime'], unit: 'MINUTES') {
+            runDrp(
+              drpDir,
+              runDir,
+              datasetInfo['dataset'],
+              datasetDir,
+              datasetArchiveDir
+            )
+          } // timeout
         } // inside
 
         // push results to squash
@@ -233,16 +237,22 @@ def Map datasetLookup(String datasetSlug) {
       info['dataset']     = 'validation_data_cfht'
       info['datasetRepo'] = 'https://github.com/lsst/validation_data_cfht.git'
       info['datasetRef']  = 'master'
+      info['cloneTime']   = 15
+      info['runTime']     = 15
       break
     case 'hsc':
       info['dataset']     = 'validation_data_hsc'
       info['datasetRepo'] = 'https://github.com/lsst/validation_data_hsc.git'
       info['datasetRef']  = 'master'
+      info['cloneTime']   = 240
+      info['runTime']     = 600
       break
     case 'decam':
       info['dataset']     = 'validation_data_decam'
       info['datasetRepo'] = 'https://github.com/lsst/validation_data_decam.git'
       info['datasetRef']  = 'master'
+      info['cloneTime']   = 60 // XXX untested
+      info['runTime']     = 60 // XXX untested
       break
     default:
       error "unknown datasetSlug: ${datasetSlug}"
