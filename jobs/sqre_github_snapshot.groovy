@@ -14,7 +14,7 @@ pipelineJob("${folder}/nightly-sqre-github-snapshot") {
 
   label('jenkins-master')
   keepDependencies(true)
-  concurrentBuild()
+  concurrentBuild(false)
 
   triggers {
     cron('23 0 * * * ')
