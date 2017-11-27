@@ -18,7 +18,7 @@ notify.wrap {
   def bx = null
 
   try {
-    timeout(time: 30, unit: 'HOURS') {
+    timeout(time: 23, unit: 'HOURS') {
       def product         = 'lsst_distrib qserv_distrib validate_drp'
       def tarballProducts = 'lsst_distrib validate_drp'
 
