@@ -1,5 +1,3 @@
-def notify = null
-
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -14,40 +12,26 @@ node('jenkins-master') {
   }
 }
 
-try {
-  notify.started()
+notify.wrap {
+  def run = {
+    stage('build') {
+      def matrix = [:]
 
-  stage('build') {
-    def matrix = [:]
+      addToMatrix(matrix, 'centos-6', 'py3')
+      addToMatrix(matrix, 'centos-7', 'py2')
+      addToMatrix(matrix, 'centos-7', 'py3')
+      addToMatrix(matrix, 'osx', 'py3')
 
-    addToMatrix(matrix, 'centos-6', 'py3')
-    addToMatrix(matrix, 'centos-7', 'py2')
-    addToMatrix(matrix, 'centos-7', 'py3')
-    addToMatrix(matrix, 'osx', 'py3')
-
-    parallel matrix
-  } // stage
-} catch (e) {
-  // If there was an exception thrown, the build failed
-  currentBuild.result = "FAILED"
-  throw e
-} finally {
-  echo "result: ${currentBuild.result}"
-  switch(currentBuild.result) {
-    case null:
-    case 'SUCCESS':
-      notify.success()
-      break
-    case 'ABORTED':
-      notify.aborted()
-      break
-    case 'FAILURE':
-      notify.failure()
-      break
-    default:
-      notify.failure()
+      parallel matrix
+    } // stage
   }
-}
+
+  // the timeout should be <= the cron triggering interval to prevent builds
+  // pilling up in the backlog.
+  timeout(time: 23, unit: 'HOURS') {
+    run()
+  }
+} // notify.wrap
 
 @NonCPS
 def addToMatrix(Map matrix, String label, String python) {
