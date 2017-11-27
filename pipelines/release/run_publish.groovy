@@ -1,5 +1,3 @@
-def notify = null
-
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -14,9 +12,7 @@ node('jenkins-master') {
   }
 }
 
-try {
-  notify.started()
-
+notify.wrap {
   def timelimit = params.TIMEOUT.toInteger()
 
   def run = {
@@ -118,24 +114,4 @@ try {
       run()
     }
   }
-} catch (e) {
-  // If there was an exception thrown, the build failed
-  currentBuild.result = "FAILED"
-  throw e
-} finally {
-  echo "result: ${currentBuild.result}"
-  switch(currentBuild.result) {
-    case null:
-    case 'SUCCESS':
-      notify.success()
-      break
-    case 'ABORTED':
-      notify.aborted()
-      break
-    case 'FAILURE':
-      notify.failure()
-      break
-    default:
-      notify.failure()
-  }
-}
+} // notify.wrap

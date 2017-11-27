@@ -2,7 +2,6 @@ import groovy.transform.Field
 
 class UnsupportedCompiler extends Exception {}
 
-def notify = null
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -24,9 +23,7 @@ node('jenkins-master') {
 @Field String newinstall_url = 'https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh'
 @Field String shebangtron_url = 'https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron'
 
-try {
-  notify.started()
-
+notify.wrap {
   def requiredParams = [
     'PRODUCT',
     'EUPS_TAG',
@@ -63,27 +60,7 @@ try {
         error "unsupported platform: ${params.PLATFORM}"
     }
   }
-} catch (e) {
-  // If there was an exception thrown, the build failed
-  currentBuild.result = "FAILED"
-  throw e
-} finally {
-  echo "result: ${currentBuild.result}"
-  switch(currentBuild.result) {
-    case null:
-    case 'SUCCESS':
-      notify.success()
-      break
-    case 'ABORTED':
-      notify.aborted()
-      break
-    case 'FAILURE':
-      notify.failure()
-      break
-    default:
-      notify.failure()
-  }
-}
+} // notify.wrap
 
 /**
  * Build EUPS tarballs inside of a docker container.
