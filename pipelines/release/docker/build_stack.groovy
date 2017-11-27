@@ -1,5 +1,3 @@
-def notify = null
-
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
