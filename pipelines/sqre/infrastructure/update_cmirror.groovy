@@ -15,7 +15,7 @@ node('jenkins-master') {
 notify.wrap {
   def hub_repo = 'lsstsqre/cmirror'
 
-  node('docker') {
+  def run = {
     def image = docker.image("${hub_repo}:latest")
 
     stage('prepare') {
@@ -91,7 +91,18 @@ notify.wrap {
         }
       }
     } // stage('push to s3')
-  } // node
+  } // run
+
+  // the timeout should be <= the cron triggering interval to prevent builds
+  // pilling up in the backlog.
+  timeout(time: 23, unit: 'HOURS') {
+    node('docker') {
+      // the longest observed runtime is ~6 hours
+      timeout(time: 9, unit: 'HOURS') {
+        run()
+      }
+    } // node
+  } // timeout
 } // notify.wrap
 
 def mirror(String imageId, String upstream, String platform) {
