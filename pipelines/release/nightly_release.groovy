@@ -201,6 +201,7 @@ notify.wrap {
               string(name: 'EUPS_TAG', value: eupsTag),
               string(name: 'BUILD_ID', value: bx),
               booleanParam(name: 'NO_PUSH', value: false),
+              booleanParam(name: 'WIPEOUT', value: true),
             ],
             wait: false
         }
