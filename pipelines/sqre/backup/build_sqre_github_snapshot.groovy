@@ -16,7 +16,7 @@ notify.wrap {
   def image = null
   def hub_repo = 'lsstsqre/sqre-github-snapshot'
 
-  node('docker') {
+  def run = {
     stage('fetch Dockerfile') {
       // `pip download` will fetch all recursive deps, it is more efficient to
       // just fetch the tarball directly
@@ -42,6 +42,12 @@ notify.wrap {
         image.push()
         image.push('latest')
       }
+    }
+  } // run
+
+  node('docker') {
+    timeout(time: 30, unit: 'MINUTES') {
+      run()
     }
   }
 } // notify.wrap

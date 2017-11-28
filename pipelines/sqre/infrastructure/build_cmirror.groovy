@@ -16,7 +16,7 @@ notify.wrap {
   def image = null
   def hub_repo = 'lsstsqre/cmirror'
 
-  node('docker') {
+  def run = {
     stage('checkout') {
       git([
         url: 'https://github.com/lsst-sqre/sandbox-cmirror',
@@ -36,6 +36,12 @@ notify.wrap {
       docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-sqreadmin') {
         image.push('latest')
       }
+    }
+  } // run
+
+  node('docker') {
+    timeout(time: 30, unit: 'MINUTES') {
+      run()
     }
   }
 } // notify.wrap

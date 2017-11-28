@@ -15,7 +15,7 @@ node('jenkins-master') {
 notify.wrap {
   def hub_repo = 'lsstsqre/s3backup'
 
-  node('docker') {
+  def run = {
     def image = docker.image("${hub_repo}:latest")
 
     stage('pull') {
@@ -53,5 +53,11 @@ notify.wrap {
         }
       }
     } // stage('backup')
+  } // pull
+
+  node('docker') {
+    timeout(time: 4, unit: 'HOURS') {
+      run()
+    }
   } // node('docker')
 } // notify.wrap

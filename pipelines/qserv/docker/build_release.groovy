@@ -14,15 +14,17 @@ node('jenkins-master') {
 
 notify.wrap {
   node('docker') {
-    dir('qserv') {
-      git([
-        url: 'https://github.com/lsst/qserv.git',
-        branch: 'master'
-      ])
-    }
+    timeout(time: 4, unit: 'HOURS') {
+      dir('qserv') {
+        git([
+          url: 'https://github.com/lsst/qserv.git',
+          branch: 'master'
+        ])
+      }
 
-    build('release_images.sh')
-  }
+      build('release_images.sh')
+    } // timeout
+  } // node
 } // notify.wrap
 
 def build(String script) {

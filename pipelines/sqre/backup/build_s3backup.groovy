@@ -16,7 +16,7 @@ notify.wrap {
   def image = null
   def hub_repo = 'lsstsqre/s3backup'
 
-  node('docker') {
+  def run = {
     stage('checkout') {
       git([
         url: 'https://github.com/lsst-sqre/s3backup',
@@ -32,6 +32,12 @@ notify.wrap {
       docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-sqreadmin') {
         image.push('latest')
       }
+    }
+  } // run
+
+  node('docker') {
+    timeout(time: 3, unit: 'HOURS') {
+      run()
     }
   }
 } // notify.wrap

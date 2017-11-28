@@ -19,7 +19,7 @@ notify.wrap {
   def githubRef  = 'master'
   def postqaVer  = '1.3.3'
 
-  node('docker') {
+  def run = {
     stage('checkout') {
       git([
         url: "https://github.com/${githubRepo}",
@@ -44,5 +44,12 @@ notify.wrap {
         }
       }
     } // push
+  } // run
+
+  node('docker') {
+    timeout(time: 30, unit: 'MINUTES') {
+      run()
+    }
+
   } // node
 } // notify.wrap

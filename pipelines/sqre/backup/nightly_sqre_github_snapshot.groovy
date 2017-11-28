@@ -16,7 +16,7 @@ notify.wrap {
   def image = null
   def hub_repo = 'lsstsqre/sqre-github-snapshot'
 
-  node('docker') {
+  def run = {
     stage('pull') {
       image = docker.image("${hub_repo}:latest")
       image.pull()
@@ -41,6 +41,12 @@ notify.wrap {
           sh "snapshot-purger"
         }
       }
+    }
+  } // run
+
+  node('docker') {
+    timeout(time: 3, unit: 'HOURS') {
+      run()
     }
   }
 } // notify.wrap
