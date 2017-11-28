@@ -37,7 +37,7 @@ notify.wrap {
   }
 
   stage('parse bNNNN') {
-    node {
+    util.nodeTiny {
       manifest_artifact = 'lsstsw/build/manifest.txt'
 
       step ([$class: 'CopyArtifact',
@@ -64,7 +64,7 @@ notify.wrap {
   }
 
   stage('archive') {
-    node {
+    util.nodeTiny {
       results = [
         bnnnn: bx
       ]

@@ -70,7 +70,7 @@ notify.wrap {
       }
 
       stage('parse bNNNN') {
-        node('jenkins-master') {
+        util.nodeTiny {
           manifest_artifact = 'lsstsw/build/manifest.txt'
 
           step([$class: 'CopyArtifact',
@@ -211,7 +211,7 @@ notify.wrap {
     stage('archive') {
       def resultsFile = 'results.json'
 
-      node('jenkins-master') {
+      util.nodeTiny {
         results = [:]
         if (bx) {
           results['bnnn'] = bx
