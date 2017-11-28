@@ -480,7 +480,7 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
  */
 def void nodeTiny(Closure run) {
   node('jenkins-master') {
-    timeout(time: 5, unit: 'minutes') {
+    timeout(time: 5, unit: 'MINUTES') {
       run()
     }
   }
