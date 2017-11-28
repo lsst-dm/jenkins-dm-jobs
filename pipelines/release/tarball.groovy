@@ -34,9 +34,9 @@ notify.wrap {
     'TIMEOUT',
   ]
 
-  requiredParams.each { it ->
-    if (!params.get(it)) {
-      error "${it} parameter is required"
+  requiredParams.each { p ->
+    if (!params.get(p)) {
+      error "${p} parameter is required"
     }
   }
 
