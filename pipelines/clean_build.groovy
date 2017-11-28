@@ -13,24 +13,15 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def run = {
-    stage('build') {
-      def matrix = [:]
-
-      addToMatrix(matrix, 'centos-6', 'py3')
-      addToMatrix(matrix, 'centos-7', 'py2')
-      addToMatrix(matrix, 'centos-7', 'py3')
-      addToMatrix(matrix, 'osx', 'py3')
+  stage('build') {
+    def matrix = [:]
 
       parallel matrix
     } // stage
   }
 
-  // the timeout should be <= the cron triggering interval to prevent builds
-  // pilling up in the backlog.
-  timeout(time: 23, unit: 'HOURS') {
-    run()
-  }
+    parallel matrix
+  } // stage
 } // notify.wrap
 
 @NonCPS

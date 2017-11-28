@@ -1,5 +1,3 @@
-def notify = null
-
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -14,9 +12,7 @@ node('jenkins-master') {
   }
 }
 
-try {
-  notify.started()
-
+notify.wrap {
   node('docker') {
     stage('pull') {
       docker.image('lsstsqre/centos:6-packerprep').pull()
@@ -49,27 +45,7 @@ try {
       }
     }
   } // node
-} catch (e) {
-  // If there was an exception thrown, the build failed
-  currentBuild.result = "FAILED"
-  throw e
-} finally {
-  echo "result: ${currentBuild.result}"
-  switch(currentBuild.result) {
-    case null:
-    case 'SUCCESS':
-      notify.success()
-      break
-    case 'ABORTED':
-      notify.aborted()
-      break
-    case 'FAILURE':
-      notify.failure()
-      break
-    default:
-      notify.failure()
-  }
-}
+} // notify.wrap
 
 def rvm(String commands) {
   util.shColor "bash -c 'source /etc/profile.d/rvm.sh && rvm install 2.2 > /dev/null 2>&1'"
