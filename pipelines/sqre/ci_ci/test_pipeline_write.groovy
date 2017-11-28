@@ -14,7 +14,7 @@ node('jenkins-master') {
 
 notify.wrap {
   stage('write json') {
-    node {
+    util.nodeTiny {
       def results = [
         foo: 'bar',
         baz: 'quix',
