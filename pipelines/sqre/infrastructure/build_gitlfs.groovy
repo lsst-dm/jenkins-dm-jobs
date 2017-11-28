@@ -22,7 +22,7 @@ notify.wrap {
   def lfsVer     = params.LFS_VER
   def pushLatest = params.LATEST
 
-  node('docker') {
+  def run = {
     stage('checkout') {
       git([
         url: "https://github.com/${githubRepo}",
@@ -48,5 +48,11 @@ notify.wrap {
         }
       }
     } // push
+  } // run
+
+  node('docker') {
+    timeout(time: 30, unit: 'MINUTES') {
+      run()
+    }
   } // node
 } // notify.wrap

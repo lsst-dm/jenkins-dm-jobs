@@ -16,7 +16,7 @@ notify.wrap {
   def image = null
   def hub_repo = 'lsstsqre/nginx-ssl-proxy'
 
-  node('docker') {
+  def run = {
     stage('checkout') {
       git([
         url: 'https://github.com/lsst-sqre/nginx-ssl-proxy',
@@ -34,6 +34,12 @@ notify.wrap {
           image.push('latest')
         }
       }
+    }
+  } // run
+
+  node('docker') {
+    timeout(time: 30, unit: 'MINUTES') {
+      run()
     }
   }
 } // notify.wrap

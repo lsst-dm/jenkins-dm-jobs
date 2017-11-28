@@ -26,67 +26,73 @@ notify.wrap {
 
   def matrix = [:]
 
+  def run = {
+    try {
+      def hub             = "docker.io/lsstsqre/gitlfs:${tag}"
+      def local           = "${hub}-local"
+      def workDir         = pwd()
+      def resultsDir      = "${workDir}/${resultsBasename}"
+
+      wrapContainer(hub, local)
+      def image = docker.image(local)
+
+      // pre-create results dir
+      dir(resultsDir) {
+        writeFile(file: '.dummy', text: '')
+      }
+
+      // only hit github once
+      dir(repoDirCached) {
+        git([
+          url: gitRepo,
+          branch: gitRef,
+          changelog: false,
+          poll: false
+        ])
+      }
+
+      runs.times { n ->
+        echo "sample #${n+1}"
+
+        // stage cached git repo
+        util.shColor "cp -ra ${repoDirCached} ${repoDirLfs}"
+
+        // run lfs
+        dir(repoDirLfs) {
+          image.inside("-v ${resultsDir}:/results") {
+            // make lfs 1.5.5 work...
+            util.shColor '''
+              git config --local --add credential.helper '!f() { cat > /dev/null; echo username=; echo password=; }; f'
+            '''
+
+            util.shColor """
+              /usr/bin/time \
+                --format='%e' \
+                --output=/results/lfspull-${tag}.txt \
+                --append \
+                git lfs pull origin
+            """
+          }
+
+          // cleanup before next iteration
+          deleteDir()
+        } // dir
+      } // times
+    } finally {
+      archiveArtifacts([
+        artifacts: "${resultsBasename}/**/lfspull*.txt",
+        excludes: '**/*.dummy',
+      ])
+
+      deleteDir()
+    }
+  } // run
+
   lfsVer.split().each { tag ->
     matrix[tag] = {
       node('docker') {
-        try {
-          def hub             = "docker.io/lsstsqre/gitlfs:${tag}"
-          def local           = "${hub}-local"
-          def workDir         = pwd()
-          def resultsDir      = "${workDir}/${resultsBasename}"
-
-          wrapContainer(hub, local)
-          def image = docker.image(local)
-
-          // pre-create results dir
-          dir(resultsDir) {
-            writeFile(file: '.dummy', text: '')
-          }
-
-          // only hit github once
-          dir(repoDirCached) {
-            git([
-              url: gitRepo,
-              branch: gitRef,
-              changelog: false,
-              poll: false
-            ])
-          }
-
-          runs.times { n ->
-            echo "sample #${n+1}"
-
-            // stage cached git repo
-            util.shColor "cp -ra ${repoDirCached} ${repoDirLfs}"
-
-            // run lfs
-            dir(repoDirLfs) {
-              image.inside("-v ${resultsDir}:/results") {
-                // make lfs 1.5.5 work...
-                util.shColor '''
-                  git config --local --add credential.helper '!f() { cat > /dev/null; echo username=; echo password=; }; f'
-                '''
-
-                util.shColor """
-                  /usr/bin/time \
-                    --format='%e' \
-                    --output=/results/lfspull-${tag}.txt \
-                    --append \
-                    git lfs pull origin
-                """
-              }
-
-              // cleanup before next iteration
-              deleteDir()
-            } // dir
-          } // times
-        } finally {
-          archiveArtifacts([
-            artifacts: "${resultsBasename}/**/lfspull*.txt",
-            excludes: '**/*.dummy',
-          ])
-
-          deleteDir()
+        timeout(time: 48, unit: 'HOURS') {
+          run()
         }
       } // node
     } // matrix
