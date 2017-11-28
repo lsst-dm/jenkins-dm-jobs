@@ -397,6 +397,7 @@ def void getManifest(String rebuildId, String filename) {
   def manifest = readFile manifest_artifact
   writeFile(file: filename, text: manifest)
 }
+
 /**
  * Run the `github-tag-version` script from `sqre-codekit` with parameters.
  *
@@ -471,5 +472,18 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
     }
   }
 } // githubTagVersion
+
+/**
+ * Run trivial execution time block
+ *
+ * @param run Closure Invoked inside of node step
+ */
+def void nodeTiny(Closure run) {
+  node('jenkins-master') {
+    timeout(time: 5, unit: 'minutes') {
+      run()
+    }
+  }
+}
 
 return this;
