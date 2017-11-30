@@ -1,26 +1,24 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('release/docker/newinstall') {
+def name = 'sqre/infrastructure/build-layercake'
+
+pipelineJob(name) {
+  description('Constructs stack of docker base images for sci-pipe releases.')
+
+  parameters {
+    booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
+  }
+
   properties {
     rebuild {
       autoRebuild()
     }
   }
 
-  // don't tie up a beefy build slave
   label('jenkins-master')
-  concurrentBuild(false)
+  concurrentBuild(true)
   keepDependencies(true)
-
-  triggers {
-    dockerHubTrigger {
-      options {
-        triggerForAllUsedInJob()
-      }
-    }
-    upstream('release/docker/prepare', 'UNSTABLE')
-  }
 
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
   def ref  = SEED_JOB.scm.getBranches().get(0).getName()
@@ -35,7 +33,7 @@ pipelineJob('release/docker/newinstall') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/newinstall/docker/newinstall.groovy')
+      scriptPath("pipelines/${name.tr('-', '_')}.groovy")
     }
   }
 }

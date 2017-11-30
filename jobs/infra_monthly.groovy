@@ -1,14 +1,17 @@
 import util.Common
 Common.makeFolders(this)
 
-pipelineJob('release/docker/prepare') {
+def name = 'sqre/infrastructure/infra-monthly'
+
+pipelineJob(name) {
+  description('Periodic monthly builds of infrastructure jobs.')
+
   properties {
     rebuild {
       autoRebuild()
     }
   }
 
-  // don't tie up a beefy build slave
   label('jenkins-master')
   concurrentBuild(false)
   keepDependencies(true)
@@ -26,7 +29,7 @@ pipelineJob('release/docker/prepare') {
           branch(ref)
         }
       }
-      scriptPath('pipelines/newinstall/docker/prepare.groovy')
+      scriptPath("pipelines/${name.tr('-', '_')}.groovy")
     }
   }
 }
