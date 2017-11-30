@@ -41,7 +41,7 @@ notify.wrap {
       images << [(baseTag): baseBuild]
 
       // devtoolset version(s)
-      [6, 7].each { tsVersion ->
+      [3, 6, 7].each { tsVersion ->
         def tsName = "${baseName}-devtoolset-${tsVersion}"
         def tsTag = "${buildRepo}:${tsName}"
 
