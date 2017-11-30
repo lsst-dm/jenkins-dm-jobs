@@ -24,7 +24,7 @@ node('jenkins-master') {
 notify.wrap {
   def required = [
     'EUPS_TAG',
-    'BUILD_ID',
+    'BNNNN',
   ]
 
   util.requireParams(required)
@@ -67,7 +67,7 @@ def void drp(
   Integer timelimit = 12
 ) {
   def eupsTag   = params.EUPS_TAG
-  def buildId   = params.BUILD_ID
+  def buildId   = params.BNNNN
   def noPush    = params.NO_PUSH
 
   def datasetInfo = datasetLookup(datasetSlug)
