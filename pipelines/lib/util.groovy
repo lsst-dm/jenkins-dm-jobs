@@ -193,6 +193,45 @@ def lsstswBuild(String label, String python, Boolean wipeout=false) {
 }
 
 /**
+ * Run a lsstsw build.
+ *
+ * @param image String
+ * @param label Node label to run on
+ * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
+ * @param wipteout Delete all existing state before starting build
+ */
+def lsstswBuildDocker(
+  String image,
+  String label,
+  String python,
+  Boolean wipeout=false
+) {
+  def slug = "${label}.${python}"
+
+  node('docker') {
+    timeout(time: 5, unit: 'HOURS') {
+      // use different workspace dirs for python 2/3 to avoid residual state
+      // conflicts
+      dir(slug) {
+        if (wipeout) {
+          deleteDir()
+        }
+
+        insideWrap(image) {
+          withEnv([
+            'SKIP_DOCS=true',
+            "LSST_JUNIT_PREFIX=${slug}",
+            "python=${python}",
+          ]) {
+            jenkinsWrapper()
+          }
+        } // insideWrap
+      } // dir
+    } // timeout
+  } // node
+}
+
+/**
  * Run a jenkins_wrapper.sh
  */
 def jenkinsWrapper() {
