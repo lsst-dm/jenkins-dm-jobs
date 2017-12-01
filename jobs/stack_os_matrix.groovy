@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: "stack-os-matrix', dsl: this)
+def p = new Plumber(name: 'stack-os-matrix', dsl: this)
 p.pipeline().with {
   description('Execute a build of EUPS products using `lsstsw`.')
 
