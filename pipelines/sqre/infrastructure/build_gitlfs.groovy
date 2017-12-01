@@ -16,7 +16,7 @@ notify.wrap {
   util.requireParams(['LFS_VER'])
 
   def image      = null
-  def hubRepo    = 'lsstsqre/gitlfs'
+  def hubRepo    = 'docker.io/lsstsqre/gitlfs'
   def githubRepo = 'lsst-sqre/docker-gitlfs'
   def githubRef  = 'master'
   def lfsVer     = params.LFS_VER

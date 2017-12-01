@@ -46,11 +46,11 @@ notify.wrap {
   stage("${params.OS}.${py.slug()}") {
     switch(params.OS) {
       case 'centos-7':
-        def imageName = 'lsstsqre/centos:7-newinstall'
+        def imageName = 'docker.io/lsstsqre/centos:7-stackbase'
         linuxTarballs(imageName, 'el7', 'gcc-system', py, timelimit)
         break
       case 'centos-6':
-        def imageName = 'lsstsqre/centos:6-newinstall'
+        def imageName = 'docker.io/lsstsqre/centos:6-stackbase-devtoolset-3'
         linuxTarballs(imageName, 'el6', 'devtoolset-3', py, timelimit)
         break
       case 'osx-10.11':

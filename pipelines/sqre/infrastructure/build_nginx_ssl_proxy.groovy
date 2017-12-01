@@ -13,8 +13,8 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def image = null
-  def hub_repo = 'lsstsqre/nginx-ssl-proxy'
+  def image    = null
+  def hub_repo = 'docker.io/lsstsqre/nginx-ssl-proxy'
 
   def run = {
     stage('checkout') {

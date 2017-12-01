@@ -13,8 +13,8 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def image = null
-  def hub_repo = 'lsstsqre/cmirror'
+  def image    = null
+  def hub_repo = 'docker.io/lsstsqre/cmirror'
 
   def run = {
     stage('checkout') {
