@@ -89,7 +89,7 @@ notify.wrap {
               "HOME=${pwd()}/home",
             ]
             withEnv(env) {
-              util.insideWrap(awsImage) {
+              docker.image(awsImage).inside {
                 util.shColor '''
                   aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/
                 '''
