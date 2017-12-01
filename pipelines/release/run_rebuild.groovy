@@ -58,12 +58,17 @@ notify.wrap {
             "WORKSPACE=${pwd()}",
             "HOME=${pwd()}/home",
           ]) {
-            util.insideWrap(awsImage) {
+            // the current iteration of the awscli container is alpine based
+            // and doesn't work with util.insideWrap.  However, the aws cli
+            // seems to work OK without trying to lookup the username.
+            docker.image(awsImage).inside {
               util.shColor '''
                 # provides DOC_PUSH_PATH
                 . ./buildbot-scripts/settings.cfg.sh
 
-                aws s3 cp --recursive "$DOC_PUSH_PATH"/ s3://$DOXYGEN_S3_BUCKET/stack/doxygen/
+                aws s3 cp --recursive \
+                  "${DOC_PUSH_PATH}/" \
+                  "s3://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
               '''
             } // util.insideWrap
           }
