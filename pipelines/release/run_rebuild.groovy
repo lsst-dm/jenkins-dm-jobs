@@ -18,8 +18,9 @@ notify.wrap {
     versiondbPush = 'false'
   }
 
-  def timelimit = params.TIMEOUT.toInteger()
-  def awsImage  = 'docker.io/lsstsqre/awscli'
+  def timelimit  = params.TIMEOUT.toInteger()
+  def buildImage = 'docker.io/lsstsqre/centos:7-stackbase'
+  def awsImage   = 'docker.io/lsstsqre/awscli'
 
   def run = {
     ws('snowflake/release') {
@@ -33,7 +34,9 @@ notify.wrap {
           'python=py3',
          ]) {
           sshagent (credentials: ['github-jenkins-versiondb']) {
-            util.jenkinsWrapper()
+            util.insideWrap(buildImage) {
+              util.jenkinsWrapper()
+            }
           } // sshagent
         } // withEnv
       } // stage('build')

@@ -40,6 +40,7 @@ notify.wrap {
         def env = [
           "EUPS_PKGROOT=${pwd()}/distrib",
           "WORKSPACE=${pwd()}",
+          "EUPS_USERDATA=${pwd()}/home/.eups_userdata",
         ]
 
         withCredentials([[
@@ -48,27 +49,24 @@ notify.wrap {
           variable: 'CMIRROR_S3_BUCKET'
         ]]) {
           withEnv(env) {
-            util.shColor '''
-              #!/bin/bash -e
+            util.insideWrap(buildImage) {
+              util.shColor '''
+                ARGS=()
+                ARGS+=('-b' "$BUILD_ID")
+                ARGS+=('-t' "$TAG")
+                # split whitespace separated EUPS products into separate array
+                # elements by not quoting
+                ARGS+=($PRODUCT)
 
-              # isolate eups cache files
-              export EUPS_USERDATA="${WORKSPACE}/.eups"
+                export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
 
-              ARGS=()
-              ARGS+=('-b' "$BUILD_ID")
-              ARGS+=('-t' "$TAG")
-              # split whitespace separated EUPS products into separate array elements
-              # by not quoting
-              ARGS+=($PRODUCT)
+                # setup.sh will unset $PRODUCTS
+                source ./lsstsw/bin/setup.sh
 
-              export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
-
-              # setup.sh will unset $PRODUCTS
-              source ./lsstsw/bin/setup.sh
-
-              publish "${ARGS[@]}"
-            '''
-          }
+                publish "${ARGS[@]}"
+              '''
+            }
+          } // util.insideWrap
         }// withCredentials([[
       } // stage('publish')
 
