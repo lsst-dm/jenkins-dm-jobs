@@ -16,7 +16,7 @@ notify.wrap {
   util.requireParams(['CODEKIT_VER'])
 
   def image      = null
-  def regRepo    = 'docker.io/lsstsqre/codekit'
+  def regRepo    = 'lsstsqre/codekit'
   def githubRepo = 'lsst-sqre/sqre-codekit'
   def githubRef  = 'master'
   def buildDir   = 'docker'

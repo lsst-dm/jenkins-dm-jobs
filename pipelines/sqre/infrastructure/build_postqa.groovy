@@ -14,7 +14,7 @@ node('jenkins-master') {
 
 notify.wrap {
   def image      = null
-  def hubRepo    = 'docker.io/lsstsqre/postqa'
+  def hubRepo    = 'lsstsqre/postqa'
   def githubRepo = 'lsst-sqre/docker-postqa'
   def githubRef  = 'master'
   def postqaVer  = '1.3.3'
