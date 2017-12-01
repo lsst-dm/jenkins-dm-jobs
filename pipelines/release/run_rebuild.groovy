@@ -33,11 +33,11 @@ notify.wrap {
           "LSST_JUNIT_PREFIX=centos-7.py3",
           'python=py3',
          ]) {
-          sshagent (credentials: ['github-jenkins-versiondb']) {
-            util.insideWrap(buildImage) {
+          util.insideWrap(buildImage) {
+            sshagent (credentials: ['github-jenkins-versiondb']) {
               util.jenkinsWrapper()
-            }
-          } // sshagent
+            } // sshagent
+          } // util.insideWrap
         } // withEnv
       } // stage('build')
 
