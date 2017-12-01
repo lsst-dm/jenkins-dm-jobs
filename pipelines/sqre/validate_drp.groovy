@@ -117,7 +117,9 @@ def void drp(
 
         // clone validation dataset
         dir(datasetDir) {
-          checkoutLFS(datasetInfo['datasetRepo'], datasetInfo['datasetRef'])
+          timeout(time: datasetInfo['cloneTime'], unit: 'MINUTES') {
+            checkoutLFS(datasetInfo['datasetRepo'], datasetInfo['datasetRef'])
+          }
         }
 
         def docLocal = "${docImage}-local"
@@ -129,7 +131,7 @@ def void drp(
           // clone and build validate_drp from source
           dir(drpDir) {
             // the simplier git step doesn't support 'CleanBeforeCheckout'
-            timeout(time: datasetInfo['cloneTime'], unit: 'MINUTES') {
+            timeout(time: 15, unit: 'MINUTES') {
               checkout(
                 scm: [
                   $class: 'GitSCM',
