@@ -1,9 +1,10 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-def folder = 'sqre/infrastructure'
-
-pipelineJob("${folder}/build-nginx-ssl-proxy") {
+def p = new Plumber(
+  name: 'sqre/infrastructure/build-nginx-ssl-proxy',
+  dsl: this
+)
+p.pipeline().with {
   description(
     '''
     Constructs docker lsstsqre/nginx-ssl-proxy image, which is a an updated
@@ -13,32 +14,5 @@ pipelineJob("${folder}/build-nginx-ssl-proxy") {
 
   parameters {
     booleanParam('PUSH', true, 'Push container to docker hub.')
-  }
-
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  label('jenkins-master')
-  keepDependencies(true)
-  concurrentBuild(false)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath("pipelines/${folder}/build_nginx_ssl_proxy.groovy")
-    }
   }
 }

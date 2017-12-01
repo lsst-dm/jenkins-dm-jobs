@@ -1,9 +1,9 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
 // note that this job *will not work* unless run-rebuild has been executed at
 // least once in order to initialize the env.
-pipelineJob('release/run-publish') {
+def p = new Plumber(name: 'release/run-publish', dsl: this)
+p.pipeline().with {
   description('Create and publish EUPS distrib packages.')
 
   parameters {
@@ -14,33 +14,5 @@ pipelineJob('release/run-publish') {
     stringParam('TIMEOUT', '1', 'build timeout in hours')
     // enable for debugging only
     // booleanParam('NO_PUSH', true, 'Skip s3 push.')
-  }
-
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  // don't tie up a beefy build slave
-  label('jenkins-master')
-  concurrentBuild(false)
-  keepDependencies(true)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath('pipelines/release/run_publish.groovy')
-    }
   }
 }

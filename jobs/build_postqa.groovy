@@ -1,39 +1,10 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-def folder = 'sqre/infrastructure'
-
-pipelineJob("${folder}/build-postqa") {
+def p = new Plumber(name: 'sqre/infrastructure/build-postqa', dsl: this)
+p.pipeline().with {
   description('Constructs docker postqa images.')
 
   parameters {
     booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
-  }
-
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  label('jenkins-master')
-  concurrentBuild(true)
-  keepDependencies(true)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath("pipelines/${folder}/build_postqa.groovy")
-    }
   }
 }

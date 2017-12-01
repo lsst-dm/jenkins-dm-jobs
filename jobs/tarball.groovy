@@ -1,7 +1,7 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-pipelineJob('release/tarball') {
+def p = new Plumber(name: 'release/tarball', dsl: this)
+p.pipeline().with {
   description('build and publish EUPS distrib "tarball" packages')
 
   parameters {
@@ -19,31 +19,5 @@ pipelineJob('release/tarball') {
     stringParam('TIMEOUT', '6', 'build timeout in hours')
   }
 
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  // don't tie up a beefy build slave
-  label('jenkins-master')
   concurrentBuild(true)
-  keepDependencies(true)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath('pipelines/release/tarball.groovy')
-    }
-  }
 }

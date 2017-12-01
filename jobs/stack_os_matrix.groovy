@@ -1,7 +1,7 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-pipelineJob("stack-os-matrix") {
+def p = new Plumber(name: "stack-os-matrix', dsl: this)
+p.pipeline().with {
   description('Execute a build of EUPS products using `lsstsw`.')
 
   parameters {
@@ -10,33 +10,5 @@ pipelineJob("stack-os-matrix") {
     booleanParam('SKIP_DEMO', false, 'Do not run the demo after all packages have completed building.')
     // XXX testing only
     //booleanParam('NO_FETCH', false, 'Do not pull from git remote if branch is already the current ref. (This should generally be false outside of testing the CI system)')
-  }
-
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  // don't tie up a beefy build slave
-  label('jenkins-master')
-  keepDependencies(true)
-  concurrentBuild(true)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath("pipelines/stack_os_matrix.groovy")
-    }
   }
 }

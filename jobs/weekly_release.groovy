@@ -1,41 +1,11 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-def folder = 'release'
-
-pipelineJob("${folder}/weekly-release") {
+def p = new Plumber(name: 'release/weekly-release', dsl: this)
+p.pipeline().with {
   description('Tag and release the DM pipelines/dax "weekly".')
 
   parameters {
     stringParam('YEAR', null, 'Gregorian calendar year.')
     stringParam('WEEK', null, 'Week of Gregorian calendar year.')
-  }
-
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  // don't tie up a beefy build slave
-  label('jenkins-master')
-  concurrentBuild(false)
-  keepDependencies(true)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath("pipelines/${folder}/weekly_release.groovy")
-    }
   }
 }

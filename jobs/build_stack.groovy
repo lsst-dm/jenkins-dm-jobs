@@ -1,9 +1,7 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-def folder = 'release/docker'
-
-pipelineJob("${folder}/build-stack") {
+def p = new Plumber(name: 'release/docker/build-stack', dsl: this)
+p.pipeline().with {
   description('Constructs docker images with EUPS tarballs.')
 
   parameters {
@@ -12,30 +10,5 @@ pipelineJob("${folder}/build-stack") {
     stringParam('TIMEOUT', '1', 'build timeout in hours')
   }
 
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  label('jenkins-master')
-  keepDependencies(true)
-  concurrentBuild(false)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath("pipelines/${folder}/build_stack.groovy")
-    }
-  }
+  concurrentBuild(true)
 }
