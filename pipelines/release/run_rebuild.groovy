@@ -18,7 +18,9 @@ notify.wrap {
     versiondbPush = 'false'
   }
 
-  def timelimit = params.TIMEOUT.toInteger()
+  def timelimit  = params.TIMEOUT.toInteger()
+  def buildImage = 'docker.io/lsstsqre/centos:7-stackbase'
+  def awsImage   = 'docker.io/lsstsqre/awscli'
 
   def run = {
     ws('snowflake/release') {
@@ -32,7 +34,9 @@ notify.wrap {
           'python=py3',
          ]) {
           sshagent (credentials: ['github-jenkins-versiondb']) {
-            util.jenkinsWrapper()
+            util.insideWrap(buildImage) {
+              util.jenkinsWrapper()
+            }
           } // sshagent
         } // withEnv
       } // stage('build')
@@ -54,22 +58,14 @@ notify.wrap {
             "WORKSPACE=${pwd()}",
             "HOME=${pwd()}/home",
           ]) {
-            util.shColor '''
-              #!/bin/bash -e
+            util.insideWrap(awsImage) {
+              util.shColor '''
+                # provides DOC_PUSH_PATH
+                . ./buildbot-scripts/settings.cfg.sh
 
-              if [[ $SKIP_DOCS == "true" ]]; then
-                exit 0
-              fi
-
-              # setup python env
-              . "${WORKSPACE}/lsstsw/bin/setup.sh"
-              pip install --upgrade awscli==1.11.167
-
-              # provides DOC_PUSH_PATH
-              . ./buildbot-scripts/settings.cfg.sh
-
-              aws s3 cp --recursive "$DOC_PUSH_PATH"/ s3://$DOXYGEN_S3_BUCKET/stack/doxygen/
-            '''
+                aws s3 cp --recursive "$DOC_PUSH_PATH"/ s3://$DOXYGEN_S3_BUCKET/stack/doxygen/
+              '''
+            } // util.insideWrap
           }
         }
       } // stage('push docs')

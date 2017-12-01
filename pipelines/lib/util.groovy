@@ -193,6 +193,45 @@ def lsstswBuild(String label, String python, Boolean wipeout=false) {
 }
 
 /**
+ * Run a lsstsw build.
+ *
+ * @param image String
+ * @param label Node label to run on
+ * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
+ * @param wipteout Delete all existing state before starting build
+ */
+def lsstswBuildDocker(
+  String image,
+  String label,
+  String python,
+  Boolean wipeout=false
+) {
+  def slug = "${label}.${python}"
+
+  node('docker') {
+    timeout(time: 5, unit: 'HOURS') {
+      // use different workspace dirs for python 2/3 to avoid residual state
+      // conflicts
+      dir(slug) {
+        if (wipeout) {
+          deleteDir()
+        }
+
+        insideWrap(image) {
+          withEnv([
+            'SKIP_DOCS=true',
+            "LSST_JUNIT_PREFIX=${slug}",
+            "python=${python}",
+          ]) {
+            jenkinsWrapper()
+          }
+        } // insideWrap
+      } // dir
+    } // timeout
+  } // node
+}
+
+/**
  * Run a jenkins_wrapper.sh
  */
 def jenkinsWrapper() {
@@ -482,6 +521,74 @@ def void nodeTiny(Closure run) {
   node('jenkins-master') {
     timeout(time: 5, unit: 'MINUTES') {
       run()
+    }
+  }
+}
+
+/**
+ * Execute a multiple os matrix build using jenkins_wrapper.sh/lsstsw
+ *
+ * Note that the `param` global variable is used by invoked methods
+ *
+ * @param run Closure Invoked inside of node step
+ */
+def buildStackOsMatrix(Boolean wipeout=false)  {
+  stage('build') {
+    def matrix = [:]
+
+    addToMatrix(matrix,
+      'docker.io/lsstsqre/centos:6-stackbase-devtoolset-3',
+      'centos-6',
+      'py3',
+      wipeout
+    )
+    addToMatrix(matrix,
+      'docker.io/lsstsqre/centos:7-stackbase',
+      'centos-7',
+      'py2',
+      wipeout
+    )
+    addToMatrix(matrix,
+      'docker.io/lsstsqre/centos:7-stackbase',
+      'centos-7',
+      'py3',
+      wipeout
+    )
+    addToMatrix(matrix,
+      null,
+      'osx',
+      'py3',
+      wipeout
+    )
+
+    parallel matrix
+  } // stage
+}
+
+/**
+ * Add build matrix configurations to a Map.
+ *
+ * @param Matrix Map to add keys too.
+ * @param image String Docker image ref or `null` -- `null` means do not build
+ * inside of a docker container and directly on a node that matches `label`
+ * @param label String A symbolic description of the build platform or the node
+ * label to match when `image` is `null`.
+ * @param python String python major version. Eg., py2 or py3
+ * @param wipeout Boolean wipeout the workspace build starting the build
+ */
+@NonCPS
+def addToMatrix(
+  Map matrix,
+  String image,
+  String label,
+  String python,
+  Boolean wipeout
+) {
+  matrix["${label}.${python}"] = {
+    if (image) {
+      lsstswBuildDocker(image, label, python, wipeout)
+    } else {
+      lsstswBuild(label, python, wipeout)
     }
   }
 }
