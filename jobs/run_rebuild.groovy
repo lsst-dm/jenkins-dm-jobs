@@ -1,7 +1,7 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-pipelineJob('release/run-rebuild') {
+def p = new Plumber(name: 'release/run-rebuild', dsl: this)
+p.pipeline().with {
   description('run rebuild in the canoncial LSST DM build environment.  Only us this job when preparing to publish EUPS distrib packages.')
 
   parameters {
@@ -12,33 +12,5 @@ pipelineJob('release/run-rebuild') {
     stringParam('TIMEOUT', '6', 'build timeout in hours')
     // enable for debugging only
     // booleanParam('NO_VERSIONDB_PUSH', true, 'Skip push to remote versiondb repo.')
-  }
-
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  // don't tie up a beefy build slave
-  label('jenkins-master')
-  concurrentBuild(false)
-  keepDependencies(true)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath('pipelines/release/run_rebuild.groovy')
-    }
   }
 }

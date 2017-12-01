@@ -1,35 +1,6 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-def name = 'sqre/infrastructure/infra-monthly'
-
-pipelineJob(name) {
+def p = new Plumber(name: 'sqre/infrastructure/infra-monthly', dsl: this)
+p.pipeline().with {
   description('Periodic monthly builds of infrastructure jobs.')
-
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  label('jenkins-master')
-  concurrentBuild(false)
-  keepDependencies(true)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath("pipelines/${name.tr('-', '_')}.groovy")
-    }
-  }
 }

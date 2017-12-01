@@ -1,39 +1,10 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-def folder = 'sqre/infrastructure'
-
-pipelineJob("${folder}/travissync") {
+def p = new Plumber(name: 'sqre/infrastructure/travissync', dsl: this)
+p.pipeline().with {
   description('Synchronize Travis CI with GitHub.')
-
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  label('travissync')
-  keepDependencies(true)
-  concurrentBuild(false)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
 
   triggers {
     cron('H * * * *')
-  }
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath("pipelines/${folder}/travissync.groovy")
-    }
   }
 }

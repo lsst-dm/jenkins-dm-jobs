@@ -1,9 +1,7 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-def folder = 'sqre/infrastructure'
-
-pipelineJob("${folder}/build-jupyterlabdemo") {
+def p = new Plumber(name: 'sqre/infrastructurebuild-jupyterlabdemo', dsl: this)
+p.pipeline().with {
   description('Constructs docker jupyterlabdemo images.')
 
   parameters {
@@ -16,30 +14,5 @@ pipelineJob("${folder}/build-jupyterlabdemo") {
     stringParam('TIMEOUT', '1', 'build timeout in hours')
   }
 
-  properties {
-    rebuild {
-      autoRebuild()
-    }
-  }
-
-  label('jenkins-master')
   concurrentBuild(true)
-  keepDependencies(true)
-
-  def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
-  def ref  = SEED_JOB.scm.getBranches().get(0).getName()
-
-  definition {
-    cpsScm {
-      scm {
-        git {
-          remote {
-            url(repo)
-          }
-          branch(ref)
-        }
-      }
-      scriptPath("pipelines/${folder}/build_jupyterlabdemo.groovy")
-    }
-  }
 }
