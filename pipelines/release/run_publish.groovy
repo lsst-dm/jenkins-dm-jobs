@@ -14,6 +14,7 @@ node('jenkins-master') {
 
 notify.wrap {
   def timelimit = params.TIMEOUT.toInteger()
+  def awsImage  = 'docker.io/lsstsqre/awscli'
 
   def run = {
     ws('snowflake/release') {
@@ -89,18 +90,13 @@ notify.wrap {
               "WORKSPACE=${pwd()}",
               "HOME=${pwd()}/home",
             ]
-
             withEnv(env) {
-              util.shColor '''
-                #!/bin/bash -e
-
-                # setup python env
-                . "${WORKSPACE}/lsstsw/bin/setup.sh"
-                pip install awscli
-
-                aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/
-              '''
-            }
+              util.insideWrap(awsImage) {
+                util.shColor '''
+                  aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/
+                '''
+              } // util.insideWrap
+            } // withEnv
           }
         } else {
           echo "skipping s3 push."
