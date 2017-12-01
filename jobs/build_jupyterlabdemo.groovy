@@ -1,6 +1,9 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructurebuild-jupyterlabdemo', dsl: this)
+def p = new Plumber(
+  name: 'sqre/infrastructurebuild/build_jupyterlabdemo',
+  dsl: this
+)
 p.pipeline().with {
   description('Constructs docker jupyterlabdemo images.')
 
