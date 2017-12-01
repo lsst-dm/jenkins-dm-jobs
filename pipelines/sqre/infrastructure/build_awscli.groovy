@@ -16,7 +16,7 @@ notify.wrap {
   util.requireParams(['AWSCLI_VER'])
 
   def image      = null
-  def hubRepo    = 'lsstsqre/awscli'
+  def hubRepo    = 'docker.io/lsstsqre/awscli'
   def githubRepo = 'lsst-sqre/docker-awscli'
   def githubRef  = 'master'
   def ver        = params.AWSCLI_VER

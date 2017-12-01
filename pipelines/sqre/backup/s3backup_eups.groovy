@@ -13,7 +13,7 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def hub_repo = 'lsstsqre/s3backup'
+  def hub_repo = 'docker.io/lsstsqre/s3backup'
 
   def run = {
     def image = docker.image("${hub_repo}:latest")

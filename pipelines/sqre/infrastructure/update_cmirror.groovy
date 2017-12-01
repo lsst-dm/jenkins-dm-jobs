@@ -13,7 +13,7 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def hub_repo = 'lsstsqre/cmirror'
+  def hub_repo = 'docker.io/lsstsqre/cmirror'
 
   def run = {
     def image = docker.image("${hub_repo}:latest")

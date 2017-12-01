@@ -25,13 +25,13 @@ notify.wrap {
     }
   }
 
-  def product = params.PRODUCT
-  def tag = params.TAG
+  def product   = params.PRODUCT
+  def tag       = params.TAG
   def timelimit = params.TIMEOUT.toInteger()
 
-  def baseImage = 'lsstsqre/centos:7-stackbase'
-  def hubRepo = 'lsstsqre/centos'
-  def slug = "${hubRepo}:7-stack-lsst_distrib-${params.TAG}"
+  def baseImage = 'docker.io/lsstsqre/centos:7-stackbase'
+  def hubRepo   = 'docker.io/lsstsqre/centos'
+  def slug      = "${hubRepo}:7-stack-lsst_distrib-${params.TAG}"
 
   def run = {
     stage('checkout') {
