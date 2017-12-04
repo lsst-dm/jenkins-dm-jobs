@@ -164,49 +164,13 @@ def tagProduct(
 /**
  * Run a lsstsw build.
  *
+ * @param image String
  * @param label Node label to run on
+ * @param compiler String compiler to require and setup, if nessicary.
  * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
  * @param wipteout Delete all existing state before starting build
  */
 def lsstswBuild(
-  String label,
-  String compiler,
-  String python,
-  Boolean wipeout=false
-) {
-  def slug = "${label}.${python}"
-
-  node(label) {
-    timeout(time: 5, unit: 'HOURS') {
-      // use different workspace dirs for python 2/3 to avoid residual state
-      // conflicts
-      dir(slug) {
-        if (wipeout) {
-          deleteDir()
-        }
-
-        withEnv([
-          'SKIP_DOCS=true',
-          "LSST_JUNIT_PREFIX=${slug}",
-          "python=${python}",
-          "LSST_COMPILER=${compiler}",
-        ]) {
-          jenkinsWrapper()
-        }
-      }
-    } // timeout
-  } // node
-}
-
-/**
- * Run a lsstsw build.
- *
- * @param image String
- * @param label Node label to run on
- * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
- * @param wipteout Delete all existing state before starting build
- */
-def lsstswBuildDocker(
   String image,
   String label,
   String compiler,
@@ -215,7 +179,24 @@ def lsstswBuildDocker(
 ) {
   def slug = "${label}.${python}"
 
-  node('docker') {
+  def run = {
+    withEnv([
+      'SKIP_DOCS=true',
+      "LSST_JUNIT_PREFIX=${slug}",
+      "python=${python}",
+      "LSST_COMPILER=${compiler}",
+    ]) {
+      jenkinsWrapper()
+    }
+  } // run
+
+  def runDocker = {
+    insideWrap(image) {
+      run()
+    }
+  } // docker
+
+  def runEnv = { doRun ->
     timeout(time: 5, unit: 'HOURS') {
       // use different workspace dirs for python 2/3 to avoid residual state
       // conflicts
@@ -224,18 +205,23 @@ def lsstswBuildDocker(
           deleteDir()
         }
 
-        insideWrap(image) {
-          withEnv([
-            'SKIP_DOCS=true',
-            "LSST_JUNIT_PREFIX=${slug}",
-            "python=${python}",
-            "LSST_COMPILER=${compiler}",
-          ]) {
-            jenkinsWrapper()
-          }
-        } // insideWrap
+        doRun()
       } // dir
     } // timeout
+  } // runEnv
+
+  def agent
+  def task
+  if (image) {
+    agent = 'docker'
+    task = { runEnv(runDocker) }
+  } else {
+    agent = label
+    task = { runEnv(run) }
+  }
+
+  node(agent) {
+    task()
   } // node
 }
 
@@ -590,11 +576,7 @@ def addToMatrix(
   Boolean wipeout
 ) {
   matrix["${label}.${python}"] = {
-    if (image) {
-      lsstswBuildDocker(image, label, compiler, python, wipeout)
-    } else {
-      lsstswBuild(label, compiler, python, wipeout)
-    }
+    lsstswBuild(image, label, compiler, python, wipeout)
   }
 }
 
