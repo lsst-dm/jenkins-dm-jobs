@@ -168,7 +168,12 @@ def tagProduct(
  * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
  * @param wipteout Delete all existing state before starting build
  */
-def lsstswBuild(String label, String python, Boolean wipeout=false) {
+def lsstswBuild(
+  String label,
+  String compiler,
+  String python,
+  Boolean wipeout=false
+) {
   def slug = "${label}.${python}"
 
   node(label) {
@@ -184,6 +189,7 @@ def lsstswBuild(String label, String python, Boolean wipeout=false) {
           'SKIP_DOCS=true',
           "LSST_JUNIT_PREFIX=${slug}",
           "python=${python}",
+          "LSST_COMPILER=${compiler}",
         ]) {
           jenkinsWrapper()
         }
@@ -203,6 +209,7 @@ def lsstswBuild(String label, String python, Boolean wipeout=false) {
 def lsstswBuildDocker(
   String image,
   String label,
+  String compiler,
   String python,
   Boolean wipeout=false
 ) {
@@ -222,6 +229,7 @@ def lsstswBuildDocker(
             'SKIP_DOCS=true',
             "LSST_JUNIT_PREFIX=${slug}",
             "python=${python}",
+            "LSST_COMPILER=${compiler}",
           ]) {
             jenkinsWrapper()
           }
@@ -526,27 +534,33 @@ def buildStackOsMatrix(Boolean wipeout=false)  {
   stage('build') {
     def matrix = [:]
 
+    def devtoolset = 'devtoolset-3'
+
     addToMatrix(matrix,
-      'docker.io/lsstsqre/centos:6-stackbase-devtoolset-3',
+      "docker.io/lsstsqre/centos:6-stackbase-${devtoolset}",
       'centos-6',
+      devtoolset,
       'py3',
       wipeout
     )
     addToMatrix(matrix,
       'docker.io/lsstsqre/centos:7-stackbase',
       'centos-7',
+      'gcc-system',
       'py2',
       wipeout
     )
     addToMatrix(matrix,
       'docker.io/lsstsqre/centos:7-stackbase',
       'centos-7',
+      'gcc-system',
       'py3',
       wipeout
     )
     addToMatrix(matrix,
       null,
       'osx',
+      'clang-800.0.42.1',
       'py3',
       wipeout
     )
@@ -571,14 +585,15 @@ def addToMatrix(
   Map matrix,
   String image,
   String label,
+  String compiler,
   String python,
   Boolean wipeout
 ) {
   matrix["${label}.${python}"] = {
     if (image) {
-      lsstswBuildDocker(image, label, python, wipeout)
+      lsstswBuildDocker(image, label, compiler, python, wipeout)
     } else {
-      lsstswBuild(label, python, wipeout)
+      lsstswBuild(label, compiler, python, wipeout)
     }
   }
 }

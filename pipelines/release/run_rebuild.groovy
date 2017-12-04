@@ -32,6 +32,7 @@ notify.wrap {
           'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
           "LSST_JUNIT_PREFIX=centos-7.py3",
           'python=py3',
+          "LSST_COMPILER=gcc-system",
          ]) {
           util.insideWrap(buildImage) {
             sshagent (credentials: ['github-jenkins-versiondb']) {
