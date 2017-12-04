@@ -1,7 +1,7 @@
 import util.Plumber
 
 def p = new Plumber(
-  name: 'sqre/infrastructure/build_jupyterlabdemo',
+  name: 'sqre/infrastructure/build-jupyterlabdemo',
   dsl: this
 )
 p.pipeline().with {
