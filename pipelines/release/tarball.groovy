@@ -240,8 +240,6 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
     ]) {
       // XXX refactor to use util.insideWrap
       util.shColor '''
-        set -e
-
         docker run \
           --storage-opt size=100G \
           -v "${BUILDDIR}:${BUILDDIR_CONTAINER}" \
@@ -375,8 +373,6 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
     ]) {
       // XXX refactor to use util.insideWrap
       util.shColor '''
-        set -e
-
         docker run \
           --storage-opt size=100G \
           -v "${SMOKEDIR}:${SMOKEDIR_CONTAINER}" \
@@ -510,7 +506,6 @@ def void s3Push(String ... parts) {
   def path = util.joinPath(parts)
 
   util.shColor '''
-    set -e
     # do not assume virtualenv is present
     pip install virtualenv
     virtualenv venv
@@ -525,7 +520,6 @@ def void s3Push(String ... parts) {
     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
   ]]) {
     util.shColor """
-      set -e
       . venv/bin/activate
       aws s3 sync --only-show-errors ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${path}
     """
@@ -706,9 +700,6 @@ def String scriptPreamble(
   String ciDir
 ) {
   util.dedent("""
-    set -e
-    set -x
-
     if [[ -n \$CMIRROR_S3_BUCKET ]]; then
         export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
         export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
