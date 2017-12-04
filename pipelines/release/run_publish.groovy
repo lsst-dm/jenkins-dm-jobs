@@ -21,21 +21,11 @@ notify.wrap {
     ws('snowflake/release') {
       stage('publish') {
         dir('lsstsw') {
-          git([
-            url: 'https://github.com/lsst/lsstsw.git',
-            branch: 'master',
-            changelog: false,
-            poll: false
-          ])
+          util.cloneLsstsw()
         }
 
         dir('buildbot-scripts') {
-          git([
-            url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-            branch: 'master',
-            changelog: false,
-            poll: false
-          ])
+          util.cloneBuildbotScripts()
         }
 
         def env = [

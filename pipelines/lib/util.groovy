@@ -238,21 +238,11 @@ def jenkinsWrapper() {
   try {
     try {
       dir('lsstsw') {
-        git([
-          url: 'https://github.com/lsst/lsstsw.git',
-          branch: 'master',
-          changelog: false,
-          poll: false
-        ])
+        cloneLsstsw()
       }
 
       dir('buildbot-scripts') {
-        git([
-          url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-          branch: 'master',
-          changelog: false,
-          poll: false
-        ])
+        cloneBuildbotScripts()
       }
 
       // workspace relative dir for dot files to prevent bleed through between

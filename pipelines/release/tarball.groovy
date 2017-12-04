@@ -334,10 +334,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
     )
 
     dir(ciDir) {
-      git([
-        url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-        branch: 'master'
-      ])
+      util.cloneBuildbotScripts()
     }
 
     util.wrapContainer(imageName, localImageName)
@@ -406,10 +403,7 @@ def void osxSmoke(
     )
 
     dir(ciDir) {
-      git([
-        url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-        branch: 'master'
-      ])
+      util.cloneBuildbotScripts()
     }
 
     dir(smokeDir) {
