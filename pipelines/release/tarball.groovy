@@ -1,7 +1,5 @@
 import groovy.transform.Field
 
-class UnsupportedCompiler extends Exception {}
-
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -186,6 +184,11 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
   def buildDir = "${pwd()}/build"
   def distDir  = "${pwd()}/distrib"
   def shDir    = "${buildDir}/scripts"
+  def ciDir    = "${pwd()}/buildbot-scripts"
+
+  def buildDirContainer = '/build'
+  def distDirContainer  = '/distrib'
+  def ciDirContainer    = '/buildbot-scripts'
 
   def shBasename = 'run.sh'
   def shName = "${shDir}/${shBasename}"
@@ -212,11 +215,16 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
       params.PRODUCT,
       params.EUPS_TAG,
       shName,
-      '/distrib', // path inside container
+      distDirContainer,
       compiler,
       null,
-      menv
+      menv,
+      ciDirContainer
     )
+
+    dir(ciDir) {
+      util.cloneBuildbotScripts()
+    }
 
     util.wrapContainer(imageName, localImageName)
 
@@ -224,21 +232,27 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
       "RUN=/build/scripts/${shBasename}",
       "IMAGE=${localImageName}",
       "BUILDDIR=${buildDir}",
+      "BUILDDIR_CONTAINER=${buildDirContainer}",
       "DISTDIR=${distDir}",
+      "DISTDIR_CONTAINER=${distDirContainer}",
+      "CIDIR=${ciDir}",
+      "CIDIR_CONTAINER=${ciDirContainer}",
     ]) {
+      // XXX refactor to use util.insideWrap
       util.shColor '''
         set -e
 
         docker run \
           --storage-opt size=100G \
-          -v "${BUILDDIR}:/build" \
-          -v "${DISTDIR}:/distrib" \
+          -v "${BUILDDIR}:${BUILDDIR_CONTAINER}" \
+          -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
+          -v "${CIDIR}:${CIDIR_CONTAINER}" \
           -w /build \
           -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
           -u "$(id -u -n)" \
           "$IMAGE" \
-          sh -c "$RUN"
+          bash -c "$RUN"
       '''
     } // withEnv
   } finally {
@@ -258,6 +272,7 @@ def void osxBuild(
   def buildDir = "${pwd()}/build"
   def distDir  = "${pwd()}/distrib"
   def shDir    = "${buildDir}/scripts"
+  def ciDir    = "${pwd()}/buildbot-scripts"
 
   def shName = "${shDir}/run.sh"
 
@@ -285,14 +300,17 @@ def void osxBuild(
       "${pwd()}/distrib",
       compiler,
       macosx_deployment_target,
-      menv
+      menv,
+      ciDir
     )
+
+    dir(ciDir) {
+      util.cloneBuildbotScripts()
+    }
 
     dir(buildDir) {
       util.shColor """
-        set -e
-
-        "${shName}"
+        bash "${shName}"
       """
     }
   } finally {
@@ -306,9 +324,13 @@ def void osxBuild(
  */
 def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
   def smokeDir = "${pwd()}/smoke"
-  def distDir = "${pwd()}/distrib"
-  def shDir = "${smokeDir}/scripts"
-  def ciDir = "${pwd()}/buildbot-scripts"
+  def distDir  = "${pwd()}/distrib"
+  def shDir    = "${smokeDir}/scripts"
+  def ciDir    = "${pwd()}/buildbot-scripts"
+
+  def smokeDirContainer = '/smoke'
+  def distDirContainer  = '/distrib'
+  def ciDirContainer    = '/buildbot-scripts'
 
   def shBasename = 'run.sh'
   def shName = "${shDir}/${shBasename}"
@@ -326,11 +348,11 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
       params.PRODUCT,
       params.EUPS_TAG,
       shName,
-      '/distrib', // path inside container
+      distDirContainer,
       compiler,
       null,
       menv,
-      '/buildbot-scripts' // path inside container
+      ciDirContainer
     )
 
     dir(ciDir) {
@@ -345,17 +367,21 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
       "RUN_DEMO=${params.RUN_DEMO}",
       "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
       "SMOKEDIR=${smokeDir}",
+      "SMOKEDIR_CONTAINER=${smokeDirContainer}",
       "DISTDIR=${distDir}",
+      "DISTDIR_CONTAINER=${distDirContainer}",
       "CIDIR=${ciDir}",
+      "CIDIR_CONTAINER=${ciDirContainer}",
     ]) {
+      // XXX refactor to use util.insideWrap
       util.shColor '''
         set -e
 
         docker run \
           --storage-opt size=100G \
-          -v "${SMOKEDIR}:/smoke" \
-          -v "${DISTDIR}:/distrib" \
-          -v "${CIDIR}:/buildbot-scripts" \
+          -v "${SMOKEDIR}:${SMOKEDIR_CONTAINER}" \
+          -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
+          -v "${CIDIR}:${CIDIR_CONTAINER}" \
           -w /smoke \
           -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
@@ -364,7 +390,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
           -e FIX_SHEBANGS=true \
           -u "$(id -u -n)" \
           "$IMAGE" \
-          sh -c "$RUN"
+          bash -c "$RUN"
       '''
     } // withEnv
   } finally {
@@ -381,8 +407,8 @@ def void osxSmoke(
   MinicondaEnv menv
 ) {
   def smokeDir = "${pwd()}/smoke"
-  def shName = "${pwd()}/scripts/smoke.sh"
-  def ciDir = "${pwd()}/buildbot-scripts"
+  def shName   = "${pwd()}/scripts/smoke.sh"
+  def ciDir    = "${pwd()}/buildbot-scripts"
 
   try {
     // smoke state is left at the end of the build for possible debugging but
@@ -399,7 +425,7 @@ def void osxSmoke(
       compiler,
       macosx_deployment_target,
       menv,
-      ciDir,
+      ciDir
     )
 
     dir(ciDir) {
@@ -413,9 +439,7 @@ def void osxSmoke(
         "FIX_SHEBANGS=true",
       ]) {
         util.shColor """
-          set -e
-
-          ${shName}
+          bash ${shName}
         """
       }
     }
@@ -434,7 +458,8 @@ def void prepareBuild(
   String distribDir,
   String compiler,
   String macosx_deployment_target,
-  MinicondaEnv menv
+  MinicondaEnv menv,
+  String ciDir
 ) {
   def script = buildScript(
     product,
@@ -442,7 +467,8 @@ def void prepareBuild(
     distribDir,
     compiler,
     macosx_deployment_target,
-    menv
+    menv,
+    ciDir
   )
 
   writeFile(file: shName, text: script)
@@ -460,7 +486,7 @@ def void prepareSmoke(
   String compiler,
   String macosx_deployment_target,
   MinicondaEnv menv,
-  String ciScriptsPath
+  String ciDir
 ) {
   def script = smokeScript(
     product,
@@ -469,7 +495,7 @@ def void prepareSmoke(
     compiler,
     macosx_deployment_target,
     menv,
-    ciScriptsPath
+    ciDir
   )
 
   writeFile(file: shName, text: script)
@@ -558,9 +584,16 @@ def String buildScript(
   String eupsPkgroot,
   String compiler,
   String macosx_deployment_target,
-  MinicondaEnv menv
+  MinicondaEnv menv,
+  String ciDir
 ) {
-  scriptPreamble(compiler, macosx_deployment_target, menv, true) +
+  scriptPreamble(
+    compiler,
+    macosx_deployment_target,
+    menv,
+    true,
+    ciDir
+  ) +
   util.dedent("""
     curl -sSL ${newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
@@ -588,10 +621,16 @@ def String smokeScript(
   String compiler,
   String macosx_deployment_target,
   MinicondaEnv menv,
-  String ciScriptsPath
+  String ciDir
 ) {
-  scriptPreamble(compiler, macosx_deployment_target, menv, true) +
-  util.dedent("""
+  scriptPreamble(
+    compiler,
+    macosx_deployment_target,
+    menv,
+    true,
+    ciDir
+  ) +
+   util.dedent("""
     export EUPS_PKGROOT="${eupsPkgroot}"
 
     curl -sSL ${newinstall_url} | bash -s -- -cb
@@ -609,7 +648,7 @@ def String smokeScript(
     fi
 
     if [[ \$RUN_DEMO == true ]]; then
-      ${ciScriptsPath}/runManifestDemo.sh --tag "${tag}" --small
+      ${ciDir}/runManifestDemo.sh --tag "${tag}" --small
     fi
   """ + '''
     #
@@ -663,7 +702,8 @@ def String scriptPreamble(
   String compiler,
   String macosx_deployment_target='10.9',
   MinicondaEnv menv,
-  boolean useTarballs
+  boolean useTarballs,
+  String ciDir
 ) {
   util.dedent("""
     set -e
@@ -692,78 +732,11 @@ def String scriptPreamble(
     export MINICONDA_VERSION="${menv.minicondaVersion}"
     export LSSTSW_REF="${menv.lsstswRef}"
     export EUPS_USE_TARBALLS="${useTarballs}"
+
+    source "${ciDir}/ccutils.sh"
+    cc::setup "${compiler}"
     """
-    + scriptCompiler(compiler)
   )
-}
-
-/**
- * Generate shellscript to configure a C/C++ compiler.
- *
- * @param compiler Single String description of compiler.
- * @return String shellscript
- */
-@NonCPS
-def String scriptCompiler(String compiler) {
-  def setup = null
-  switch(compiler) {
-    case ~/^devtoolset-\d/:
-      setup = """
-        enable_script=/opt/rh/${compiler}/enable
-        if [[ ! -e \$enable_script ]]; then
-          echo "devtoolset enable script is missing"
-          exit 1
-        fi
-        set -o verbose
-        . \$enable_script
-        set +o verbose
-      """
-      break
-    case 'gcc-system':
-      setup = '''
-        cc_path=$(type -p gcc)
-        if [[ -z $cc_path ]]; then
-          echo "compiler appears to be missing from PATH"
-          exit 1
-        fi
-        if [[ $cc_path != '/usr/bin/gcc' ]]; then
-          echo "system compiler is not default"
-          exit 1
-        fi
-      '''
-      break
-    case ~/^clang-.*/:
-      setup = """
-        target_cc_version=$compiler
-        cc_path=\$(type -p clang)
-        if [[ -z \$cc_path ]]; then
-          echo "compiler appears to be missing from PATH"
-          exit 1
-        fi
-        if [[ \$cc_path != '/usr/bin/clang' ]]; then
-          echo "system compiler is not default"
-          exit 1
-        fi
-
-        # Apple LLVM version 8.0.0 (clang-800.0.42.1)
-        if [[ ! \$(clang --version) =~ Apple[[:space:]]+LLVM[[:space:]]+version[[:space:]]+[[:digit:].]+[[:space:]]+\\((.*)\\) ]]; then
-          echo "unable to determine compiler version"
-          exit 1
-        fi
-        cc_version="\${BASH_REMATCH[1]}"
-
-        if [[ \$cc_version != \$target_cc_version ]]; then
-          echo "found clang \$cc_version but expected \$target_cc_version"
-          exit 1
-        fi
-      """
-      break
-    case null:
-    default:
-      throw new UnsupportedCompiler(compiler)
-  }
-
-  util.dedent(setup)
 }
 
 /**
