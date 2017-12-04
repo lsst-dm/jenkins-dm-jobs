@@ -164,51 +164,39 @@ def tagProduct(
 /**
  * Run a lsstsw build.
  *
- * @param label Node label to run on
- * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
- * @param wipteout Delete all existing state before starting build
- */
-def lsstswBuild(String label, String python, Boolean wipeout=false) {
-  def slug = "${label}.${python}"
-
-  node(label) {
-    timeout(time: 5, unit: 'HOURS') {
-      // use different workspace dirs for python 2/3 to avoid residual state
-      // conflicts
-      dir(slug) {
-        if (wipeout) {
-          deleteDir()
-        }
-
-        withEnv([
-          'SKIP_DOCS=true',
-          "LSST_JUNIT_PREFIX=${slug}",
-          "python=${python}",
-        ]) {
-          jenkinsWrapper()
-        }
-      }
-    } // timeout
-  } // node
-}
-
-/**
- * Run a lsstsw build.
- *
  * @param image String
  * @param label Node label to run on
+ * @param compiler String compiler to require and setup, if nessicary.
  * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
  * @param wipteout Delete all existing state before starting build
  */
-def lsstswBuildDocker(
+def lsstswBuild(
   String image,
   String label,
+  String compiler,
   String python,
   Boolean wipeout=false
 ) {
   def slug = "${label}.${python}"
 
-  node('docker') {
+  def run = {
+    withEnv([
+      'SKIP_DOCS=true',
+      "LSST_JUNIT_PREFIX=${slug}",
+      "python=${python}",
+      "LSST_COMPILER=${compiler}",
+    ]) {
+      jenkinsWrapper()
+    }
+  } // run
+
+  def runDocker = {
+    insideWrap(image) {
+      run()
+    }
+  } // docker
+
+  def runEnv = { doRun ->
     timeout(time: 5, unit: 'HOURS') {
       // use different workspace dirs for python 2/3 to avoid residual state
       // conflicts
@@ -217,17 +205,23 @@ def lsstswBuildDocker(
           deleteDir()
         }
 
-        insideWrap(image) {
-          withEnv([
-            'SKIP_DOCS=true',
-            "LSST_JUNIT_PREFIX=${slug}",
-            "python=${python}",
-          ]) {
-            jenkinsWrapper()
-          }
-        } // insideWrap
+        doRun()
       } // dir
     } // timeout
+  } // runEnv
+
+  def agent
+  def task
+  if (image) {
+    agent = 'docker'
+    task = { runEnv(runDocker) }
+  } else {
+    agent = label
+    task = { runEnv(run) }
+  }
+
+  node(agent) {
+    task()
   } // node
 }
 
@@ -238,21 +232,11 @@ def jenkinsWrapper() {
   try {
     try {
       dir('lsstsw') {
-        git([
-          url: 'https://github.com/lsst/lsstsw.git',
-          branch: 'master',
-          changelog: false,
-          poll: false
-        ])
+        cloneLsstsw()
       }
 
       dir('buildbot-scripts') {
-        git([
-          url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
-          branch: 'master',
-          changelog: false,
-          poll: false
-        ])
+        cloneBuildbotScripts()
       }
 
       // workspace relative dir for dot files to prevent bleed through between
@@ -536,27 +520,33 @@ def buildStackOsMatrix(Boolean wipeout=false)  {
   stage('build') {
     def matrix = [:]
 
+    def devtoolset = 'devtoolset-3'
+
     addToMatrix(matrix,
-      'docker.io/lsstsqre/centos:6-stackbase-devtoolset-3',
+      "docker.io/lsstsqre/centos:6-stackbase-${devtoolset}",
       'centos-6',
+      devtoolset,
       'py3',
       wipeout
     )
     addToMatrix(matrix,
       'docker.io/lsstsqre/centos:7-stackbase',
       'centos-7',
+      'gcc-system',
       'py2',
       wipeout
     )
     addToMatrix(matrix,
       'docker.io/lsstsqre/centos:7-stackbase',
       'centos-7',
+      'gcc-system',
       'py3',
       wipeout
     )
     addToMatrix(matrix,
       null,
       'osx',
+      'clang-800.0.42.1',
       'py3',
       wipeout
     )
@@ -581,16 +571,47 @@ def addToMatrix(
   Map matrix,
   String image,
   String label,
+  String compiler,
   String python,
   Boolean wipeout
 ) {
   matrix["${label}.${python}"] = {
-    if (image) {
-      lsstswBuildDocker(image, label, python, wipeout)
-    } else {
-      lsstswBuild(label, python, wipeout)
-    }
+    lsstswBuild(image, label, compiler, python, wipeout)
   }
+}
+
+/**
+ * Clone lsstsw git repo
+ */
+@NonCPS
+def void cloneLsstsw() {
+  gitNoNoise(
+    url: 'https://github.com/lsst/lsstsw.git',
+    branch: 'master',
+  )
+}
+
+/**
+ * Clone buildbot-scripts git repo
+ */
+@NonCPS
+def void cloneBuildbotScripts() {
+  gitNoNoise(
+    url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+    branch: 'master',
+  )
+}
+
+/**
+ * Clone git repo without generating a jenkins bulid changelog
+ */
+def void gitNoNoise(Map args) {
+  git([
+    url: args.url,
+    branch: args.branch,
+    changelog: false,
+    poll: false
+  ])
 }
 
 return this;
