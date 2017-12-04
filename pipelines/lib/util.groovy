@@ -593,4 +593,38 @@ def addToMatrix(
   }
 }
 
+/**
+ * Clone lsstsw git repo
+ */
+@NonCPS
+def void cloneLsstsw() {
+  gitNoNoise(
+    url: 'https://github.com/lsst/lsstsw.git',
+    branch: 'master',
+  )
+}
+
+/**
+ * Clone buildbot-scripts git repo
+ */
+@NonCPS
+def void cloneBuildbotScripts() {
+  gitNoNoise(
+    url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+    branch: 'master',
+  )
+}
+
+/**
+ * Clone git repo without generating a jenkins bulid changelog
+ */
+def void gitNoNoise(Map args) {
+  git([
+    url: args.url,
+    branch: args.branch,
+    changelog: false,
+    poll: false
+  ])
+}
+
 return this;
