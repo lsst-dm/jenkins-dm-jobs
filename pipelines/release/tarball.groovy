@@ -15,6 +15,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
 
@@ -25,11 +26,13 @@ notify.wrap {
   def requiredParams = [
     'PRODUCT',
     'EUPS_TAG',
-    'PYVER',
+    'TIMEOUT',
+    // 'IMAGE', // '' represents null
+    'LABEL',
+    'COMPILER',
+    'PYTHON_VERSION',
     'MINIVER',
     'LSSTSW_REF',
-    'OS',
-    'TIMEOUT',
   ]
 
   requiredParams.each { p ->
@@ -38,21 +41,21 @@ notify.wrap {
     }
   }
 
-  def py = new MinicondaEnv(params.PYVER, params.MINIVER, params.LSSTSW_REF)
+  def image = util.emptyToNull(params.IMAGE)
+
+  def py = new MinicondaEnv(params.PYTHON_VERSION, params.MINIVER, params.LSSTSW_REF)
   def timelimit = params.TIMEOUT.toInteger()
 
-  stage("${params.OS}.${py.slug()}") {
-    switch(params.OS) {
+  stage("${params.LABEL}.${py.slug()}") {
+    switch(params.LABEL) {
       case 'centos-7':
-        def imageName = 'docker.io/lsstsqre/centos:7-stackbase'
-        linuxTarballs(imageName, 'el7', 'gcc-system', py, timelimit)
+        linuxTarballs(image, 'el7', params.COMPILER, py, timelimit)
         break
       case 'centos-6':
-        def imageName = 'docker.io/lsstsqre/centos:6-stackbase-devtoolset-3'
-        linuxTarballs(imageName, 'el6', 'devtoolset-3', py, timelimit)
+        linuxTarballs(image, 'el6', params.COMPILER, py, timelimit)
         break
       case 'osx-10.11':
-        osxTarballs('10.11', '10.9', 'clang-800.0.42.1', py, timelimit)
+        osxTarballs(params.LABEL, '10.9', params.COMPILER, py, timelimit)
         break
       default:
         error "unsupported platform: ${params.PLATFORM}"
@@ -129,7 +132,7 @@ def void linuxTarballs(
  * @param timelmit Integer build timeout in hours
  */
 def void osxTarballs(
-  String platform,
+  String label,
   String macosx_deployment_target,
   String compiler,
   MinicondaEnv menv,
@@ -166,11 +169,11 @@ def void osxTarballs(
         if (params.PUBLISH) {
           s3Push(envId)
         }
-      } // dir(platform)
-    } // withCredentials([[
-  } // run()
+      } // dir
+    } // withCredentials
+  } // run
 
-  node("osx-${platform}") {
+  node(label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }

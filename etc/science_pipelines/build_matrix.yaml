@@ -1,0 +1,56 @@
+---
+template:
+  tarball_defaults: &tarball_defaults
+    miniver: &miniver '4.3.21'
+    lsstsw_ref: '10a4fa6'
+  platforms:
+    - &el6-py2
+      image: docker.io/lsstsqre/centos:6-stackbase-devtoolset-3
+      label: centos-6
+      compiler: devtoolset-3
+      python: '2'
+    - &el6-py3
+      image: docker.io/lsstsqre/centos:6-stackbase-devtoolset-3
+      label: centos-6
+      compiler: devtoolset-3
+      python: '3'
+    - &el7-py2
+      image: docker.io/lsstsqre/centos:7-stackbase
+      label: centos-7
+      compiler: gcc-system
+      python: '2'
+    - &el7-py3
+      image: docker.io/lsstsqre/centos:7-stackbase
+      label: centos-7
+      compiler: gcc-system
+      python: '3'
+    - &osx-py2
+      image: null
+      label: osx
+      compiler: clang-800.0.42.1
+      python: '2'
+    - &osx-py3
+      image: null
+      label: osx
+      compiler: clang-800.0.42.1
+      python: '3'
+matrix:
+  - <<: *el6-py3
+  - <<: *el7-py2
+  - <<: *el7-py3
+  - <<: *osx-py3
+tarball:
+  - <<: *tarball_defaults
+    <<: *el6-py2
+  - <<: *tarball_defaults
+    <<: *el6-py3
+  - <<: *tarball_defaults
+    <<: *el7-py2
+  - <<: *tarball_defaults
+    <<: *el7-py3
+  - <<: *tarball_defaults
+    <<: *osx-py2
+    label: osx-10.11
+  - <<: *tarball_defaults
+    <<: *osx-py3
+    label: osx-10.11
