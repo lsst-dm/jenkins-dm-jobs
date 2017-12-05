@@ -167,7 +167,7 @@ def tagProduct(
  * @param image String
  * @param label Node label to run on
  * @param compiler String compiler to require and setup, if nessicary.
- * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
+ * @param python Python major revsion to build with. Eg., '2' or '3'
  * @param wipteout Delete all existing state before starting build
  */
 def lsstswBuild(
@@ -183,7 +183,7 @@ def lsstswBuild(
     withEnv([
       'SKIP_DOCS=true',
       "LSST_JUNIT_PREFIX=${slug}",
-      "python=${python}",
+      "LSST_PYTHON_VERSION=${python}",
       "LSST_COMPILER=${compiler}",
     ]) {
       jenkinsWrapper()
@@ -563,7 +563,7 @@ def buildStackOsMatrix(Boolean wipeout=false)  {
  * inside of a docker container and directly on a node that matches `label`
  * @param label String A symbolic description of the build platform or the node
  * label to match when `image` is `null`.
- * @param python String python major version. Eg., py2 or py3
+ * @param python String python major version. Eg., 2 or 3
  * @param wipeout Boolean wipeout the workspace build starting the build
  */
 @NonCPS

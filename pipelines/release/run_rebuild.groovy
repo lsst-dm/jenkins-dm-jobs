@@ -31,7 +31,7 @@ notify.wrap {
           "VERSIONDB_PUSH=${versiondbPush}",
           'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
           "LSST_JUNIT_PREFIX=centos-7.py3",
-          'python=py3',
+          'LSST_PYTHON_VERSION=3',
           "LSST_COMPILER=gcc-system",
          ]) {
           util.insideWrap(buildImage) {
