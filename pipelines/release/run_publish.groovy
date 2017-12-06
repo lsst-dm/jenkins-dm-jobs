@@ -1,3 +1,5 @@
+def config = null
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -9,13 +11,14 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
 
 notify.wrap {
-  def timelimit  = params.TIMEOUT.toInteger()
-  def buildImage = 'docker.io/lsstsqre/centos:7-stackbase'
-  def awsImage   = 'docker.io/lsstsqre/awscli'
+  def timelimit = params.TIMEOUT.toInteger()
+  def can       = config.canonical
+  def awsImage  = 'docker.io/lsstsqre/awscli'
 
   def run = {
     ws('snowflake/release') {
@@ -40,7 +43,7 @@ notify.wrap {
           variable: 'CMIRROR_S3_BUCKET'
         ]]) {
           withEnv(env) {
-            util.insideWrap(buildImage) {
+            util.insideWrap(can.image) {
               util.shColor '''
                 ARGS=()
                 ARGS+=('-b' "$BUILD_ID")
