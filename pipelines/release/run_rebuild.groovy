@@ -1,3 +1,5 @@
+def config = null
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -9,6 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
 
@@ -18,9 +21,9 @@ notify.wrap {
     versiondbPush = 'false'
   }
 
-  def timelimit  = params.TIMEOUT.toInteger()
-  def buildImage = 'docker.io/lsstsqre/centos:7-stackbase'
-  def awsImage   = 'docker.io/lsstsqre/awscli'
+  def timelimit = params.TIMEOUT.toInteger()
+  def can       = config.canonical
+  def awsImage  = 'docker.io/lsstsqre/awscli'
 
   def run = {
     ws('snowflake/release') {
@@ -30,11 +33,11 @@ notify.wrap {
           'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
           "VERSIONDB_PUSH=${versiondbPush}",
           'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
-          "LSST_JUNIT_PREFIX=centos-7.py3",
-          'LSST_PYTHON_VERSION=3',
-          "LSST_COMPILER=gcc-system",
+          "LSST_JUNIT_PREFIX=${can.label}.py${can.python}",
+          "LSST_PYTHON_VERSION=${can.python}",
+          "LSST_COMPILER=${can.compiler}",
          ]) {
-          util.insideWrap(buildImage) {
+          util.insideWrap(can.image) {
             sshagent (credentials: ['github-jenkins-versiondb']) {
               util.jenkinsWrapper()
             } // sshagent

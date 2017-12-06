@@ -41,6 +41,8 @@ matrix:
   - <<: *osx-py3
     label: osx-10.12
     compiler: clang-802.0.42
+canonical:
+  <<: *el7-py3
 tarball:
   - <<: *tarball_defaults
     <<: *el6-py2
