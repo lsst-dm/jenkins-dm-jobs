@@ -38,6 +38,7 @@ class CleanBuild {
         BRANCH: branch,
         SKIP_DEMO: skipDemo,
         SKIP_DOCS: skipDocs,
+        WIPEOUT: true,
       )
 
       def repo = seedJob.scm.userRemoteConfigs.get(0).getUrl()
@@ -53,7 +54,7 @@ class CleanBuild {
               branch(ref)
             }
           }
-          scriptPath("pipelines/clean_build.groovy")
+          scriptPath("pipelines/stack_os_matrix.groovy")
         }
       } // definition
     } // pipelineJob

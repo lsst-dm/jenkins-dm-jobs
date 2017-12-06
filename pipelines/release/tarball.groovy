@@ -1,5 +1,7 @@
 import groovy.transform.Field
 
+def config = null
+
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
