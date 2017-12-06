@@ -17,6 +17,6 @@ node('jenkins-master') {
 
 notify.wrap {
   timeout(time: 23, unit: 'HOURS') {
-    util.buildStackOsMatrix(config, false)
+    util.buildStackOsMatrix(config, WIPEOUT.toBoolean())
   }
 } // notify.wrap
