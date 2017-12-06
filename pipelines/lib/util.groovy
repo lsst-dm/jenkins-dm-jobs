@@ -167,7 +167,7 @@ def tagProduct(
  * @param image String
  * @param label Node label to run on
  * @param compiler String compiler to require and setup, if nessicary.
- * @param python Python major revsion to build with. Eg., 'py2' or 'py3'
+ * @param python Python major revsion to build with. Eg., '2' or '3'
  * @param wipteout Delete all existing state before starting build
  */
 def lsstswBuild(
@@ -177,13 +177,13 @@ def lsstswBuild(
   String python,
   Boolean wipeout=false
 ) {
-  def slug = "${label}.${python}"
+  def slug = "${label}.py${python}"
 
   def run = {
     withEnv([
       'SKIP_DOCS=true',
       "LSST_JUNIT_PREFIX=${slug}",
-      "python=${python}",
+      "LSST_PYTHON_VERSION=${python}",
       "LSST_COMPILER=${compiler}",
     ]) {
       jenkinsWrapper()
@@ -514,70 +514,27 @@ def void nodeTiny(Closure run) {
  *
  * Note that the `param` global variable is used by invoked methods
  *
- * @param run Closure Invoked inside of node step
+ * @param config Map YAML config file object
+ * @param wipeout Boolean wipeout the workspace build starting the build
  */
-def buildStackOsMatrix(Boolean wipeout=false)  {
+def buildStackOsMatrix(Map config, Boolean wipeout=false) {
   stage('build') {
     def matrix = [:]
 
-    def devtoolset = 'devtoolset-3'
-
-    addToMatrix(matrix,
-      "docker.io/lsstsqre/centos:6-stackbase-${devtoolset}",
-      'centos-6',
-      devtoolset,
-      'py3',
-      wipeout
-    )
-    addToMatrix(matrix,
-      'docker.io/lsstsqre/centos:7-stackbase',
-      'centos-7',
-      'gcc-system',
-      'py2',
-      wipeout
-    )
-    addToMatrix(matrix,
-      'docker.io/lsstsqre/centos:7-stackbase',
-      'centos-7',
-      'gcc-system',
-      'py3',
-      wipeout
-    )
-    addToMatrix(matrix,
-      null,
-      'osx',
-      'clang-800.0.42.1',
-      'py3',
-      wipeout
-    )
+    config['matrix'].each { item ->
+      matrix["${item.label}.py${item.python}"] = {
+        lsstswBuild(
+          item.image,
+          item.label,
+          item.compiler,
+          item.python,
+          wipeout
+        )
+      }
+    }
 
     parallel matrix
   } // stage
-}
-
-/**
- * Add build matrix configurations to a Map.
- *
- * @param Matrix Map to add keys too.
- * @param image String Docker image ref or `null` -- `null` means do not build
- * inside of a docker container and directly on a node that matches `label`
- * @param label String A symbolic description of the build platform or the node
- * label to match when `image` is `null`.
- * @param python String python major version. Eg., py2 or py3
- * @param wipeout Boolean wipeout the workspace build starting the build
- */
-@NonCPS
-def addToMatrix(
-  Map matrix,
-  String image,
-  String label,
-  String compiler,
-  String python,
-  Boolean wipeout
-) {
-  matrix["${label}.${python}"] = {
-    lsstswBuild(image, label, compiler, python, wipeout)
-  }
 }
 
 /**
@@ -612,6 +569,75 @@ def void gitNoNoise(Map args) {
     changelog: false,
     poll: false
   ])
+}
+
+/**
+ * Parse yaml file into object.
+ *
+ * @param file String file to parse
+ */
+def Object readYamlFile(String file) {
+  readYaml(text: readFile(file))
+}
+
+def void buildTarballMatrix(
+  Map config,
+  String product,
+  String eupsTag,
+  Map opt,
+  Integer retries = 3
+) {
+  def platform = [:]
+
+  config['tarball'].each { item ->
+    def slug = "miniconda${item.python}"
+    slug += "-${item.miniver}-${item.lsstsw_ref}"
+
+    platform["${item.label}.${slug}"] = {
+      retry(retries) {
+        build job: 'release/tarball',
+          parameters: [
+            string(name: 'PRODUCT', value: product),
+            string(name: 'EUPS_TAG', value: eupsTag),
+            booleanParam(name: 'SMOKE', value: opt.SMOKE),
+            booleanParam(name: 'RUN_DEMO', value: opt.RUN_DEMO),
+            booleanParam(name: 'RUN_SCONS_CHECK', value: opt.RUN_SCONS_CHECK),
+            booleanParam(name: 'PUBLISH', value: opt.PUBLISH),
+            string(name: 'TIMEOUT', value: '6'), // hours
+            string(name: 'IMAGE', value: nullToEmpty(item.image)),
+            string(name: 'LABEL', value: item.label),
+            string(name: 'COMPILER', value: item.compiler),
+            string(name: 'PYTHON_VERSION', value: item.python),
+            string(name: 'MINIVER', value: item.miniver),
+            string(name: 'LSSTSW_REF', value: item.lsstsw_ref),
+          ]
+      } // retry
+    } // platform
+  } // each
+
+  parallel platform
+}
+
+/**
+ * Convert null to empty string; pass through valid strings
+ *
+ * @param s String string to process
+ */
+@NonCPS
+def String nullToEmpty(String s) {
+  if (!s) { s = '' }
+  s
+}
+
+/**
+ * Convert an empty string to null; pass through valid strings
+ *
+ * @param s String string to process
+ */
+@NonCPS
+def String emptyToNull(String s) {
+  if (s == '') { s = null }
+  s
 }
 
 return this;

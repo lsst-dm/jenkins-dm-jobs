@@ -9,6 +9,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
 
@@ -126,44 +127,15 @@ notify.wrap {
         } // retry
       }
 
-      stage("build eups tarballs") {
-        def operatingsystem = [
-          'centos-7',
-          'centos-6',
-          'osx-10.11',
+      stage('build eups tarballs') {
+       def opt = [
+          SMOKE: true,
+          RUN_DEMO: true,
+          RUN_SCONS_CHECK: true,
+          PUBLISH: true,
         ]
 
-        def pyenv = [
-          new MinicondaEnv('2', '4.3.21', '10a4fa6'),
-          new MinicondaEnv('3', '4.3.21', '10a4fa6'),
-        ]
-
-        def platform = [:]
-
-        operatingsystem.each { os ->
-          pyenv.each { py ->
-            platform["${os}.${py.slug()}"] = {
-              retry(retries) {
-                build job: 'release/tarball',
-                  parameters: [
-                    string(name: 'PRODUCT', value: tarballProducts),
-                    string(name: 'EUPS_TAG', value: eupsTag),
-                    booleanParam(name: 'SMOKE', value: true),
-                    booleanParam(name: 'RUN_DEMO', value: true),
-                    booleanParam(name: 'RUN_SCONS_CHECK', value: true),
-                    booleanParam(name: 'PUBLISH', value: true),
-                    string(name: 'PYVER', value: py.pythonVersion),
-                    string(name: 'MINIVER', value: py.minicondaVersion),
-                    string(name: 'LSSTSW_REF', value: py.lsstswRef),
-                    string(name: 'OS', value: os),
-                    string(name: 'TIMEOUT', value: '6'), // hours
-                  ]
-              }
-            }
-          }
-        }
-
-        parallel platform
+        util.buildTarballMatrix(config, tarballProducts, eupsTag, opt)
       }
 
       // disabled

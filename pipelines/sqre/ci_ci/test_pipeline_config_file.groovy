@@ -11,12 +11,13 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+
+    config = readYaml(
+      text: readFile('pipelines/sqre/ci_ci/test_pipeline_config_file.yaml')
+    )
   }
 }
 
-notify.wrap {
-  timeout(time: 23, unit: 'HOURS') {
-    util.buildStackOsMatrix(config, false)
-  }
-} // notify.wrap
+echo config['a']
+echo config['b']
+echo config['c']
