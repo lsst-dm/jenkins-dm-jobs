@@ -54,7 +54,7 @@ class Offline extends Node {}
 class Skipped extends Node {}
 
 // threshold is in GB and comes from a job parameter
-def threshold = 100
+def threshold = 1
 def skippedLabels = [
   'lsst-dev',
   'snowflake',
