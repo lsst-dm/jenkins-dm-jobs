@@ -189,11 +189,11 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
   def buildDir = "${pwd()}/build"
   def distDir  = "${pwd()}/distrib"
   def shDir    = "${buildDir}/scripts"
-  def ciDir    = "${pwd()}/buildbot-scripts"
+  def ciDir    = "${pwd()}/ci-scripts"
 
   def buildDirContainer = '/build'
   def distDirContainer  = '/distrib'
-  def ciDirContainer    = '/buildbot-scripts'
+  def ciDirContainer    = '/ci-scripts'
 
   def shBasename = 'run.sh'
   def shName = "${shDir}/${shBasename}"
@@ -228,7 +228,7 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
     )
 
     dir(ciDir) {
-      util.cloneBuildbotScripts()
+      util.cloneCiScripts()
     }
 
     util.wrapContainer(imageName, localImageName)
@@ -275,7 +275,7 @@ def void osxBuild(
   def buildDir = "${pwd()}/build"
   def distDir  = "${pwd()}/distrib"
   def shDir    = "${buildDir}/scripts"
-  def ciDir    = "${pwd()}/buildbot-scripts"
+  def ciDir    = "${pwd()}/ci-scripts"
 
   def shName = "${shDir}/run.sh"
 
@@ -308,7 +308,7 @@ def void osxBuild(
     )
 
     dir(ciDir) {
-      util.cloneBuildbotScripts()
+      util.cloneCiScripts()
     }
 
     dir(buildDir) {
@@ -329,11 +329,11 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
   def smokeDir = "${pwd()}/smoke"
   def distDir  = "${pwd()}/distrib"
   def shDir    = "${smokeDir}/scripts"
-  def ciDir    = "${pwd()}/buildbot-scripts"
+  def ciDir    = "${pwd()}/ci-scripts"
 
   def smokeDirContainer = '/smoke'
   def distDirContainer  = '/distrib'
-  def ciDirContainer    = '/buildbot-scripts'
+  def ciDirContainer    = '/ci-scripts'
 
   def shBasename = 'run.sh'
   def shName = "${shDir}/${shBasename}"
@@ -359,7 +359,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
     )
 
     dir(ciDir) {
-      util.cloneBuildbotScripts()
+      util.cloneCiScripts()
     }
 
     util.wrapContainer(imageName, localImageName)
@@ -409,7 +409,7 @@ def void osxSmoke(
 ) {
   def smokeDir = "${pwd()}/smoke"
   def shName   = "${pwd()}/scripts/smoke.sh"
-  def ciDir    = "${pwd()}/buildbot-scripts"
+  def ciDir    = "${pwd()}/ci-scripts"
 
   try {
     // smoke state is left at the end of the build for possible debugging but
@@ -430,7 +430,7 @@ def void osxSmoke(
     )
 
     dir(ciDir) {
-      util.cloneBuildbotScripts()
+      util.cloneCiScripts()
     }
 
     dir(smokeDir) {

@@ -27,8 +27,8 @@ notify.wrap {
           util.cloneLsstsw()
         }
 
-        dir('buildbot-scripts') {
-          util.cloneBuildbotScripts()
+        dir('ci-scripts') {
+          util.cloneCiScripts()
         }
 
         def env = [

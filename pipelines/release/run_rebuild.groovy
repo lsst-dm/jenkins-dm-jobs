@@ -69,7 +69,7 @@ notify.wrap {
               docker.image(awsImage).inside {
                 util.shColor '''
                   # provides DOC_PUSH_PATH
-                  . ./buildbot-scripts/settings.cfg.sh
+                  . ./ci-scripts/settings.cfg.sh
 
                   aws s3 cp --recursive \
                     "${DOC_PUSH_PATH}/" \

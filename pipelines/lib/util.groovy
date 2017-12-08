@@ -235,8 +235,8 @@ def jenkinsWrapper() {
         cloneLsstsw()
       }
 
-      dir('buildbot-scripts') {
-        cloneBuildbotScripts()
+      dir('ci-scripts') {
+        cloneCiScripts()
       }
 
       // workspace relative dir for dot files to prevent bleed through between
@@ -268,7 +268,7 @@ def jenkinsWrapper() {
           "HOME=${pwd()}/home",
           "EUPS_USERDATA=${pwd()}/home/.eups_userdata",
         ]) {
-          util.shColor './buildbot-scripts/jenkins_wrapper.sh'
+          util.shColor './ci-scripts/jenkins_wrapper.sh'
         }
       } // withCredentials([[
     } finally {
@@ -549,12 +549,12 @@ def void cloneLsstsw() {
 }
 
 /**
- * Clone buildbot-scripts git repo
+ * Clone ci-scripts git repo
  */
 @NonCPS
-def void cloneBuildbotScripts() {
+def void cloneCiScripts() {
   gitNoNoise(
-    url: 'https://github.com/lsst-sqre/buildbot-scripts.git',
+    url: 'https://github.com/lsst-sqre/ci-scripts.git',
     branch: 'master',
   )
 }
