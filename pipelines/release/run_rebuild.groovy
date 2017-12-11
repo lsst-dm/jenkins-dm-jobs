@@ -39,7 +39,11 @@ notify.wrap {
          ]) {
           util.insideWrap(can.image) {
             sshagent (credentials: ['github-jenkins-versiondb']) {
-              util.jenkinsWrapper()
+              try {
+                util.jenkinsWrapper()
+              } finally {
+                util.jenkinsWrapperPost()
+              }
             } // sshagent
           } // util.insideWrap
         } // withEnv

@@ -194,24 +194,30 @@ def lsstswBuild(
     insideWrap(image) {
       run()
     }
-  } // docker
+  } // runDocker
 
   def runEnv = { doRun ->
     timeout(time: 5, unit: 'HOURS') {
       // use different workspace dirs for python 2/3 to avoid residual state
       // conflicts
-      dir(slug) {
-        if (wipeout) {
-          deleteDir()
-        }
+      try {
+        dir(slug) {
+          if (wipeout) {
+            deleteDir()
+          }
 
-        doRun()
-      } // dir
+          doRun()
+        } // dir
+      } finally {
+        // needs to be called in the parent dir of jenkinsWrapper() in order to
+        // add the slug as a prefix to the archived files.
+        jenkinsWrapperPost(slug)
+      }
     } // timeout
   } // runEnv
 
-  def agent
-  def task
+  def agent = null
+  def task = null
   if (image) {
     agent = 'docker'
     task = { runEnv(runDocker) }
