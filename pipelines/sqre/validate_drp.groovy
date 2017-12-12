@@ -278,7 +278,7 @@ def void record(String archiveDir, String drpDir, String lsstswDir) {
     "${drpDir}/**/*.log",
     "${drpDir}/**/*.failed",
     "${drpDir}/**/pytest-*.xml",
-    "${lsstswdir}/**/*",
+    "${lsstswDir}/**/*",
   ]
 
   def reports = [
