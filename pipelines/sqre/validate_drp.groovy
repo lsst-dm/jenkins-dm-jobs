@@ -182,7 +182,7 @@ def void drp(
       // collect artifacats
       // note that this should be run relative to the origin workspace path so
       // that artifacts from parallel branches do not collide.
-      record(archiveDir, drpDir)
+      record(archiveDir, drpDir, fakeLsstswDir)
     }
   } // run
 
@@ -272,12 +272,13 @@ def Map datasetLookup(String datasetSlug) {
  * @param drpDir String path to validate_drp build dir from which to collect
  * build time logs and/or junit output.
  */
-def void record(String archiveDir, String drpDir) {
+def void record(String archiveDir, String drpDir, String lsstswDir) {
   def archive = [
     "${archiveDir}/**/*",
     "${drpDir}/**/*.log",
     "${drpDir}/**/*.failed",
     "${drpDir}/**/pytest-*.xml",
+    "${lsstswdir}/**/*",
   ]
 
   def reports = [
