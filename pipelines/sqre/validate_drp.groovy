@@ -349,7 +349,7 @@ def void buildDrp(
   String homeDir,
   String drpDir,
   String runSlug,
-  String cidir,
+  String ciDir,
   String compiler
 ) {
   // keep eups from polluting the jenkins role user dotfiles
