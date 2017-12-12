@@ -194,24 +194,30 @@ def lsstswBuild(
     insideWrap(image) {
       run()
     }
-  } // docker
+  } // runDocker
 
   def runEnv = { doRun ->
     timeout(time: 5, unit: 'HOURS') {
       // use different workspace dirs for python 2/3 to avoid residual state
       // conflicts
-      dir(slug) {
-        if (wipeout) {
-          deleteDir()
-        }
+      try {
+        dir(slug) {
+          if (wipeout) {
+            deleteDir()
+          }
 
-        doRun()
-      } // dir
+          doRun()
+        } // dir
+      } finally {
+        // needs to be called in the parent dir of jenkinsWrapper() in order to
+        // add the slug as a prefix to the archived files.
+        jenkinsWrapperPost(slug)
+      }
     } // timeout
   } // runEnv
 
-  def agent
-  def task
+  def agent = null
+  def task = null
   if (image) {
     agent = 'docker'
     task = { runEnv(runDocker) }
@@ -230,128 +236,133 @@ def lsstswBuild(
  */
 def jenkinsWrapper() {
   try {
-    try {
-      dir('lsstsw') {
-        cloneLsstsw()
-      }
+    dir('lsstsw') {
+      cloneLsstsw()
+    }
 
-      dir('ci-scripts') {
-        cloneCiScripts()
-      }
+    dir('ci-scripts') {
+      cloneCiScripts()
+    }
 
-      // workspace relative dir for dot files to prevent bleed through between
-      // jobs and subsequent builds.
-      dir('home') {
+    // workspace relative dir for dot files to prevent bleed through between
+    // jobs and subsequent builds.
+    dir('home') {
+      deleteDir()
+
+      // this is a lazy way to recreate the directory
+      writeFile(file: '.dummy', text: '')
+    }
+
+    // cleanup *all* conda cached package info
+    [
+      'lsstsw/miniconda/conda-meta',
+      'lsstsw/miniconda/pkgs',
+    ].each { it ->
+      dir(it) {
         deleteDir()
-
-        // this is a lazy way to recreate the directory
-        writeFile(file: '.dummy', text: '')
       }
+    }
 
-      // cleanup *all* conda cached package info
-      [
-        'lsstsw/miniconda/conda-meta',
-        'lsstsw/miniconda/pkgs',
-      ].each { it ->
-        dir(it) {
-          deleteDir()
-        }
+    withCredentials([[
+      $class: 'StringBinding',
+      credentialsId: 'cmirror-s3-bucket',
+      variable: 'CMIRROR_S3_BUCKET'
+    ]]) {
+      withEnv([
+        "WORKSPACE=${pwd()}",
+        "HOME=${pwd()}/home",
+        "EUPS_USERDATA=${pwd()}/home/.eups_userdata",
+      ]) {
+        util.shColor './ci-scripts/jenkins_wrapper.sh'
       }
-
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'cmirror-s3-bucket',
-        variable: 'CMIRROR_S3_BUCKET'
-      ]]) {
-        withEnv([
-          "WORKSPACE=${pwd()}",
-          "HOME=${pwd()}/home",
-          "EUPS_USERDATA=${pwd()}/home/.eups_userdata",
-        ]) {
-          util.shColor './ci-scripts/jenkins_wrapper.sh'
-        }
-      } // withCredentials([[
-    } finally {
-      withEnv(["WORKSPACE=${pwd()}"]) {
-        util.shColor '''
-          if hash lsof 2>/dev/null; then
-            Z=$(lsof -d 200 -t)
-            if [[ ! -z $Z ]]; then
-              kill -9 $Z
-            fi
-          else
-            echo "lsof is missing; unable to kill rebuild related processes."
-          fi
-
-          rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
-        '''
-      }
-    } // try
+    } // withCredentials([[
   } finally {
-    // archive does not like a leading `./`
-    def lsstsw = 'lsstsw'
-    def lsstsw_build_dir = "${lsstsw}/build"
-    def manifestPath = "${lsstsw_build_dir}/manifest.txt"
-    def statusPath = "${lsstsw_build_dir}/status.yaml"
-    def archive = [
-      manifestPath,
-      statusPath,
-    ]
-    def record = [
-      '*.log',
-      '*.failed',
-    ]
+    withEnv(["WORKSPACE=${pwd()}"]) {
+      util.shColor '''
+        if hash lsof 2>/dev/null; then
+          Z=$(lsof -d 200 -t)
+          if [[ ! -z $Z ]]; then
+            kill -9 $Z
+          fi
+        else
+          echo "lsof is missing; unable to kill rebuild related processes."
+        fi
 
-    try {
-      if (fileExists(statusPath)) {
-        def status = readYaml(file: statusPath)
-
-        def products = status['built']
-        // if there is a "failed_at" product, check it for a junit file too
-        if (status['failed_at']) {
-          products << status['failed_at']
-        }
-
-        def reports = []
-        products.each { item ->
-          def name = item['name']
-          def xml = "${lsstsw_build_dir}/${name}/tests/.tests/pytest-${name}.xml"
-          if (fileExists(xml)) {
-            reports << xml
-          }
-
-          record.each { pattern ->
-            archive += "${lsstsw_build_dir}/${name}/**/${pattern}"
-          }
-        }
-
-        if (reports) {
-          // note that junit will ignore files with timestamps before the start
-          // of the build
-          junit([
-            testResults: reports.join(', '),
-            allowEmptyResults: true,
-          ])
-
-          archive += reports
-        }
-      }
-    } catch (e) {
-      // As a last resort, find product build dirs with a wildcard.  This might
-      // match logs for products that _are not_ part of the current build.
-      record.each { pattern ->
-        archive += "${lsstsw_build_dir}/**/${pattern}"
-      }
-      throw e
-    } finally {
-      archiveArtifacts([
-        artifacts: archive.join(', '),
-        allowEmptyArchive: true,
-        fingerprint: true
-      ])
-    } // try
+        rm -rf "${WORKSPACE}/lsstsw/stack/.lockDir"
+      '''
+    }
   } // try
-}
+} // jenkinsWrapper
+
+def jenkinsWrapperPost(String baseDir = null) {
+  def lsstsw = 'lsstsw'
+
+  if (baseDir) {
+    lsstsw = "${baseDir}/${lsstsw}"
+  }
+
+  // note that archive does not like a leading `./`
+  def lsstsw_build_dir = "${lsstsw}/build"
+  def manifestPath = "${lsstsw_build_dir}/manifest.txt"
+  def statusPath = "${lsstsw_build_dir}/status.yaml"
+  def archive = [
+    manifestPath,
+    statusPath,
+  ]
+  def record = [
+    '*.log',
+    '*.failed',
+  ]
+
+  try {
+    if (fileExists(statusPath)) {
+      def status = readYaml(file: statusPath)
+
+      def products = status['built']
+      // if there is a "failed_at" product, check it for a junit file too
+      if (status['failed_at']) {
+        products << status['failed_at']
+      }
+
+      def reports = []
+      products.each { item ->
+        def name = item['name']
+        def xml = "${lsstsw_build_dir}/${name}/tests/.tests/pytest-${name}.xml"
+        if (fileExists(xml)) {
+          reports << xml
+        }
+
+        record.each { pattern ->
+          archive += "${lsstsw_build_dir}/${name}/**/${pattern}"
+        }
+      }
+
+      if (reports) {
+        // note that junit will ignore files with timestamps before the start
+        // of the build
+        junit([
+          testResults: reports.join(', '),
+          allowEmptyResults: true,
+        ])
+
+        archive += reports
+      }
+    }
+  } catch (e) {
+    // As a last resort, find product build dirs with a wildcard.  This might
+    // match logs for products that _are not_ part of the current build.
+    record.each { pattern ->
+      archive += "${lsstsw_build_dir}/**/${pattern}"
+    }
+    throw e
+  } finally {
+    archiveArtifacts([
+      artifacts: archive.join(', '),
+      allowEmptyArchive: true,
+      fingerprint: true
+    ])
+  } // try
+} // jenkinsWrapperPost
 
 /**
  * Parse bNNNN out of a manifest.txt format String.
