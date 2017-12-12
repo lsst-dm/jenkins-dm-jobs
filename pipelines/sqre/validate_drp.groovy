@@ -74,12 +74,7 @@ def void drp(
 
   def docImage     = "docker.io/lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
 
-  //def dataset      = 'validation_data_cfht'
-  //def datasetRepo  = 'https://github.com/lsst/validation_data_cfht.git'
-  //def datasetRef   = 'master'
   def drpRepo      = 'https://github.com/lsst/validate_drp.git'
-  //def drpRef       = 'master'
-  //def datasetSlug  = 'cfht'
   def postqaVer    = '1.3.3'
   def jenkinsDebug = 'true'
 
