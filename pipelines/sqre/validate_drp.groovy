@@ -25,6 +25,7 @@ notify.wrap {
   def required = [
     'EUPS_TAG',
     'BNNNN',
+    'COMPILER',
   ]
 
   util.requireParams(required)
@@ -69,11 +70,10 @@ def void drp(
   def eupsTag   = params.EUPS_TAG
   def buildId   = params.BNNNN
   def noPush    = params.NO_PUSH
+  def compiler  = params.COMIPLER
 
-  def datasetInfo = datasetLookup(datasetSlug)
-
+  def datasetInfo  = datasetLookup(datasetSlug)
   def docImage     = "docker.io/lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
-
   def drpRepo      = 'https://github.com/lsst/validate_drp.git'
   def postqaVer    = '1.3.3'
   def jenkinsDebug = 'true'
@@ -90,6 +90,7 @@ def void drp(
     def fakeManifestFile  = "${fakeLsstswDir}/build/manifest.txt"
     def fakeReposFile     = "${fakeLsstswDir}/etc/repos.yaml"
     def postqaDir         = "${archiveDir}/postqa"
+    def ciDir             = "${baseDir}/ci-scripts"
 
     try {
       dir(baseDir) {
@@ -109,6 +110,10 @@ def void drp(
         // testing
         downloadManifest(fakeManifestFile, buildId)
         downloadRepos(fakeReposFile)
+
+        dir(ciDir) {
+          cloneCiScripts()
+        }
 
         // clone validation dataset
         dir(datasetDir) {
@@ -139,7 +144,13 @@ def void drp(
             // XXX DM-12663 validate_drp must be built from source / be
             // writable by the jenkins role user -- the version installed in
             // the container image can not be used.
-            buildDrp(homeDir, drpDir, runSlug)
+            buildDrp(
+              homeDir,
+              drpDir,
+              runSlug,
+              ciDir,
+              compiler
+            )
           } // dir
 
           timeout(time: datasetInfo['runTime'], unit: 'MINUTES') {
@@ -333,21 +344,34 @@ def void checkoutLFS(String gitRepo, String gitRef = 'master') {
  * @param drpDir String path to validate_drp (code)
  * @param runSlug String short name to describe this drp run
  */
-def void buildDrp(String homeDir, String drpDir, String runSlug) {
+def void buildDrp(
+  String homeDir,
+  String drpDir,
+  String runSlug,
+  String cidir,
+  String compiler
+) {
   // keep eups from polluting the jenkins role user dotfiles
   withEnv([
     "HOME=${homeDir}",
     "EUPS_USERDATA=${homeDir}/.eups_userdata",
     "DRP_DIR=${drpDir}",
+    "CI_DIR=${ciDir}",
     "LSST_JUNIT_PREFIX=${runSlug}",
+    "LSST_COMPILER=${compiler}",
   ]) {
     util.shColor '''
       cd "$DRP_DIR"
 
       SHOPTS=$(set +o)
       set +o xtrace
+
+      source "${CI_DIR}/ccutils.sh"
+      cc::setup "${LSST_COMPILER}"
+
       source /opt/lsst/software/stack/loadLSST.bash
       setup -k -r .
+
       eval "$SHOPTS"
 
       scons

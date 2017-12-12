@@ -179,12 +179,18 @@ notify.wrap {
       }
 
       stage('validate_drp') {
+        // XXX use the same compiler as is configured for the canoncial build
+        // env.  This is a bit of a kludge.  It would be better to directly
+        // label the compiler used on the dockage image.
+        def can = config.canonical
+
         retry(1) {
           // based on lsstsqre/stack image
           build job: 'sqre/validate_drp',
             parameters: [
               string(name: 'EUPS_TAG', value: eupsTag),
               string(name: 'BNNNN', value: bx),
+              string(name: 'COMPILER', value: can.compiler),
               booleanParam(name: 'NO_PUSH', value: false),
               booleanParam(name: 'WIPEOUT', value: true),
             ],
