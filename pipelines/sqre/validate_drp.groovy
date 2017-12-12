@@ -122,12 +122,7 @@ def void drp(
           }
         }
 
-        def docLocal = "${docImage}-local"
-
-        util.wrapContainer(docImage, docLocal)
-        def image = docker.image(docLocal)
-
-        image.inside {
+        util.insideWrap(docImage) {
           // clone and build validate_drp from source
           dir(drpDir) {
             // the simplier git step doesn't support 'CleanBeforeCheckout'
@@ -317,10 +312,6 @@ def void record(String archiveDir, String drpDir) {
  */
 def void checkoutLFS(String gitRepo, String gitRef = 'master') {
   def docRepo = 'docker.io/lsstsqre/gitlfs'
-  def docLocal = "${docRepo}-local"
-
-  util.wrapContainer(docRepo, docLocal)
-  def image = docker.image(docLocal)
 
   // running a git clone in a docker.inside block is broken
   git([
@@ -331,7 +322,7 @@ def void checkoutLFS(String gitRepo, String gitRef = 'master') {
   ])
 
   try {
-    image.inside {
+    util.insideWrap(docRepo) {
       util.shColor('git lfs pull origin')
     }
   } finally {
@@ -576,10 +567,6 @@ def void runPostqa(
   Boolean noPush = true
 ) {
   def docImage = "docker.io/lsstsqre/postqa:${postqaVer}"
-  def docLocal = "${docImage}-local"
-
-  util.wrapContainer(docImage, docLocal)
-  def image = docker.image(docLocal)
 
   def run = {
     util.shColor '''
@@ -654,7 +641,7 @@ def void runPostqa(
       credentialsId: 'squash-api-url',
       variable: 'SQUASH_URL',
     ]]) {
-      image.inside {
+      util.insideWrap(docImage) {
         run()
       }
     } // withCredentials
