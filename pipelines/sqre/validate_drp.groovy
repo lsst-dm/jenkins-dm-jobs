@@ -112,7 +112,7 @@ def void drp(
         downloadRepos(fakeReposFile)
 
         dir(ciDir) {
-          cloneCiScripts()
+          util.cloneCiScripts()
         }
 
         // clone validation dataset
