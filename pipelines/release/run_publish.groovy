@@ -27,10 +27,6 @@ notify.wrap {
           util.cloneLsstsw()
         }
 
-        dir('ci-scripts') {
-          util.cloneCiScripts()
-        }
-
         def env = [
           "EUPS_PKGROOT=${pwd()}/distrib",
           "WORKSPACE=${pwd()}",

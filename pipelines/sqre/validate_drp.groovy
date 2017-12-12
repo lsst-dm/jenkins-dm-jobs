@@ -25,6 +25,7 @@ notify.wrap {
   def required = [
     'EUPS_TAG',
     'BNNNN',
+    'COMPILER',
   ]
 
   util.requireParams(required)
@@ -69,17 +70,11 @@ def void drp(
   def eupsTag   = params.EUPS_TAG
   def buildId   = params.BNNNN
   def noPush    = params.NO_PUSH
+  def compiler  = params.COMIPLER
 
-  def datasetInfo = datasetLookup(datasetSlug)
-
+  def datasetInfo  = datasetLookup(datasetSlug)
   def docImage     = "docker.io/lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
-
-  //def dataset      = 'validation_data_cfht'
-  //def datasetRepo  = 'https://github.com/lsst/validation_data_cfht.git'
-  //def datasetRef   = 'master'
   def drpRepo      = 'https://github.com/lsst/validate_drp.git'
-  //def drpRef       = 'master'
-  //def datasetSlug  = 'cfht'
   def postqaVer    = '1.3.3'
   def jenkinsDebug = 'true'
 
@@ -95,6 +90,7 @@ def void drp(
     def fakeManifestFile  = "${fakeLsstswDir}/build/manifest.txt"
     def fakeReposFile     = "${fakeLsstswDir}/etc/repos.yaml"
     def postqaDir         = "${archiveDir}/postqa"
+    def ciDir             = "${baseDir}/ci-scripts"
 
     try {
       dir(baseDir) {
@@ -115,6 +111,10 @@ def void drp(
         downloadManifest(fakeManifestFile, buildId)
         downloadRepos(fakeReposFile)
 
+        dir(ciDir) {
+          cloneCiScripts()
+        }
+
         // clone validation dataset
         dir(datasetDir) {
           timeout(time: datasetInfo['cloneTime'], unit: 'MINUTES') {
@@ -122,12 +122,7 @@ def void drp(
           }
         }
 
-        def docLocal = "${docImage}-local"
-
-        util.wrapContainer(docImage, docLocal)
-        def image = docker.image(docLocal)
-
-        image.inside {
+        util.insideWrap(docImage) {
           // clone and build validate_drp from source
           dir(drpDir) {
             // the simplier git step doesn't support 'CleanBeforeCheckout'
@@ -149,7 +144,13 @@ def void drp(
             // XXX DM-12663 validate_drp must be built from source / be
             // writable by the jenkins role user -- the version installed in
             // the container image can not be used.
-            buildDrp(homeDir, drpDir, runSlug)
+            buildDrp(
+              homeDir,
+              drpDir,
+              runSlug,
+              ciDir,
+              compiler
+            )
           } // dir
 
           timeout(time: datasetInfo['runTime'], unit: 'MINUTES') {
@@ -181,7 +182,7 @@ def void drp(
       // collect artifacats
       // note that this should be run relative to the origin workspace path so
       // that artifacts from parallel branches do not collide.
-      record(archiveDir, drpDir)
+      record(archiveDir, drpDir, fakeLsstswDir)
     }
   } // run
 
@@ -271,12 +272,13 @@ def Map datasetLookup(String datasetSlug) {
  * @param drpDir String path to validate_drp build dir from which to collect
  * build time logs and/or junit output.
  */
-def void record(String archiveDir, String drpDir) {
+def void record(String archiveDir, String drpDir, String lsstswDir) {
   def archive = [
     "${archiveDir}/**/*",
     "${drpDir}/**/*.log",
     "${drpDir}/**/*.failed",
     "${drpDir}/**/pytest-*.xml",
+    "${lsstswdir}/**/*",
   ]
 
   def reports = [
@@ -317,10 +319,6 @@ def void record(String archiveDir, String drpDir) {
  */
 def void checkoutLFS(String gitRepo, String gitRef = 'master') {
   def docRepo = 'docker.io/lsstsqre/gitlfs'
-  def docLocal = "${docRepo}-local"
-
-  util.wrapContainer(docRepo, docLocal)
-  def image = docker.image(docLocal)
 
   // running a git clone in a docker.inside block is broken
   git([
@@ -331,7 +329,7 @@ def void checkoutLFS(String gitRepo, String gitRef = 'master') {
   ])
 
   try {
-    image.inside {
+    util.insideWrap(docRepo) {
       util.shColor('git lfs pull origin')
     }
   } finally {
@@ -347,21 +345,34 @@ def void checkoutLFS(String gitRepo, String gitRef = 'master') {
  * @param drpDir String path to validate_drp (code)
  * @param runSlug String short name to describe this drp run
  */
-def void buildDrp(String homeDir, String drpDir, String runSlug) {
+def void buildDrp(
+  String homeDir,
+  String drpDir,
+  String runSlug,
+  String cidir,
+  String compiler
+) {
   // keep eups from polluting the jenkins role user dotfiles
   withEnv([
     "HOME=${homeDir}",
     "EUPS_USERDATA=${homeDir}/.eups_userdata",
     "DRP_DIR=${drpDir}",
+    "CI_DIR=${ciDir}",
     "LSST_JUNIT_PREFIX=${runSlug}",
+    "LSST_COMPILER=${compiler}",
   ]) {
     util.shColor '''
       cd "$DRP_DIR"
 
       SHOPTS=$(set +o)
       set +o xtrace
+
+      source "${CI_DIR}/ccutils.sh"
+      cc::setup "${LSST_COMPILER}"
+
       source /opt/lsst/software/stack/loadLSST.bash
       setup -k -r .
+
       eval "$SHOPTS"
 
       scons
@@ -576,10 +587,6 @@ def void runPostqa(
   Boolean noPush = true
 ) {
   def docImage = "docker.io/lsstsqre/postqa:${postqaVer}"
-  def docLocal = "${docImage}-local"
-
-  util.wrapContainer(docImage, docLocal)
-  def image = docker.image(docLocal)
 
   def run = {
     util.shColor '''
@@ -654,7 +661,7 @@ def void runPostqa(
       credentialsId: 'squash-api-url',
       variable: 'SQUASH_URL',
     ]]) {
-      image.inside {
+      util.insideWrap(docImage) {
         run()
       }
     } // withCredentials
