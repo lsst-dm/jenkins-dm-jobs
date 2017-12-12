@@ -20,6 +20,20 @@ def void shColor(script) {
 }
 
 /**
+ * Prepend a shebang to a String that does not already have one.
+ *
+ * @param script String Text to prepend a shebang to
+ * @return shebangerized String
+ */
+def String shebanger(String script) {
+  if (!(script ==~ /^#!/)) {
+    script = "#!bash -xe\n${script}"
+  }
+
+  script
+}
+
+/**
  * Create a thin "wrapper" container around {@code imageName} to map uid/gid of
  * the user invoking docker into the container.
  *
