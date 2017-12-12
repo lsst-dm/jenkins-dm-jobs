@@ -184,7 +184,7 @@ notify.wrap {
           build job: 'sqre/validate_drp',
             parameters: [
               string(name: 'EUPS_TAG', value: eupsTag),
-              string(name: 'BUILD_ID', value: bx),
+              string(name: 'BNNNN', value: bx),
               booleanParam(name: 'NO_PUSH', value: false),
               booleanParam(name: 'WIPEOUT', value: true),
             ],
