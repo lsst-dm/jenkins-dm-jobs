@@ -26,8 +26,9 @@ def void shColor(script) {
  * @param script String Text to prepend a shebang to
  * @return shebangerized String
  */
+@NonCPS
 def String shebangerize(String script) {
-  if (!(script ==~ /^#!/)) {
+  if (!script.startsWith('#!')) {
     script = "#!/bin/bash -xe\n${script}"
   }
 
