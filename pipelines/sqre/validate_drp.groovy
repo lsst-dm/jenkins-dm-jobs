@@ -368,7 +368,7 @@ def void buildDrp(
       set +o xtrace
 
       source "${CI_DIR}/ccutils.sh"
-      cc::setup "${LSST_COMPILER}"
+      cc::setup "$LSST_COMPILER"
 
       source /opt/lsst/software/stack/loadLSST.bash
       setup -k -r .
@@ -590,10 +590,6 @@ def void runPostqa(
 
   def run = {
     util.shColor '''
-      #!/bin/bash -e
-
-      [[ $JENKINS_DEBUG == true ]] && set -o xtrace
-
       # archive post-qa output
       # XXX --api-url, --api-user, and --api-password are required even
       # when --test is set
@@ -648,7 +644,6 @@ def void runPostqa(
     "PRODUCT=validate_drp",
     "dataset=${datasetSlug}",
     "label=${label}",
-    "JENKINS_DEBUG=true",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
