@@ -300,12 +300,12 @@ def jenkinsWrapper() {
         "HOME=${pwd()}/home",
         "EUPS_USERDATA=${pwd()}/home/.eups_userdata",
       ]) {
-        util.shColor './ci-scripts/jenkins_wrapper.sh'
+        util.bash './ci-scripts/jenkins_wrapper.sh'
       }
     } // withCredentials([[
   } finally {
     withEnv(["WORKSPACE=${pwd()}"]) {
-      util.shColor '''
+      util.bash '''
         if hash lsof 2>/dev/null; then
           Z=$(lsof -d 200 -t)
           if [[ ! -z $Z ]]; then
@@ -522,7 +522,7 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
         credentialsId: 'github-api-token-sqreadmin',
         variable: 'GITHUB_TOKEN'
       ]]) {
-        util.shColor cmd
+        util.bash cmd
       } // withCredentials
     } // util.insideWrap
   } // run
