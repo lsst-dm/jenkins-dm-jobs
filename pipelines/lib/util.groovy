@@ -27,9 +27,9 @@ def void shColor(script) {
  * @return shebangerized String
  */
 @NonCPS
-def String shebangerize(String script) {
+def String shebangerize(String script, String prog = '/bin/sh -xe') {
   if (!script.startsWith('#!')) {
-    script = "#!/bin/bash -xe\n${script}"
+    script = "#!${prog}\n${script}"
   }
 
   script
