@@ -22,13 +22,13 @@ notify.wrap {
     def image = docker.image(local)
 
     image.inside {
-      util.shColor '''
+      util.bash '''
         whereis git git-lfs
         git --version
         git lfs version
       '''
 
-      //util.shColor 'git lfs clone https://github.com/lsst/validation_data_cfht.git'
+      //util.bash 'git lfs clone https://github.com/lsst/validation_data_cfht.git'
 
       checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ci_hsc'], [$class: 'GitLFSPull']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/lsst/ci_hsc.git']]])
 
@@ -50,6 +50,6 @@ notify.wrap {
       */
     } // inside
 
-    util.shColor('ls -la')
+    util.bash('ls -la')
   } // node
 } // notify.wrap

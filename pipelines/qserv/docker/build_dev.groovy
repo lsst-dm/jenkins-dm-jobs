@@ -32,7 +32,7 @@ def build(String script) {
     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-sqreadmin') {
       dir('qserv/admin/tools/docker/lsst-dm-ci') {
         withEnv(['DOCKER_REPO=qserv/qserv']) {
-          util.shColor "./$script"
+          util.bash "./$script"
         }
       }
     }

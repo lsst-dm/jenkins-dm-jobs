@@ -73,10 +73,8 @@ notify.wrap {
               // and doesn't work with util.insideWrap.  However, the aws cli
               // seems to work OK without trying to lookup the username.
               docker.image(awsImage).inside {
-                util.shColor '''
-                  #!/bin/sh -xe
-                  # alpine does not include bash by default
-
+                // alpine does not include bash by default
+                util.posixSh '''
                   # provides DOC_PUSH_PATH
                   . ./ci-scripts/settings.cfg.sh
 

@@ -13,10 +13,10 @@ def String dedent(String text) {
  * Thin wrapper around {@code sh} step that strips leading whitspace and
  * enables ANSI color codes.
  */
-def void shColor(script) {
+def void posixSh(script) {
   ansiColor('gnome-terminal') {
     script = dedent(script)
-    sh shebangerize(script)
+    sh shebangerize(script, '/bin/sh -xe')
   }
 }
 
@@ -77,10 +77,7 @@ def void wrapContainer(String imageName, String tag) {
   dir(buildDir) {
     writeFile(file: 'Dockerfile', text: config)
 
-    shColor """
-      set -e
-      set -x
-
+    bash """
       docker build -t "${tag}" \
           --build-arg USER="\$(id -un)" \
           --build-arg UID="\$(id -u)" \

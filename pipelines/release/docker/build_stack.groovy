@@ -47,7 +47,7 @@ notify.wrap {
     }
 
     stage('build') {
-      util.shColor """
+      util.bash """
         docker build \
           --build-arg PRODUCT=\"${product}\" \
           --build-arg TAG=\"${tag}\" \
@@ -60,7 +60,7 @@ notify.wrap {
         'https://index.docker.io/v1/',
         'dockerhub-sqreadmin'
       ) {
-        util.shColor "docker push \"${slug}\""
+        util.bash "docker push \"${slug}\""
       }
     }
   } // run

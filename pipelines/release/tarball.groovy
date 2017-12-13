@@ -244,7 +244,7 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
       "CIDIR_CONTAINER=${ciDirContainer}",
     ]) {
       // XXX refactor to use util.insideWrap
-      util.shColor '''
+      util.bash '''
         docker run \
           --storage-opt size=100G \
           -v "${BUILDDIR}:${BUILDDIR_CONTAINER}" \
@@ -312,7 +312,7 @@ def void osxBuild(
     }
 
     dir(buildDir) {
-      util.shColor shName
+      util.bash shName
     }
   } finally {
     record(buildDir)
@@ -375,7 +375,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
       "CIDIR_CONTAINER=${ciDirContainer}",
     ]) {
       // XXX refactor to use util.insideWrap
-      util.shColor '''
+      util.bash '''
         docker run \
           --storage-opt size=100G \
           -v "${SMOKEDIR}:${SMOKEDIR_CONTAINER}" \
@@ -437,7 +437,7 @@ def void osxSmoke(
         "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
         "FIX_SHEBANGS=true",
       ]) {
-        util.shColor shName
+        util.bash shName
       }
     }
   } finally {
@@ -469,7 +469,7 @@ def void prepareBuild(
   )
 
   writeFile(file: shName, text: script)
-  util.shColor "chmod a+x ${shName}"
+  util.bash "chmod a+x ${shName}"
 }
 
 /**
@@ -496,7 +496,7 @@ def void prepareSmoke(
   )
 
   writeFile(file: shName, text: script)
-  util.shColor "chmod a+x ${shName}"
+  util.bash "chmod a+x ${shName}"
 }
 
 /**
@@ -506,7 +506,7 @@ def void prepareSmoke(
 def void s3Push(String ... parts) {
   def path = util.joinPath(parts)
 
-  util.shColor '''
+  util.bash '''
     # do not assume virtualenv is present
     pip install virtualenv
     virtualenv venv
@@ -520,7 +520,7 @@ def void s3Push(String ... parts) {
     usernameVariable: 'AWS_ACCESS_KEY_ID',
     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
   ]]) {
-    util.shColor """
+    util.bash """
       . venv/bin/activate
       aws s3 sync --only-show-errors ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${path}
     """
