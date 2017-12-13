@@ -37,6 +37,8 @@ notify.wrap {
           "LSST_PYTHON_VERSION=${can.python}",
           "LSST_COMPILER=${can.compiler}",
          ]) {
+          // XXX note that util.jenkinsWrapper() clones the ci-scripts repo,
+          // which is used by the push docs stage
           util.insideWrap(can.image) {
             sshagent (credentials: ['github-jenkins-versiondb']) {
               try {
