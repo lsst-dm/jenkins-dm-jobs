@@ -312,9 +312,7 @@ def void osxBuild(
     }
 
     dir(buildDir) {
-      util.shColor """
-        bash "${shName}"
-      """
+      util.shColor shName
     }
   } finally {
     record(buildDir)
@@ -439,9 +437,7 @@ def void osxSmoke(
         "RUN_SCONS_CHECK=${params.RUN_SCONS_CHECK}",
         "FIX_SHEBANGS=true",
       ]) {
-        util.shColor """
-          bash ${shName}
-        """
+        util.shColor shName
       }
     }
   } finally {
