@@ -15,7 +15,7 @@ def String dedent(String text) {
  */
 def void shColor(script) {
   ansiColor('gnome-terminal') {
-    sh dedent(script)
+    sh shebanger(dedent(script))
   }
 }
 
