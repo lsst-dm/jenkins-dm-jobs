@@ -15,8 +15,22 @@ def String dedent(String text) {
  */
 def void shColor(script) {
   ansiColor('gnome-terminal') {
-    sh dedent(script)
+    sh shebanger(dedent(script))
   }
+}
+
+/**
+ * Prepend a shebang to a String that does not already have one.
+ *
+ * @param script String Text to prepend a shebang to
+ * @return shebangerized String
+ */
+def String shebanger(String script) {
+  if (!(script ==~ /^#!/)) {
+    script = "#!bash -xe\n${script}"
+  }
+
+  script
 }
 
 /**
