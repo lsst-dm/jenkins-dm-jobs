@@ -330,11 +330,11 @@ def void checkoutLFS(String gitRepo, String gitRef = 'master') {
 
   try {
     util.insideWrap(docRepo) {
-      util.shColor('git lfs pull origin')
+      util.bash('git lfs pull origin')
     }
   } finally {
     // try not to break jenkins clone mangement
-    util.shColor 'rm -f .git/hooks/post-checkout'
+    util.bash 'rm -f .git/hooks/post-checkout'
   }
 } // checkoutLFS
 
@@ -361,7 +361,7 @@ def void buildDrp(
     "LSST_JUNIT_PREFIX=${runSlug}",
     "LSST_COMPILER=${compiler}",
   ]) {
-    util.shColor '''
+    util.bash '''
       cd "$DRP_DIR"
 
       SHOPTS=$(set +o)
@@ -400,7 +400,7 @@ def void runDrp(
 ) {
   // run drp driver script
   def run = {
-    util.shColor '''
+    util.bash '''
       #!/bin/bash -e
 
       [[ $JENKINS_DEBUG == true ]] && set -o xtrace
@@ -589,7 +589,7 @@ def void runPostqa(
   def docImage = "docker.io/lsstsqre/postqa:${postqaVer}"
 
   def run = {
-    util.shColor '''
+    util.bash '''
       # archive post-qa output
       # XXX --api-url, --api-user, and --api-password are required even
       # when --test is set
@@ -603,18 +603,20 @@ def void runPostqa(
         --test \
         > "$OUTPUTFILE"
       xz -T0 -9ev "$OUTPUTFILE"
-
-      [[ $NO_PUSH == true ]] && exit
-
-      # submit post-qa
-      post-qa \
-        --lsstsw "$LSSTSW_DIR" \
-        --qa-json "$RESULTFILE" \
-        --api-url "$SQUASH_URL" \
-        --api-user "$SQUASH_USER" \
-        --api-password "$SQUASH_PASS" \
-        --no-probe-git
     '''
+
+    if (!noPush) {
+      util.bash '''
+        # submit post-qa
+        post-qa \
+          --lsstsw "$LSSTSW_DIR" \
+          --qa-json "$RESULTFILE" \
+          --api-url "$SQUASH_URL" \
+          --api-user "$SQUASH_USER" \
+          --api-password "$SQUASH_PASS" \
+          --no-probe-git
+      '''
+    }
   } // run
 
   /*

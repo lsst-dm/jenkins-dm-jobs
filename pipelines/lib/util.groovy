@@ -13,10 +13,21 @@ def String dedent(String text) {
  * Thin wrapper around {@code sh} step that strips leading whitspace and
  * enables ANSI color codes.
  */
-def void shColor(script) {
+def void posixSh(script) {
   ansiColor('gnome-terminal') {
     script = dedent(script)
-    sh shebangerize(script)
+    sh shebangerize(script, '/bin/sh -xe')
+  }
+}
+
+/**
+ * Thin wrapper around {@code sh} step that strips leading whitspace and
+ * enables ANSI color codes.
+ */
+def void bash(script) {
+  ansiColor('gnome-terminal') {
+    script = dedent(script)
+    sh shebangerize(script, '/bin/bash -xe')
   }
 }
 
@@ -27,9 +38,9 @@ def void shColor(script) {
  * @return shebangerized String
  */
 @NonCPS
-def String shebangerize(String script) {
+def String shebangerize(String script, String prog = '/bin/sh -xe') {
   if (!script.startsWith('#!')) {
-    script = "#!/bin/bash -xe\n${script}"
+    script = "#!${prog}\n${script}"
   }
 
   script
@@ -66,10 +77,7 @@ def void wrapContainer(String imageName, String tag) {
   dir(buildDir) {
     writeFile(file: 'Dockerfile', text: config)
 
-    shColor """
-      set -e
-      set -x
-
+    bash """
       docker build -t "${tag}" \
           --build-arg USER="\$(id -un)" \
           --build-arg UID="\$(id -u)" \
@@ -289,12 +297,12 @@ def jenkinsWrapper() {
         "HOME=${pwd()}/home",
         "EUPS_USERDATA=${pwd()}/home/.eups_userdata",
       ]) {
-        util.shColor './ci-scripts/jenkins_wrapper.sh'
+        util.bash './ci-scripts/jenkins_wrapper.sh'
       }
     } // withCredentials([[
   } finally {
     withEnv(["WORKSPACE=${pwd()}"]) {
-      util.shColor '''
+      util.bash '''
         if hash lsof 2>/dev/null; then
           Z=$(lsof -d 200 -t)
           if [[ ! -z $Z ]]; then
@@ -511,7 +519,7 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
         credentialsId: 'github-api-token-sqreadmin',
         variable: 'GITHUB_TOKEN'
       ]]) {
-        util.shColor cmd
+        util.bash cmd
       } // withCredentials
     } // util.insideWrap
   } // run

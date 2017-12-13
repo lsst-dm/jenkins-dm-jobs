@@ -35,10 +35,10 @@ notify.wrap {
       ])
 
       image.inside {
-        util.shColor('git lfs pull origin')
+        util.bash('git lfs pull origin')
       }
     }
 
-    util.shColor('ls -la')
+    util.bash('ls -la')
   } // node
 } // notify.wrap

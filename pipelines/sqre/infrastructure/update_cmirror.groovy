@@ -21,7 +21,7 @@ notify.wrap {
     stage('prepare') {
       image.pull()
 
-      util.shColor '''
+      util.bash '''
         mkdir -p local_mirror tmp
         chmod 777 local_mirror tmp
       '''
@@ -41,7 +41,7 @@ notify.wrap {
     }
 
     stage('mirror miniconda') {
-      util.shColor '''
+      util.bash '''
         wget \
           --mirror \
           --continue \
@@ -68,7 +68,7 @@ notify.wrap {
         credentialsId: 'cmirror-s3-bucket',
         variable: 'CMIRROR_S3_BUCKET'
       ]]) {
-        util.shColor '''
+        util.bash '''
           set -e
           # do not assume virtualenv is present
           pip install virtualenv
@@ -78,13 +78,13 @@ notify.wrap {
         '''
 
         catchError {
-          util.shColor '''
+          util.bash '''
             . venv/bin/activate
             aws s3 sync ./local_mirror/ s3://$CMIRROR_S3_BUCKET/pkgs/free/
           '''
         }
         catchError {
-          util.shColor '''
+          util.bash '''
             . venv/bin/activate
             aws s3 sync ./miniconda/ s3://$CMIRROR_S3_BUCKET/miniconda/
           '''
@@ -121,7 +121,7 @@ def runMirror(String imageId, String upstream, String platform) {
   // suspected repodata.json issues as conda-mirror completely rewrites the
   // packages section of this file.
   dir("repodata/${platform}") {
-    util.shColor "wget ${upstream}${platform}/repodata.json"
+    util.bash "wget ${upstream}${platform}/repodata.json"
   }
 
   archiveArtifacts([
@@ -134,7 +134,7 @@ def runMirror(String imageId, String upstream, String platform) {
     "UPSTREAM=${upstream}",
     "PLATFORM=${platform}",
   ]) {
-    util.shColor '''
+    util.bash '''
       docker run \
         -v $(pwd)/tmp:/tmp \
         -v $(pwd)/local_mirror:/local_mirror \

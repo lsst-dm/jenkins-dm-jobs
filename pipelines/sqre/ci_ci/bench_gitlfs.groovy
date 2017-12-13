@@ -55,17 +55,17 @@ notify.wrap {
         echo "sample #${n+1}"
 
         // stage cached git repo
-        util.shColor "cp -ra ${repoDirCached} ${repoDirLfs}"
+        util.bash "cp -ra ${repoDirCached} ${repoDirLfs}"
 
         // run lfs
         dir(repoDirLfs) {
           image.inside("-v ${resultsDir}:/results") {
             // make lfs 1.5.5 work...
-            util.shColor '''
+            util.bash '''
               git config --local --add credential.helper '!f() { cat > /dev/null; echo username=; echo password=; }; f'
             '''
 
-            util.shColor """
+            util.bash """
               /usr/bin/time \
                 --format='%e' \
                 --output=/results/lfspull-${tag}.txt \
@@ -128,7 +128,7 @@ def void wrapContainer(String imageName, String tag) {
   dir(buildDir) {
     writeFile(file: 'Dockerfile', text: config)
 
-    util.shColor """
+    util.bash """
       set -e
       set -x
 

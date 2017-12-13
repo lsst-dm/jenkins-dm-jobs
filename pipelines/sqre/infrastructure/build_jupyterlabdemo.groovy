@@ -32,7 +32,7 @@ try {
             'https://index.docker.io/v1/',
             'dockerhub-sqreadmin'
           ) {
-            util.shColor """
+            util.bash """
               ./bld \
                -p '${params.PYVER}' \
                -b '${params.BASE_IMAGE}' \
@@ -42,7 +42,7 @@ try {
             """
           }
         } else {
-          util.shColor """
+          util.bash """
               ./bld \
                -d \
                -p '${params.PYVER}' \

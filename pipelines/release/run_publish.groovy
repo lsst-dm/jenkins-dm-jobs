@@ -40,7 +40,7 @@ notify.wrap {
         ]]) {
           withEnv(env) {
             util.insideWrap(can.image) {
-              util.shColor '''
+              util.bash '''
                 ARGS=()
                 ARGS+=('-b' "$BUILD_ID")
                 ARGS+=('-t' "$TAG")
@@ -80,7 +80,8 @@ notify.wrap {
             ]
             withEnv(env) {
               docker.image(awsImage).inside {
-                util.shColor '''
+                // alpine does not include bash by default
+                util.posixSh '''
                   aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/
                 '''
               } // util.insideWrap

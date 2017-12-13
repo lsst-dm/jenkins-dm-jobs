@@ -71,7 +71,7 @@ notify.wrap {
 
 def void librarianPuppet(String cmd='install', String tag='2.2.3') {
   util.insideWrap("docker.io/lsstsqre/cakepan:${tag}", "-e HOME=${pwd()}") {
-    util.shColor "librarian-puppet ${cmd}"
+    util.bash "librarian-puppet ${cmd}"
   }
 }
 
@@ -83,7 +83,8 @@ def String packIt(String templateFile, List options, String tag = '1.1.1') {
   def args        = options.join(' ')
 
   docker.image(docImage).inside(dockerSetup) {
-    util.shColor "packer build ${args} ${templateFile}"
+    // alpine does not include bash by default
+    util.posixSh "packer build ${args} ${templateFile}"
   }
 
   def manifest = readJSON file: 'packer-manifest.json'
@@ -121,7 +122,7 @@ def String epochToUtc(Integer epoch) {
 
 // image.push() screws up with docker.image("sha:...")
 def void tagIt(String id, String tag) {
-  util.shColor "docker tag ${id} ${tag}"
+  util.bash "docker tag ${id} ${tag}"
 }
 
 def void pushIt(String tag) {
@@ -129,6 +130,6 @@ def void pushIt(String tag) {
     'https://index.docker.io/v1/',
     'dockerhub-sqreadmin'
   ) {
-    util.shColor "docker push ${tag}"
+    util.bash "docker push ${tag}"
   }
 }
