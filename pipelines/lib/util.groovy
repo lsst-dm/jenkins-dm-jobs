@@ -21,6 +21,17 @@ def void shColor(script) {
 }
 
 /**
+ * Thin wrapper around {@code sh} step that strips leading whitspace and
+ * enables ANSI color codes.
+ */
+def void bash(script) {
+  ansiColor('gnome-terminal') {
+    script = dedent(script)
+    sh shebangerize(script, '/bin/bash -xe')
+  }
+}
+
+/**
  * Prepend a shebang to a String that does not already have one.
  *
  * @param script String Text to prepend a shebang to
