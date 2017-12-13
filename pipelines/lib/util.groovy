@@ -27,7 +27,7 @@ def void shColor(script) {
  */
 def String shebanger(String script) {
   if (!(script ==~ /^#!/)) {
-    script = "#!bash -xe\n${script}"
+    script = "#!/bin/bash -xe\n${script}"
   }
 
   script
