@@ -70,7 +70,7 @@ def void drp(
   def eupsTag   = params.EUPS_TAG
   def buildId   = params.BNNNN
   def noPush    = params.NO_PUSH
-  def compiler  = params.COMIPLER
+  def compiler  = params.COMPILER
 
   def datasetInfo  = datasetLookup(datasetSlug)
   def docImage     = "docker.io/lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
