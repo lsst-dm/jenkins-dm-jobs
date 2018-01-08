@@ -30,18 +30,21 @@ notify.wrap {
 
   util.requireParams(required)
 
+  def masterRetries     = 3
+  def verifyPortRetries = 1
+
   def matrix = [
     cfht: {
-      drp('cfht', 'master', true, 3, 1)
+      drp('cfht', 'master', true, masterRetries, 1)
     },
     cfht_verify_port: {
-      drp('cfht', 'verify_port', false, 3, 1)
+      drp('cfht', 'verify_port', false, verifyPortRetries, 1)
     },
     hsc: {
-      drp('hsc', 'master', true, 3, 15)
+      drp('hsc', 'master', true, masterRetries, 15)
     },
     hsc_verify_port: {
-      drp('hsc', 'verify_port', false, 3, 15)
+      drp('hsc', 'verify_port', false, verifyPortRetries, 15)
     },
   ]
 
