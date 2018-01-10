@@ -20,6 +20,7 @@ notify.wrap {
   def githubRef  = 'master'
   def dockerDir  = 'docker'
   def pushLatest = params.LATEST
+  def noPush     = params.NO_PUSH
 
   def run = {
     stage('checkout') {
@@ -37,7 +38,7 @@ notify.wrap {
     }
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (!noPush) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
