@@ -23,11 +23,15 @@ notify.wrap {
   def noPush     = params.NO_PUSH
 
   def run = {
+    def abbrHash = null
+
     stage('checkout') {
       git([
         url: githubRepo,
         branch: githubRef,
       ])
+
+      abbrHash = util.bash(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
     }
 
     stage('build') {
@@ -35,6 +39,8 @@ notify.wrap {
         // ensure base image is always up to date
         image = docker.build("${hubRepo}", "--pull=true --no-cache --build-arg REPO=${githubRepo} --build-arg REF=${githubRef} .")
       }
+
+
     }
 
     stage('push') {
@@ -44,6 +50,9 @@ notify.wrap {
           'dockerhub-sqreadmin'
         ) {
           image.push(githubRef)
+          if (githubRef == 'master') {
+            image.push(abbrHash)
+          }
           if (pushLatest) {
             image.push('latest')
           }
