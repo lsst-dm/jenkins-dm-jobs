@@ -42,7 +42,7 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(lfsVer)
+          image.push(githubRef)
           if (pushLatest) {
             image.push('latest')
           }
