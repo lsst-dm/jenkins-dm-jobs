@@ -49,7 +49,7 @@ notify.wrap {
         ) {
           image.push(githubRef)
           if (githubRef == 'master') {
-            image.push(abbrHash)
+            image.push("g${abbrHash}")
           }
           if (pushLatest) {
             image.push('latest')
