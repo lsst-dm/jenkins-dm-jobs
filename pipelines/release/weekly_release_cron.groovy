@@ -1,3 +1,7 @@
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -18,16 +22,10 @@ notify.wrap {
   def week = null
 
   stage('generate temporal coordinates') {
-    def tz = TimeZone.getTimeZone('America/Los_Angeles')
-    def date = new java.util.Date()
+    def date = LocalDate.now(ZoneId.of('America/Los_Angeles'))
 
-    def yearFormat = new java.text.SimpleDateFormat('YYYY')
-    yearFormat.setTimeZone(tz)
-    def weekFormat = new java.text.SimpleDateFormat('ww')
-    weekFormat.setTimeZone(tz)
-
-    year = yearFormat.format(date)
-    week = weekFormat.format(date)
+    year = date.format(DateTimeFormatter.ofPattern('YYYY'))
+    week = date.format(DateTimeFormatter.ofPattern('ww'))
 
     echo "generated year: ${year}"
     echo "generated week: ${week}"
