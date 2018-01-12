@@ -1,3 +1,6 @@
+import java.time.LocalDate
+import java.time.ZoneId
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -19,19 +22,11 @@ notify.wrap {
   def day = null
 
   stage('generate temporal coordinates') {
-    def tz = TimeZone.getTimeZone('America/Los_Angeles')
-    def date = new java.util.Date()
+    def date = LocalDate.now(ZoneId.of('America/Los_Angeles'))
 
-    def yearFormat = new java.text.SimpleDateFormat('YYYY')
-    yearFormat.setTimeZone(tz)
-    def monthFormat = new java.text.SimpleDateFormat('MM')
-    monthFormat.setTimeZone(tz)
-    def dayFormat = new java.text.SimpleDateFormat('dd')
-    dayFormat.setTimeZone(tz)
-
-    year = yearFormat.format(date)
-    month = monthFormat.format(date)
-    day = dayFormat.format(date)
+    year  = date.getYear().toString()
+    month = date.getMonthValue().toString()
+    day   = date.getDayOfMonth().toString()
 
     echo "generated year: ${year}"
     echo "generated month: ${month}"
