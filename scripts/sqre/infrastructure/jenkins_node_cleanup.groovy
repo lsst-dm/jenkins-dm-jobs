@@ -111,8 +111,9 @@ for (node in Jenkins.instance.nodes) {
     }
 
     def dsm = DiskSpaceMonitor.DESCRIPTOR.get(computer)
+    def size = null
     if (dsm) {
-      def size = dsm.size
+      size = dsm.size
     } else {
       throw new Failed(node, "unable to determine disk usage (this is bad)")
     }
