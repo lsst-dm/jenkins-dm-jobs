@@ -110,7 +110,12 @@ for (node in Jenkins.instance.nodes) {
       throw new Skipped(node, "based on label(s)")
     }
 
-    def size = DiskSpaceMonitor.DESCRIPTOR.get(computer).size
+    def dsm = DiskSpaceMonitor.DESCRIPTOR.get(computer)
+    if (dsm) {
+      def size = dsm.size
+    } else {
+      throw new Failed(node, "unable to determine disk usage (this is bad)")
+    }
     def roundedSize = size / (1024 * 1024 * 1024) as int
 
     println("node: " + node.getDisplayName()
