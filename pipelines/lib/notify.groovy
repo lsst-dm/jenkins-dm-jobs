@@ -16,8 +16,74 @@ String duration() {
   "after ${durClean}"
 }
 
-String slackMessage(String detail) {
+// AFAIK - gymnastics are required to get the build triggering user id without
+// a workspace / shell env vars being setup; this seems unnecessarily difficult
+// but it saves the overhead and latency of using a node block.
+String jenkinsUserId() {
+  currentBuild.build().getCause(Cause.UserIdCause).getUserId()
+}
+
+Map githubToSlack(String user) {
+  def service    = 'https://api.lsst.codes/ghslacker'
+  def authString = null
+
+  withCredentials([[
+    $class: 'UsernamePasswordMultiBinding',
+    credentialsId: 'ghslacker',
+    usernameVariable: 'GS_USER',
+    passwordVariable: 'GS_PASS'
+  ]]) {
+    authString = "${GS_USER}:${GS_PASS}".getBytes().encodeBase64().toString()
+  }
+
+  def conn = new URL("${service}/github/${user}/").openConnection()
+  conn.setRequestProperty( "Authorization", "Basic ${authString}" )
+  // DNS lookup failures will throw an exception
+  def code = conn.getResponseCode()
+
+  def response = [code: code]
+
+  if (code.equals(200)) {
+    def data    = conn.getInputStream().getText()
+    def json    = new groovy.json.JsonSlurper().parseText(data)
+    def slackId = json.collect { it.key }.first()
+    response['slack_id'] = slackId
+  }
+
+  return response
+}
+
+String slackBaseMessage(String detail) {
   "${env.JOB_NAME} - #${env.BUILD_NUMBER} ${detail} (<${env.RUN_DISPLAY_URL}|Open>)"
+}
+
+String slackMessage(String detail) {
+  try {
+    def jenkinsId = jenkinsUserId()
+
+    if (jenkinsId) {
+      // end-user triggered build
+      def response = githubToSlack(jenkinsId)
+
+      if (response.code.equals(200)) {
+        return "<@${response.slack_id}> ${slackBaseMessage(detail)}"
+      }
+
+      // if the slack lookup failed, send a message asking for the "github
+      // user" to edit thier slack profile.
+      if (response.code.equals(404)) {
+        slackSend color: 'danger', message: "Hey, whoever is the slack user corresponding to the github user <${jenkinsId}>, please edit the GitHub Username field in your slack profile."
+      } else {
+        echo "HTTP status code ${response.code.toString()}"
+      }
+    }
+  } catch (e) {
+    // ignore all slack lookup related exceptions
+    echo e.toString()
+  }
+
+  // build was not triggered by an end-user or slack lookup failed
+  return slackBaseMessage(detail)
 }
 
 String slackStartMessage() {
