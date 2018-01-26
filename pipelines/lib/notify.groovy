@@ -20,7 +20,7 @@ String duration() {
 // a workspace / shell env vars being setup; this seems unnecessarily difficult
 // but it saves the overhead and latency of using a node block.
 String jenkinsUserId() {
-  currentBuild.build().getCause(Cause.UserIdCause).getUserId()
+  currentBuild.build().getCause(Cause.UserIdCause)?.getUserId()
 }
 
 Map githubToSlack(String user) {
