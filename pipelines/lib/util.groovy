@@ -638,6 +638,7 @@ def void buildTarballMatrix(
             booleanParam(name: 'RUN_DEMO', value: opt.RUN_DEMO),
             booleanParam(name: 'RUN_SCONS_CHECK', value: opt.RUN_SCONS_CHECK),
             booleanParam(name: 'PUBLISH', value: opt.PUBLISH),
+            booleanParam(name: 'WIPEOUT', value: true),
             string(name: 'TIMEOUT', value: '6'), // hours
             string(name: 'IMAGE', value: nullToEmpty(item.image)),
             string(name: 'LABEL', value: item.label),
