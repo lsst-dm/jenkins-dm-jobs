@@ -509,7 +509,7 @@ def void runDrp(
       export NUMPROC=$(($(target_cores $MEM_PER_CORE) + 1))
 
       set +e
-      "$RUN" --noplot
+      "$RUN" -- --noplot
       run_status=$?
       set -e
 
