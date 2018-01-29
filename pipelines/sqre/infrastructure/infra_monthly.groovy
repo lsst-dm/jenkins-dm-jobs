@@ -38,6 +38,13 @@ notify.wrap {
         booleanParam(name: 'LATEST', value: true),
       ]
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-s3cmd',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
     parallel tasks
   } // run
 
