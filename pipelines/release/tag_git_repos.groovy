@@ -13,11 +13,13 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.githubTagVersion(
-    params.GIT_TAG,
-    params.BUILD_ID,
-    [
-      '--dry-run': params.DRY_RUN,
-    ]
-  )
+  node('docker') {
+    util.githubTagVersion(
+      params.GIT_TAG,
+      params.BUILD_ID,
+      [
+        '--dry-run': params.DRY_RUN,
+      ]
+    )
+  } // node
 } // notify.wrap

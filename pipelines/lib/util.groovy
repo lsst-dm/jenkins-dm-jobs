@@ -524,10 +524,8 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
     } // util.insideWrap
   } // run
 
-  node('docker') {
-    timeout(time: timelimit, unit: 'HOURS') {
-      run()
-    }
+  timeout(time: timelimit, unit: 'HOURS') {
+    run()
   }
 } // githubTagVersion
 
