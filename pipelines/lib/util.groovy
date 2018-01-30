@@ -221,7 +221,7 @@ def lsstswBuild(
   } // runDocker
 
   def runEnv = { doRun ->
-    timeout(time: 5, unit: 'HOURS') {
+    timeout(time: 8, unit: 'HOURS') {
       // use different workspace dirs for python 2/3 to avoid residual state
       // conflicts
       try {
