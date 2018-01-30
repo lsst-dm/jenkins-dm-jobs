@@ -10,25 +10,19 @@ def String dedent(String text) {
 }
 
 /**
- * Thin wrapper around {@code sh} step that strips leading whitspace and
- * enables ANSI color codes.
+ * Thin wrapper around {@code sh} step that strips leading whitspace.
  */
 def void posixSh(script) {
-  ansiColor('gnome-terminal') {
-    script = dedent(script)
-    sh shebangerize(script, '/bin/sh -xe')
-  }
+  script = dedent(script)
+  sh shebangerize(script, '/bin/sh -xe')
 }
 
 /**
- * Thin wrapper around {@code sh} step that strips leading whitspace and
- * enables ANSI color codes.
+ * Thin wrapper around {@code sh} step that strips leading whitspace.
  */
 def void bash(script) {
-  ansiColor('gnome-terminal') {
-    script = dedent(script)
-    sh shebangerize(script, '/bin/bash -xe')
-  }
+  script = dedent(script)
+  sh shebangerize(script, '/bin/bash -xe')
 }
 
 /**
