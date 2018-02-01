@@ -52,6 +52,9 @@ notify.wrap {
         booleanParam(name: 'LATEST', value: true),
       ]
 
+    triggerJob trigger: tasks,
+      name: 'sqre/backup/build-s3backup'
+
     parallel tasks
   } // run
 
