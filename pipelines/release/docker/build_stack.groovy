@@ -13,56 +13,61 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def requiredParams = [
+  util.requireParams([
     'PRODUCT',
     'TAG',
     'TIMEOUT',
-  ]
+  ])
 
-  requiredParams.each { p ->
-    if (!params.get(p)) {
-      error "${p} parameter is required"
-    }
-  }
-
-  def product = params.PRODUCT
-  def tag = params.TAG
+  def product   = params.PRODUCT
+  def eupsTag   = params.TAG
   def timelimit = params.TIMEOUT.toInteger()
 
-  def baseImage = 'lsstsqre/centos:7-stackbase'
+  def image   = null
+  def repo    = null
   def hubRepo = 'lsstsqre/centos'
-  def slug = "${hubRepo}:7-stack-lsst_distrib-${params.TAG}"
+  def hubTag  = "7-stack-lsst_distrib-${eupsTag}"
 
   def run = {
     stage('checkout') {
-      git([
+      repo = git([
         url: 'https://github.com/lsst-sqre/docker-tarballs',
         branch: 'master'
       ])
     }
 
-    stage('pull') {
-      def image = docker.image(baseImage)
-      image.pull()
-    }
-
     stage('build') {
-      util.bash """
-        docker build \
-          --build-arg PRODUCT=\"${product}\" \
-          --build-arg TAG=\"${tag}\" \
-          -t \"${slug}\" .
-        """
+      def opt = []
+      // ensure base image is always up to date
+      opt << '--pull=true'
+      opt << '--no-cache'
+      opt << "--build-arg EUPS_PRODUCT=\"${product}\""
+      opt << "--build-arg EUPS_TAG=\"${tag}\""
+      opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\"'
+      opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\"'
+      opt << "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\"'
+      opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
+      opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
+      opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
+      opt << '.'
+
+      image = docker.build("${hubRepo}", opt.join(' '))
     }
 
     stage('push') {
-      docker.withRegistry(
-        'https://index.docker.io/v1/',
-        'dockerhub-sqreadmin'
-      ) {
-        util.bash "docker push \"${slug}\""
+      if (!noPush) {
+        docker.withRegistry(
+          'https://index.docker.io/v1/',
+          'dockerhub-sqreadmin'
+        ) {
+          def timestamp = util.epochMilliToUtc(currentBuild.startTimeInMillis)
+
+          [hubTag, "${hubTag}-${timestamp}"].each { name ->
+            image.push(name)
+          }
+        }
       }
-    }
+    } // push
   } // run
 
   node('docker') {

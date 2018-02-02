@@ -1,7 +1,3 @@
-import java.time.Instant
-import java.time.format.DateTimeFormatter
-import java.time.ZoneId
-
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -101,23 +97,13 @@ def String packIt(String templateFile, List options, String tag = '1.1.1') {
 
 def void shipIt(Map build, String tag) {
   def sha2  = build['artifact_id']
-  def timestamp = epochToUtc((build['build_time']))
+  def timestamp = util.epochToUtc((build['build_time']))
 
   // push tag AND tag+utc
   [tag, "${tag}-${timestamp}"].each { name ->
     tagIt(sha2, name)
     pushIt(name)
   }
-}
-
-@NonCPS
-def String epochToUtc(Integer epoch) {
-  def unixTime = Instant.ofEpochSecond(epoch)
-  def utcFormat = DateTimeFormatter
-                    .ofPattern("yyyyMMdd'T'hhmmssX")
-                    .withZone(ZoneId.of('UTC') )
-
-  utcFormat.format(unixTime)
 }
 
 // image.push() screws up with docker.image("sha:...")
