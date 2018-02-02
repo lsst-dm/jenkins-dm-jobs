@@ -680,11 +680,21 @@ def String emptyToNull(String s) {
 @NonCPS
 def String epochToUtc(Integer epoch) {
   def unixTime = Instant.ofEpochSecond(epoch)
-  def utcFormat = DateTimeFormatter
+  instantToUtc(unixTime)
+}
+
+/**
+ * Convert java.time.Instant objects to a UTC formatted date/time string.
+ * @param moment java.time.Instant object
+ * @return String UTC formatted date/time string
+ */
+@NonCPS
+def String instantToUtc(Instant moment) {
+  def moment = DateTimeFormatter
                     .ofPattern("yyyyMMdd'T'hhmmssX")
                     .withZone(ZoneId.of('UTC') )
 
-  utcFormat.format(unixTime)
+  utcFormat.format(moment)
 }
 
 return this;
