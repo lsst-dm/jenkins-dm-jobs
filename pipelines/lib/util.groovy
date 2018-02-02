@@ -689,7 +689,7 @@ def String epochToUtc(Integer epoch) {
  * @return String UTC formatted date/time string
  */
 @NonCPS
-def String epochMilliToUtc(Integer epoch) {
+def String epochMilliToUtc(Long epoch) {
   def unixTime = Instant.ofEpochMilli(epoch)
   instantToUtc(unixTime)
 }
