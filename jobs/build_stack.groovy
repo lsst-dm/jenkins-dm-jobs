@@ -7,6 +7,7 @@ p.pipeline().with {
   parameters {
     stringParam('PRODUCT', 'lsst_distrib validate_drp', 'Whitespace delimited list of EUPS products to build.')
     stringParam('TAG', null, 'EUPS distrib tag name. Eg. w_2016_08')
+    booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
     stringParam('TIMEOUT', '1', 'build timeout in hours')
   }
 
