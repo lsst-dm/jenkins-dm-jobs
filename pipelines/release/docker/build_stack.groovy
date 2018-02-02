@@ -53,7 +53,11 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(hubTag)
+          def timestamp = util.epochMilliToUtc(currentBuild.startTimeInMillis)
+
+          [hubTag, "${hubTag}-${timestamp}"].each { name ->
+            image.push(name)
+          }
         }
       }
     } // push
