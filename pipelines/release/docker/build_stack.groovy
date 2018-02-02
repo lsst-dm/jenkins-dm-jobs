@@ -21,6 +21,7 @@ notify.wrap {
 
   def product   = params.PRODUCT
   def eupsTag   = params.TAG
+  def noPush    = params.NO_PUSH
   def timelimit = params.TIMEOUT.toInteger()
 
   def image   = null
