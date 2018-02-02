@@ -43,9 +43,9 @@ notify.wrap {
       opt << '--no-cache'
       opt << "--build-arg EUPS_PRODUCT=\"${product}\""
       opt << "--build-arg EUPS_TAG=\"${tag}\""
-      opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\"'
-      opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\"'
-      opt << "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\"'
+      opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\""
+      opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\""
+      opt << "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\""
       opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
       opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
       opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
