@@ -673,7 +673,7 @@ def String emptyToNull(String s) {
 }
 
 /**
- * Convert UNIX epoch to a UTC formatted date/time string.
+ * Convert UNIX epoch (seconds) to a UTC formatted date/time string.
  * @param epoch Integer count of seconds since UNIX epoch
  * @return String UTC formatted date/time string
  */
@@ -684,13 +684,24 @@ def String epochToUtc(Integer epoch) {
 }
 
 /**
+ * Convert UNIX epoch (milliseconds) to a UTC formatted date/time string.
+ * @param epoch Integer count of milliseconds since UNIX epoch
+ * @return String UTC formatted date/time string
+ */
+@NonCPS
+def String epochMilliToUtc(Integer epoch) {
+  def unixTime = Instant.ofEpochMilli(epoch)
+  instantToUtc(unixTime)
+}
+
+/**
  * Convert java.time.Instant objects to a UTC formatted date/time string.
  * @param moment java.time.Instant object
  * @return String UTC formatted date/time string
  */
 @NonCPS
 def String instantToUtc(Instant moment) {
-  def moment = DateTimeFormatter
+  def utcFormat = DateTimeFormatter
                     .ofPattern("yyyyMMdd'T'hhmmssX")
                     .withZone(ZoneId.of('UTC') )
 
