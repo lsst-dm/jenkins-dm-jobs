@@ -19,13 +19,13 @@ notify.wrap {
     'TIMEOUT',
   ])
 
-  def product = params.PRODUCT
-  def tag = params.TAG
+  def product   = params.PRODUCT
+  def eupsTag   = params.TAG
   def timelimit = params.TIMEOUT.toInteger()
 
-  def baseImage = 'lsstsqre/centos:7-stackbase'
+  def image   = null
   def hubRepo = 'lsstsqre/centos'
-  def slug = "${hubRepo}:7-stack-lsst_distrib-${params.TAG}"
+  def hubTag  = "7-stack-lsst_distrib-${eupsTag}"
 
   def run = {
     stage('checkout') {
@@ -35,28 +35,28 @@ notify.wrap {
       ])
     }
 
-    stage('pull') {
-      def image = docker.image(baseImage)
-      image.pull()
-    }
-
     stage('build') {
-      util.bash """
-        docker build \
-          --build-arg PRODUCT=\"${product}\" \
-          --build-arg TAG=\"${tag}\" \
-          -t \"${slug}\" .
-        """
+      def opt = []
+      // ensure base image is always up to date
+      opt << '--pull=true'
+      opt << '--no-cache'
+      opt << "--build-arg PRODUCT=\"${product}\""
+      opt << "--build-arg TAG=\"${tag}\""
+      opt << '.'
+
+      image = docker.build("${hubRepo}", opt.join(' '))
     }
 
     stage('push') {
-      docker.withRegistry(
-        'https://index.docker.io/v1/',
-        'dockerhub-sqreadmin'
-      ) {
-        util.bash "docker push \"${slug}\""
+      if (!noPush) {
+        docker.withRegistry(
+          'https://index.docker.io/v1/',
+          'dockerhub-sqreadmin'
+        ) {
+          image.push(hubTag)
+        }
       }
-    }
+    } // push
   } // run
 
   node('docker') {
