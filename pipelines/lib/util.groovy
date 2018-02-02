@@ -1,3 +1,7 @@
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.time.ZoneId
+
 /**
  * Remove leading whitespace from a multi-line String (probably a shellscript).
  */
@@ -666,6 +670,21 @@ def String nullToEmpty(String s) {
 def String emptyToNull(String s) {
   if (s == '') { s = null }
   s
+}
+
+/**
+ * Convert UNIX epoch to a UTC formatted date/time string.
+ * @param epoch Integer count of seconds since UNIX epoch
+ * @return String UTC formatted date/time string
+ */
+@NonCPS
+def String epochToUtc(Integer epoch) {
+  def unixTime = Instant.ofEpochSecond(epoch)
+  def utcFormat = DateTimeFormatter
+                    .ofPattern("yyyyMMdd'T'hhmmssX")
+                    .withZone(ZoneId.of('UTC') )
+
+  utcFormat.format(unixTime)
 }
 
 return this;
