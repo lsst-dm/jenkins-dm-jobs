@@ -24,10 +24,11 @@ notify.wrap {
   def noPush    = params.NO_PUSH
   def timelimit = params.TIMEOUT.toInteger()
 
-  def image   = null
-  def repo    = null
-  def hubRepo = 'lsstsqre/centos'
-  def hubTag  = "7-stack-lsst_distrib-${eupsTag}"
+  def image     = null
+  def repo      = null
+  def hubRepo   = 'lsstsqre/centos'
+  def hubTag    = "7-stack-lsst_distrib-${eupsTag}"
+  def timestamp = util.epochMilliToUtc(currentBuild.startTimeInMillis)
 
   def run = {
     stage('checkout') {
@@ -61,8 +62,6 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          def timestamp = util.epochMilliToUtc(currentBuild.startTimeInMillis)
-
           [hubTag, "${hubTag}-${timestamp}"].each { name ->
             image.push(name)
           }
