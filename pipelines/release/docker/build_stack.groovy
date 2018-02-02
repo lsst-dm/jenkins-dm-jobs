@@ -13,17 +13,11 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def requiredParams = [
+  util.requireParams([
     'PRODUCT',
     'TAG',
     'TIMEOUT',
-  ]
-
-  requiredParams.each { p ->
-    if (!params.get(p)) {
-      error "${p} parameter is required"
-    }
-  }
+  ])
 
   def product = params.PRODUCT
   def tag = params.TAG
