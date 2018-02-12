@@ -475,7 +475,7 @@ def void runDrp(
           )
           LOGS=(
             'Cfht/singleFrame.log'
-            'run_validate_drp.log'
+            'job_validate_drp.log'
           )
           ;;
         validation_data_decam)
@@ -485,7 +485,7 @@ def void runDrp(
           )
           LOGS=(
             'Decam/singleFrame.log'
-            'run_validate_drp.log'
+            'job_validate_drp.log'
           )
           ;;
         validation_data_hsc)
@@ -497,7 +497,7 @@ def void runDrp(
           )
           LOGS=(
             'Hsc/singleFrame.log'
-            'run_validate_drp.log'
+            'job_validate_drp.log'
           )
           ;;
         *)
