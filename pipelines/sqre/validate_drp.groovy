@@ -474,7 +474,8 @@ def void runDrp(
             Cfht_output_r.json
           )
           LOGS=(
-            'Cfht/processCcd.log'
+            'Cfht/singleFrame.log'
+            'job_validate_drp.log'
           )
           ;;
         validation_data_decam)
@@ -483,7 +484,8 @@ def void runDrp(
             Decam_output_z.json
           )
           LOGS=(
-            'Decam/processCcd.log'
+            'Decam/singleFrame.log'
+            'job_validate_drp.log'
           )
           ;;
         validation_data_hsc)
@@ -494,7 +496,8 @@ def void runDrp(
             data_hsc_rerun_20170105_HSC-Y.json
           )
           LOGS=(
-            'job_singleFrame.log'
+            'Hsc/singleFrame.log'
+            'job_validate_drp.log'
           )
           ;;
         *)
