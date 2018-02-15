@@ -27,9 +27,11 @@ notify.wrap {
 
   def run = {
     ws('snowflake/release') {
+      def cwd = pwd()
+
       stage('build') {
         withEnv([
-          "EUPS_PKGROOT=${pwd()}/distrib",
+          "EUPS_PKGROOT=${cwd}/distrib",
           'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
           "VERSIONDB_PUSH=${versiondbPush}",
           'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
@@ -65,9 +67,9 @@ notify.wrap {
             variable: 'DOXYGEN_S3_BUCKET'
           ]]) {
             withEnv([
-              "EUPS_PKGROOT=${pwd()}/distrib",
-              "WORKSPACE=${pwd()}",
-              "HOME=${pwd()}/home",
+              "EUPS_PKGROOT=${cwd}/distrib",
+              "WORKSPACE=${cwd}",
+              "HOME=${cwd}/home",
             ]) {
               // the current iteration of the awscli container is alpine based
               // and doesn't work with util.insideWrap.  However, the aws cli

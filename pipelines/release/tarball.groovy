@@ -186,10 +186,11 @@ def void osxTarballs(
  * Run Linux specific tarball build.
  */
 def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
-  def buildDir = "${pwd()}/build"
-  def distDir  = "${pwd()}/distrib"
+  def cwd      = pwd()
+  def buildDir = "${cwd}/build"
+  def distDir  = "${cwd}/distrib"
   def shDir    = "${buildDir}/scripts"
-  def ciDir    = "${pwd()}/ci-scripts"
+  def ciDir    = "${cwd}/ci-scripts"
 
   def buildDirContainer = '/build'
   def distDirContainer  = '/distrib'
@@ -272,10 +273,11 @@ def void osxBuild(
   String compiler,
   MinicondaEnv menv
 ) {
-  def buildDir = "${pwd()}/build"
-  def distDir  = "${pwd()}/distrib"
+  def cwd      = pwd()
+  def buildDir = "${cwd}/build"
+  def distDir  = "${cwd}/distrib"
   def shDir    = "${buildDir}/scripts"
-  def ciDir    = "${pwd()}/ci-scripts"
+  def ciDir    = "${cwd}/ci-scripts"
 
   def shName = "${shDir}/run.sh"
 
@@ -300,7 +302,7 @@ def void osxBuild(
       params.PRODUCT,
       params.EUPS_TAG,
       "${shName}",
-      "${pwd()}/distrib",
+      "${cwd}/distrib",
       compiler,
       macosx_deployment_target,
       menv,
@@ -324,10 +326,11 @@ def void osxBuild(
  * Run Linux specific tarball smoke test(s).
  */
 def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
-  def smokeDir = "${pwd()}/smoke"
-  def distDir  = "${pwd()}/distrib"
+  def cwd      = pwd()
+  def smokeDir = "${cwd}/smoke"
+  def distDir  = "${cwd}/distrib"
   def shDir    = "${smokeDir}/scripts"
-  def ciDir    = "${pwd()}/ci-scripts"
+  def ciDir    = "${cwd}/ci-scripts"
 
   def smokeDirContainer = '/smoke'
   def distDirContainer  = '/distrib'
@@ -405,9 +408,10 @@ def void osxSmoke(
   String compiler,
   MinicondaEnv menv
 ) {
-  def smokeDir = "${pwd()}/smoke"
-  def shName   = "${pwd()}/scripts/smoke.sh"
-  def ciDir    = "${pwd()}/ci-scripts"
+  def cwd      = pwd()
+  def smokeDir = "${cwd}/smoke"
+  def shName   = "${cwd}/scripts/smoke.sh"
+  def ciDir    = "${cwd}/ci-scripts"
 
   try {
     // smoke state is left at the end of the build for possible debugging but
@@ -420,7 +424,7 @@ def void osxSmoke(
       params.PRODUCT,
       params.EUPS_TAG,
       shName,
-      "${pwd()}/distrib",
+      "${cwd}/distrib",
       compiler,
       macosx_deployment_target,
       menv,
