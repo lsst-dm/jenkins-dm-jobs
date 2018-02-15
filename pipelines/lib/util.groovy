@@ -257,6 +257,8 @@ def lsstswBuild(
  * Run a jenkins_wrapper.sh
  */
 def jenkinsWrapper() {
+  def cwd = pwd()
+
   try {
     dir('lsstsw') {
       cloneLsstsw()
@@ -291,15 +293,15 @@ def jenkinsWrapper() {
       variable: 'CMIRROR_S3_BUCKET'
     ]]) {
       withEnv([
-        "WORKSPACE=${pwd()}",
-        "HOME=${pwd()}/home",
-        "EUPS_USERDATA=${pwd()}/home/.eups_userdata",
+        "WORKSPACE=${cwd}",
+        "HOME=${cwd}/home",
+        "EUPS_USERDATA=${cwd}/home/.eups_userdata",
       ]) {
         util.bash './ci-scripts/jenkins_wrapper.sh'
       }
     } // withCredentials([[
   } finally {
-    withEnv(["WORKSPACE=${pwd()}"]) {
+    withEnv(["WORKSPACE=${cwd}"]) {
       util.bash '''
         if hash lsof 2>/dev/null; then
           Z=$(lsof -d 200 -t)
