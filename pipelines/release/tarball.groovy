@@ -510,10 +510,10 @@ def void s3Push(String ... parts) {
   // container
   util.bash '''
     # do not assume virtualenv is present
-    pip install --upgrade pip
-    pip install --upgrade virtualenv
+    pip install virtualenv
     virtualenv venv
     . venv/bin/activate
+    pip install --upgrade pip
     pip install --upgrade awscli==1.14.2
   '''
 
