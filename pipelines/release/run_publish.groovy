@@ -22,15 +22,17 @@ notify.wrap {
 
   def run = {
     ws('snowflake/release') {
+      def cwd = pwd()
+
       stage('publish') {
         dir('lsstsw') {
           util.cloneLsstsw()
         }
 
         def env = [
-          "EUPS_PKGROOT=${pwd()}/distrib",
-          "WORKSPACE=${pwd()}",
-          "EUPS_USERDATA=${pwd()}/home/.eups_userdata",
+          "EUPS_PKGROOT=${cwd}/distrib",
+          "WORKSPACE=${cwd}",
+          "EUPS_USERDATA=${cwd}/home/.eups_userdata",
         ]
 
         withCredentials([[
@@ -74,9 +76,9 @@ notify.wrap {
             variable: 'EUPS_S3_BUCKET'
           ]]) {
             def env = [
-              "EUPS_PKGROOT=${pwd()}/distrib",
-              "WORKSPACE=${pwd()}",
-              "HOME=${pwd()}/home",
+              "EUPS_PKGROOT=${cwd}/distrib",
+              "WORKSPACE=${cwd}",
+              "HOME=${cwd}/home",
             ]
             withEnv(env) {
               docker.image(awsImage).inside {
