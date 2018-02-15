@@ -506,6 +506,8 @@ def void prepareSmoke(
 def void s3Push(String ... parts) {
   def path = util.joinPath(parts)
 
+  // XXX if docker was available on osx nodes, this could be replaced with a
+  // container
   util.bash '''
     # do not assume virtualenv is present
     pip install --upgrade pip
