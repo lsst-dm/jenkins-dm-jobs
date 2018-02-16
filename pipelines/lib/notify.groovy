@@ -259,7 +259,6 @@ String shortenFolder(String folder) {
   def dirsep = '_'
 
   folder.split('/').collect { section ->
-    println section
     // take first char
     section[0]
   }.join(dirsep)
@@ -409,18 +408,22 @@ String defaultChannel() {
   }
 }
 
-String jobChannel() {
-  def maxChannelChars = 21
-  def parts = []
-
+String jobChannelPrefix() {
   withCredentials([[
     $class: 'StringBinding',
     credentialsId: 'slack-channel-prefix',
     variable: 'channelPrefix'
   ]]) {
-    parts << channelPrefix
-    parts << '-'
+    return channelPrefix
   }
+}
+
+String jobChannel() {
+  def maxChannelChars = 21
+  def parts = []
+
+  parts << jobChannelPrefix()
+  parts << '-'
 
   // JOB_NAME is folder path+ job name; name needs to be striped off to get
   // only the path
