@@ -425,15 +425,13 @@ String jobChannel() {
   parts << jobChannelPrefix()
   parts << '-'
 
-  // JOB_NAME is folder path+ job name; name needs to be striped off to get
-  // only the path
-  def folder = env.JOB_NAME.replaceAll('/[^/]+$', '')
-  def sFolder = null
-  // if the regex didn't change JOB_NAME, it isn't in a folder
-  sFolder = shortenFolder(folder)
+  // if JOB_NAME and JOB_BASE_NAME are identifcal, there is no folder path
+  // component
+  if (env.JOB_NAME != env.JOB_BASE_NAME) {
+    // JOB_NAME is <folder path>/<job name>; <job name> needs to be striped off
+    def folder = env.JOB_NAME.split('/')[0 .. -2].join('/')
 
-  if (sFolder) {
-    parts << sFolder
+    parts << shortenFolder(folder)
     parts << '_'
   }
 
