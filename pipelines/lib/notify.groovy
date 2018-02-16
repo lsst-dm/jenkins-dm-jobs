@@ -258,17 +258,10 @@ Map slackUserProfile(String token, String slackId) {
 String shortenFolder(String folder) {
   def dirsep = '_'
 
-  def parts = folder.split('/')
-  if (parts.size() > 1) {
-    def bits = parts.collect { section ->
-      // take first char
-      section[0]
-    }
-
-    return bits.join(dirsep)
-  }
-
-  return null
+  folder.split('/').collect { section ->
+    // take first char
+    section[0]
+  }.join(dirsep)
 }
 
 /*
@@ -415,28 +408,30 @@ String defaultChannel() {
   }
 }
 
-String jobChannel() {
-  def maxChannelChars = 21
-  def parts = []
-
+String jobChannelPrefix() {
   withCredentials([[
     $class: 'StringBinding',
     credentialsId: 'slack-channel-prefix',
     variable: 'channelPrefix'
   ]]) {
-    parts << channelPrefix
-    parts << '-'
+    return channelPrefix
   }
+}
 
-  // JOB_NAME is folder path+ job name; name needs to be striped off to get
-  // only the path
-  def folder = env.JOB_NAME.replaceAll('/[^/]+$', '')
-  def sFolder = null
-  // if the regex didn't change JOB_NAME, it isn't in a folder
-  sFolder = shortenFolder(folder)
+String jobChannel() {
+  def maxChannelChars = 21
+  def parts = []
 
-  if (sFolder) {
-    parts << sFolder
+  parts << jobChannelPrefix()
+  parts << '-'
+
+  // if JOB_NAME and JOB_BASE_NAME are identifcal, there is no folder path
+  // component
+  if (env.JOB_NAME != env.JOB_BASE_NAME) {
+    // JOB_NAME is <folder path>/<job name>; <job name> needs to be striped off
+    def folder = env.JOB_NAME.split('/')[0 .. -2].join('/')
+
+    parts << shortenFolder(folder)
     parts << '_'
   }
 
