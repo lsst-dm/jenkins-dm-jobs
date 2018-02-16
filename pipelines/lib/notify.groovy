@@ -391,7 +391,7 @@ Map baseBuildMessage(Map args) {
 
   if (!params.isEmpty()) {
     message.attachments.first().text += " ```\n" +
-      params.collect{ k,v -> "${k} ${v}" }.join("\n") +
+      params.collect{ k,v -> "${k}: ${v}" }.join("\n") +
       "\n```"
   }
 
