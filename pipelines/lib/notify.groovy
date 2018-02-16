@@ -258,17 +258,11 @@ Map slackUserProfile(String token, String slackId) {
 String shortenFolder(String folder) {
   def dirsep = '_'
 
-  def parts = folder.split('/')
-  if (parts.size() > 1) {
-    def bits = parts.collect { section ->
-      // take first char
-      section[0]
-    }
-
-    return bits.join(dirsep)
-  }
-
-  return null
+  folder.split('/').collect { section ->
+    println section
+    // take first char
+    section[0]
+  }.join(dirsep)
 }
 
 /*
