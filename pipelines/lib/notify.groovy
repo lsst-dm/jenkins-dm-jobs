@@ -60,9 +60,10 @@ String githubToSlack(String jenkinsUser, String authUser, String authPass) {
     conn.setRequestProperty('Authorization', "Basic ${auth}")
 
     debugln("responseCode: ${conn.responseCode}")
-    def text = conn.getInputStream().getText()
-    debugln("text: ${text}")
     if (conn.responseCode.equals(200)) {
+      // don't try to parse body text upon error
+      def text = conn.getInputStream().getText()
+      debugln("text: ${text}")
       def data = new groovy.json.JsonSlurperClassic().parseText(text)
       slackId  = data.collect { it.key }.first()
     }
