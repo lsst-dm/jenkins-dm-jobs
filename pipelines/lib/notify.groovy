@@ -452,6 +452,17 @@ String jobChannel() {
   channel.replaceAll('-$', '')
 }
 
+String githubToSlackEz(jenkinsId) {
+  withCredentials([[
+    $class: 'UsernamePasswordMultiBinding',
+    credentialsId: 'ghslacker',
+    usernameVariable: 'GS_USER',
+    passwordVariable: 'GS_PASS'
+  ]]) {
+    return githubToSlack(jenkinsId, GS_USER, GS_PASS)
+  }
+}
+
 // memoized to reduce remote api calls
 @Field Map slackProfile = null
 @Field String slackId = null
@@ -476,18 +487,8 @@ void slackSendBuild(Map args) {
     def jenkinsId = jenkinsUserId()
     if (jenkinsId) {
       // end-user triggered build
-
-      if (!slackId) {
-        withCredentials([[
-          $class: 'UsernamePasswordMultiBinding',
-          credentialsId: 'ghslacker',
-          usernameVariable: 'GS_USER',
-          passwordVariable: 'GS_PASS'
-        ]]) {
-          slackId = githubToSlack(jenkinsId, GS_USER, GS_PASS)
-          debugln("slackId: ${slackId}")
-        }
-      }
+      slackId = slackId ?: githubToSlackEz(jenkinsId)
+      debugln("slackId: ${slackId}")
 
       if (!slackId && !warningIssued) {
         // only issue warning once per build to avoid spamming
