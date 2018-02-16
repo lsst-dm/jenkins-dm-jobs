@@ -425,6 +425,7 @@ String jobChannel() {
     variable: 'channelPrefix'
   ]]) {
     parts << channelPrefix
+    parts << '-'
   }
 
   // JOB_NAME is folder path+ job name; name needs to be striped off to get
@@ -435,7 +436,6 @@ String jobChannel() {
   sFolder = shortenFolder(folder)
 
   if (sFolder) {
-    parts << '-'
     parts << sFolder
     parts << '_'
   }
