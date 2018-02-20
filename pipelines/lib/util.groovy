@@ -469,7 +469,7 @@ def void getManifest(String rebuildId, String filename) {
  */
 def void githubTagVersion(String gitTag, String buildId, Map options) {
   def timelimit = 1
-  def docImage  = 'docker.io/lsstsqre/codekit:3.1.0'
+  def docImage  = 'lsstsqre/codekit:3.1.0'
   def prog = 'github-tag-version'
   def defaultOptions = [
     '--dry-run': true,

@@ -29,7 +29,7 @@ notify.wrap {
 
     stage('build') {
       // ensure base image is always up to date
-      docker.image('docker.io/centos:7').pull()
+      docker.image('centos:7').pull()
 
       image = docker.build("${hubRepo}", "--no-cache --build-arg POSTQA_VER=${postqaVer} .")
     }

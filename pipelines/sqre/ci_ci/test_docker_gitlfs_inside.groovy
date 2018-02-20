@@ -14,7 +14,7 @@ node('jenkins-master') {
 
 notify.wrap {
   node('docker') {
-    def hubRepo = 'docker.io/lsstsqre/gitlfs'
+    def hubRepo = 'lsstsqre/gitlfs'
     def local = "${hubRepo}-local"
 
     util.wrapContainer(hubRepo, local)
