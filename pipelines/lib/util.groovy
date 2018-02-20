@@ -43,6 +43,25 @@ def String shebangerize(String script, String prog = '/bin/sh -xe') {
 
   script
 }
+/**
+ * Build a docker image, constructing the `Dockerfile` from `config`.
+ *
+ * @param config String literal text of Dockerfile
+ * @param tag String name of tag to apply to generated image
+ */
+def void buildImage(String config, String tag) {
+  writeFile(file: 'Dockerfile', text: config)
+
+  bash """
+    docker build -t "${tag}" \
+        --build-arg USER="\$(id -un)" \
+        --build-arg UID="\$(id -u)" \
+        --build-arg GROUP="\$(id -gn)" \
+        --build-arg GID="\$(id -g)" \
+        --build-arg HOME="\$HOME" \
+        .
+  """
+}
 
 /**
  * Create a thin "wrapper" container around {@code imageName} to map uid/gid of
@@ -73,17 +92,7 @@ def void wrapContainer(String imageName, String tag) {
   // docker insists on recusrively checking file access under its execution
   // path -- so run it from a dedicated dir
   dir(buildDir) {
-    writeFile(file: 'Dockerfile', text: config)
-
-    bash """
-      docker build -t "${tag}" \
-          --build-arg USER="\$(id -un)" \
-          --build-arg UID="\$(id -u)" \
-          --build-arg GROUP="\$(id -gn)" \
-          --build-arg GID="\$(id -g)" \
-          --build-arg HOME="\$HOME" \
-          .
-    """
+    buildImage(config, tag)
 
     deleteDir()
   }
