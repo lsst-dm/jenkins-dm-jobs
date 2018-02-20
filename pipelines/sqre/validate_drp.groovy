@@ -491,9 +491,9 @@ def void runDrp(
         validation_data_hsc)
           RUN="$VALIDATE_DRP_DIR/examples/runHscTest.sh"
           RESULTS=(
-            data_hsc_rerun_20170105_HSC-I.json
-            data_hsc_rerun_20170105_HSC-R.json
-            data_hsc_rerun_20170105_HSC-Y.json
+            Hsc_output_HSC-I.json
+            Hsc_output_HSC-R.json
+            Hsc_output_HSC-Y.json
           )
           LOGS=(
             'Hsc/singleFrame.log'
