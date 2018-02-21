@@ -119,8 +119,8 @@ for (node in Jenkins.instance.nodes) {
       println "unable to determine disk usage (this is bad)"
 
       // force disk cleanup
-      roundedSize = threshold
-      println "assuming disk usage == cleanup threshold to force cleanup"
+      roundedSize = 0
+      println "assuming free disk space == 0 to force cleanup"
     }
 
     println("node: " + node.getDisplayName()
