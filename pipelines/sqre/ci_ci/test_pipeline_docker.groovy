@@ -16,7 +16,7 @@ notify.wrap {
   def image = null
   node('docker') {
     stage('pull centos:7') {
-      docker.image('docker.io/centos:7').pull()
+      docker.image('centos:7').pull()
     }
 
     stage('build Dockerfile') {

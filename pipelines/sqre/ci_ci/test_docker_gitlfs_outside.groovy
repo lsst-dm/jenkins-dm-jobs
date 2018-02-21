@@ -16,7 +16,7 @@ notify.wrap {
   node('docker') {
     deleteDir()
 
-    def hubRepo = 'docker.io/lsstsqre/gitlfs'
+    def hubRepo = 'lsstsqre/gitlfs'
     def local = "${hubRepo}-local"
 
     def gitRepo = 'https://github.com/lsst/validation_data_cfht.git'

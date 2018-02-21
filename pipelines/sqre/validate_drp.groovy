@@ -76,7 +76,7 @@ def void drp(
   def compiler  = params.COMPILER
 
   def datasetInfo  = datasetLookup(datasetSlug)
-  def docImage     = "docker.io/lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
+  def docImage     = "lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
   def drpRepo      = 'https://github.com/lsst/validate_drp.git'
   def postqaVer    = '1.3.3'
   def jenkinsDebug = 'true'
@@ -321,7 +321,7 @@ def void record(String archiveDir, String drpDir, String lsstswDir) {
  * @param gitRef String git ref to checkout
  */
 def void checkoutLFS(String gitRepo, String gitRef = 'master') {
-  def docRepo = 'docker.io/lsstsqre/gitlfs'
+  def docRepo = 'lsstsqre/gitlfs'
 
   // running a git clone in a docker.inside block is broken
   git([
@@ -592,7 +592,7 @@ def void runPostqa(
   String label,
   Boolean noPush = true
 ) {
-  def docImage = "docker.io/lsstsqre/postqa:${postqaVer}"
+  def docImage = "lsstsqre/postqa:${postqaVer}"
 
   def run = {
     util.bash '''

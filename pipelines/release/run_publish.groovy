@@ -18,7 +18,7 @@ node('jenkins-master') {
 notify.wrap {
   def timelimit = params.TIMEOUT.toInteger()
   def can       = config.canonical
-  def awsImage  = 'docker.io/lsstsqre/awscli'
+  def awsImage  = 'lsstsqre/awscli'
 
   def run = {
     ws('snowflake/release') {

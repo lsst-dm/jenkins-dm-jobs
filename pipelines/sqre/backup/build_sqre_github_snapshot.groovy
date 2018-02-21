@@ -28,7 +28,7 @@ notify.wrap {
     }
 
     stage('pull') {
-      docker.image('docker.io/centos:7').pull()
+      docker.image('centos:7').pull()
     }
 
     stage('build') {

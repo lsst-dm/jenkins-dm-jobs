@@ -186,6 +186,15 @@ notify.wrap {
             wait: false
         }
       }
+
+      stage('doc build') {
+        retry(retries) {
+          build job: 'sqre/infrastructure/documenteer',
+            parameters: [
+              string(name: 'EUPS_TAG', value: eupsTag),
+            ]
+        }
+      }
     } // timeout
   } finally {
     stage('archive') {

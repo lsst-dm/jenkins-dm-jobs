@@ -13,11 +13,16 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  util.requireParams(['LTD_MASON_VER'])
+
   def image      = null
-  def hubRepo    = 'lsstsqre/postqa'
-  def githubRepo = 'lsst-sqre/docker-postqa'
+  def hubRepo    = 'lsstsqre/ltd-mason'
+  def githubRepo = 'lsst-sqre/ltd-mason'
   def githubRef  = 'master'
-  def postqaVer  = '1.3.3'
+  def buildDir   = 'docker'
+  def ver        = params.LTD_MASON_VER
+  def pushLatest = params.LATEST
+
 
   def run = {
     stage('checkout') {
@@ -28,10 +33,10 @@ notify.wrap {
     }
 
     stage('build') {
-      // ensure base image is always up to date
-      docker.image('centos:7').pull()
-
-      image = docker.build("${hubRepo}", "--no-cache --build-arg POSTQA_VER=${postqaVer} .")
+      dir(buildDir) {
+        // ensure base image is always up to date
+        image = docker.build("${hubRepo}", "--pull=true --no-cache --build-arg LTD_MASON_VER=${ver} .")
+      }
     }
 
     stage('push') {
@@ -40,7 +45,10 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(postqaVer)
+          image.push(ver)
+          if (pushLatest) {
+            image.push('latest')
+          }
         }
       }
     } // push
@@ -50,6 +58,5 @@ notify.wrap {
     timeout(time: 30, unit: 'MINUTES') {
       run()
     }
-
   } // node
 } // notify.wrap

@@ -28,7 +28,7 @@ notify.wrap {
 
   def run = {
     try {
-      def hub             = "docker.io/lsstsqre/gitlfs:${tag}"
+      def hub             = "lsstsqre/gitlfs:${tag}"
       def local           = "${hub}-local"
       def workDir         = pwd()
       def resultsDir      = "${workDir}/${resultsBasename}"

@@ -22,7 +22,7 @@ notify.wrap {
     ])
 
     def images = []
-    def buildRepo = 'docker.io/lsstsqre/centos'
+    def buildRepo = 'lsstsqre/centos'
 
     // centos major release version(s)
     [6, 7].each { majrelease ->
@@ -31,7 +31,7 @@ notify.wrap {
 
       librarianPuppet()
       def baseBuild = packIt('centos_stackbase.json', [
-        "-var base_image=docker.io/centos:${majrelease}",
+        "-var base_image=centos:${majrelease}",
         "-var build_name=${baseName}",
       ])
       images << [(baseTag): baseBuild]
@@ -66,7 +66,7 @@ notify.wrap {
 } // notify.wrap
 
 def void librarianPuppet(String cmd='install', String tag='2.2.3') {
-  util.insideWrap("docker.io/lsstsqre/cakepan:${tag}", "-e HOME=${pwd()}") {
+  util.insideWrap("lsstsqre/cakepan:${tag}", "-e HOME=${pwd()}") {
     util.bash "librarian-puppet ${cmd}"
   }
 }
@@ -75,7 +75,7 @@ def String packIt(String templateFile, List options, String tag = '1.1.1') {
 
   def dockerSetup = '-v /var/run/docker.sock:/var/run/docker.sock'
   dockerSetup     = "-e HOME=${pwd()} ${dockerSetup}"
-  def docImage    = "docker.io/lsstsqre/cakepacker:${tag}"
+  def docImage    = "lsstsqre/cakepacker:${tag}"
   def args        = options.join(' ')
 
   docker.image(docImage).inside(dockerSetup) {
