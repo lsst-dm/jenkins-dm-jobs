@@ -111,13 +111,17 @@ for (node in Jenkins.instance.nodes) {
     }
 
     def dsm = DiskSpaceMonitor.DESCRIPTOR.get(computer)
-    def size = null
+    def roundedSize = null
     if (dsm) {
-      size = dsm.size
+      def size = dsm.size
+      roundedSize = size / (1024 * 1024 * 1024) as int
     } else {
-      throw new Failed(node, "unable to determine disk usage (this is bad)")
+      println "unable to determine disk usage (this is bad)"
+
+      // force disk cleanup
+      roundedSize = threshold
+      println "assuming disk usage == cleanup threshold to force cleanup"
     }
-    def roundedSize = size / (1024 * 1024 * 1024) as int
 
     println("node: " + node.getDisplayName()
             + ", free space: " + roundedSize
