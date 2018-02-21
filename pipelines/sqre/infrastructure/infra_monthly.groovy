@@ -55,6 +55,13 @@ notify.wrap {
     triggerJob trigger: tasks,
       name: 'sqre/backup/build-s3backup'
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-ltd-mason',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
     parallel tasks
   } // run
 
