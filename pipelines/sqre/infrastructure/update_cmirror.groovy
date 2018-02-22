@@ -15,6 +15,7 @@ node('jenkins-master') {
 notify.wrap {
   def hub_repo  = 'lsstsqre/cmirror'
   def wgetImage = 'lsstsqre/wget'
+  def awsImage  = 'lsstsqre/awscli'
 
   def run = {
     def image = docker.image("${hub_repo}:latest")
@@ -42,8 +43,8 @@ notify.wrap {
     }
 
     stage('mirror miniconda') {
-      util.insideWrap(wgetImage) {
-        util.sh '''
+      docker.image(wgetImage).inside {
+        util.posixSh '''
           wget \
             --mirror \
             --continue \
@@ -71,28 +72,19 @@ notify.wrap {
         credentialsId: 'cmirror-s3-bucket',
         variable: 'CMIRROR_S3_BUCKET'
       ]]) {
-        util.bash '''
-          set -e
-          # do not assume virtualenv is present
-          pip install virtualenv
-          virtualenv venv
-          . venv/bin/activate
-          pip install awscli
-        '''
-
-        catchError {
-          util.bash '''
-            . venv/bin/activate
-            aws s3 sync ./local_mirror/ s3://$CMIRROR_S3_BUCKET/pkgs/free/
-          '''
-        }
-        catchError {
-          util.bash '''
-            . venv/bin/activate
-            aws s3 sync ./miniconda/ s3://$CMIRROR_S3_BUCKET/miniconda/
-          '''
-        }
-      }
+        docker.image(awsImage).inside {
+          catchError {
+            util.posixSh '''
+              aws s3 sync ./local_mirror/ s3://$CMIRROR_S3_BUCKET/pkgs/free/
+            '''
+          }
+          catchError {
+            util.posixSh '''
+              aws s3 sync ./miniconda/ s3://$CMIRROR_S3_BUCKET/miniconda/
+            '''
+          }
+        } // .inside
+      } // withCredentials
     } // stage('push to s3')
   } // run
 
@@ -124,8 +116,8 @@ def runMirror(String imageId, String upstream, String platform) {
   // suspected repodata.json issues as conda-mirror completely rewrites the
   // packages section of this file.
   dir("repodata/${platform}") {
-    util.insideWrap(wgetImage) {
-      util.sh "wget ${upstream}${platform}/repodata.json"
+    docker.image(wgetImage).inside {
+      util.posixSh "wget ${upstream}${platform}/repodata.json"
     }
   }
 
