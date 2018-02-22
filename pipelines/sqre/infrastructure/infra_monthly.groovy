@@ -65,6 +65,9 @@ notify.wrap {
     triggerJob trigger: tasks,
       name: 'sqre/infrastructure/build-wget'
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-cmirror'
+
     parallel tasks
   } // run
 
