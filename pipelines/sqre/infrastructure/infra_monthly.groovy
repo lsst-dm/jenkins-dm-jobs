@@ -62,6 +62,9 @@ notify.wrap {
         booleanParam(name: 'LATEST', value: true),
       ]
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-wget'
+
     parallel tasks
   } // run
 
