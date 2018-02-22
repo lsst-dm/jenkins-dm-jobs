@@ -1,3 +1,5 @@
+import groovy.transform.Field
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -12,9 +14,10 @@ node('jenkins-master') {
   }
 }
 
+@Field String wgetImage = 'lsstsqre/wget'
+
 notify.wrap {
   def hub_repo  = 'lsstsqre/cmirror'
-  def wgetImage = 'lsstsqre/wget'
   def awsImage  = 'lsstsqre/awscli'
 
   def run = {
