@@ -13,7 +13,8 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def hub_repo = 'lsstsqre/cmirror'
+  def hub_repo  = 'lsstsqre/cmirror'
+  def wgetImage = 'lsstsqre/wget'
 
   def run = {
     def image = docker.image("${hub_repo}:latest")
@@ -41,19 +42,21 @@ notify.wrap {
     }
 
     stage('mirror miniconda') {
-      util.bash '''
-        wget \
-          --mirror \
-          --continue \
-          --no-parent \
-          --no-host-directories \
-          --progress=dot:giga \
-          -R "*.exe" \
-          -R "*ppc64le.sh" \
-          -R "*armv7l.sh" \
-          -R "*x86.sh" \
-          https://repo.continuum.io/miniconda/
-      '''
+      util.insideWrap(wgetImage) {
+        util.sh '''
+          wget \
+            --mirror \
+            --continue \
+            --no-parent \
+            --no-host-directories \
+            --progress=dot:giga \
+            -R "*.exe" \
+            -R "*ppc64le.sh" \
+            -R "*armv7l.sh" \
+            -R "*x86.sh" \
+            https://repo.continuum.io/miniconda/
+        '''
+      }
     }
 
     stage('push to s3') {
@@ -121,7 +124,9 @@ def runMirror(String imageId, String upstream, String platform) {
   // suspected repodata.json issues as conda-mirror completely rewrites the
   // packages section of this file.
   dir("repodata/${platform}") {
-    util.bash "wget ${upstream}${platform}/repodata.json"
+    util.insideWrap(wgetImage) {
+      util.sh "wget ${upstream}${platform}/repodata.json"
+    }
   }
 
   archiveArtifacts([
