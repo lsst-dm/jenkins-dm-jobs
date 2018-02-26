@@ -12,7 +12,7 @@ p.pipeline().with {
     booleanParam('RUN_SCONS_CHECK', false, '(no-op without SMOKE) Manually checkout the "base" product and invoke "scons".')
     booleanParam('PUBLISH', false, 'Publish generated EUPS distrib tarballs.')
     booleanParam('WIPEOUT', false, 'Completely wipe out workspace(s) before starting build.')
-    stringParam('TIMEOUT', '6', 'build timeout in hours')
+    stringParam('TIMEOUT', '8', 'build timeout in hours')
     stringParam('IMAGE', null, 'published EUPS tag')
     choiceParam('LABEL', ['centos-7', 'centos-6', 'osx-10.11'], 'LSST conda package set ref')
     stringParam('COMPILER', null, 'compiler version string')
