@@ -20,12 +20,6 @@ class Plumber {
     Common.makeFolders(dsl)
 
     dsl.pipelineJob(name) {
-      properties {
-        rebuild {
-          autoRebuild()
-        }
-      }
-
       label('jenkins-master')
       keepDependencies()
       concurrentBuild(false)
