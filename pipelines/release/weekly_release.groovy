@@ -58,7 +58,7 @@ notify.wrap {
               string(name: 'PRODUCT', value: product),
               booleanParam(name: 'SKIP_DEMO', value: false),
               booleanParam(name: 'SKIP_DOCS', value: false),
-              string(name: 'TIMEOUT', value: '6'), // hours
+              string(name: 'TIMEOUT', value: '8'), // hours
             ],
             wait: true
           rebuildId = result.id
