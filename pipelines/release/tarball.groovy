@@ -733,7 +733,7 @@ def String scriptPreamble(
     export EUPS_USE_TARBALLS="${useTarballs}"
 
     source "${ciDir}/ccutils.sh"
-    cc::setup "${compiler}"
+    cc::setup_first "${compiler}"
     """
   )
 }

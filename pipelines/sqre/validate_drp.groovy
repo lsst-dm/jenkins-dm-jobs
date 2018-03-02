@@ -371,7 +371,7 @@ def void buildDrp(
       set +o xtrace
 
       source "${CI_DIR}/ccutils.sh"
-      cc::setup "$LSST_COMPILER"
+      cc::setup_first "$LSST_COMPILER"
 
       source /opt/lsst/software/stack/loadLSST.bash
       setup -k -r .

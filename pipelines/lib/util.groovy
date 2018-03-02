@@ -206,10 +206,9 @@ def lsstswBuild(
   String label,
   String compiler,
   String python,
+  String slug,
   Boolean wipeout=false
 ) {
-  def slug = "${label}.py${python}"
-
   def run = {
     withEnv([
       'SKIP_DOCS=true',
@@ -564,12 +563,15 @@ def buildStackOsMatrix(Map config, Boolean wipeout=false) {
     def matrix = [:]
 
     config['matrix'].each { item ->
-      matrix["${item.label}.py${item.python}"] = {
+      def lname = item.dname ? item.dname : item.label
+      def slug = "${lname}.py${item.python}"
+      matrix[slug] = {
         lsstswBuild(
           item.image,
           item.label,
           item.compiler,
           item.python,
+          slug,
           wipeout
         )
       }
