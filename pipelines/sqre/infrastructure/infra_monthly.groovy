@@ -68,6 +68,13 @@ notify.wrap {
     triggerJob trigger: tasks,
       name: 'sqre/infrastructure/build-cmirror'
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-eupsredirector',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
     parallel tasks
   } // run
 
