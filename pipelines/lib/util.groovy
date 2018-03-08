@@ -721,4 +721,16 @@ def String instantToUtc(Instant moment) {
   utcFormat.format(moment)
 }
 
+/**
+ * Run librarian-puppet on the current directory via a container
+ *
+ * @param cmd String librarian-puppet arguments; defaults to 'install'
+ * @param tag String tag of docker image to use.
+ */
+def void librarianPuppet(String cmd='install', String tag='2.2.3') {
+  insideWrap("lsstsqre/cakepan:${tag}", "-e HOME=${pwd()}") {
+    bash "librarian-puppet ${cmd}"
+  }
+}
+
 return this;
