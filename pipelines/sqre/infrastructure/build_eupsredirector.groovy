@@ -36,6 +36,7 @@ notify.wrap {
 
     stage('build') {
       dir(dockerDir) {
+        util.librarianPuppet()
         // ensure base image is always up to date
         image = docker.build("${hubRepo}", '--pull=true --no-cache .')
       }

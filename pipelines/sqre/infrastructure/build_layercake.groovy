@@ -29,7 +29,7 @@ notify.wrap {
       def baseName = "${majrelease}-stackbase"
       def baseTag = "${buildRepo}:${baseName}"
 
-      librarianPuppet()
+      util.librarianPuppet()
       def baseBuild = packIt('centos_stackbase.json', [
         "-var base_image=centos:${majrelease}",
         "-var build_name=${baseName}",
@@ -64,12 +64,6 @@ notify.wrap {
     run()
   }
 } // notify.wrap
-
-def void librarianPuppet(String cmd='install', String tag='2.2.3') {
-  util.insideWrap("lsstsqre/cakepan:${tag}", "-e HOME=${pwd()}") {
-    util.bash "librarian-puppet ${cmd}"
-  }
-}
 
 def String packIt(String templateFile, List options, String tag = '1.1.1') {
 
