@@ -7,7 +7,7 @@ job('sqre/infrastructure/jenkins-node-cleanup') {
   concurrentBuild(false)
 
   triggers {
-    cron('H/30 * * * *')
+    cron('H/10 * * * *')
   }
 
   wrappers {
