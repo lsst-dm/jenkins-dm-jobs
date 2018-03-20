@@ -29,7 +29,8 @@ notify.wrap {
       passwordVariable: 'AWS_SECRET_ACCESS_KEY'
     ]]) {
       stage('snapshot') {
-        image.inside {
+        // #inside is only being used to map env vars into the container
+        image.inside('--entrypoint=""') {
           util.bash '/usr/local/bin/ec2-snapshot.sh'
         }
       } // stage
