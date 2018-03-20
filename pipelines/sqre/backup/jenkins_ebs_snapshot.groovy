@@ -36,7 +36,7 @@ notify.wrap {
     } // withCredentials
   } // run
 
-  node('docker') {
+  node('jenkins-master') {
     timeout(time: 1, unit: 'HOURS') {
       run()
     }
