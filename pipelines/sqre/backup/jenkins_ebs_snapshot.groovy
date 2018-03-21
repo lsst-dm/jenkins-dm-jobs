@@ -30,7 +30,7 @@ notify.wrap {
     ]]) {
       stage('snapshot') {
         // #inside is only being used to map env vars into the container
-        image.inside('--entrypoint=""') {
+        image.inside {
           util.bash '/usr/local/bin/ec2-snapshot.sh'
         }
       } // stage
