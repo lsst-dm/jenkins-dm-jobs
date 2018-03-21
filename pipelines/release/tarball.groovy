@@ -247,7 +247,6 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
       // XXX refactor to use util.insideWrap
       util.bash '''
         docker run \
-          --storage-opt size=100G \
           -v "${BUILDDIR}:${BUILDDIR_CONTAINER}" \
           -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
           -v "${CIDIR}:${CIDIR_CONTAINER}" \
@@ -380,7 +379,6 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
       // XXX refactor to use util.insideWrap
       util.bash '''
         docker run \
-          --storage-opt size=100G \
           -v "${SMOKEDIR}:${SMOKEDIR_CONTAINER}" \
           -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
           -v "${CIDIR}:${CIDIR_CONTAINER}" \
