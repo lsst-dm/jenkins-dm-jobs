@@ -24,15 +24,24 @@ notify.wrap {
 
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
-      credentialsId: 'jenkins-aws',
+      credentialsId: 'aws-jenkins-master-snapshot',
       usernameVariable: 'AWS_ACCESS_KEY_ID',
       passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+    ],
+    [
+      $class: 'StringBinding',
+      credentialsId: 'jenkins-env',
+      variable: 'JENKINS_ENV',
     ]]) {
       stage('snapshot') {
-        // #inside is only being used to map env vars into the container
-        image.inside {
-          util.bash '/usr/local/bin/ec2-snapshot.sh'
-        }
+        withEnv([
+          "CUSTOM_TAGS=Key=jenkins_env,Value=${env.JENKINS_ENV}",
+        ]) {
+          // #inside is only being used to map env vars into the container
+          image.inside {
+            util.bash '/usr/local/bin/ec2-snapshot.sh'
+          }
+        } // withEnv
       } // stage
     } // withCredentials
   } // run
