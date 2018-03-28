@@ -7,6 +7,7 @@ import util.Plumber
 ].each { type, crontab ->
   def p = new Plumber(
     name: "sqre/backup/s3backup-eups-${type.toLowerCase()}-cron",
+    script: "pipelines/sqre/backup/s3backup-eups.groovy".tr('-', '_'),
     dsl: this
   )
   p.pipeline().with {
