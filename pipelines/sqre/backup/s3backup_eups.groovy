@@ -13,6 +13,17 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  util.requireParams(['TYPE'])
+  def type = params.TYPE
+  switch(type) {
+    case 'DAILY':
+    case 'WEEKLY':
+    case 'MONTHLY':
+      break
+    default:
+      error "TYPE parameter value must be one of 'DAILY','WEEKLY','MONTHLY'"
+  }
+
   def hub_repo = 'lsstsqre/s3backup'
 
   def run = {
@@ -41,13 +52,17 @@ notify.wrap {
           variable: 'S3_BACKUP_BUCKET'
         ]
       ]) {
-        withEnv(["IMAGE=${image.id}"]) {
+        withEnv([
+          "IMAGE=${image.id}",
+          "S3_BACKUP_PREFIX=${type}",
+        ]) {
           sh '''
           docker run \
             -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
             -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
             -e S3_SRC_BUCKET="$S3_SRC_BUCKET" \
             -e S3_BACKUP_BUCKET="$S3_BACKUP_BUCKET" \
+            -e S3_BACKUP_PREFIX="$S3_BACKUP_PREFIX" \
             "$IMAGE"
           '''.replaceFirst("\n","").stripIndent()
         }
