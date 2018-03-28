@@ -664,7 +664,7 @@ def void runPostqa(
       credentialsId: 'squash-api-url',
       variable: 'SQUASH_URL',
     ]]) {
-      util.insideWrap(docImage) {
+      docker.image(docImage).inside {
         run()
       }
     } // withCredentials
