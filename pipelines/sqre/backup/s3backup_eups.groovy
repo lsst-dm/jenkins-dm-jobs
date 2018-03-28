@@ -54,7 +54,7 @@ notify.wrap {
       ]) {
         withEnv([
           "IMAGE=${image.id}",
-          "S3_BACKUP_PREFIX=${type}",
+          "S3_BACKUP_PREFIX=${type.toLowerCase()}",
         ]) {
           sh '''
           docker run \
