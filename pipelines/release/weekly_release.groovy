@@ -22,8 +22,8 @@ notify.wrap {
 
   try {
     timeout(time: 30, unit: 'HOURS') {
-      def product         = 'lsst_distrib qserv_distrib validate_drp'
-      def tarballProducts = 'lsst_distrib validate_drp'
+      def product         = 'lsst_distrib qserv_distrib'
+      def tarballProducts = 'lsst_distrib'
 
       def retries = 3
       def rebuildId = null

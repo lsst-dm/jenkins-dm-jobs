@@ -5,7 +5,7 @@ p.pipeline().with {
   description('build and publish EUPS distrib "tarball" packages')
 
   parameters {
-    stringParam('PRODUCT', 'lsst_distrib validate_drp', 'Whitespace delimited list of EUPS products to build.')
+    stringParam('PRODUCT', 'lsst_distrib', 'Whitespace delimited list of EUPS products to build.')
     stringParam('EUPS_TAG', null, 'published EUPS tag')
     booleanParam('SMOKE', true, 'Run a post-build installation test of generated EUPS distrib traballs.')
     booleanParam('RUN_DEMO', true, '(no-op without SMOKE) Run the "stack" demo as part of the "smoke" installation test.')
