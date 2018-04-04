@@ -125,6 +125,7 @@ def void drp(
           }
         }
 
+        docker.image(docImage).pull()
         util.insideWrap(docImage) {
           // clone and build validate_drp from source
           dir(drpDir) {
@@ -332,6 +333,7 @@ def void checkoutLFS(String gitRepo, String gitRef = 'master') {
   ])
 
   try {
+    docker.image(docRepo).pull()
     util.insideWrap(docRepo) {
       util.bash('git lfs pull origin')
     }
@@ -664,7 +666,9 @@ def void runPostqa(
       credentialsId: 'squash-api-url',
       variable: 'SQUASH_URL',
     ]]) {
-      docker.image(docImage).inside {
+      def img = docker.image(docImage)
+      img.pull()
+      img.inside {
         run()
       }
     } // withCredentials
