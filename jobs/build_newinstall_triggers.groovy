@@ -24,6 +24,12 @@ def j = job('sqre/infrastructure/build-newinstall-triggers') {
   triggers {
     githubPush()
   }
+
+  steps {
+    downstreamParameterized {
+      trigger('sqre/infrastructure/build-newinstall') {}
+    }
+  }
 }
 
 Common.addNotification(j)
