@@ -637,7 +637,7 @@ def void buildTarballMatrix(
     def slug = "miniconda${item.python}"
     slug += "-${item.miniver}-${item.lsstsw_ref}"
 
-    platform["${item.label}.${slug}"] = {
+    platform["${item.label}.${item.compiler}.${slug}"] = {
       retry(retries) {
         build job: 'release/tarball',
           parameters: [
