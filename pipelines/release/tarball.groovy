@@ -48,7 +48,7 @@ notify.wrap {
   def py = new MinicondaEnv(params.PYTHON_VERSION, params.MINIVER, params.LSSTSW_REF)
   def timelimit = params.TIMEOUT.toInteger()
 
-  stage("${params.LABEL}.${py.slug()}") {
+  stage("${params.LABEL}.${params.COMPILER}.${py.slug()}") {
     switch(params.LABEL) {
       case 'centos-7':
         linuxTarballs(image, 'el7', params.COMPILER, py, timelimit)
