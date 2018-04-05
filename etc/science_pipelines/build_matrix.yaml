@@ -60,8 +60,9 @@ tarball:
     <<: *el7-py2
   - <<: *tarball_defaults
     <<: *el7-py3
-  - <<: *tarball_defaults
-    <<: *el7-dts7-py3
+  # need newinstall.sh support for devtoolset-7
+  # - <<: *tarball_defaults
+  #  <<: *el7-dts7-py3
   - <<: *tarball_defaults
     <<: *osx-py2
     label: osx-10.11
