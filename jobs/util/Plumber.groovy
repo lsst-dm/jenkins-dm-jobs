@@ -35,6 +35,12 @@ class Plumber {
                 url(repo)
               }
               branch(ref)
+              extensions {
+                pathRestriction {
+                  includedRegions(script())
+                  excludedRegions(null)
+                }
+              }
             }
           }
           scriptPath(script())
