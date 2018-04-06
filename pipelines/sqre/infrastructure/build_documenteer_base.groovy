@@ -37,7 +37,12 @@ notify.wrap {
     stage('build') {
       dir(dockerDir) {
         // ensure base image is always up to date
-        image = docker.build("${hubRepo}", '--pull=true --no-cache .')
+        //image = docker.build("${hubRepo}", '--pull=true --no-cache .')
+        // XXX for unknown reasons, jenkins is choking on this Dockerfile
+        // java.io.IOException: Cannot retrieve .Id from 'docker inspect    lsstsqre/newinstall:latest'
+        // running the build by hand seems to kludge around the problem...
+        util.bash("docker build -t ${hubRepo} --pull=true --no-cache .")
+        image = docker.image(hubRepo)
       }
     }
 
