@@ -733,4 +733,46 @@ def void librarianPuppet(String cmd='install', String tag='2.2.3') {
   }
 }
 
+/**
+ * run documenteer doc build
+ *
+ * @param args.docTemplateDir String path to sphinx template clone (required)
+ * @param args.eupsPath String path to EUPS installed productions (optional)
+ * @param args.eupsTag String tag to setup. defaults to 'current'
+ * @param args.docImage String defaults to: 'lsstsqre/documenteer-base'
+ */
+def runDocumenteer(Map args) {
+  def argDefaults = [
+    docImage: 'lsstsqre/documenteer-base',
+    eupsTag: 'current',
+  ]
+  args = argDefaults + args
+
+  def homeDir = "${pwd()}/home"
+  emptyDirs([homeDir])
+
+  def docEnv = [
+    "HOME=${homeDir}",
+    "EUPS_TAG=${args.eupsTag}",
+  ]
+
+  if (args.eupsPath) {
+    docEnv += "EUPS_PATH=${args.eupsPath}"
+  }
+
+  withEnv(docEnv) {
+    insideWrap(args.docImage) {
+      dir(args.docTemplateDir) {
+        bash '''
+          source /opt/lsst/software/stack/loadLSST.bash
+          export PATH="${HOME}/.local/bin:${PATH}"
+          pip install --upgrade --user -r requirements.txt
+          setup -r . -t "$EUPS_TAG"
+          build-stack-docs -d . -v
+        '''
+      } // dir
+    }
+  } // withEnv
+} // jenkinsWrapper
+
 return this;
