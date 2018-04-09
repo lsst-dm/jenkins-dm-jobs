@@ -82,6 +82,7 @@ def void wrapContainer(String imageName, String tag) {
     ARG     HOME
 
     USER    root
+    RUN     mkdir -p "\$(dirname \$HOME)"
     RUN     groupadd -g \$GID \$GROUP
     RUN     useradd -d \$HOME -g \$GROUP -u \$UID \$USER
 
