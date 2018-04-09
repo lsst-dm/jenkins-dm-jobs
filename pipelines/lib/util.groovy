@@ -775,4 +775,46 @@ def runDocumenteer(Map args) {
   } // withEnv
 } // jenkinsWrapper
 
+/**
+ * run ltd-mason-travis to push a doc build
+ *
+ * @param args.eupsTag String tag to setup. Eg.: 'current', 'b1234'
+ * @param args.repoSlug String github repo slug. Eg.: 'lsst/pipelines_lsst_io'
+ * @param args.product String LTD product name., Eg.: 'pipelines'
+ */
+def ltdPush(Map args) {
+  def masonImage = 'lsstsqre/ltd-mason'
+
+  withEnv([
+    "LTD_MASON_BUILD=true",
+    "LTD_MASON_PRODUCT=${args.ltdProduct}",
+    "LTD_KEEPER_URL=https://keeper.lsst.codes",
+    "LTD_KEEPER_USER=travis",
+    "TRAVIS_PULL_REQUEST=false",
+    "TRAVIS_REPO_SLUG=${args.repoSlug}",
+    "TRAVIS_BRANCH=${args.eupsTag}",
+  ]) {
+    withCredentials([[
+      $class: 'UsernamePasswordMultiBinding',
+      credentialsId: 'ltd-mason-aws',
+      usernameVariable: 'LTD_MASON_AWS_ID',
+      passwordVariable: 'LTD_MASON_AWS_SECRET',
+    ],
+    [
+      $class: 'UsernamePasswordMultiBinding',
+      credentialsId: 'ltd-keeper',
+      usernameVariable: 'LTD_KEEPER_USER',
+      passwordVariable: 'LTD_KEEPER_PASSWORD',
+    ]]) {
+      docker.image(masonImage).inside {
+        // expect that the service will return an HTTP 502, which causes
+        // ltd-mason-travis to exit 1
+        util.sh '''
+        /usr/bin/ltd-mason-travis --html-dir _build/html --verbose || true
+        '''
+      } // util.insideWrap
+    } // withCredentials
+  } //withEnv
+} // runLtdMason
+
 return this;

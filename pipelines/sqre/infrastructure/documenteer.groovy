@@ -30,7 +30,6 @@ notify.wrap {
   def docTemplateRef  = 'tickets/DM-11216'
 
   def relImage   = "lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
-  def masonImage = 'lsstsqre/ltd-mason'
 
   def run = {
     def meerImage = null
@@ -86,36 +85,11 @@ notify.wrap {
           fingerprint: false,
         ])
 
-        withEnv([
-          "LTD_MASON_BUILD=true",
-          "LTD_MASON_PRODUCT=pipelines",
-          "LTD_KEEPER_URL=https://keeper.lsst.codes",
-          "LTD_KEEPER_USER=travis",
-          "TRAVIS_PULL_REQUEST=false",
-          "TRAVIS_REPO_SLUG=lsst/pipelines_lsst_io",
-          "TRAVIS_BRANCH=${eupsTag}",
-        ]) {
-          withCredentials([[
-            $class: 'UsernamePasswordMultiBinding',
-            credentialsId: 'ltd-mason-aws',
-            usernameVariable: 'LTD_MASON_AWS_ID',
-            passwordVariable: 'LTD_MASON_AWS_SECRET',
-          ],
-          [
-            $class: 'UsernamePasswordMultiBinding',
-            credentialsId: 'ltd-keeper',
-            usernameVariable: 'LTD_KEEPER_USER',
-            passwordVariable: 'LTD_KEEPER_PASSWORD',
-          ]]) {
-            docker.image(masonImage).inside {
-              // expect that the service will return an HTTP 502, which causes
-              // ltd-mason-travis to exit 1
-              util.sh '''
-              /usr/bin/ltd-mason-travis --html-dir _build/html --verbose || true
-              '''
-            } // util.insideWrap
-          } // withCredentials
-        } //withEnv
+        util.ltdPush(
+          ltdProduct: "pipelines",
+          repoSlug: "lsst/pipelines_lsst_io",
+          eupsTag: eupsTag,
+        )
       } // stage
     } // dir
   } // run
