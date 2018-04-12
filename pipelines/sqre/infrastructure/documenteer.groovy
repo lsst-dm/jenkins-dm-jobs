@@ -21,35 +21,37 @@ node('jenkins-master') {
 notify.wrap {
   def required = [
     'EUPS_TAG',
+    'LTD_SLUG',
+    'TEMPLATE_REPO',
+    'TEMPLATE_REF',
   ]
 
   util.requireParams(required)
 
   def eupsTag         = params.EUPS_TAG
-  def docTemplateRepo = 'https://github.com/lsst/pipelines_lsst_io'
-  def docTemplateRef  = 'tickets/DM-11216'
+  def ltdSlug         = params.LTD_SLUG
+  def docTemplateRepo = "https://github.com/${params.TEMPLATE_REPO}"
+  def docTemplateRef  = params.TEMPLATE_REF
 
   def relImage   = "lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
 
   def run = {
     def meerImage = null
-    stage('install documenteer') {
+    def docTemplateDir = "${pwd()}/doc_template"
+
+    stage('prepare') {
       def config = util.dedent("""
         FROM    ${relImage}
 
         USER    root
         RUN     yum -y install graphviz && yum -y clean all
-
-        USER    lsst
-        RUN     . /opt/lsst/software/stack/loadLSST.bash && \
-                  pip install --upgrade documenteer[pipelines]==0.2.6
       """)
 
-      meerImage = "${relImage}-local"
+      meerImage = "${relImage}-docubase"
       util.buildImage(config, meerImage)
     } // stage
 
-    dir('pipelines_lsst_io') {
+    dir(docTemplateDir) {
       stage('build docs') {
         deleteDir()
 
@@ -58,38 +60,36 @@ notify.wrap {
           branch: docTemplateRef,
         ])
 
-        util.insideWrap(meerImage) {
-          util.bash '''
-            . /opt/lsst/software/stack/loadLSST.bash
-
-            setup -r .
-            build-stack-docs -d . -v
-          '''
-        } // util.insideWrap
+        util.runDocumenteer(
+          docImage: meerImage,
+          docTemplateDir: docTemplateDir,
+        )
       } // stage
 
       stage('publish') {
-        publishHTML([
-          allowMissing: false,
-          alwaysLinkToLastBuild: true,
-          keepAll: true,
-          reportDir: '_build/html',
-          reportFiles: 'index.html',
-          reportName: 'doc build',
-          reportTitles: '',
-        ])
+        if (params.PUBLISH) {
+          publishHTML([
+            allowMissing: false,
+            alwaysLinkToLastBuild: true,
+            keepAll: true,
+            reportDir: '_build/html',
+            reportFiles: 'index.html',
+            reportName: 'doc build',
+            reportTitles: '',
+          ])
 
-        archiveArtifacts([
-          artifacts: '_build/html/**/*',
-          allowEmptyArchive: true,
-          fingerprint: false,
-        ])
+          archiveArtifacts([
+            artifacts: '_build/html/**/*',
+            allowEmptyArchive: true,
+            fingerprint: false,
+          ])
 
-        util.ltdPush(
-          ltdProduct: "pipelines",
-          repoSlug: "lsst/pipelines_lsst_io",
-          eupsTag: eupsTag,
-        )
+          util.ltdPush(
+            ltdProduct: "pipelines",
+            repoSlug: "lsst/pipelines_lsst_io",
+            eupsTag: ltdSlug,
+          )
+        } // if
       } // stage
     } // dir
   } // run
