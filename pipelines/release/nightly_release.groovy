@@ -192,6 +192,7 @@ notify.wrap {
           build job: 'sqre/infrastructure/documenteer',
             parameters: [
               string(name: 'EUPS_TAG', value: eupsTag),
+              string(name: 'LTD_SLUG', value: eupsTag),
             ]
         }
       }
