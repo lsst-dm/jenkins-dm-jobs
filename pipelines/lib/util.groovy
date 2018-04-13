@@ -82,6 +82,7 @@ def void wrapContainer(String imageName, String tag) {
     ARG     HOME
 
     USER    root
+    RUN     mkdir -p "\$(dirname \$HOME)"
     RUN     groupadd -g \$GID \$GROUP
     RUN     useradd -d \$HOME -g \$GROUP -u \$UID \$USER
 
@@ -732,5 +733,89 @@ def void librarianPuppet(String cmd='install', String tag='2.2.3') {
     bash "librarian-puppet ${cmd}"
   }
 }
+
+/**
+ * run documenteer doc build
+ *
+ * @param args.docTemplateDir String path to sphinx template clone (required)
+ * @param args.eupsPath String path to EUPS installed productions (optional)
+ * @param args.eupsTag String tag to setup. defaults to 'current'
+ * @param args.docImage String defaults to: 'lsstsqre/documenteer-base'
+ */
+def runDocumenteer(Map args) {
+  def argDefaults = [
+    docImage: 'lsstsqre/documenteer-base',
+    eupsTag: 'current',
+  ]
+  args = argDefaults + args
+
+  def homeDir = "${pwd()}/home"
+  emptyDirs([homeDir])
+
+  def docEnv = [
+    "HOME=${homeDir}",
+    "EUPS_TAG=${args.eupsTag}",
+  ]
+
+  if (args.eupsPath) {
+    docEnv += "EUPS_PATH=${args.eupsPath}"
+  }
+
+  withEnv(docEnv) {
+    insideWrap(args.docImage) {
+      dir(args.docTemplateDir) {
+        bash '''
+          source /opt/lsst/software/stack/loadLSST.bash
+          export PATH="${HOME}/.local/bin:${PATH}"
+          pip install --upgrade --user -r requirements.txt
+          setup -r . -t "$EUPS_TAG"
+          build-stack-docs -d . -v
+        '''
+      } // dir
+    }
+  } // withEnv
+} // jenkinsWrapper
+
+/**
+ * run ltd-mason-travis to push a doc build
+ *
+ * @param args.eupsTag String tag to setup. Eg.: 'current', 'b1234'
+ * @param args.repoSlug String github repo slug. Eg.: 'lsst/pipelines_lsst_io'
+ * @param args.product String LTD product name., Eg.: 'pipelines'
+ */
+def ltdPush(Map args) {
+  def masonImage = 'lsstsqre/ltd-mason'
+
+  withEnv([
+    "LTD_MASON_BUILD=true",
+    "LTD_MASON_PRODUCT=${args.ltdProduct}",
+    "LTD_KEEPER_URL=https://keeper.lsst.codes",
+    "LTD_KEEPER_USER=travis",
+    "TRAVIS_PULL_REQUEST=false",
+    "TRAVIS_REPO_SLUG=${args.repoSlug}",
+    "TRAVIS_BRANCH=${args.eupsTag}",
+  ]) {
+    withCredentials([[
+      $class: 'UsernamePasswordMultiBinding',
+      credentialsId: 'ltd-mason-aws',
+      usernameVariable: 'LTD_MASON_AWS_ID',
+      passwordVariable: 'LTD_MASON_AWS_SECRET',
+    ],
+    [
+      $class: 'UsernamePasswordMultiBinding',
+      credentialsId: 'ltd-keeper',
+      usernameVariable: 'LTD_KEEPER_USER',
+      passwordVariable: 'LTD_KEEPER_PASSWORD',
+    ]]) {
+      docker.image(masonImage).inside {
+        // expect that the service will return an HTTP 502, which causes
+        // ltd-mason-travis to exit 1
+        util.sh '''
+        /usr/bin/ltd-mason-travis --html-dir _build/html --verbose || true
+        '''
+      } // util.insideWrap
+    } // withCredentials
+  } //withEnv
+} // runLtdMason
 
 return this;
