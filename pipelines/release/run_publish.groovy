@@ -46,6 +46,8 @@ notify.wrap {
                 ARGS=()
                 ARGS+=('-b' "$BUILD_ID")
                 ARGS+=('-t' "$TAG")
+                # enable debug output
+                ARGS+=('-d')
                 # split whitespace separated EUPS products into separate array
                 # elements by not quoting
                 ARGS+=($PRODUCT)
