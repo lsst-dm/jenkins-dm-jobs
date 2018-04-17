@@ -170,6 +170,15 @@ def void drp(
               datasetArchiveDir
             )
           } // timeout
+          // push results to squash, verify version
+          if (doDispatchqa) {
+            runDispatchqa(
+              runDir,
+              fakeLsstswDir,
+              datasetInfo['dataset'],
+              noPush
+            )
+          }
         } // inside
 
         // push results to squash, validate version
@@ -182,15 +191,6 @@ def void drp(
             datasetSlug,
             // docImage, // XXX DM-12669
             '0xdeadbeef',
-            noPush
-          )
-        }
-        // push results to squash, verify version
-        if (doDispatchqa) {
-          runDispatchqa(
-            "${runDir}",
-            fakeLsstswDir,
-            datasetSlug,
             noPush
           )
         }
