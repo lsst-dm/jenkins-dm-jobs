@@ -174,6 +174,7 @@ def void drp(
           if (doDispatchqa) {
             runDispatchqa(
               runDir,
+              drpDir,
               fakeLsstswDir,
               datasetInfo['dataset'],
               noPush
@@ -703,7 +704,8 @@ def void runPostqa(
  * Reguardless of that value, the output of the characterization report is recorded
  */
 def void runDispatchqa(
-  String resultPath,
+  String runDir,
+  String drpDir,
   String lsstswDir,
   String datasetSlug,
   Boolean noPush = true
@@ -711,17 +713,25 @@ def void runDispatchqa(
 
   def run = {
     util.bash '''
+      cd "$RUN_DIR"
+
+      source /opt/lsst/software/stack/loadLSST.bash
+      setup -k -r "$DRP_DIR"
       # compute characterization report
       reportPerformance.py \
-        --output_file=$RESULTPATH/char_report.rst \
-        $RESULTPATH/*_output_*.json
+        --output_file=char_report.rst \
+        *_output_*.json
     '''
 
     if (!noPush) {
       util.bash '''
+        cd "$RUN_DIR"
+
+        source /opt/lsst/software/stack/loadLSST.bash
+        setup -k -r "$DRP_DIR"
         # submit via dispatch_verify
         # XXX endpoint hardcoded for this test
-        for file in $( ls -d $RESULTPATH ); do
+        for file in $( ls *_output_*.json ); do
           dispatch_verify.py \
             --env jenkins \
             --lsstsw "$LSSTSW_DIR" \
@@ -745,7 +755,7 @@ def void runDispatchqa(
   */
   withEnv([
     "LSSTSW_DIR=${lsstswDir}",
-    "RESULTPATH=${resultPath}",
+    "RUN_DIR=${runDir}",
     "NO_PUSH=${noPush}",
     "dataset=${datasetSlug}",
   ]) {
