@@ -40,12 +40,14 @@ notify.wrap {
     cfht_verify_port: {
       drp('cfht', 'verify_port', false, true, verifyPortRetries, 1)
     },
+/*
     hsc: {
       drp('hsc', 'master', true, false, masterRetries, 15)
     },
     hsc_verify_port: {
       drp('hsc', 'verify_port', false, true, verifyPortRetries, 15)
     },
+*/
   ]
 
   stage('matrix') {
