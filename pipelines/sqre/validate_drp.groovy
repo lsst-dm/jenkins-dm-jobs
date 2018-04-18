@@ -177,6 +177,7 @@ def void drp(
             runDispatchqa(
               runDir,
               drpDir,
+              datasetArchiveDir,
               fakeLsstswDir,
               datasetInfo['dataset'],
               noPush
@@ -708,6 +709,7 @@ def void runPostqa(
 def void runDispatchqa(
   String runDir,
   String drpDir,
+  String archiveDir,
   String lsstswDir,
   String datasetSlug,
   Boolean noPush = true
@@ -729,6 +731,8 @@ def void runDispatchqa(
       reportPerformance.py \
         --output_file=char_report.rst \
         *_output_*.json
+      cp char_report.rst "$ARCH_DIR"
+      xz -T0 -9ev "$ARCH_DIR"/char_report.rst
     '''
 
     if (!noPush) {
@@ -769,6 +773,7 @@ def void runDispatchqa(
     "LSSTSW_DIR=${lsstswDir}",
     "RUN_DIR=${runDir}",
     "DRP_DIR=${drpDir}",
+    "ARCH_DIR=${archiveDir}",
     "NO_PUSH=${noPush}",
     "dataset=${datasetSlug}",
   ]) {
