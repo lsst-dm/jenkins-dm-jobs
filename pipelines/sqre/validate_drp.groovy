@@ -713,6 +713,7 @@ def void runDispatchqa(
 
   def run = {
     util.bash '''
+      set -x
       cd "$RUN_DIR"
 
       source /opt/lsst/software/stack/loadLSST.bash
@@ -725,6 +726,7 @@ def void runDispatchqa(
 
     if (!noPush) {
       util.bash '''
+        set -x
         cd "$RUN_DIR"
 
         source /opt/lsst/software/stack/loadLSST.bash
