@@ -718,11 +718,13 @@ def void runDispatchqa(
 
       source /opt/lsst/software/stack/loadLSST.bash
       cd "$DRP_DIR"
+      echo $DRP_DIR
+      ls
       git checkout verify_port
       cd -
       setup -k -r "$DRP_DIR"
       # compute characterization report
-      replortPerformance.py \
+      reportPerformance.py \
         --output_file=char_report.rst \
         *_output_*.json
     '''
