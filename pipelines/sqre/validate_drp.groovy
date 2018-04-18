@@ -717,9 +717,12 @@ def void runDispatchqa(
       cd "$RUN_DIR"
 
       source /opt/lsst/software/stack/loadLSST.bash
+      cd "$DRP_DIR"
+      git checkout verify_port
+      cd -
       setup -k -r "$DRP_DIR"
       # compute characterization report
-      reportPerformance.py \
+      replortPerformance.py \
         --output_file=char_report.rst \
         *_output_*.json
     '''
@@ -730,6 +733,9 @@ def void runDispatchqa(
         cd "$RUN_DIR"
 
         source /opt/lsst/software/stack/loadLSST.bash
+        cd "$DRP_DIR"
+        git checkout verify_port
+        cd -
         setup -k -r "$DRP_DIR"
         # submit via dispatch_verify
         # XXX endpoint hardcoded for this test
