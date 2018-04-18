@@ -717,36 +717,31 @@ def void runDispatchqa(
 
   def run = {
     util.bash '''
-      set -x
-      cd "$RUN_DIR"
 
       source /opt/lsst/software/stack/loadLSST.bash
       cd "$DRP_DIR"
-      echo $DRP_DIR
-      ls
       git checkout verify_port
-      cd -
-      setup -k -r "$DRP_DIR"
+      setup -k -r .
+      cd "$RUN_DIR"
+
       # compute characterization report
       reportPerformance.py \
         --output_file=char_report.rst \
         *_output_*.json
-      cp char_report.rst "$ARCH_DIR"
-      xz -T0 -9ev "$ARCH_DIR"/char_report.rst
+      # cp char_report.rst "$ARCH_DIR"
+      # xz -T0 -9ev "$ARCH_DIR"/char_report.rst
     '''
 
     if (!noPush) {
       util.bash '''
-        set -x
-        cd "$RUN_DIR"
-
         source /opt/lsst/software/stack/loadLSST.bash
         cd "$DRP_DIR"
         git checkout verify_port
-        cd -
-        setup -k -r "$DRP_DIR"
+        setup -k -r .
+        cd "$RUN_DIR"
+
         # submit via dispatch_verify
-        # XXX endpoint hardcoded for this test
+        # XXX endpoint hardcoded until production SQuaSH is ready
         for file in $( ls *_output_*.json ); do
           dispatch_verify.py \
             --env jenkins \
