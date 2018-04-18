@@ -34,9 +34,11 @@ notify.wrap {
   def verifyPortRetries = 1
 
   def matrix = [
+/*
     cfht: {
       drp('cfht', 'master', true, false, masterRetries, 1)
     },
+*/
     cfht_verify_port: {
       drp('cfht', 'verify_port', false, true, verifyPortRetries, 1)
     },
@@ -766,6 +768,7 @@ def void runDispatchqa(
   withEnv([
     "LSSTSW_DIR=${lsstswDir}",
     "RUN_DIR=${runDir}",
+    "DRP_DIR=${drpDir}",
     "NO_PUSH=${noPush}",
     "dataset=${datasetSlug}",
   ]) {
