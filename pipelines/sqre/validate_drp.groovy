@@ -726,10 +726,10 @@ def void runDispatchqa(
 
       # compute characterization report
       reportPerformance.py \
-        --output_file=char_report.rst \
+        --output_file="$DATASET"_char_report.rst \
         *_output_*.json
-      # cp char_report.rst "$ARCH_DIR"
-      # xz -T0 -9ev "$ARCH_DIR"/char_report.rst
+      cp "$DATASET"_char_report.rst "$ARCH_DIR"
+      xz -T0 -9ev "$ARCH_DIR"/"$DATASET"_char_report.rst
     '''
 
     if (!noPush) {
@@ -770,7 +770,7 @@ def void runDispatchqa(
     "DRP_DIR=${drpDir}",
     "ARCH_DIR=${archiveDir}",
     "NO_PUSH=${noPush}",
-    "dataset=${datasetSlug}",
+    "DATASET=${datasetSlug}",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
