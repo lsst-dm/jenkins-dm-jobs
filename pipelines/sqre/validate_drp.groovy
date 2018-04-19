@@ -717,8 +717,6 @@ def void runDispatchqa(
 
   def run = {
     util.bash '''
-
-      set -x
       source /opt/lsst/software/stack/loadLSST.bash
       cd "$DRP_DIR"
       git checkout verify_port
@@ -735,7 +733,6 @@ def void runDispatchqa(
 
     if (!noPush) {
       util.bash '''
-        set -x
         source /opt/lsst/software/stack/loadLSST.bash
         cd "$DRP_DIR"
         git checkout verify_port
