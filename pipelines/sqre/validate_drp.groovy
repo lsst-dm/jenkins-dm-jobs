@@ -487,7 +487,6 @@ def void runDrp(
           RUN="$VALIDATE_DRP_DIR/examples/runCfhtTest.sh"
           RESULTS=(
             Cfht_output_r.json
-            char_report.rst
           )
           LOGS=(
             'Cfht/singleFrame.log'
@@ -498,7 +497,6 @@ def void runDrp(
           RUN="$VALIDATE_DRP_DIR/examples/runDecamTest.sh"
           RESULTS=(
             Decam_output_z.json
-            char_report.rst
           )
           LOGS=(
             'Decam/singleFrame.log'
@@ -511,7 +509,6 @@ def void runDrp(
             Hsc_output_HSC-I.json
             Hsc_output_HSC-R.json
             Hsc_output_HSC-Y.json
-            char_report.rst
           )
           LOGS=(
             'Hsc/singleFrame.log'
