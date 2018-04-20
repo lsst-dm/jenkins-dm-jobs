@@ -33,6 +33,8 @@ scipipe-lsstsw-matrix:
     dname: osx
     # allow 800.0.42 and 800.0.42.1
     compiler: ^clang-802.0.42$ ^clang-800.0.42.1$
+dax-lsstsw-matrix:
+  - <<: *el7-py3
 canonical:
   <<: *el7-py3
 tarball:
