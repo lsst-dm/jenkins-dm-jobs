@@ -16,7 +16,16 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  util.requireEnvVars(['WIPEOUT', 'BUILD_CONFIG'])
+
+  def lsstswConfigs = config[BUILD_CONFIG]
+  if (lsstswConfigs == null) {
+    error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
+  }
+
   timeout(time: 23, unit: 'HOURS') {
-    util.buildStackOsMatrix(config, WIPEOUT.toBoolean())
+    stage('build') {
+      util.lsstswBuildMatrix(lsstswConfigs, WIPEOUT.toBoolean())
+    }
   }
 } // notify.wrap

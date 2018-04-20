@@ -16,5 +16,6 @@ p.pipeline().with {
 
   environmentVariables(
     WIPEOUT: false,
+    BUILD_CONFIG: 'scipipe-lsstsw-matrix',
   )
 }

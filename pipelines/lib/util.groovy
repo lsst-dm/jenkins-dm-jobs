@@ -567,34 +567,31 @@ def void nodeTiny(Closure run) {
 }
 
 /**
- * Execute a multiple os matrix build using jenkins_wrapper.sh/lsstsw
+ * Execute a multiple multiple lsstsw builds using different configurations.
  *
- * Note that the `param` global variable is used by invoked methods
- *
- * @param config Map YAML config file object
+ * @param config List of lsstsw build configurations
  * @param wipeout Boolean wipeout the workspace build starting the build
  */
-def buildStackOsMatrix(Map config, Boolean wipeout=false) {
-  stage('build') {
-    def matrix = [:]
+def lsstswBuildMatrix(List lsstswConfigs, Boolean wipeout=false) {
+  def matrix = [:]
 
-    config['matrix'].each { item ->
-      def lname = item.dname ? item.dname : item.label
-      def slug = "${lname}.py${item.python}"
-      matrix[slug] = {
-        lsstswBuild(
-          item.image,
-          item.label,
-          item.compiler,
-          item.python,
-          slug,
-          wipeout
-        )
-      }
+  // XXX validate config
+  lsstswConfigs.each { item ->
+    def lname = item.dname ? item.dname : item.label
+    def slug = "${lname}.py${item.python}"
+    matrix[slug] = {
+      lsstswBuild(
+        item.image,
+        item.label,
+        item.compiler,
+        item.python,
+        slug,
+        wipeout
+      )
     }
+  }
 
-    parallel matrix
-  } // stage
+  parallel matrix
 }
 
 /**
