@@ -35,16 +35,16 @@ notify.wrap {
 
   def matrix = [
     cfht: {
-      drp('cfht', 'master', true, masterRetries, 1)
+      drp('cfht', 'master', true, false, masterRetries, 1)
     },
     cfht_verify_port: {
-      drp('cfht', 'verify_port', false, verifyPortRetries, 1)
+      drp('cfht', 'verify_port', false, true, verifyPortRetries, 1)
     },
     hsc: {
-      drp('hsc', 'master', true, masterRetries, 15)
+      drp('hsc', 'master', true, false, masterRetries, 15)
     },
     hsc_verify_port: {
-      drp('hsc', 'verify_port', false, verifyPortRetries, 15)
+      drp('hsc', 'verify_port', false, true, verifyPortRetries, 15)
     },
   ]
 
@@ -58,7 +58,8 @@ notify.wrap {
  *
  * @param datasetSlug String short name of dataset
  * @param drpRef String validate_drp git repo ref. Defaults to 'master'
- * @param doPostqa Boolean Enables/disables running of post-qa. Defaults to
+ * @param doPostqa Boolean Enables/disables running of post-qa. Defaults to true.
+ * @param doDispatchqa Boolean Enables/disables running of displatch-verify. Defaults to true.
  * @param retries Integer Number of times to retry after a failure
  * @param timelimit Integer Maximum number of hours per 'try'
  * 'true'
@@ -67,6 +68,7 @@ def void drp(
   String datasetSlug,
   String drpRef = 'master',
   Boolean doPostqa = true,
+  Boolean doDispatchqa = true,
   Integer retries = 3,
   Integer timelimit = 12
 ) {
@@ -166,9 +168,20 @@ def void drp(
               datasetArchiveDir
             )
           } // timeout
+          // push results to squash, verify version
+          if (doDispatchqa) {
+            runDispatchqa(
+              runDir,
+              drpDir,
+              datasetArchiveDir,
+              fakeLsstswDir,
+              datasetInfo['dataset'],
+              noPush
+            )
+          }
         } // inside
 
-        // push results to squash
+        // push results to squash, validate version
         if (doPostqa) {
           runPostqa(
             "${runDir}/output.json",
@@ -671,6 +684,98 @@ def void runPostqa(
       img.inside {
         run()
       }
+    } // withCredentials
+  } // withEnv
+}
+
+
+/**
+ * push DRP results to squash using dispatch-verify.
+ *
+ * @param resultPath
+ * @param lsstswDir String Path to (the fake) lsstsw dir
+ * @param datasetSlug String The dataset "short" name.  Eg., cfht instead of
+ * validation_data_cfht.
+ * @param noPush Boolean if true, do not attempt to push data to squash.
+ * Reguardless of that value, the output of the characterization report is recorded
+ */
+def void runDispatchqa(
+  String runDir,
+  String drpDir,
+  String archiveDir,
+  String lsstswDir,
+  String datasetSlug,
+  Boolean noPush = true
+) {
+
+  def run = {
+    util.bash '''
+      source /opt/lsst/software/stack/loadLSST.bash
+      cd "$DRP_DIR"
+      git checkout verify_port
+      setup -k -r .
+      cd "$RUN_DIR"
+
+      # compute characterization report
+      reportPerformance.py \
+        --output_file="$DATASET"_char_report.rst \
+        *_output_*.json
+      cp "$DATASET"_char_report.rst "$ARCH_DIR"
+      xz -T0 -9ev "$ARCH_DIR"/"$DATASET"_char_report.rst
+    '''
+
+    if (!noPush) {
+      util.bash '''
+        source /opt/lsst/software/stack/loadLSST.bash
+        cd "$DRP_DIR"
+        git checkout verify_port
+        setup -k -r .
+        cd "$RUN_DIR"
+
+        # submit via dispatch_verify
+        # XXX endpoint hardcoded until production SQuaSH is ready
+        for file in $( ls *_output_*.json ); do
+          dispatch_verify.py \
+            --env jenkins \
+            --lsstsw "$LSSTSW_DIR" \
+            --url https://squash-restful-api-demo.lsst.codes/ \
+            --user "$SQUASH_USER" \
+            --password "$SQUASH_PASS" \
+            $file
+        done
+      '''
+    }
+  } // run
+
+  /*
+  These are already present under pipeline:
+  - BUILD_ID
+  - BUILD_URL
+
+  This var were defined automagically by matrixJob and now must be manually
+  set:
+  - dataset
+  */
+  withEnv([
+    "LSSTSW_DIR=${lsstswDir}",
+    "RUN_DIR=${runDir}",
+    "DRP_DIR=${drpDir}",
+    "ARCH_DIR=${archiveDir}",
+    "NO_PUSH=${noPush}",
+    "DATASET=${datasetSlug}",
+  ]) {
+    withCredentials([[
+      $class: 'UsernamePasswordMultiBinding',
+      credentialsId: 'squash-api-user',
+      usernameVariable: 'SQUASH_USER',
+      passwordVariable: 'SQUASH_PASS',
+    ],
+    [
+      $class: 'StringBinding',
+      credentialsId: 'squash-api-url',
+      variable: 'SQUASH_URL',
+    ]]) {
+      run()
     } // withCredentials
   } // withEnv
 }
