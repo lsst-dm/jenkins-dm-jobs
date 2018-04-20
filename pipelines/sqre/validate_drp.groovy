@@ -35,16 +35,10 @@ notify.wrap {
 
   def matrix = [
     cfht: {
-      drp('cfht', 'master', true, false, masterRetries, 1)
-    },
-    cfht_verify_port: {
-      drp('cfht', 'verify_port', false, true, verifyPortRetries, 1)
+      drp('cfht', 'master', false, true, masterRetries, 1)
     },
     hsc: {
-      drp('hsc', 'master', true, false, masterRetries, 15)
-    },
-    hsc_verify_port: {
-      drp('hsc', 'verify_port', false, true, verifyPortRetries, 15)
+      drp('hsc', 'master', false, true, masterRetries, 15)
     },
   ]
 
@@ -738,7 +732,7 @@ def void runDispatchqa(
           dispatch_verify.py \
             --env jenkins \
             --lsstsw "$LSSTSW_DIR" \
-            --url https://squash-restful-api-demo.lsst.codes/ \
+            --url https://squash-restful-api.lsst.codes/ \
             --user "$SQUASH_USER" \
             --password "$SQUASH_PASS" \
             $file
