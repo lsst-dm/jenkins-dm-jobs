@@ -22,13 +22,14 @@ notify.wrap {
 
   try {
     timeout(time: 30, unit: 'HOURS') {
-      def product         = 'lsst_distrib qserv_distrib'
-      def tarballProducts = 'lsst_distrib'
+      def product         = 'lsst_distrib'
+      def tarballProducts = product
 
       def retries = 3
       def rebuildId = null
       def buildJob = 'release/run-rebuild'
       def publishJob = 'release/run-publish'
+
       def year = null
       def week = null
 
@@ -72,8 +73,11 @@ notify.wrap {
           step([$class: 'CopyArtifact',
                 projectName: buildJob,
                 filter: manifest_artifact,
-                selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
-                ])
+                selector: [
+                  $class: 'SpecificBuildSelector',
+                  buildNumber: rebuildId
+                ],
+              ])
 
           def manifest = readFile manifest_artifact
           bx = util.bxxxx(manifest)
@@ -92,17 +96,7 @@ notify.wrap {
         }
         pub['w_latest'] = {
           retry(retries) {
-            util.tagProduct(bx, 'w_latest', 'lsst_distrib', publishJob)
-          }
-        }
-        pub['qserv_latest'] = {
-          retry(retries) {
-            util.tagProduct(bx, 'qserv_latest', 'qserv_distrib', publishJob)
-          }
-        }
-        pub['qserv-dev'] = {
-          retry(retries) {
-            util.tagProduct(bx, 'qserv-dev', 'qserv_distrib', publishJob)
+            util.tagProduct(bx, 'w_latest', product, publishJob)
           }
         }
 
@@ -139,18 +133,6 @@ notify.wrap {
 
         util.buildTarballMatrix(config, tarballProducts, eupsTag, opt)
       }
-
-      // disabled
-      // see: https://jira.lsstcorp.org/browse/DM-11586
-      /*
-      artifact['run qserv/docker/build'] = {
-        catchError {
-          retry(retries) {
-            build job: 'qserv/docker/build'
-          }
-        }
-      }
-      */
 
       stage('wait for s3 sync') {
         sleep time: 15, unit: 'MINUTES'
