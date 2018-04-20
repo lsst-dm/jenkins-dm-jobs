@@ -417,7 +417,7 @@ def String bxxxx(String manifest) {
  */
 def void requireParams(List rps) {
   rps.each { it ->
-    if (!params.get(it)) {
+    if (params.get(it) == null) {
       error "${it} parameter is required"
     }
   }
