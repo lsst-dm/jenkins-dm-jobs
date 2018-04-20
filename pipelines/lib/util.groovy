@@ -424,6 +424,21 @@ def void requireParams(List rps) {
 }
 
 /**
+ * Validate that required env vars were passed from the job and raise an
+ * error on any that are missing.
+ *
+ * @param rev List of required env vars
+ */
+def void requireEnvVars(List rev) {
+  // note that `env` isn't a map and #get doesn't work as expected
+  var.each { it ->
+    if (env."${it}" == null) {
+      error "${it} envirnoment variable is required"
+    }
+  }
+}
+
+/**
  * Empty directories by deleting and recreating them.
  *
  * @param dirs List of directories to empty
