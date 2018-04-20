@@ -10,6 +10,7 @@ class CleanBuild {
   Boolean skipDemo = true
   Boolean skipDocs = true
   String cron = 'H 19 * * *'
+  String buildConfig = 'scipipe-lsstsw-matrix'
   Object seedJob
 
   Job build(DslFactory dslFactory) {
@@ -39,6 +40,7 @@ class CleanBuild {
         SKIP_DEMO: skipDemo,
         SKIP_DOCS: skipDocs,
         WIPEOUT: true,
+        BUILD_CONFIG: buildConfig,
       )
 
       def repo = seedJob.scm.userRemoteConfigs.get(0).getUrl()

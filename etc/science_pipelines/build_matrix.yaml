@@ -25,7 +25,7 @@ template:
       label: osx
       compiler: clang-800.0.42.1
       python: '3'
-matrix:
+scipipe-lsstsw-matrix:
   - <<: *el6-py3
   - <<: *el7-py3
   - <<: *osx-py3
@@ -33,6 +33,8 @@ matrix:
     dname: osx
     # allow 800.0.42 and 800.0.42.1
     compiler: ^clang-802.0.42$ ^clang-800.0.42.1$
+dax-lsstsw-matrix:
+  - <<: *el7-py3
 canonical:
   <<: *el7-py3
 tarball:

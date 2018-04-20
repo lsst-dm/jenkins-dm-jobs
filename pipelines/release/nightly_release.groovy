@@ -22,8 +22,8 @@ notify.wrap {
 
   try {
     timeout(time: 30, unit: 'HOURS') {
-      def product         = 'lsst_distrib qserv_distrib'
-      def tarballProducts = 'lsst_distrib'
+      def product         = 'lsst_distrib'
+      def tarballProducts = product
 
       def retries = 3
       def rebuildId = null
@@ -65,7 +65,6 @@ notify.wrap {
               booleanParam(name: 'SKIP_DEMO', value: false),
               booleanParam(name: 'SKIP_DOCS', value: false),
               string(name: 'TIMEOUT', value: '8'), // hours
-
             ],
             wait: true
           rebuildId = result.id
