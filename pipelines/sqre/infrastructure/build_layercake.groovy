@@ -36,15 +36,19 @@ notify.wrap {
       ])
       images << [(baseTag): baseBuild]
 
-      // devtoolset version(s)
-      [6, 7].each { tsVersion ->
-        def tsName = "${baseName}-devtoolset-${tsVersion}"
+      // scl compiler string(s)
+      [
+        'devtoolset-6',
+        'devtoolset-7',
+        'llvm-toolset-7',
+      ].each { scl ->
+        def tsName = "${baseName}-${scl}"
         def tsTag = "${buildRepo}:${tsName}"
 
         tsBuild = packIt('centos_devtoolset.json', [
           "-var base_image=${baseTag}",
           "-var build_name=${tsName}",
-          "-var version=${tsVersion}",
+          "-var scl_compiler=${tsVersion}",
         ])
         images << [(tsTag): tsBuild]
 
