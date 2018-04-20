@@ -12,14 +12,14 @@ import util.CleanBuild
     seedJob: SEED_JOB,
   ],
   [
-    name: 'qserv/dax_webserv',
+    name: 'dax/dax_webserv',
     product: 'dax_webserv',
     skipDemo: true,
     skipDocs: true,
     seedJob: SEED_JOB,
   ],
   [
-    name: 'qserv/qserv_distrib',
+    name: 'dax/qserv_distrib',
     product: 'qserv_distrib',
     skipDemo: true,
     skipDocs: true,

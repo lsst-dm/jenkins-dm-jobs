@@ -60,14 +60,14 @@ class Common {
       description('Experimental, not fully-baked, and/or "demonstration purposes only" jobs.')
     }
     */
-    dslFactory.folder('qserv') {
-      description('qserv specific jobs.')
+    dslFactory.folder('dax') {
+      description('dax specific jobs.')
     }
-    dslFactory.folder('qserv/docker') {
+    dslFactory.folder('dax/docker') {
       description('Construct docker containers.')
     }
-    dslFactory.folder('qserv/release') {
-      description('Jobs related to DAX/qserv releases.')
+    dslFactory.folder('dax/release') {
+      description('Jobs related to dax releases.')
     }
     dslFactory.folder('sims') {
       description('LSST sims specific jobs.')
