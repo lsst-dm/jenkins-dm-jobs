@@ -16,6 +16,7 @@ import util.CleanBuild
     product: 'dax_webserv',
     skipDemo: true,
     skipDocs: true,
+    buildConfig: 'dax-lsstsw-matrix',
     seedJob: SEED_JOB,
   ],
   [
@@ -23,6 +24,7 @@ import util.CleanBuild
     product: 'qserv_distrib',
     skipDemo: true,
     skipDocs: true,
+    buildConfig: 'dax-lsstsw-matrix',
     seedJob: SEED_JOB,
   ],
   [
