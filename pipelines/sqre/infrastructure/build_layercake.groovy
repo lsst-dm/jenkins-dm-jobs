@@ -79,8 +79,12 @@ notify.wrap {
     }
   } // run
 
-  node('docker') {
-    run()
+  timeout(time: 23, unit: 'HOURS') {
+    node('docker') {
+      timeout(time: 30, unit: 'MINUTES') {
+        run()
+      }
+    }
   }
 } // notify.wrap
 
