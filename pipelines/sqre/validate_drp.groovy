@@ -712,10 +712,10 @@ def void runDispatchqa(
 
       # compute characterization report
       reportPerformance.py \
-        --output_file="$DATASET"_char_report.rst \
+        --output_file="$dataset"_char_report.rst \
         *_output_*.json
-      cp "$DATASET"_char_report.rst "$ARCH_DIR"
-      xz -T0 -9ev "$ARCH_DIR"/"$DATASET"_char_report.rst
+      cp "$dataset"_char_report.rst "$ARCH_DIR"
+      xz -T0 -9ev "$ARCH_DIR"/"$dataset"_char_report.rst
     '''
 
     if (!noPush) {
@@ -746,7 +746,7 @@ def void runDispatchqa(
   - BUILD_ID
   - BUILD_URL
 
-  This var were defined automagically by matrixJob and now must be manually
+  This var was defined automagically by matrixJob and now must be manually
   set:
   - dataset
   */
@@ -756,7 +756,7 @@ def void runDispatchqa(
     "DRP_DIR=${drpDir}",
     "ARCH_DIR=${archiveDir}",
     "NO_PUSH=${noPush}",
-    "DATASET=${datasetSlug}",
+    "dataset=${datasetSlug}",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
