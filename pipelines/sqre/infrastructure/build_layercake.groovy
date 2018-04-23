@@ -16,6 +16,13 @@ String mkBaseName(Integer majrelease) {
   "${majrelease}-stackbase"
 }
 
+// This job is intentionally not using parallel branches so that updates to the
+// set of ( stackbase X compiler scls ) images is atomic-ish.  As the total
+// build time is well under 15mins, this seems like a tolerable trade-off
+// against performance. Note that this could also be achieved by artifact-ing
+// each image from a parallel branch and then doing the push all at once at the
+// cost of having to storage large artifacts within jenkins.
+
 notify.wrap {
   def run = {
     git([
