@@ -12,6 +12,10 @@ node('jenkins-master') {
   }
 }
 
+String mkBaseName(Integer majrelease) {
+  "${majrelease}-stackbase"
+}
+
 notify.wrap {
   def run = {
     git([
@@ -22,38 +26,42 @@ notify.wrap {
     ])
 
     def images = []
+    def baseRepo = 'centos'
     def buildRepo = 'lsstsqre/centos'
 
     // centos major release version(s)
     [6, 7].each { majrelease ->
-      def baseName = "${majrelease}-stackbase"
+      def baseImage = "${baseRepo}:${majrelease}"
+      def baseName = mkBaseName(majrelease)
       def baseTag = "${buildRepo}:${baseName}"
 
       util.librarianPuppet()
       def baseBuild = packIt('centos_stackbase.json', [
-        "-var base_image=centos:${majrelease}",
+        "-var base_image=${baseImage}",
         "-var build_name=${baseName}",
       ])
       images << [(baseTag): baseBuild]
-
-      // scl compiler string(s)
-      [
-        'devtoolset-6',
-        'devtoolset-7',
-        'llvm-toolset-7',
-      ].each { scl ->
-        def tsName = "${baseName}-${scl}"
-        def tsTag = "${buildRepo}:${tsName}"
-
-        tsBuild = packIt('centos_devtoolset.json', [
-          "-var base_image=${baseTag}",
-          "-var build_name=${tsName}",
-          "-var scl_compiler=${tsVersion}",
-        ])
-        images << [(tsTag): tsBuild]
-
-      } // tsVersion
     } // majrelease
+
+    // scl compiler string(s)
+    [
+      (mkBaseName(6)): 'devtoolset-6',
+      (mkBaseName(7)): 'devtoolset-6',
+      (mkBaseName(6)): 'devtoolset-7',
+      (mkBaseName(7)): 'devtoolset-7',
+      (mkBaseName(7)): 'llvm-toolset-7',
+    ].each { baseName, scl ->
+      def baseTag = "${buildRepo}:${baseName}"
+      def tsName = "${baseName}-${scl}"
+      def tsTag = "${buildRepo}:${tsName}"
+
+      tsBuild = packIt('centos_devtoolset.json', [
+        "-var base_image=${baseTag}",
+        "-var build_name=${tsName}",
+        "-var scl_compiler=${scl}",
+      ])
+      images << [(tsTag): tsBuild]
+    } // scl
 
     if (! params.NO_PUSH) {
       images.each { item ->
