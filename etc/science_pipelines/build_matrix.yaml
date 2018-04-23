@@ -35,9 +35,10 @@ scipipe-lsstsw-matrix:
   - <<: *el7-py3
   - <<: *osx-py3
     label: osx-10.11||osx-10.12
-    dname: osx
+    display_name: osx
     # allow 800.0.42 and 800.0.42.1
     compiler: ^clang-802.0.42$ ^clang-800.0.42.1$
+    display_compiler: clang
 dax-lsstsw-matrix:
   - <<: *el7-py3
   - <<: *el7-py3-llvm

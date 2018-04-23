@@ -577,8 +577,10 @@ def lsstswBuildMatrix(List lsstswConfigs, Boolean wipeout=false) {
 
   // XXX validate config
   lsstswConfigs.each { item ->
-    def lname = item.dname ? item.dname : item.label
-    def slug = "${lname}.py${item.python}"
+    def displayName = item.display_name ?: item.label
+    def displayCompiler = item.display_compiler ?: item.compiler
+    def slug = "${displayName}.${displayCompiler}.py${item.python}"
+
     matrix[slug] = {
       lsstswBuild(
         item.image,
@@ -647,10 +649,13 @@ def void buildTarballMatrix(
   def platform = [:]
 
   config['tarball'].each { item ->
+    def displayName = item.display_name ?: item.label
+    def displayCompiler = item.display_compiler ?: item.compiler
+
     def slug = "miniconda${item.python}"
     slug += "-${item.miniver}-${item.lsstsw_ref}"
 
-    platform["${item.label}.${item.compiler}.${slug}"] = {
+    platform["${displayName}.${displayCompiler}.${slug}"] = {
       retry(retries) {
         build job: 'release/tarball',
           parameters: [
