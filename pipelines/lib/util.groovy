@@ -417,8 +417,23 @@ def String bxxxx(String manifest) {
  */
 def void requireParams(List rps) {
   rps.each { it ->
-    if (!params.get(it)) {
+    if (params.get(it) == null) {
       error "${it} parameter is required"
+    }
+  }
+}
+
+/**
+ * Validate that required env vars were passed from the job and raise an
+ * error on any that are missing.
+ *
+ * @param rev List of required env vars
+ */
+def void requireEnvVars(List rev) {
+  // note that `env` isn't a map and #get doesn't work as expected
+  rev.each { it ->
+    if (env."${it}" == null) {
+      error "${it} envirnoment variable is required"
     }
   }
 }
@@ -552,34 +567,33 @@ def void nodeTiny(Closure run) {
 }
 
 /**
- * Execute a multiple os matrix build using jenkins_wrapper.sh/lsstsw
+ * Execute a multiple multiple lsstsw builds using different configurations.
  *
- * Note that the `param` global variable is used by invoked methods
- *
- * @param config Map YAML config file object
+ * @param config List of lsstsw build configurations
  * @param wipeout Boolean wipeout the workspace build starting the build
  */
-def buildStackOsMatrix(Map config, Boolean wipeout=false) {
-  stage('build') {
-    def matrix = [:]
+def lsstswBuildMatrix(List lsstswConfigs, Boolean wipeout=false) {
+  def matrix = [:]
 
-    config['matrix'].each { item ->
-      def lname = item.dname ? item.dname : item.label
-      def slug = "${lname}.py${item.python}"
-      matrix[slug] = {
-        lsstswBuild(
-          item.image,
-          item.label,
-          item.compiler,
-          item.python,
-          slug,
-          wipeout
-        )
-      }
+  // XXX validate config
+  lsstswConfigs.each { item ->
+    def displayName = item.display_name ?: item.label
+    def displayCompiler = item.display_compiler ?: item.compiler
+    def slug = "${displayName}.${displayCompiler}.py${item.python}"
+
+    matrix[slug] = {
+      lsstswBuild(
+        item.image,
+        item.label,
+        item.compiler,
+        item.python,
+        slug,
+        wipeout
+      )
     }
+  }
 
-    parallel matrix
-  } // stage
+  parallel matrix
 }
 
 /**
@@ -635,10 +649,13 @@ def void buildTarballMatrix(
   def platform = [:]
 
   config['tarball'].each { item ->
+    def displayName = item.display_name ?: item.label
+    def displayCompiler = item.display_compiler ?: item.compiler
+
     def slug = "miniconda${item.python}"
     slug += "-${item.miniver}-${item.lsstsw_ref}"
 
-    platform["${item.label}.${item.compiler}.${slug}"] = {
+    platform["${displayName}.${displayCompiler}.${slug}"] = {
       retry(retries) {
         build job: 'release/tarball',
           parameters: [

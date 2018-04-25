@@ -20,19 +20,28 @@ template:
       label: centos-7
       compiler: devtoolset-7
       python: '3'
+    - &el7-py3-llvm
+      image: docker.io/lsstsqre/centos:7-stackbase-llvm-toolset-7
+      label: centos-7
+      compiler: llvm-toolset-7
+      python: '3'
     - &osx-py3
       image: null
       label: osx
       compiler: clang-800.0.42.1
       python: '3'
-matrix:
+scipipe-lsstsw-matrix:
   - <<: *el6-py3
   - <<: *el7-py3
   - <<: *osx-py3
     label: osx-10.11||osx-10.12
-    dname: osx
+    display_name: osx
     # allow 800.0.42 and 800.0.42.1
     compiler: ^clang-802.0.42$ ^clang-800.0.42.1$
+    display_compiler: clang
+dax-lsstsw-matrix:
+  - <<: *el7-py3
+  - <<: *el7-py3-llvm
 canonical:
   <<: *el7-py3
 tarball:

@@ -12,6 +12,17 @@ node('jenkins-master') {
   }
 }
 
+String mkBaseName(Integer majrelease) {
+  "${majrelease}-stackbase"
+}
+
+// This job is intentionally not using parallel branches so that updates to the
+// set of ( stackbase X compiler scls ) images is atomic-ish.  As the total
+// build time is well under 15mins, this seems like a tolerable trade-off
+// against performance. Note that this could also be achieved by artifact-ing
+// each image from a parallel branch and then doing the push all at once at the
+// cost of having to storage large artifacts within jenkins.
+
 notify.wrap {
   def run = {
     git([
@@ -22,34 +33,42 @@ notify.wrap {
     ])
 
     def images = []
+    def baseRepo = 'centos'
     def buildRepo = 'lsstsqre/centos'
 
     // centos major release version(s)
     [6, 7].each { majrelease ->
-      def baseName = "${majrelease}-stackbase"
+      def baseImage = "${baseRepo}:${majrelease}"
+      def baseName = mkBaseName(majrelease)
       def baseTag = "${buildRepo}:${baseName}"
 
       util.librarianPuppet()
       def baseBuild = packIt('centos_stackbase.json', [
-        "-var base_image=centos:${majrelease}",
+        "-var base_image=${baseImage}",
         "-var build_name=${baseName}",
       ])
       images << [(baseTag): baseBuild]
-
-      // devtoolset version(s)
-      [3, 6, 7].each { tsVersion ->
-        def tsName = "${baseName}-devtoolset-${tsVersion}"
-        def tsTag = "${buildRepo}:${tsName}"
-
-        tsBuild = packIt('centos_devtoolset.json', [
-          "-var base_image=${baseTag}",
-          "-var build_name=${tsName}",
-          "-var version=${tsVersion}",
-        ])
-        images << [(tsTag): tsBuild]
-
-      } // tsVersion
     } // majrelease
+
+    // scl compiler string(s)
+    [
+      (mkBaseName(6)): 'devtoolset-6',
+      (mkBaseName(7)): 'devtoolset-6',
+      (mkBaseName(6)): 'devtoolset-7',
+      (mkBaseName(7)): 'devtoolset-7',
+      (mkBaseName(7)): 'llvm-toolset-7',
+    ].each { baseName, scl ->
+      def baseTag = "${buildRepo}:${baseName}"
+      def tsName = "${baseName}-${scl}"
+      def tsTag = "${buildRepo}:${tsName}"
+
+      tsBuild = packIt('centos_devtoolset.json', [
+        "-var base_image=${baseTag}",
+        "-var build_name=${tsName}",
+        "-var scl_compiler=${scl}",
+      ])
+      images << [(tsTag): tsBuild]
+    } // scl
 
     if (! params.NO_PUSH) {
       images.each { item ->
@@ -60,8 +79,12 @@ notify.wrap {
     }
   } // run
 
-  node('docker') {
-    run()
+  timeout(time: 23, unit: 'HOURS') {
+    node('docker') {
+      timeout(time: 30, unit: 'MINUTES') {
+        run()
+      }
+    }
   }
 } // notify.wrap
 
