@@ -29,8 +29,18 @@ notify.wrap {
           util.cloneLsstsw()
         }
 
+        def pkgroot = "${cwd}/distrib"
+        def tagDir  = "${pkgroot}/tags"
+
+        // remove any pre-existing eups tags to prevent them from being
+        // [re]published
+        // the src pkgroot has tags under ./tags/
+        dir(tagDir) {
+          deleteDir()
+        }
+
         def env = [
-          "EUPS_PKGROOT=${cwd}/distrib",
+          "EUPS_PKGROOT=${pkgroot}",
           "WORKSPACE=${cwd}",
           "EUPS_USERDATA=${cwd}/home/.eups_userdata",
         ]

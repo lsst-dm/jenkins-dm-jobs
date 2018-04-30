@@ -600,6 +600,15 @@ def String buildScript(
     done
 
     export EUPS_PKGROOT="${eupsPkgroot}"
+
+    # remove any pre-existing eups tags to prevent them from being
+    # [re]published
+    # the tarball pkgroots have tag files (.list) directly in the root of the
+    # repo
+    if [[ -e \$EUPS_PKGROOT ]]; then
+      rm -f "\${EUPS_PKGROOT}/*.list"
+    fi
+
     for prod in ${products}; do
       eups distrib create --server-dir "\$EUPS_PKGROOT" -d tarball "\$prod" -t "${tag}" -vvv
     done
