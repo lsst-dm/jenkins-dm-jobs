@@ -1,7 +1,5 @@
 import groovy.transform.Field
 
-def config = null
-
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -17,7 +15,6 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
 
