@@ -1,7 +1,5 @@
 import groovy.transform.Field
 
-def config = null
-
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -17,7 +15,6 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
 
@@ -301,7 +298,7 @@ def void osxBuild(
       params.PRODUCT,
       params.EUPS_TAG,
       "${shName}",
-      "${cwd}/distrib",
+      distDir,
       compiler,
       macosx_deployment_target,
       menv,
@@ -603,6 +600,15 @@ def String buildScript(
     done
 
     export EUPS_PKGROOT="${eupsPkgroot}"
+
+    # remove any pre-existing eups tags to prevent them from being
+    # [re]published
+    # the tarball pkgroots have tag files (.list) directly in the root of the
+    # repo
+    if [[ -e \$EUPS_PKGROOT ]]; then
+      rm -f "\${EUPS_PKGROOT}/*.list"
+    fi
+
     for prod in ${products}; do
       eups distrib create --server-dir "\$EUPS_PKGROOT" -d tarball "\$prod" -t "${tag}" -vvv
     done
