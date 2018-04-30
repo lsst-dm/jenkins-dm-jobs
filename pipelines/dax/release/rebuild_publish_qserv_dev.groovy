@@ -21,7 +21,7 @@ notify.wrap {
 
   try {
     timeout(time: 30, unit: 'HOURS') {
-      def product         = 'lsst_distrib'
+      def product         = 'qserv_distrib'
       def tarballProducts = product
 
       def retries = 3
