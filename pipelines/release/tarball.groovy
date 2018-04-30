@@ -298,7 +298,7 @@ def void osxBuild(
       params.PRODUCT,
       params.EUPS_TAG,
       "${shName}",
-      "${cwd}/distrib",
+      distDir,
       compiler,
       macosx_deployment_target,
       menv,
