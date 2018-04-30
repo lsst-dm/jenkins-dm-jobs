@@ -2,7 +2,7 @@ import util.Plumber
 
 [
   DAILY:   'H 4 * * *',
-  WEEKLY:  'H 4 * * 0',
+//  WEEKLY:  'H 4 * * 0',
   MONTHLY: 'H 4 1 * *',
 ].each { type, crontab ->
   def p = new Plumber(
