@@ -41,7 +41,6 @@ notify.wrap {
 
         def env = [
           "EUPS_PKGROOT=${pkgroot}",
-          "WORKSPACE=${cwd}",
           "EUPS_USERDATA=${cwd}/home/.eups_userdata",
         ]
 
@@ -89,7 +88,6 @@ notify.wrap {
           ]]) {
             def env = [
               "EUPS_PKGROOT=${cwd}/distrib",
-              "WORKSPACE=${cwd}",
               "HOME=${cwd}/home",
             ]
             withEnv(env) {
@@ -100,7 +98,7 @@ notify.wrap {
                 '''
               } // .inside
             } // withEnv
-          }
+          } // withCredentials
         } else {
           echo "skipping s3 push."
         }
