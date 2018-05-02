@@ -34,8 +34,8 @@ notify.wrap {
           def result = build job: buildJob,
             parameters: [
               string(name: 'PRODUCT', value: product),
-              booleanParam(name: 'SKIP_DEMO', value: false),
-              booleanParam(name: 'SKIP_DOCS', value: false),
+              booleanParam(name: 'SKIP_DEMO', value: true),
+              booleanParam(name: 'SKIP_DOCS', value: true),
               string(name: 'TIMEOUT', value: '8'), // hours
             ],
             wait: true
