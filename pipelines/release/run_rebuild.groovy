@@ -68,7 +68,6 @@ notify.wrap {
           ]]) {
             withEnv([
               "EUPS_PKGROOT=${cwd}/distrib",
-              "WORKSPACE=${cwd}",
               "HOME=${cwd}/home",
             ]) {
               // the current iteration of the awscli container is alpine based
