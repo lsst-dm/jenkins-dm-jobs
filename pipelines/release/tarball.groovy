@@ -107,7 +107,7 @@ def void linuxTarballs(
         }
 
         if (params.PUBLISH) {
-          s3Push(envId)
+          s3PushDocker(envId)
         }
       }
     } // withCredentials([[
@@ -166,7 +166,7 @@ def void osxTarballs(
         }
 
         if (params.PUBLISH) {
-          s3Push(envId)
+          s3PushVenv(envId)
         }
       } // dir
     } // withCredentials
@@ -502,11 +502,10 @@ def void prepareSmoke(
  * Push {@code ./distrib} dir to an s3 bucket under the "path" formed by
  * joining the {@code parts} parameters.
  */
-def void s3Push(String ... parts) {
-  def path = util.joinPath(parts)
+def void s3PushVenv(String ... parts) {
+  def objectPrefix = "stack/" + util.joinPath(parts)
+  def cwd = pwd()
 
-  // XXX if docker was available on osx nodes, this could be replaced with a
-  // container
   util.bash '''
     # do not assume virtualenv is present
     pip install virtualenv
@@ -516,16 +515,71 @@ def void s3Push(String ... parts) {
     pip install --upgrade awscli==1.14.2
   '''
 
+  def env = [
+    "EUPS_PKGROOT=${cwd}/distrib",
+    "EUPS_S3_OBJECT_PREFIX=${objectPrefix}",
+  ]
+
+  withEnv(env) {
+    withEupsBucketEnv {
+      util.bash '''
+        . venv/bin/activate
+        aws s3 sync --only-show-errors \
+          "${EUPS_PKGROOT}/" \
+          "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
+      '''
+    } // withEupsBucketEnv
+  } // withEnv
+}
+
+/**
+ * Push {@code ./distrib} dir to an s3 bucket under the "path" formed by
+ * joining the {@code parts} parameters.
+ */
+def void s3PushDocker(String ... parts) {
+  def objectPrefix = "stack/" + util.joinPath(parts)
+  def cwd = pwd()
+  def awsImage  = 'lsstsqre/awscli'
+
+  def env = [
+    "EUPS_PKGROOT=${cwd}/distrib",
+    "EUPS_S3_OBJECT_PREFIX=${objectPrefix}",
+    "HOME=${cwd}/home",
+  ]
+
+  withEnv(env) {
+    withEupsBucketEnv {
+      docker.image(awsImage).inside {
+        // alpine does not include bash by default
+        util.posixSh '''
+          aws s3 sync --only-show-errors \
+            "${EUPS_PKGROOT}/" \
+            "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
+        '''
+      } // .inside
+    } //withEupsBucketEnv
+  } // withEnv
+}
+
+/**
+ * Declares the following env vars from credentials:
+ * - AWS_ACCESS_KEY_ID
+ * - AWS_SECRET_ACCESS_KEY
+ * - EUPS_S3_BUCKET
+ */
+def void withEupsBucketEnv(Closure run) {
   withCredentials([[
     $class: 'UsernamePasswordMultiBinding',
     credentialsId: 'aws-eups-push',
     usernameVariable: 'AWS_ACCESS_KEY_ID',
     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+  ],
+  [
+    $class: 'StringBinding',
+    credentialsId: 'eups-push-bucket',
+    variable: 'EUPS_S3_BUCKET'
   ]]) {
-    util.bash """
-      . venv/bin/activate
-      aws s3 sync --only-show-errors ./distrib/ s3://\$EUPS_S3_BUCKET/stack/${path}
-    """
+    run()
   }
 }
 
