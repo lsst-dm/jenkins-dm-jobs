@@ -361,9 +361,7 @@ def jenkinsWrapperPost(String baseDir = null) {
       products.each { item ->
         def name = item['name']
         def xml = "${lsstsw_build_dir}/${name}/tests/.tests/pytest-${name}.xml"
-        if (fileExists(xml)) {
-          reports << xml
-        }
+        reports << xml
 
         record.each { pattern ->
           archive += "${lsstsw_build_dir}/${name}/**/${pattern}"
