@@ -506,33 +506,7 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
 
   options = defaultOptions + options
 
-  def mapToFlags = { opt ->
-    def flags = []
-
-    opt.each { k,v ->
-      if (v) {
-        if (v == true) {
-          // its a boolean flag
-          flags += k
-        } else {
-          // its a flag with an arg
-          if (v instanceof List) {
-            // its a flag with multiple values
-            v.each { nested ->
-              flags += "${k} \"${nested}\""
-            }
-          } else {
-            // its a flag with a single value
-            flags += "${k} \"${v}\""
-          }
-        }
-      }
-    }
-
-    return flags.join(' ')
-  }
-
-  cmd = "${prog} ${mapToFlags(options)} ${gitTag} ${buildId}"
+  cmd = "${prog} ${mapToCliFlags(options)} ${gitTag} ${buildId}"
 
   def run = {
     insideWrap(docImage) {
@@ -550,6 +524,38 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
     run()
   }
 } // githubTagVersion
+
+/**
+ * Convert a map of command line flags (keys) and values into a string suitable
+ * to be passed on "the cli" to a program
+ *
+ * @param opt Map script option flags
+ */
+def String mapToCliFlags(Map opt) {
+  def flags = []
+
+  opt.each { k,v ->
+    if (v) {
+      if (v == true) {
+        // its a boolean flag
+        flags += k
+      } else {
+        // its a flag with an arg
+        if (v instanceof List) {
+          // its a flag with multiple values
+          v.each { nested ->
+            flags += "${k} \"${nested}\""
+          }
+        } else {
+          // its a flag with a single value
+          flags += "${k} \"${v}\""
+        }
+      }
+    }
+  }
+
+  return flags.join(' ')
+}
 
 /**
  * Run trivial execution time block
