@@ -483,14 +483,9 @@ def void getManifest(String rebuildId, String filename) {
  *
  * @param gitTag String name of git tag to create
  * @param buildId String bNNNN/manifest id to select repos/refs to tag
- * @param options Map script option flags.  These are merged with an internal
- * set of defaults.  Truthy values are considered as an active flag while the
- * literal `true` constant indicates a boolean flag.  Falsey values result in
- * the flag being omitted.  Lists/Arrays result in the flag being specified
- * multiple times.
+ * @param options Map see `makeCliCmd`
  */
 def void githubTagVersion(String gitTag, String buildId, Map options) {
-  def timelimit = 1
   def prog = 'github-tag-version'
   def defaultOptions = [
     '--dry-run': true,
@@ -503,15 +498,7 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
     '--debug': true,
   ]
 
-  options = defaultOptions + options
-
-  cmd = "${prog} ${mapToCliFlags(options)} ${gitTag} ${buildId}"
-
-  timeout(time: timelimit, unit: 'HOURS') {
-    insideCodekit {
-      run()
-    }
-  }
+  runCodekitCmd(prog, defaultOptions, options, [gitTag, buildId])
 } // githubTagVersion
 
 /**
