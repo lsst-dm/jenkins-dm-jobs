@@ -510,13 +510,9 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
 
   def run = {
     insideWrap(docImage) {
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'github-api-token-sqreadmin',
-        variable: 'GITHUB_TOKEN'
-      ]]) {
+      withGithubAdminCredentials {
         bash cmd
-      } // withCredentials
+      } // withGithubAdminCredentials
     } // insideWrap
   } // run
 
@@ -555,6 +551,21 @@ def String mapToCliFlags(Map opt) {
   }
 
   return flags.join(' ')
+}
+
+/**
+ * Run block with a github oauth token defined as `GITHUB_TOKEN`.
+ *
+ * @param run Closure Invoked inside of node step
+ */
+def void withGithubAdminCredentials(Closure run) {
+  withCredentials([[
+    $class: 'StringBinding',
+    credentialsId: 'github-api-token-sqreadmin',
+    variable: 'GITHUB_TOKEN'
+  ]]) {
+    run()
+  } // withCredentials
 }
 
 /**
