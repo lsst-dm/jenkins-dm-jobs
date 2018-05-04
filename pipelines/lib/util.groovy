@@ -515,6 +515,47 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
 } // githubTagVersion
 
 /**
+ * Generate a string for executing a system command with optional flags and/or
+ * arguments.
+ *
+ * @param prog String command to run.
+ * @param defaultOptions Map command option flags.
+ * @param options Map script option flags.  These are merged with
+ * defaultOptions.  Truthy values are considered as an active flag while the
+ * literal `true` constant indicates a boolean flag.  Falsey values result in
+ * the flag being omitted.  Lists/Arrays result in the flag being specified
+ * multiple times.
+ * @param args List verbatium arguments to pass to command.
+ * @return String complete cli command
+ */
+def String makeCliCmd(
+  String prog,
+  Map defaultOptions,
+  Map options,
+  List args
+) {
+  def useOpts = [:]
+
+  if (defaultOptions) {
+    useOpts = defaultOptions
+  }
+  if (options) {
+    useOpts += options
+  }
+
+  cmd = [prog]
+
+  if (useOpts) {
+    cmd += mapToCliFlags(useOpts)
+  }
+  if (args) {
+    cmd += listToCliArgs(args)
+  }
+
+  return cmd.join(' ')
+} // makeCliCmd
+
+/**
  * Run block inside a container with sqre-codekit installed and a github oauth
  * token defined as `GITHUB_TOKEN`.
  *
