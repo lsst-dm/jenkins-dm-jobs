@@ -55,6 +55,10 @@ class Common {
       description('Binary releases via docker contrainers.')
     }
 
+    dslFactory.folder('release/codekit') {
+      description('Run commands from sqre-codekit.')
+    }
+
     /*
     dslFactory.folder('sqre/cowboy') {
       description('Experimental, not fully-baked, and/or "demonstration purposes only" jobs.')
