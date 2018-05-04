@@ -934,10 +934,10 @@ def ltdPush(Map args) {
       docker.image(masonImage).inside {
         // expect that the service will return an HTTP 502, which causes
         // ltd-mason-travis to exit 1
-        util.sh '''
+        sh '''
         /usr/bin/ltd-mason-travis --html-dir _build/html --verbose || true
         '''
-      } // util.insideWrap
+      } // insideWrap
     } // withCredentials
   } //withEnv
 } // runLtdMason
