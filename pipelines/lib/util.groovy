@@ -502,6 +502,26 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
 } // githubTagVersion
 
 /**
+ * Run the `github-tag-teams` script from `sqre-codekit` with parameters.
+ *
+ * @param options Map see `makeCliCmd`
+ */
+def void githubTagTeams(Map options) {
+  def prog = 'github-tag-teams'
+  def defaultOptions = [
+    '--dry-run': true,
+    '--org': 'lsst',
+    '--team': 'Data Management',
+    '--email': 'sqre-admin@lists.lsst.org',
+    '--tagger': 'sqreadmin',
+    '--token':  '$GITHUB_TOKEN',
+    '--debug': true,
+  ]
+
+  runCodekitCmd(prog, defaultOptions, options, null)
+} // githubTagVersion
+
+/**
  * Run a codekit cli command.
  *
  * @param prog String see `makeCliCmd`
