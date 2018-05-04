@@ -563,6 +563,17 @@ def String mapToCliFlags(Map opt) {
 }
 
 /**
+ * Convert a List of command line args into a string suitable
+ * to be passed on "the cli" to a program
+ *
+ * @param args List of command arguments
+ * @return String of arguments
+ */
+def String listToCliArgs(List args) {
+  return args.collect { "\"${it}\"" }.join(' ')
+}
+
+/**
  * Run block with a github oauth token defined as `GITHUB_TOKEN`.
  *
  * @param run Closure Invoked inside of node step
