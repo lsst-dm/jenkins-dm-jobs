@@ -491,7 +491,6 @@ def void getManifest(String rebuildId, String filename) {
  */
 def void githubTagVersion(String gitTag, String buildId, Map options) {
   def timelimit = 1
-  def docImage  = 'lsstsqre/codekit:4.1.1'
   def prog = 'github-tag-version'
   def defaultOptions = [
     '--dry-run': true,
@@ -508,18 +507,28 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
 
   cmd = "${prog} ${mapToCliFlags(options)} ${gitTag} ${buildId}"
 
-  def run = {
-    insideWrap(docImage) {
-      withGithubAdminCredentials {
-        bash cmd
-      } // withGithubAdminCredentials
-    } // insideWrap
-  } // run
-
   timeout(time: timelimit, unit: 'HOURS') {
-    run()
+    insideCodekit {
+      run()
+    }
   }
 } // githubTagVersion
+
+/**
+ * Run block inside a container with sqre-codekit installed and a github oauth
+ * token defined as `GITHUB_TOKEN`.
+ *
+ * @param run Closure Invoked inside of node step
+ */
+def void insideCodekit(Closure run) {
+  def docImage  = 'lsstsqre/codekit:4.1.1'
+
+  insideWrap(docImage) {
+    withGithubAdminCredentials {
+      run()
+    } // withGithubAdminCredentials
+  } // insideWrap
+}
 
 /**
  * Convert a map of command line flags (keys) and values into a string suitable
