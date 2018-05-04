@@ -483,15 +483,9 @@ def void getManifest(String rebuildId, String filename) {
  *
  * @param gitTag String name of git tag to create
  * @param buildId String bNNNN/manifest id to select repos/refs to tag
- * @param options Map script option flags.  These are merged with an internal
- * set of defaults.  Truthy values are considered as an active flag while the
- * literal `true` constant indicates a boolean flag.  Falsey values result in
- * the flag being omitted.  Lists/Arrays result in the flag being specified
- * multiple times.
+ * @param options Map see `makeCliCmd`
  */
 def void githubTagVersion(String gitTag, String buildId, Map options) {
-  def timelimit = 1
-  def docImage  = 'lsstsqre/codekit:4.1.1'
   def prog = 'github-tag-version'
   def defaultOptions = [
     '--dry-run': true,
@@ -504,52 +498,167 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
     '--debug': true,
   ]
 
-  options = defaultOptions + options
+  runCodekitCmd(prog, defaultOptions, options, [gitTag, buildId])
+} // githubTagVersion
 
-  def mapToFlags = { opt ->
-    def flags = []
+/**
+ * Run the `github-tag-teams` script from `sqre-codekit` with parameters.
+ *
+ * @param options Map see `makeCliCmd`
+ */
+def void githubTagTeams(Map options) {
+  def prog = 'github-tag-teams'
+  def defaultOptions = [
+    '--dry-run': true,
+    '--org': 'lsst',
+    '--team': 'Data Management',
+    '--email': 'sqre-admin@lists.lsst.org',
+    '--tagger': 'sqreadmin',
+    '--token':  '$GITHUB_TOKEN',
+    '--debug': true,
+  ]
 
-    opt.each { k,v ->
-      if (v) {
-        if (v == true) {
-          // its a boolean flag
-          flags += k
-        } else {
-          // its a flag with an arg
-          if (v instanceof List) {
-            // its a flag with multiple values
-            v.each { nested ->
-              flags += "${k} \"${nested}\""
-            }
-          } else {
-            // its a flag with a single value
-            flags += "${k} \"${v}\""
+  runCodekitCmd(prog, defaultOptions, options, null)
+} // githubTagVersion
+
+/**
+ * Run a codekit cli command.
+ *
+ * @param prog String see `makeCliCmd`
+ * @param defaultOptions Map see `makeCliCmd`
+ * @param options Map see `makeCliCmd`
+ * @param args List see `makeCliCmd`
+ */
+def void runCodekitCmd(
+  String prog,
+  Map defaultOptions,
+  Map options,
+  List args,
+  Integer timelimit = 30
+) {
+  def cliCmd = makeCliCmd(prog, defaultOptions, options, args)
+
+  timeout(time: timelimit, unit: 'MINUTES') {
+    insideCodekit {
+      bash cliCmd
+    }
+  }
+} // runCodekitCmd
+
+/**
+ * Generate a string for executing a system command with optional flags and/or
+ * arguments.
+ *
+ * @param prog String command to run.
+ * @param defaultOptions Map command option flags.
+ * @param options Map script option flags.  These are merged with
+ * defaultOptions.  Truthy values are considered as an active flag while the
+ * literal `true` constant indicates a boolean flag.  Falsey values result in
+ * the flag being omitted.  Lists/Arrays result in the flag being specified
+ * multiple times.
+ * @param args List verbatium arguments to pass to command.
+ * @return String complete cli command
+ */
+def String makeCliCmd(
+  String prog,
+  Map defaultOptions,
+  Map options,
+  List args
+) {
+  def useOpts = [:]
+
+  if (defaultOptions) {
+    useOpts = defaultOptions
+  }
+  if (options) {
+    useOpts += options
+  }
+
+  cmd = [prog]
+
+  if (useOpts) {
+    cmd += mapToCliFlags(useOpts)
+  }
+  if (args) {
+    cmd += listToCliArgs(args)
+  }
+
+  return cmd.join(' ')
+} // makeCliCmd
+
+/**
+ * Run block inside a container with sqre-codekit installed and a github oauth
+ * token defined as `GITHUB_TOKEN`.
+ *
+ * @param run Closure Invoked inside of node step
+ */
+def void insideCodekit(Closure run) {
+  def docImage  = 'lsstsqre/codekit:4.1.1'
+
+  insideWrap(docImage) {
+    withGithubAdminCredentials {
+      run()
+    } // withGithubAdminCredentials
+  } // insideWrap
+}
+
+/**
+ * Convert a map of command line flags (keys) and values into a string suitable
+ * to be passed on "the cli" to a program
+ *
+ * @param opt Map script option flags
+ */
+def String mapToCliFlags(Map opt) {
+  def flags = []
+
+  opt.each { k,v ->
+    if (v) {
+      if (v == true) {
+        // its a boolean flag
+        flags += k
+      } else {
+        // its a flag with an arg
+        if (v instanceof List) {
+          // its a flag with multiple values
+          v.each { nested ->
+            flags += "${k} \"${nested}\""
           }
+        } else {
+          // its a flag with a single value
+          flags += "${k} \"${v}\""
         }
       }
     }
-
-    return flags.join(' ')
   }
 
-  cmd = "${prog} ${mapToFlags(options)} ${gitTag} ${buildId}"
+  return flags.join(' ')
+}
 
-  def run = {
-    insideWrap(docImage) {
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'github-api-token-sqreadmin',
-        variable: 'GITHUB_TOKEN'
-      ]]) {
-        bash cmd
-      } // withCredentials
-    } // insideWrap
-  } // run
+/**
+ * Convert a List of command line args into a string suitable
+ * to be passed on "the cli" to a program
+ *
+ * @param args List of command arguments
+ * @return String of arguments
+ */
+def String listToCliArgs(List args) {
+  return args.collect { "\"${it}\"" }.join(' ')
+}
 
-  timeout(time: timelimit, unit: 'HOURS') {
+/**
+ * Run block with a github oauth token defined as `GITHUB_TOKEN`.
+ *
+ * @param run Closure Invoked inside of node step
+ */
+def void withGithubAdminCredentials(Closure run) {
+  withCredentials([[
+    $class: 'StringBinding',
+    credentialsId: 'github-api-token-sqreadmin',
+    variable: 'GITHUB_TOKEN'
+  ]]) {
     run()
-  }
-} // githubTagVersion
+  } // withCredentials
+}
 
 /**
  * Run trivial execution time block
@@ -825,12 +934,54 @@ def ltdPush(Map args) {
       docker.image(masonImage).inside {
         // expect that the service will return an HTTP 502, which causes
         // ltd-mason-travis to exit 1
-        util.sh '''
+        sh '''
         /usr/bin/ltd-mason-travis --html-dir _build/html --verbose || true
         '''
-      } // util.insideWrap
+      } // insideWrap
     } // withCredentials
   } //withEnv
 } // runLtdMason
+
+def String runRebuild(String buildJob, Map opts) {
+  def defaultOpts = [
+    SKIP_DEMO: false,
+    SKIP_DOCS: false,
+    TIMEOUT: '8', // should be String
+  ]
+
+  def useOpts = defaultOpts
+  if (opts) {
+    useOpts += opts
+  }
+
+  def result = build job: buildJob,
+    parameters: [
+      string(name: 'BRANCH', value: opts.BRANCH),
+      string(name: 'PRODUCT', value: opts.PRODUCT),
+      booleanParam(name: 'SKIP_DEMO', value: opts.SKIP_DEMO),
+      booleanParam(name: 'SKIP_DOCS', value: opts.SKIP_DOCS),
+      string(name: 'TIMEOUT', value: opts.TIMEOUT), // hours
+    ],
+    wait: true
+
+  nodeTiny {
+    manifest_artifact = 'lsstsw/build/manifest.txt'
+
+    step([$class: 'CopyArtifact',
+          projectName: buildJob,
+          filter: manifest_artifact,
+          selector: [
+            $class: 'SpecificBuildSelector',
+            buildNumber: result.id,
+          ],
+        ])
+
+    def manifest = readFile manifest_artifact
+    def bx = bxxxx(manifest)
+    echo "parsed bxxxx: ${bx}"
+  } // nodeTiny
+
+  return bx
+}
 
 return this;

@@ -13,6 +13,8 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  util.requireParams(['DRY_RUN', 'GIT_TAG', 'BUILD_ID'])
+
   node('docker') {
     util.githubTagVersion(
       params.GIT_TAG,
