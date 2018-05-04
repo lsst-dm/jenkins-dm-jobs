@@ -942,4 +942,46 @@ def ltdPush(Map args) {
   } //withEnv
 } // runLtdMason
 
+def String runRebuild(String buildJob, Map opts) {
+  def defaultOpts = [
+    SKIP_DEMO: false,
+    SKIP_DOCS: false,
+    TIMEOUT: '8', // should be String
+  ]
+
+  def useOpts = defaultOpts
+  if (opts) {
+    useOpts += opts
+  }
+
+  def result = build job: buildJob,
+    parameters: [
+      string(name: 'BRANCH', value: opts.BRANCH),
+      string(name: 'PRODUCT', value: opts.PRODUCT),
+      booleanParam(name: 'SKIP_DEMO', value: opts.SKIP_DEMO),
+      booleanParam(name: 'SKIP_DOCS', value: opts.SKIP_DOCS),
+      string(name: 'TIMEOUT', value: opts.TIMEOUT), // hours
+    ],
+    wait: true
+
+  nodeTiny {
+    manifest_artifact = 'lsstsw/build/manifest.txt'
+
+    step([$class: 'CopyArtifact',
+          projectName: buildJob,
+          filter: manifest_artifact,
+          selector: [
+            $class: 'SpecificBuildSelector',
+            buildNumber: result.id,
+          ],
+        ])
+
+    def manifest = readFile manifest_artifact
+    def bx = bxxxx(manifest)
+    echo "parsed bxxxx: ${bx}"
+  } // nodeTiny
+
+  return bx
+}
+
 return this;
