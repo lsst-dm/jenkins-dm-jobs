@@ -108,19 +108,39 @@ notify.wrap {
       }
 
       stage('git tag') {
-        retry(retries) {
-          node('docker') {
-            // needs eups distrib tag to be sync'd from s3 -> k8s volume
-            util.githubTagVersion(
-              gitTag,
-              bx,
-              [
-                '--dry-run': false,
-                '--team': ['Data Management', 'DM Externals'],
-              ]
-            )
-          } // node
-        } // retry
+        def tag = [:]
+
+        tag['github-tag-version'] = {
+          retry(retries) {
+            node('docker') {
+              // needs eups distrib tag to be sync'd from s3 -> k8s volume
+              util.githubTagVersion(
+                gitTag,
+                bx,
+                [
+                  '--dry-run': false,
+                  '--team': ['Data Management', 'DM Externals'],
+                ]
+              )
+            } // node
+          } // retry
+        }
+
+        tag['github-tag-teams'] = {
+          retry(retries) {
+            node('docker') {
+              util.githubTagTeams(
+                [
+                  '--dry-run': false,
+                  '--team': 'DM Auxilliaries',
+                  '--tag': gitTag,
+                ]
+              )
+            } // node
+          } // retry
+        }
+
+        parallel tag
       }
 
       stage('build eups tarballs') {
