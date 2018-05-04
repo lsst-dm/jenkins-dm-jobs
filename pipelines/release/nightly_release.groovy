@@ -113,40 +113,37 @@ notify.wrap {
       }
 
       // NOOP / DRY_RUN
-      stage('git tag') {
-        def tag = [:]
+      stage('git tag eups products') {
+        retry(retries) {
+          node('docker') {
+            // needs eups distrib tag to be sync'd from s3 -> k8s volume
+            util.githubTagVersion(
+              gitTag,
+              bx,
+              [
+                '--dry-run': true,
+                '--team': ['Data Management', 'DM Externals'],
+              ]
+            )
+          } // node
+        } // retry
+      }
 
-        tag['github-tag-version'] = {
-          retry(retries) {
-            node('docker') {
-              // needs eups distrib tag to be sync'd from s3 -> k8s volume
-              util.githubTagVersion(
-                gitTag,
-                bx,
-                [
-                  '--dry-run': true,
-                  '--team': ['Data Management', 'DM Externals'],
-                ]
-              )
-            } // node
-          } // retry
-        }
-
-        tag['github-tag-teams'] = {
-          retry(retries) {
-            node('docker') {
-              util.githubTagTeams(
-                [
-                  '--dry-run': true,
-                  '--team': 'DM Auxilliaries',
-                  '--tag': gitTag,
-                ]
-              )
-            } // node
-          } // retry
-        }
-
-        parallel tag
+      // add aux repo tags *after* tagging eups product repos so as to avoid a
+      // trainwreck if an aux repo has been pulled into the build (without
+      // first being removed from the aux team).
+      stage('git tag auxilliaries') {
+        retry(retries) {
+          node('docker') {
+            util.githubTagTeams(
+              [
+                '--dry-run': true,
+                '--team': 'DM Auxilliaries',
+                '--tag': gitTag,
+              ]
+            )
+          } // node
+        } // retry
       }
 
       stage('build eups tarballs') {
