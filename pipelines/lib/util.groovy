@@ -515,6 +515,30 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
 } // githubTagVersion
 
 /**
+ * Run a codekit cli command.
+ *
+ * @param prog String see `makeCliCmd`
+ * @param defaultOptions Map see `makeCliCmd`
+ * @param options Map see `makeCliCmd`
+ * @param args List see `makeCliCmd`
+ */
+def void runCodekitCmd(
+  String prog,
+  Map defaultOptions,
+  Map options,
+  List args,
+  Integer timelimit = 30
+) {
+  def cliCmd = makeCliCmd(prog, defaultOptions, options, args)
+
+  timeout(time: timelimit, unit: 'MINUTES') {
+    insideCodekit {
+      bash cliCmd
+    }
+  }
+} // runCodekitCmd
+
+/**
  * Generate a string for executing a system command with optional flags and/or
  * arguments.
  *
