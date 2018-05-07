@@ -239,35 +239,3 @@ notify.wrap {
     }
   } // try
 } // notify.wrap
-
-/**
- * Represents a miniconda build environment.
- */
-class MinicondaEnv implements Serializable {
-  String pythonVersion
-  String minicondaVersion
-  String lsstswRef
-
-  /**
-   * Constructor.
-   *
-   * @param p Python major version number. Eg., '3'
-   * @param m Miniconda version string. Eg., '4.2.12'
-   * @param l {@code lsst/lsstsw} git ref.
-   * @return MinicondaEnv
-   */
-  // unfortunately, a constructor is required under the security sandbox
-  // See: https://issues.jenkins-ci.org/browse/JENKINS-34741
-  MinicondaEnv(String p, String m, String l) {
-    this.pythonVersion = p
-    this.minicondaVersion = m
-    this.lsstswRef = l
-  }
-
-  /**
-   * Generate a single string description of miniconda env.
-   */
-  String slug() {
-    "miniconda${pythonVersion}-${minicondaVersion}-${lsstswRef}"
-  }
-}
