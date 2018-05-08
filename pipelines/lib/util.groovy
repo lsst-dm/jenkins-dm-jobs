@@ -492,7 +492,7 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
     '--org': 'lsst',
     '--team': 'Data Management',
     '--email': 'sqre-admin@lists.lsst.org',
-    '--tagger': 'sqreadmin',
+    '--user': 'sqreadmin',
     '--token':  '$GITHUB_TOKEN',
     '--fail-fast': true,
     '--debug': true,
@@ -513,7 +513,7 @@ def void githubTagTeams(Map options) {
     '--org': 'lsst',
     '--team': 'Data Management',
     '--email': 'sqre-admin@lists.lsst.org',
-    '--tagger': 'sqreadmin',
+    '--user': 'sqreadmin',
     '--token':  '$GITHUB_TOKEN',
     '--debug': true,
   ]
@@ -593,7 +593,7 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  def docImage  = 'lsstsqre/codekit:4.1.1'
+  def docImage  = 'lsstsqre/codekit:5.0.4'
 
   insideWrap(docImage) {
     withGithubAdminCredentials {
