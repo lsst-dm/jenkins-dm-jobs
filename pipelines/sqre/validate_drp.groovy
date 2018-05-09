@@ -706,7 +706,6 @@ def void runDispatchqa(
     util.bash '''
       source /opt/lsst/software/stack/loadLSST.bash
       cd "$DRP_DIR"
-      git checkout verify_port
       setup -k -r .
       cd "$RUN_DIR"
 
@@ -722,7 +721,6 @@ def void runDispatchqa(
       util.bash '''
         source /opt/lsst/software/stack/loadLSST.bash
         cd "$DRP_DIR"
-        git checkout verify_port
         setup -k -r .
         cd "$RUN_DIR"
 
