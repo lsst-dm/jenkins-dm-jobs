@@ -309,7 +309,7 @@ def void osxBuild(
       util.bash shName
     }
   } finally {
-    record(buildDir)
+    record(buildDir, menv)
     cleanup(buildDir)
   }
 } // osxBuild
@@ -387,7 +387,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
       '''
     } // withEnv
   } finally {
-    record(smokeDir)
+    record(smokeDir, menv)
   }
 } // linuxSmoke
 
@@ -436,7 +436,7 @@ def void osxSmoke(
       }
     }
   } finally {
-    record(smokeDir)
+    record(smokeDir, menv)
   }
 } // osxSmoke
 
