@@ -210,9 +210,7 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
 
     // sanitize build dir to ensure log collection is for the current build
     // only
-    dir("${buildDir}/stack/current/EupsBuildDir") {
-      deleteDir()
-    }
+    emptyExistingDir("${buildDir}/stack/current/EupsBuildDir")
 
     prepareBuild(
       params.PRODUCT,
@@ -290,9 +288,7 @@ def void osxBuild(
 
     // sanitize build dir to ensure log collection is for the current build
     // only
-    dir("${buildDir}/stack/current/EupsBuildDir") {
-      deleteDir()
-    }
+    emptyExistingDir("${buildDir}/stack/current/EupsBuildDir")
 
     prepareBuild(
       params.PRODUCT,
@@ -825,5 +821,19 @@ class MinicondaEnv implements Serializable {
    */
   String slug() {
     "miniconda${pythonVersion}-${minicondaVersion}-${lsstswRef}"
+  }
+}
+
+/**
+ * Empty dir only if it exists.  This is intended to avoid the side effect of
+ * the dir() step of creating an empty dir if it does not already exists.
+ *
+ * @param path String path to dir to empty, if it exists
+ */
+def void emptyExistingDir(String path) {
+  if (fileExists(path)) {
+    dir(path) {
+      deleteDir()
+    }
   }
 }
