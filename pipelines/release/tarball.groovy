@@ -210,7 +210,7 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
 
     // sanitize build dir to ensure log collection is for the current build
     // only
-    emptyExistingDir("${buildDir}/stack/current/EupsBuildDir")
+    emptyExistingDir(eupsBuildDir(buildDir, menv))
 
     prepareBuild(
       params.PRODUCT,
@@ -254,7 +254,7 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
       '''
     } // withEnv
   } finally {
-    record(buildDir)
+    record(buildDir, menv)
     cleanup(buildDir)
   }
 } // linuxBuild
@@ -288,7 +288,7 @@ def void osxBuild(
 
     // sanitize build dir to ensure log collection is for the current build
     // only
-    emptyExistingDir("${buildDir}/stack/current/EupsBuildDir")
+    emptyExistingDir(eupsBuildDir(buildDir, menv))
 
     prepareBuild(
       params.PRODUCT,
@@ -582,8 +582,8 @@ def void withEupsBucketEnv(Closure run) {
 /**
  *  Record logs
  */
-def void record(String buildDir) {
-  def eupsBuildDir = "${buildDir}/stack/current/EupsBuildDir"
+def void record(String buildDir, MinicondaEnv menv) {
+  def eupsBuildDir = eupsBuildDir(buildDir, menv)
 
   def archive = [
     '**/*.log',
@@ -836,4 +836,16 @@ def void emptyExistingDir(String path) {
       deleteDir()
     }
   }
+}
+
+/**
+ * Calculate EupsBuildDir path
+ *
+ * @param buildDir String root path to newinstall.sh env
+ * @param menv MinicondaEnv
+ * @return String path to EupsBuildDir
+*/
+@NonCPS
+def String eupsBuildDir(String buildDir, MinicondaEnv menv) {
+  return "${buildDir}/stack/${menv.slug()}/EupsBuildDir"
 }
