@@ -593,7 +593,7 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  def docImage  = 'lsstsqre/codekit:5.0.4'
+  def docImage  = 'lsstsqre/codekit:6.0.0'
 
   insideWrap(docImage) {
     withGithubAdminCredentials {
