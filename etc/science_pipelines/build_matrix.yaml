@@ -39,6 +39,8 @@ scipipe-lsstsw-matrix:
     # allow 800.0.42 and 800.0.42.1
     compiler: ^clang-802.0.42$ ^clang-800.0.42.1$
     display_compiler: clang
+scipipe-lsstsw-ci_hsc:
+  - <<: *el7-py3
 dax-lsstsw-matrix:
   - <<: *el7-py3
   - <<: *el7-py3-llvm
