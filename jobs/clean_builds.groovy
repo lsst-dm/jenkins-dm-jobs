@@ -6,9 +6,17 @@ import util.CleanBuild
 [
   [
     name: 'science-pipelines/lsst_distrib',
-    product: 'lsst_distrib ci_hsc',
+    product: 'lsst_distrib',
     skipDemo: false,
     skipDocs: false,
+    seedJob: SEED_JOB,
+  ],
+  [
+    name: 'science-pipelines/ci_hsc',
+    product: 'ci_hsc',
+    skipDemo: true,
+    skipDocs: true,
+    buildConfig: 'scipipe-lsstsw-ci_hsc',
     seedJob: SEED_JOB,
   ],
   [
