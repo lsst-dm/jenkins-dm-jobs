@@ -942,7 +942,18 @@ def ltdPush(Map args) {
   } //withEnv
 } // runLtdMason
 
-def String runRebuild(String buildJob, Map opts) {
+/**
+ * run `release/rebuild` job and parse result
+ *
+ * @param buildJob String job to trigger. Defaults to `release/rebuild`.
+ * @param opts.BRANCH String
+ * @param opts.PRODUCT String
+ * @param opts.SKIP_DEMO Boolean Defaults to `false`.
+ * @param opts.SKIP_DOCS Boolean Defaults to `false`.
+ * @param opts.TIMEOUT String Defaults to `'8'`.
+ * @return bxxxx String
+ */
+def String runRebuild(String buildJob='release/rebuild', Map opts) {
   def defaultOpts = [
     SKIP_DEMO: false,
     SKIP_DOCS: false,

@@ -25,41 +25,17 @@ notify.wrap {
       def tarballProducts = product
 
       def retries = 3
-      def rebuildId = null
       def buildJob = 'release/run-rebuild'
       def publishJob = 'release/run-publish'
 
       stage('build') {
         retry(retries) {
-          def result = build job: buildJob,
-            parameters: [
-              string(name: 'PRODUCT', value: product),
-              booleanParam(name: 'SKIP_DEMO', value: true),
-              booleanParam(name: 'SKIP_DOCS', value: true),
-              string(name: 'TIMEOUT', value: '8'), // hours
-            ],
-            wait: true
-          rebuildId = result.id
-        }
-      }
-
-      stage('parse bNNNN') {
-        util.nodeTiny {
-          manifest_artifact = 'lsstsw/build/manifest.txt'
-
-          step([$class: 'CopyArtifact',
-                projectName: buildJob,
-                filter: manifest_artifact,
-                selector: [
-                  $class: 'SpecificBuildSelector',
-                  buildNumber: rebuildId
-                ],
-              ])
-
-          def manifest = readFile manifest_artifact
-          bx = util.bxxxx(manifest)
-
-          echo "parsed bxxxx: ${bx}"
+          bx = util.runRebuild(buildJob, [
+            PRODUCT: product,
+            SKIP_DEMO: false,
+            SKIP_DOCS: false,
+            TIMEOUT: '8', // hours
+          ])
         }
       }
 

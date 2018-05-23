@@ -20,37 +20,16 @@ notify.wrap {
   echo "[eups] tag: ${EUPS_TAG}"
 
   def bx = null
-  def rebuildId = null
   def buildJob = 'release/run-rebuild'
   def publishJob = 'release/run-publish'
 
-  stage('build') {
-    def result = build job: buildJob,
-        parameters: [
-          string(name: 'BRANCH', value: BRANCH),
-          string(name: 'PRODUCT', value: PRODUCT),
-          booleanParam(name: 'SKIP_DEMO', value: SKIP_DEMO.toBoolean()),
-          booleanParam(name: 'SKIP_DOCS', value: SKIP_DOCS.toBoolean())
-        ],
-        wait: true
-    rebuildId = result.id
-  }
-
-  stage('parse bNNNN') {
-    util.nodeTiny {
-      manifest_artifact = 'lsstsw/build/manifest.txt'
-
-      step ([$class: 'CopyArtifact',
-            projectName: buildJob,
-            filter: manifest_artifact,
-            selector: [$class: 'SpecificBuildSelector', buildNumber: rebuildId]
-            ]);
-
-      def manifest = readFile manifest_artifact
-      bx = util.bxxxx(manifest)
-
-      echo "parsed bxxxx: ${bx}"
-    }
+  retry(retries) {
+    bx = util.runRebuild(buildJob, [
+      BRANCH: params.BRANCH,
+      PRODUCT: params.PRODUCT,
+      SKIP_DEMO: params.SKIP_DEMO.toBoolean(),
+      SKIP_DOCS: params.SKIP_DOCS.toBoolean(),
+    ])
   }
 
   stage('eups publish [tag]') {
