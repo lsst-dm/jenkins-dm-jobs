@@ -42,12 +42,14 @@ notify.wrap {
       def baseName = mkBaseName(majrelease)
       def baseTag = "${buildRepo}:${baseName}"
 
-      util.librarianPuppet()
-      def baseBuild = packIt('centos_stackbase.json', [
-        "-var base_image=${baseImage}",
-        "-var build_name=${baseName}",
-      ])
-      images << [(baseTag): baseBuild]
+      stage(baseTag) {
+        util.librarianPuppet()
+        def baseBuild = packIt('centos_stackbase.json', [
+          "-var base_image=${baseImage}",
+          "-var build_name=${baseName}",
+        ])
+        images << [(baseTag): baseBuild]
+      } // stage
     } // majrelease
 
     // scl compiler string(s)
@@ -63,22 +65,26 @@ notify.wrap {
         def tsName = "${baseName}-${scl}"
         def tsTag = "${buildRepo}:${tsName}"
 
-        tsBuild = packIt('centos_devtoolset.json', [
-          "-var base_image=${baseTag}",
-          "-var build_name=${tsName}",
-          "-var scl_compiler=${scl}",
-        ])
-        images << [(tsTag): tsBuild]
+        stage(tsTag) {
+          tsBuild = packIt('centos_devtoolset.json', [
+            "-var base_image=${baseTag}",
+            "-var build_name=${tsName}",
+            "-var scl_compiler=${scl}",
+          ])
+          images << [(tsTag): tsBuild]
+        } // stage
       } // baseName, scl
     } // conf
 
-    if (! params.NO_PUSH) {
-      images.each { item ->
-        item.each { tag, build ->
-          shipIt(build, tag)
+    stage('push') {
+      if (! params.NO_PUSH) {
+        images.each { item ->
+          item.each { tag, build ->
+            shipIt(build, tag)
+          }
         }
       }
-    }
+    } // stage
   } // run
 
   timeout(time: 23, unit: 'HOURS') {
