@@ -23,6 +23,12 @@ notify.wrap {
       ])
     }
 
+    // ensure the current image is used
+    stage('docker pull') {
+      docImage = "${params.BASE_IMAGE}:${params.TAG_PREFIX}${params.TAG}"
+      docker.image(docImage).pull()
+    }
+
     stage('build+push') {
       dir('jupyterlab') {
         if (! params.NO_PUSH) {
