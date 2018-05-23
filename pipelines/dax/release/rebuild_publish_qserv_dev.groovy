@@ -32,8 +32,8 @@ notify.wrap {
         retry(retries) {
           bx = util.runRebuild(buildJob, [
             PRODUCT: product,
-            SKIP_DEMO: false,
-            SKIP_DOCS: false,
+            SKIP_DEMO: true,
+            SKIP_DOCS: true,
             TIMEOUT: '8', // hours
           ])
         }
