@@ -52,23 +52,25 @@ notify.wrap {
 
     // scl compiler string(s)
     [
-      (mkBaseName(6)): 'devtoolset-6',
-      (mkBaseName(7)): 'devtoolset-6',
-      (mkBaseName(6)): 'devtoolset-7',
-      (mkBaseName(7)): 'devtoolset-7',
-      (mkBaseName(7)): 'llvm-toolset-7',
-    ].each { baseName, scl ->
-      def baseTag = "${buildRepo}:${baseName}"
-      def tsName = "${baseName}-${scl}"
-      def tsTag = "${buildRepo}:${tsName}"
+      [(mkBaseName(6)): 'devtoolset-6'],
+      [(mkBaseName(7)): 'devtoolset-6'],
+      [(mkBaseName(6)): 'devtoolset-7'],
+      [(mkBaseName(7)): 'devtoolset-7'],
+      [(mkBaseName(7)): 'llvm-toolset-7'],
+    ].each { conf ->
+      conf.each { baseName, scl ->
+        def baseTag = "${buildRepo}:${baseName}"
+        def tsName = "${baseName}-${scl}"
+        def tsTag = "${buildRepo}:${tsName}"
 
-      tsBuild = packIt('centos_devtoolset.json', [
-        "-var base_image=${baseTag}",
-        "-var build_name=${tsName}",
-        "-var scl_compiler=${scl}",
-      ])
-      images << [(tsTag): tsBuild]
-    } // scl
+        tsBuild = packIt('centos_devtoolset.json', [
+          "-var base_image=${baseTag}",
+          "-var build_name=${tsName}",
+          "-var scl_compiler=${scl}",
+        ])
+        images << [(tsTag): tsBuild]
+      } // baseName, scl
+    } // conf
 
     if (! params.NO_PUSH) {
       images.each { item ->
