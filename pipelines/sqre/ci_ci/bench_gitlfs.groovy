@@ -108,19 +108,19 @@ def void wrapContainer(String imageName, String tag) {
   def config = util.dedent("""
     FROM    ${imageName}
 
-    ARG     USER
-    ARG     UID
-    ARG     GROUP
-    ARG     GID
-    ARG     HOME
+    ARG     D_USER
+    ARG     D_UID
+    ARG     D_GROUP
+    ARG     D_GID
+    ARG     D_HOME
 
     USER    root
-    RUN     groupadd -g \$GID \$GROUP
-    RUN     useradd -d \$HOME -g \$GROUP -u \$UID \$USER
+    RUN     groupadd -g \$D_GID \$D_GROUP
+    RUN     useradd -d \$D_HOME -g \$D_GROUP -u \$D_UID \$D_USER
     RUN     yum install -y time
 
-    USER    \$USER
-    WORKDIR \$HOME
+    USER    \$D_USER
+    WORKDIR \$D_HOME
   """)
 
   // docker insists on recusrively checking file access under its execution
@@ -133,11 +133,11 @@ def void wrapContainer(String imageName, String tag) {
       set -x
 
       docker build -t "${tag}" \
-          --build-arg USER="\$(id -un)" \
-          --build-arg UID="\$(id -u)" \
-          --build-arg GROUP="\$(id -gn)" \
-          --build-arg GID="\$(id -g)" \
-          --build-arg HOME="\$HOME" \
+          --build-arg D_USER="\$(id -un)" \
+          --build-arg D_UID="\$(id -u)" \
+          --build-arg D_GROUP="\$(id -gn)" \
+          --build-arg D_GID="\$(id -g)" \
+          --build-arg D_HOME="\$HOME" \
           .
     """
 
