@@ -961,19 +961,15 @@ def String runRebuild(String buildJob='release/rebuild', Map opts) {
     SKIP_DOCS: false,
     TIMEOUT: '8', // should be String
   ]
-
-  def useOpts = defaultOpts
-  if (opts) {
-    useOpts += opts
-  }
+  def useOpts = defaultOpts + opts
 
   def result = build job: buildJob,
     parameters: [
-      string(name: 'BRANCH', value: opts.BRANCH),
-      string(name: 'PRODUCT', value: opts.PRODUCT),
-      booleanParam(name: 'SKIP_DEMO', value: opts.SKIP_DEMO),
-      booleanParam(name: 'SKIP_DOCS', value: opts.SKIP_DOCS),
-      string(name: 'TIMEOUT', value: opts.TIMEOUT), // hours
+      string(name: 'BRANCH', value: useOpts.BRANCH),
+      string(name: 'PRODUCT', value: useOpts.PRODUCT),
+      booleanParam(name: 'SKIP_DEMO', value: useOpts.SKIP_DEMO),
+      booleanParam(name: 'SKIP_DOCS', value: useOpts.SKIP_DOCS),
+      string(name: 'TIMEOUT', value: useOpts.TIMEOUT), // hours
     ],
     wait: true
 
