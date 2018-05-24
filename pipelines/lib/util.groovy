@@ -943,7 +943,7 @@ def ltdPush(Map args) {
 } // runLtdMason
 
 /**
- * run `release/rebuild` job and parse result
+ * run `release/run-rebuild` job and parse result
  *
  * @param buildJob String job to trigger. Defaults to `release/rebuild`.
  * @param opts.BRANCH String
@@ -953,7 +953,7 @@ def ltdPush(Map args) {
  * @param opts.TIMEOUT String Defaults to `'8'`.
  * @return bxxxx String
  */
-def String runRebuild(String buildJob='release/rebuild', Map opts) {
+def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
   def defaultOpts = [
     BRANCH: '',  // null is not a valid value for a string param
     PRODUCT: '',
