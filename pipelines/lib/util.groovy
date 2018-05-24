@@ -955,6 +955,8 @@ def ltdPush(Map args) {
  */
 def String runRebuild(String buildJob='release/rebuild', Map opts) {
   def defaultOpts = [
+    BRANCH: '',  // null is not a valid value for a string param
+    PRODUCT: '',
     SKIP_DEMO: false,
     SKIP_DOCS: false,
     TIMEOUT: '8', // should be String
