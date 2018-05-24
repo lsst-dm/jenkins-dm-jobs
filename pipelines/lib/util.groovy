@@ -973,6 +973,7 @@ def String runRebuild(String buildJob='release/rebuild', Map opts) {
     ],
     wait: true
 
+  def bx = null
   nodeTiny {
     manifest_artifact = 'lsstsw/build/manifest.txt'
 
@@ -986,7 +987,7 @@ def String runRebuild(String buildJob='release/rebuild', Map opts) {
         ])
 
     def manifest = readFile manifest_artifact
-    def bx = bxxxx(manifest)
+    bx = bxxxx(manifest)
     echo "parsed bxxxx: ${bx}"
   } // nodeTiny
 
