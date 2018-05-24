@@ -13,11 +13,11 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  echo "branch: ${BRANCH}"
-  echo "product: ${PRODUCT}"
-  echo "skip demo: ${SKIP_DEMO}"
-  echo "skip docs: ${SKIP_DOCS}"
-  echo "[eups] tag: ${EUPS_TAG}"
+  echo "branch: ${params.BRANCH}"
+  echo "product: ${params.PRODUCT}"
+  echo "skip demo: ${params.SKIP_DEMO}"
+  echo "skip docs: ${params.SKIP_DOCS}"
+  echo "[eups] tag: ${params.EUPS_TAG}"
 
   def bx = null
   def buildJob = 'release/run-rebuild'
@@ -37,8 +37,8 @@ notify.wrap {
       parameters: [
         string(name: 'EUPSPKG_SOURCE', value: 'git'),
         string(name: 'BUILD_ID', value: bx),
-        string(name: 'TAG', value: EUPS_TAG),
-        string(name: 'PRODUCT', value: PRODUCT)
+        string(name: 'TAG', value: params.EUPS_TAG),
+        string(name: 'PRODUCT', value: params.PRODUCT)
       ]
   }
 
