@@ -17,16 +17,10 @@ notify.wrap {
   def hubRepo    = 'lsstsqre/sqre-github-snapshot'
   def githubRepo = 'lsst-sqre/sqre-git-snapshot'
   def githubRef  = 'refs/tags/0.2.1'
-  def hubTag     = githubRef
+  def hubTag     = tagBasename(githubRef)
   def pushLatest = params.LATEST
   def noPush     = params.NO_PUSH
 
-  // docker tags may not include slashes, so mangle explicit tag refs back to
-  // <tagName>
-  def m = hubTag =~ '^refs/tags/(.*)'
-  if (m) {
-    hubTag = m[0][1]
-  }
 
   def run = {
     def abbrHash = null
@@ -76,3 +70,15 @@ notify.wrap {
     }
   }
 } // notify.wrap
+
+@NonCPS
+def String tagBasename(String ref) {
+  // docker tags may not include slashes, so mangle explicit tag refs back to
+  // <tagName>
+  def m = ref =~ '^refs/tags/(.*)'
+  if (m) {
+    return m[0][1]
+  }
+
+  return ref
+}
