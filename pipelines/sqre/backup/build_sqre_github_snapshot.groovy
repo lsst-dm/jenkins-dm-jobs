@@ -16,7 +16,7 @@ notify.wrap {
   def image      = null
   def hubRepo    = 'lsstsqre/sqre-github-snapshot'
   def githubRepo = 'lsst-sqre/sqre-git-snapshot'
-  def githubRef  = '0.2.1'
+  def githubRef  = 'refs/tags/0.2.1'
   def pushLatest = params.LATEST
   def noPush     = params.NO_PUSH
 
@@ -24,9 +24,11 @@ notify.wrap {
     def abbrHash = null
 
     stage('checkout') {
-      git([
-        url: "https://github.com/${githubRepo}",
-        branch: githubRef,
+      checkout([
+        $class: 'GitSCM',
+        userRemoteConfigs: [[url: "https://github.com/${githubRepo}"]],
+        branches: [[name: githubRef]],
+        poll: false
       ])
 
       abbrHash = sh([
