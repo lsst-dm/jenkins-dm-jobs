@@ -52,8 +52,8 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(githubRef)
-          if (githubRef == 'master') {
+          image.push(hubTag)
+          if (hubTag== 'master') {
             image.push("g${abbrHash}")
           }
           if (pushLatest) {
