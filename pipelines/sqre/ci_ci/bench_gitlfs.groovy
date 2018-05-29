@@ -26,7 +26,7 @@ notify.wrap {
 
   def matrix = [:]
 
-  def run = {
+  def run = { tag ->
     try {
       def hub             = "lsstsqre/gitlfs:${tag}"
       def local           = "${hub}-local"
@@ -92,7 +92,7 @@ notify.wrap {
     matrix[tag] = {
       node('docker') {
         timeout(time: 48, unit: 'HOURS') {
-          run()
+          run(tag)
         }
       } // node
     } // matrix
