@@ -96,6 +96,12 @@ notify.wrap {
         booleanParam(name: 'LATEST', value: true),
       ]
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-nginx-ssl-proxy',
+      parameters: [
+        booleanParam(name: 'PUSH', value: true),
+      ]
+
     parallel tasks
   } // run
 
