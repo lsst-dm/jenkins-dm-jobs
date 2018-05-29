@@ -15,7 +15,7 @@ node('jenkins-master') {
 notify.wrap {
   def image      = null
   def hubRepo    = 'lsstsqre/sqre-github-snapshot'
-  def githubRepo = 'lsst-sqre/docker-awscli'
+  def githubRepo = 'lsst-sqre/sqre-git-snapshot'
   def githubRef  = '0.2.1'
   def pushLatest = params.LATEST
   def noPush     = params.NO_PUSH
