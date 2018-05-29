@@ -82,6 +82,39 @@ notify.wrap {
         booleanParam(name: 'LATEST', value: true),
       ]
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-gitlfs',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-codekit',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-nginx-ssl-proxy',
+      parameters: [
+        booleanParam(name: 'PUSH', value: true),
+      ]
+
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-postqa',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+      ]
+
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-tag-monger',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
     parallel tasks
   } // run
 
