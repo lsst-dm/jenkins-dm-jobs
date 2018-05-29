@@ -102,6 +102,12 @@ notify.wrap {
         booleanParam(name: 'PUSH', value: true),
       ]
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-postqa',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+      ]
+
     parallel tasks
   } // run
 
