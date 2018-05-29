@@ -13,36 +13,51 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def image = null
-  def hub_repo = 'lsstsqre/sqre-github-snapshot'
+  def image      = null
+  def hubRepo    = 'lsstsqre/sqre-github-snapshot'
+  def githubRepo = 'lsst-sqre/docker-awscli'
+  def githubRef  = '0.2.1'
+  def pushLatest = params.LATEST
+  def noPush     = params.NO_PUSH
 
   def run = {
-    stage('fetch Dockerfile') {
-      // `pip download` will fetch all recursive deps, it is more efficient to
-      // just fetch the tarball directly
-      sh '''
-        wget https://pypi.python.org/packages/50/81/30b98d8cf5201b2fbdb2a2391863ee6e9196e74984ee54c986e320d47640/sqre-github-snapshot-0.2.1.tar.gz#md5=6d4d31c33cbc06fa534425a25cc0e81e
-        tar -xvf sqre-github-snapshot-0.2.1.tar.gz
-        ln -sf sqre-github-snapshot-0.2.1 sqre-github-snapshot
-      '''.replaceFirst("\n","").stripIndent()
-    }
+    def abbrHash = null
 
-    stage('pull') {
-      docker.image('centos:7').pull()
+    stage('checkout') {
+      git([
+        url: "https://github.com/${githubRepo}",
+        branch: githubRef,
+      ])
+
+      abbrHash = sh([
+        returnStdout: true,
+        script: "git log -n 1 --pretty=format:'%h'",
+      ]).trim()
     }
 
     stage('build') {
-      dir('sqre-github-snapshot/docker') {
-        image = docker.build("${hub_repo}:${BUILD_TAG}", '--no-cache .')
+      dir('docker') {
+        // ensure base image is always up to date
+        image = docker.build("${hubRepo}", "--pull=true --no-cache .")
       }
     }
 
     stage('push') {
-      docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-sqreadmin') {
-        image.push()
-        image.push('latest')
+      if (!noPush) {
+        docker.withRegistry(
+          'https://index.docker.io/v1/',
+          'dockerhub-sqreadmin'
+        ) {
+          image.push(githubRef)
+          if (githubRef == 'master') {
+            image.push("g${abbrHash}")
+          }
+          if (pushLatest) {
+            image.push('latest')
+          }
+        }
       }
-    }
+    } // push
   } // run
 
   node('docker') {
