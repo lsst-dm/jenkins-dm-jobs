@@ -108,6 +108,13 @@ notify.wrap {
         booleanParam(name: 'NO_PUSH', value: false),
       ]
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-tag-monger',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
     parallel tasks
   } // run
 
