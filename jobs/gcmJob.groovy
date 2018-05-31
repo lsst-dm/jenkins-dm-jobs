@@ -1,7 +1,7 @@
 SETUP_STEP = '''#!/bin/bash
 git clone https://github.com/lsst/lsstsw.git
 cd lsstsw
-./bin/deply
+./bin/deploy
 export LSSTSW=pwd
 export LSST_PATH=$LSSTSW/stack
 . bin/setup.sh
