@@ -12,7 +12,7 @@ rebuild base
 '''
 
 job('gcmTestJob') {
-  step {
+  steps {
       shell(CI_STEP)
   }
 }
