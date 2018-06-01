@@ -55,6 +55,7 @@ job('gcmTestJob') {
           extensions {
                 relativeTargetDirectory('lsstsw')
           }
+      }
   }
   steps {
       shell(CI_STEP)
