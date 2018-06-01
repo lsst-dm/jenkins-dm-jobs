@@ -27,12 +27,12 @@ cat > Dockerfile <<END
     ARG     D_HOME
 
     USER    root
-    RUN     mkdir -p "\$(dirname \$D_HOME)"
-    RUN     groupadd -g \$D_GID \$D_GROUP
-    RUN     useradd -d \$D_HOME -g \$D_GROUP -u \$D_UID \$D_USER
+    RUN     mkdir -p "\\\$(dirname \\\$D_HOME)"
+    RUN     groupadd -g \\\$D_GID \\\$D_GROUP
+    RUN     useradd -d \\\$D_HOME -g \\\$D_GROUP -u \\\$D_UID \\\$D_USER
 
-    USER    \$D_USER
-    WORKDIR \$D_HOME
+    USER    \\\$D_USER
+    WORKDIR \\\$D_HOME
 END
 docker build -t "mybase" \\
         --build-arg D_USER="$(id -un)" \\
