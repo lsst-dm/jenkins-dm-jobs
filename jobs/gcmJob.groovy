@@ -28,19 +28,19 @@ cat > Dockerfile <<END
     USER    \$D_USER
     WORKDIR \$D_HOME
 END
-docker build -t "mybase" \
-        --build-arg D_USER="$(id -un)" \
-        --build-arg D_UID="$(id -u)" \
-        --build-arg D_GROUP="$(id -gn)" \
-        --build-arg D_GID="$(id -g)" \
-        --build-arg D_HOME="$HOME" \
+docker build -t "mybase" \\
+        --build-arg D_USER="$(id -un)" \\
+        --build-arg D_UID="$(id -u)" \\
+        --build-arg D_GROUP="$(id -gn)" \\
+        --build-arg D_GID="$(id -g)" \\
+        --build-arg D_HOME="$HOME" \\
         .
 
-docker run -v$(pwd):$(pwd) -w$(pwd) -u$(id -u):$(id -g) \
+docker run -v$(pwd):$(pwd) -w$(pwd) -u$(id -u):$(id -g) \\
   mybase $(pwd)/run.sh
 '''
 
-def lsstswGitURL = 'git//github.com/lsst/lsstsw.git'
+def lsstswGitURL = 'https://github.com/lsst/lsstsw.git'
 def lsstswBranch = '*/master'
 
 
