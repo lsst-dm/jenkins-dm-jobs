@@ -1,4 +1,10 @@
 CI_STEP = '''#!/bin/bash
+
+set -ex
+
+cat > run.sh <<END
+#!/bin/bash
+
 set -ex
 
 source /opt/rh/devtoolset-6/enable
