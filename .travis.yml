@@ -1,0 +1,17 @@
+---
+sudo: false
+language: c
+matrix:
+  include:
+    - env: TEST=yamllint
+      language: c
+      services:
+        - docker
+      script: ./tests/yamllint.sh
+branches:
+  only:
+    - master
+    # also matched against tag pushes
+    - /^\d+\.\d+\.\d+$/
+notifications:
+  email: false
