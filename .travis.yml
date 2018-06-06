@@ -14,6 +14,12 @@ matrix:
       services:
         - docker
       script: ./tests/mdl.sh
+
+    - env: TEST=shellcheck
+      language: c
+      services:
+        - docker
+      script: ./tests/shellcheck.sh
 branches:
   only:
     - master
