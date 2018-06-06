@@ -93,6 +93,7 @@ notify.wrap {
               bx,
               [
                 '--dry-run': false,
+                '--org': config.release_tag_org,
               ]
             )
           } // node
@@ -108,6 +109,7 @@ notify.wrap {
             util.githubTagTeams(
               [
                 '--dry-run': false,
+                '--org': config.release_tag_org,
                 '--tag': gitTag,
               ]
             )

@@ -9,6 +9,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
 
@@ -22,6 +23,7 @@ notify.wrap {
   ])
 
   options = [
+    '--org': config.release_tag_org,
     '--dry-run': params.DRY_RUN,
   ]
 

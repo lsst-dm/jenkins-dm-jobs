@@ -499,7 +499,6 @@ def void githubTagRelease(
     '--token': '$GITHUB_TOKEN',
     '--user': 'sqreadmin',
     '--email': 'sqre-admin@lists.lsst.org',
-    '--org': 'lsst',
     '--allow-team': ['Data Management', 'DM Externals'],
     '--external-team': 'DM Externals',
     '--deny-team': 'DM Auxilliaries',
@@ -524,7 +523,6 @@ def void githubTagTeams(Map options) {
     '--token': '$GITHUB_TOKEN',
     '--user': 'sqreadmin',
     '--email': 'sqre-admin@lists.lsst.org',
-    '--org': 'lsst',
     '--allow-team': 'DM Auxilliaries',
     '--deny-team': 'DM Externals',
   ]

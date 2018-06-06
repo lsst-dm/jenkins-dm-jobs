@@ -9,6 +9,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
 
@@ -16,11 +17,10 @@ notify.wrap {
   util.requireParams(['DRY_RUN', 'GIT_TAG'])
 
   node('docker') {
-    util.githubTagTeams(
-      [
-        '--dry-run': params.DRY_RUN,
-        '--tag': params.GIT_TAG,
-      ]
-    )
+    util.githubTagTeams([
+      '--dry-run': params.DRY_RUN,
+      '--org': config.release_tag_org,
+      '--tag': params.GIT_TAG,
+    ])
   } // node
 } // notify.wrap

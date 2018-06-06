@@ -61,3 +61,4 @@ tarball:
   - <<: *tarball_defaults
     <<: *osx-py3
     label: osx-10.11
+release_tag_org: lsst
