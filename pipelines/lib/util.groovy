@@ -97,7 +97,7 @@ def void wrapContainer(String imageName, String tag) {
 
     deleteDir()
   }
-}
+} // wrapContainer
 
 /**
  * Invoke block inside of a "wrapper" container.  See: wrapContainer
@@ -137,7 +137,7 @@ def String joinPath(String ... parts) {
   }
 
   return text
-}
+} // joinPath
 
 /**
  * Serialize a Map to a JSON string and write it to a file.
@@ -191,7 +191,7 @@ def tagProduct(
       string(name: 'PRODUCT', value: product),
       string(name: 'TIMEOUT', value: timelimit.toString()), // hours
     ]
-}
+} // tagProduct
 
 /**
  * Run a lsstsw build.
@@ -260,7 +260,7 @@ def lsstswBuild(
   node(agent) {
     task()
   } // node
-}
+} // lsstswBuild
 
 /**
  * Run a jenkins_wrapper.sh
@@ -476,7 +476,7 @@ def void getManifest(String rebuildId, String filename) {
 
   def manifest = readFile manifest_artifact
   writeFile(file: filename, text: manifest)
-}
+} // getManifest
 
 /**
  * Run the `github-tag-version` script from `sqre-codekit` with parameters.
@@ -519,7 +519,7 @@ def void githubTagTeams(Map options) {
   ]
 
   runCodekitCmd(prog, defaultOptions, options, null)
-} // githubTagVersion
+} // githubTagTeams
 
 /**
  * Run a codekit cli command.
@@ -600,7 +600,7 @@ def void insideCodekit(Closure run) {
       run()
     } // withGithubAdminCredentials
   } // insideWrap
-}
+} // insideCodekit
 
 /**
  * Convert a map of command line flags (keys) and values into a string suitable
@@ -632,7 +632,7 @@ def String mapToCliFlags(Map opt) {
   }
 
   return flags.join(' ')
-}
+} // mapToCliFlags
 
 /**
  * Convert a List of command line args into a string suitable
@@ -701,7 +701,7 @@ def lsstswBuildMatrix(List lsstswConfigs, Boolean wipeout=false) {
   }
 
   parallel matrix
-}
+} // lsstswBuildMatrix
 
 /**
  * Clone lsstsw git repo
@@ -786,7 +786,7 @@ def void buildTarballMatrix(
   } // each
 
   parallel platform
-}
+} // buildTarballMatrix
 
 /**
  * Convert null to empty string; pass through valid strings
@@ -898,7 +898,7 @@ def runDocumenteer(Map args) {
       } // dir
     }
   } // withEnv
-} // jenkinsWrapper
+} // runDocumenteer
 
 /**
  * run ltd-mason-travis to push a doc build
@@ -940,7 +940,7 @@ def ltdPush(Map args) {
       } // insideWrap
     } // withCredentials
   } //withEnv
-} // runLtdMason
+} // ltdPush
 
 /**
  * run `release/run-rebuild` job and parse result
@@ -992,6 +992,6 @@ def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
   } // nodeTiny
 
   return bx
-}
+} // runRebuild
 
 return this;
