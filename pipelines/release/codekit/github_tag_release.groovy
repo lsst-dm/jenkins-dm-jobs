@@ -13,14 +13,24 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['DRY_RUN', 'GIT_TAG', 'EUPS_TAG', 'BUILD_ID'])
+  util.requireParams([
+    'BUILD_ID',
+    'DRY_RUN',
+    'EUPS_TAG',
+    'GIT_TAG',
+    'VERIFY',
+  ])
 
   options = [
     '--dry-run': params.DRY_RUN,
   ]
 
   if (params.LIMIT) {
-    options.'--limit' =  params.LIMIT
+    options.'--limit' = params.LIMIT
+  }
+
+  if (params.VERIFY) {
+    options.'--verify' = true
   }
 
   node('docker') {
