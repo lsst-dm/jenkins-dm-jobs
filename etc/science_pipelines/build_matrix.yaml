@@ -65,12 +65,6 @@ tarball:
   # need newinstall.sh support for devtoolset-7
   # - <<: *tarball_defaults
   #  <<: *el7-dts7-py3
-  - <<: *tarball_defaults
-    <<: *osx-py3
-    label: osx-10.11
-    platform: '10.9'
-    osfamily: osx
-    timelimit: 12
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
