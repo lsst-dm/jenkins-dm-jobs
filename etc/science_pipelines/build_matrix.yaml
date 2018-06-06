@@ -46,6 +46,7 @@ scipipe-lsstsw-ci_hsc:
 dax-lsstsw-matrix:
   - <<: *el7-py3
   - <<: *el7-py3-llvm
+canonical_node_label: jenkins-snowflake-1
 canonical:
   <<: *el7-py3
 tarball:

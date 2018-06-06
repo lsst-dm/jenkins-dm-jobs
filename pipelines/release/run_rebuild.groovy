@@ -96,7 +96,7 @@ notify.wrap {
     } // ws
   } // run
 
-  node('jenkins-snowflake-1') {
+  node(config.canonical_node_label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }
