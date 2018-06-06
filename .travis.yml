@@ -1,0 +1,29 @@
+---
+sudo: false
+language: c
+matrix:
+  include:
+    - env: TEST=yamllint
+      language: c
+      services:
+        - docker
+      script: ./tests/yamllint.sh
+
+    - env: TEST=markdownlint
+      language: c
+      services:
+        - docker
+      script: ./tests/mdl.sh
+
+    - env: TEST=shellcheck
+      language: c
+      services:
+        - docker
+      script: ./tests/shellcheck.sh
+branches:
+  only:
+    - master
+    # also matched against tag pushes
+    - /^\d+\.\d+\.\d+$/
+notifications:
+  email: false
