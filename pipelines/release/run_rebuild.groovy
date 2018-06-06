@@ -38,6 +38,9 @@ notify.wrap {
           "LSST_JUNIT_PREFIX=${can.label}.py${can.python}",
           "LSST_PYTHON_VERSION=${can.python}",
           "LSST_COMPILER=${can.compiler}",
+          // XXX this should be renamed in lsstsw to make it clear that its
+          // setting a github repo slug
+          "REPOSFILE_REPO=${config.reposfile_repo_slug}",
          ]) {
           // XXX note that util.jenkinsWrapper() clones the ci-scripts repo,
           // which is used by the push docs stage

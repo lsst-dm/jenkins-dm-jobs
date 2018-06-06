@@ -30,6 +30,7 @@ template:
       label: osx
       compiler: clang-800.0.42.1
       python: '3'
+reposfile_repo_slug: lsst/repos
 scipipe-lsstsw-matrix:
   - <<: *el6-py3
   - <<: *el7-py3
