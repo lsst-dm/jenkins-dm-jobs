@@ -89,10 +89,10 @@ notify.wrap {
             // needs eups distrib tag to be sync'd from s3 -> k8s volume
             util.githubTagRelease(
               gitTag,
+              eupsTag,
               bx,
               [
                 '--dry-run': false,
-                '--team': ['Data Management', 'DM Externals'],
               ]
             )
           } // node

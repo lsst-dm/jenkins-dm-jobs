@@ -482,23 +482,33 @@ def void getManifest(String rebuildId, String filename) {
  * Run the `github-tag-release` script from `sqre-codekit` with parameters.
  *
  * @param gitTag String name of git tag to create
+ * @param eupsTag String name of eups distrib tag to select repos/refs to tag
  * @param buildId String bNNNN/manifest id to select repos/refs to tag
  * @param options Map see `makeCliCmd`
  */
-def void githubTagRelease(String gitTag, String buildId, Map options) {
+def void githubTagRelease(
+  String gitTag,
+  String eupsTag,
+  String buildId,
+  Map options
+) {
   def prog = 'github-tag-release'
   def defaultOptions = [
-    '--dry-run': true,
-    '--org': 'lsst',
-    '--team': 'Data Management',
-    '--email': 'sqre-admin@lists.lsst.org',
-    '--user': 'sqreadmin',
-    '--token':  '$GITHUB_TOKEN',
-    '--fail-fast': true,
     '--debug': true,
+    '--dry-run': true,
+    '--token': '$GITHUB_TOKEN',
+    '--user': 'sqreadmin',
+    '--email': 'sqre-admin@lists.lsst.org',
+    '--org': 'lsst',
+    '--allow-team': ['Data Management', 'DM Externals'],
+    '--external-team': 'DM Externals',
+    '--deny-team': 'DM Auxilliaries',
+    '--fail-fast': true,
+    '--manifest': buildId,
+    '--eups-tag': eupsTag,
   ]
 
-  runCodekitCmd(prog, defaultOptions, options, [gitTag, buildId])
+  runCodekitCmd(prog, defaultOptions, options, [gitTag])
 } // githubTagRelease
 
 /**
