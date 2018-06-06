@@ -49,7 +49,7 @@ notify.wrap {
   }
 
   stage('git tag') {
-    build job: 'release/codekit/github-tag-version',
+    build job: 'release/codekit/github-tag-release',
       parameters: [
         string(name: 'BUILD_ID', value: bx),
         string(name: 'GIT_TAG', value: params.GIT_TAG),

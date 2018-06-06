@@ -479,14 +479,14 @@ def void getManifest(String rebuildId, String filename) {
 } // getManifest
 
 /**
- * Run the `github-tag-version` script from `sqre-codekit` with parameters.
+ * Run the `github-tag-release` script from `sqre-codekit` with parameters.
  *
  * @param gitTag String name of git tag to create
  * @param buildId String bNNNN/manifest id to select repos/refs to tag
  * @param options Map see `makeCliCmd`
  */
-def void githubTagVersion(String gitTag, String buildId, Map options) {
-  def prog = 'github-tag-version'
+def void githubTagRelease(String gitTag, String buildId, Map options) {
+  def prog = 'github-tag-release'
   def defaultOptions = [
     '--dry-run': true,
     '--org': 'lsst',
@@ -499,7 +499,7 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
   ]
 
   runCodekitCmd(prog, defaultOptions, options, [gitTag, buildId])
-} // githubTagVersion
+} // githubTagRelease
 
 /**
  * Run the `github-tag-teams` script from `sqre-codekit` with parameters.

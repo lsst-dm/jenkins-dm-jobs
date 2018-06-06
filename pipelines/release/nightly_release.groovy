@@ -93,7 +93,7 @@ notify.wrap {
         retry(retries) {
           node('docker') {
             // needs eups distrib tag to be sync'd from s3 -> k8s volume
-            util.githubTagVersion(
+            util.githubTagRelease(
               gitTag,
               bx,
               [

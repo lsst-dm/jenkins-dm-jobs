@@ -16,7 +16,7 @@ notify.wrap {
   util.requireParams(['DRY_RUN', 'GIT_TAG', 'BUILD_ID'])
 
   node('docker') {
-    util.githubTagVersion(
+    util.githubTagRelease(
       params.GIT_TAG,
       params.BUILD_ID,
       [
