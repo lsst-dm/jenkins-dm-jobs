@@ -17,8 +17,10 @@ node('jenkins-master') {
 
 notify.wrap {
   def versiondbPush = 'true'
+  def versiondbRepo = "git@github.com:${config.versiondb_repo_slug}.git"
   if (params.NO_VERSIONDB_PUSH) {
     versiondbPush = 'false'
+    versiondbRepo = "https://github.com/${config.versiondb_repo_slug}.git"
   }
 
   def timelimit = params.TIMEOUT.toInteger()
@@ -32,7 +34,7 @@ notify.wrap {
       stage('build') {
         withEnv([
           "EUPS_PKGROOT=${cwd}/distrib",
-          'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
+          "VERSIONDB_REPO=${versiondbRepo}",
           "VERSIONDB_PUSH=${versiondbPush}",
           'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
           "LSST_JUNIT_PREFIX=${can.label}.py${can.python}",

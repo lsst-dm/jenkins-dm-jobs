@@ -31,6 +31,7 @@ template:
       compiler: clang-800.0.42.1
       python: '3'
 reposfile_repo_slug: lsst/repos
+versiondb_repo_slug: lsst/versiondb
 scipipe-lsstsw-matrix:
   - <<: *el6-py3
   - <<: *el7-py3
