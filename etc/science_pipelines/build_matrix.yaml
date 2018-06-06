@@ -97,11 +97,11 @@ release:
 # low-level build parameters
 #
 repos:
-  github_repo: lsst/repos
+  github_repo: provingground-moe/repos
   git_ref: master
 versiondb:
-  github_repo: lsst/versiondb
-release_tag_org: lsst
+  github_repo: provingground-moe/versiondb
+release_tag_org: provingground-moe
 lsstsw:
   github_repo: lsst/lsstsw
   git_ref: master
