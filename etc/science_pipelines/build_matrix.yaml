@@ -71,7 +71,7 @@ tarball:
 canonical:
   lsstsw_config:
     <<: *el7-py3
-    label: jenkins-snowflake-1
+    label: jenkins-el7-1
     display_name: centos-7
   workspace: snowflake/release
 #
