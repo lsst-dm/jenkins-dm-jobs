@@ -47,6 +47,7 @@ dax-lsstsw-matrix:
   - <<: *el7-py3
   - <<: *el7-py3-llvm
 canonical_node_label: jenkins-snowflake-1
+canonical_workspace: snowflake/release
 canonical:
   <<: *el7-py3
 tarball:

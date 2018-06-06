@@ -28,7 +28,7 @@ notify.wrap {
   def awsImage  = 'lsstsqre/awscli'
 
   def run = {
-    ws('snowflake/release') {
+    ws(config.canonical_workspace) {
       def cwd = pwd()
 
       stage('build') {
