@@ -13,13 +13,12 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['DRY_RUN', 'TEAM', 'GIT_TAG'])
+  util.requireParams(['DRY_RUN', 'GIT_TAG'])
 
   node('docker') {
     util.githubTagTeams(
       [
         '--dry-run': params.DRY_RUN,
-        '--team': params.TEAM,
         '--tag': params.GIT_TAG,
       ]
     )

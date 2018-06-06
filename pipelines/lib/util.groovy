@@ -519,13 +519,14 @@ def void githubTagRelease(
 def void githubTagTeams(Map options) {
   def prog = 'github-tag-teams'
   def defaultOptions = [
-    '--dry-run': true,
-    '--org': 'lsst',
-    '--team': 'Data Management',
-    '--email': 'sqre-admin@lists.lsst.org',
-    '--user': 'sqreadmin',
-    '--token':  '$GITHUB_TOKEN',
     '--debug': true,
+    '--dry-run': true,
+    '--token': '$GITHUB_TOKEN',
+    '--user': 'sqreadmin',
+    '--email': 'sqre-admin@lists.lsst.org',
+    '--org': 'lsst',
+    '--allow-team': 'DM Auxilliaries',
+    '--deny-team': 'DM Externals',
   ]
 
   runCodekitCmd(prog, defaultOptions, options, null)

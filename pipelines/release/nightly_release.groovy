@@ -114,7 +114,6 @@ notify.wrap {
             util.githubTagTeams(
               [
                 '--dry-run': true,
-                '--team': 'DM Auxilliaries',
                 '--tag': gitTag,
               ]
             )
