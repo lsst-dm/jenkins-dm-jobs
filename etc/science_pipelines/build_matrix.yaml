@@ -62,5 +62,7 @@ tarball:
     <<: *osx-py3
     label: osx-10.11
 release_tag_org: lsst
+lsstsw_repo_slug: lsst/lsstsw
+lsstsw_repo_ref: master
 ciscripts_repo_slug: lsst-sqre/ci-scripts
 ciscripts_repo_ref: master

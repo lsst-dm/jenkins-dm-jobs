@@ -729,11 +729,12 @@ def lsstswBuildMatrix(List lsstswConfigs, Boolean wipeout=false) {
 /**
  * Clone lsstsw git repo
  */
-@NonCPS
 def void cloneLsstsw() {
+  def config = readYamlFile('etc/science_pipelines/build_matrix.yaml')
+
   gitNoNoise(
-    url: 'https://github.com/lsst/lsstsw.git',
-    branch: 'master',
+    url: githubSlugToUrl(config.lsstsw_repo_slug),
+    branch: config.lsstsw_repo_ref,
   )
 }
 
