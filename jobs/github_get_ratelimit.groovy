@@ -3,6 +3,8 @@ import util.Plumber
 def p = new Plumber(name: 'release/codekit/github-get-ratelimit', dsl: this)
 p.pipeline().with {
   def text = '''
+    Display the current github ReST API request ratelimit.
+
     Example:
 
       $ github-get-ratelimit
