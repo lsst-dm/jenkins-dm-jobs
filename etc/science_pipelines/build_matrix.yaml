@@ -1,4 +1,5 @@
 ---
+# yamllint disable rule:line-length
 template:
   tarball_defaults: &tarball_defaults
     miniver: &miniver '4.3.21'
