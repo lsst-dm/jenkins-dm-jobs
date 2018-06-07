@@ -16,11 +16,12 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def versiondbPush = 'true'
-  def versiondbRepo = "git@github.com:${config.versiondb_repo_slug}.git"
-  if (params.NO_VERSIONDB_PUSH) {
-    versiondbPush = 'false'
-    versiondbRepo = "https://github.com/${config.versiondb_repo_slug}.git"
+  def versiondbPush = 'false'
+  def versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'https')
+
+  if (! params.NO_VERSIONDB_PUSH) {
+    versiondbPush = 'true'
+    versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'ssh')
   }
 
   def timelimit = params.TIMEOUT.toInteger()
