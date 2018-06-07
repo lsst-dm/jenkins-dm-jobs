@@ -9,6 +9,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
 
@@ -26,7 +27,7 @@ notify.wrap {
 
   def image     = null
   def repo      = null
-  def hubRepo   = 'lsstsqre/centos'
+  def hubRepo   = config.release_docker_repo
   def hubTag    = "7-stack-lsst_distrib-${eupsTag}"
   def timestamp = util.epochMilliToUtc(currentBuild.startTimeInMillis)
 

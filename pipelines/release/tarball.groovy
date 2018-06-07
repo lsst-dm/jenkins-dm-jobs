@@ -1,5 +1,3 @@
-import groovy.transform.Field
-
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -15,11 +13,9 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
-
-@Field String newinstall_url = 'https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh'
-@Field String shebangtron_url = 'https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron'
 
 notify.wrap {
   def requiredParams = [
@@ -642,7 +638,7 @@ def String buildScript(
     ciDir
   ) +
   util.dedent("""
-    curl -sSL ${newinstall_url} | bash -s -- -cb
+    curl -sSL ${config.newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
 
     for prod in ${products}; do
@@ -689,7 +685,7 @@ def String smokeScript(
    util.dedent("""
     export EUPS_PKGROOT="${eupsPkgroot}"
 
-    curl -sSL ${newinstall_url} | bash -s -- -cb
+    curl -sSL ${config.newinstall_url} | bash -s -- -cb
     . ./loadLSST.bash
 
     # override newinstall.sh configured EUPS_PKGROOT
@@ -700,7 +696,7 @@ def String smokeScript(
     done
 
     if [[ \$FIX_SHEBANGS == true ]]; then
-      curl -sSL ${shebangtron_url} | python
+      curl -sSL ${config.shebangtron_url} | python
     fi
 
     if [[ \$RUN_DEMO == true ]]; then

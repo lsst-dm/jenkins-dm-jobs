@@ -16,10 +16,19 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['YEAR', 'MONTH', 'DAY'])
+  util.requireParams(['EUPS_TAG', 'GIT_TAG', 'MANIFEST_ID'])
 
-  def gitTag = null
-  def eupsTag = null
+  def gitTag = params.GIT_TAG
+  def srcEupsTag = params.EUPS_TAG
+  def srcManifestId = params.MANIFEST_ID
+
+  def eupsTag = params.GIT_TAG.tr('.', '_')
+
+  echo "[git] tag: ${gitTag}"
+  echo "[eups] tag: ${srcEupsTag}"
+  echo "manifest id: ${srcManifestId}"
+  echo "publish build with [eups] tag: ${eupsTag}"
+
   def bx = null
 
   try {
@@ -31,26 +40,45 @@ notify.wrap {
       def buildJob = 'release/run-rebuild'
       def publishJob = 'release/run-publish'
 
-      def year = null
-      def month = null
-      def day = null
 
-      stage('format nightly tag') {
-        year = params.YEAR.padLeft(4, "0")
-        month = params.MONTH.padLeft(2, "0")
-        day = params.DAY.padLeft(2, "0")
+      stage('git tag eups products') {
+        retry(retries) {
+          node('docker') {
+            // needs eups distrib tag to be sync'd from s3 -> k8s volume
+            util.githubTagRelease(
+              gitTag,
+              srcEupsTag,
+              srcManifestId,
+              [
+                '--dry-run': false,
+                '--org': config.release_tag_org,
+              ]
+            )
+          } // node
+        } // retry
+      }
 
-        gitTag = "d.${year}.${month}.${day}"
-        echo "generated [git] tag: ${gitTag}"
-
-        // eups doesn't like dots in tags, convert to underscores
-        eupsTag = gitTag.tr('.', '_')
-        echo "generated [eups] tag: ${eupsTag}"
+      // add aux repo tags *after* tagging eups product repos so as to avoid a
+      // trainwreck if an aux repo has been pulled into the build (without
+      // first being removed from the aux team).
+      stage('git tag auxilliaries') {
+        retry(retries) {
+          node('docker') {
+            util.githubTagTeams(
+              [
+                '--dry-run': false,
+                '--org': config.release_tag_org,
+                '--tag': gitTag,
+              ]
+            )
+          } // node
+        } // retry
       }
 
       stage('build') {
         retry(retries) {
           bx = util.runRebuild(buildJob, [
+            BRANCH: gitTag,
             PRODUCT: product,
             SKIP_DEMO: false,
             SKIP_DOCS: false,
@@ -67,9 +95,9 @@ notify.wrap {
             util.tagProduct(bx, eupsTag, product, publishJob)
           }
         }
-        pub['d_latest'] = {
+        pub['o_latest'] = {
           retry(retries) {
-            util.tagProduct(bx, 'd_latest', product, publishJob)
+            util.tagProduct(bx, 'o_latest', product, publishJob)
           }
         }
 
@@ -80,40 +108,6 @@ notify.wrap {
         sleep time: 15, unit: 'MINUTES'
       }
 
-      // NOOP / DRY_RUN
-      stage('git tag eups products') {
-        retry(retries) {
-          node('docker') {
-            // needs eups distrib tag to be sync'd from s3 -> k8s volume
-            util.githubTagRelease(
-              gitTag,
-              eupsTag,
-              bx,
-              [
-                '--dry-run': true,
-                '--org': config.release_tag_org,
-              ]
-            )
-          } // node
-        } // retry
-      }
-
-      // add aux repo tags *after* tagging eups product repos so as to avoid a
-      // trainwreck if an aux repo has been pulled into the build (without
-      // first being removed from the aux team).
-      stage('git tag auxilliaries') {
-        retry(retries) {
-          node('docker') {
-            util.githubTagTeams(
-              [
-                '--dry-run': true,
-                '--org': config.release_tag_org,
-                '--tag': gitTag,
-              ]
-            )
-          } // node
-        } // retry
-      }
 
       stage('build eups tarballs') {
        def opt = [

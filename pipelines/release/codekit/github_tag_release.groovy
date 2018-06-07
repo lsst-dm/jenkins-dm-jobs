@@ -14,13 +14,33 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['DRY_RUN', 'GIT_TAG'])
+  util.requireParams([
+    'BUILD_ID',
+    'DRY_RUN',
+    'EUPS_TAG',
+    'GIT_TAG',
+    'VERIFY',
+  ])
+
+  options = [
+    '--org': config.release_tag_org,
+    '--dry-run': params.DRY_RUN,
+  ]
+
+  if (params.LIMIT) {
+    options.'--limit' = params.LIMIT
+  }
+
+  if (params.VERIFY) {
+    options.'--verify' = true
+  }
 
   node('docker') {
-    util.githubTagTeams([
-      '--dry-run': params.DRY_RUN,
-      '--org': config.release_tag_org,
-      '--tag': params.GIT_TAG,
-    ])
+    util.githubTagRelease(
+      params.GIT_TAG,
+      params.EUPS_TAG,
+      params.BUILD_ID,
+      options
+    )
   } // node
 } // notify.wrap

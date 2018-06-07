@@ -16,9 +16,12 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def versiondbPush = 'true'
-  if (params.NO_VERSIONDB_PUSH) {
-    versiondbPush = 'false'
+  def versiondbPush = 'false'
+  def versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'https')
+
+  if (! params.NO_VERSIONDB_PUSH) {
+    versiondbPush = 'true'
+    versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'ssh')
   }
 
   def timelimit = params.TIMEOUT.toInteger()
@@ -26,18 +29,21 @@ notify.wrap {
   def awsImage  = 'lsstsqre/awscli'
 
   def run = {
-    ws('snowflake/release') {
+    ws(config.canonical_workspace) {
       def cwd = pwd()
 
       stage('build') {
         withEnv([
           "EUPS_PKGROOT=${cwd}/distrib",
-          'VERSIONDB_REPO=git@github.com:lsst/versiondb.git',
+          "VERSIONDB_REPO=${versiondbRepo}",
           "VERSIONDB_PUSH=${versiondbPush}",
           'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
           "LSST_JUNIT_PREFIX=${can.label}.py${can.python}",
           "LSST_PYTHON_VERSION=${can.python}",
           "LSST_COMPILER=${can.compiler}",
+          // XXX this should be renamed in lsstsw to make it clear that its
+          // setting a github repo slug
+          "REPOSFILE_REPO=${config.reposfile_repo_slug}",
          ]) {
           // XXX note that util.jenkinsWrapper() clones the ci-scripts repo,
           // which is used by the push docs stage
@@ -91,7 +97,7 @@ notify.wrap {
     } // ws
   } // run
 
-  node('jenkins-snowflake-1') {
+  node(config.canonical_node_label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }

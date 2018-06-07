@@ -1,6 +1,7 @@
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.ZoneId
+import groovy.transform.Field
 
 /**
  * Remove leading whitespace from a multi-line String (probably a shellscript).
@@ -479,27 +480,36 @@ def void getManifest(String rebuildId, String filename) {
 } // getManifest
 
 /**
- * Run the `github-tag-version` script from `sqre-codekit` with parameters.
+ * Run the `github-tag-release` script from `sqre-codekit` with parameters.
  *
  * @param gitTag String name of git tag to create
+ * @param eupsTag String name of eups distrib tag to select repos/refs to tag
  * @param buildId String bNNNN/manifest id to select repos/refs to tag
  * @param options Map see `makeCliCmd`
  */
-def void githubTagVersion(String gitTag, String buildId, Map options) {
-  def prog = 'github-tag-version'
+def void githubTagRelease(
+  String gitTag,
+  String eupsTag,
+  String buildId,
+  Map options
+) {
+  def prog = 'github-tag-release'
   def defaultOptions = [
-    '--dry-run': true,
-    '--org': 'lsst',
-    '--team': 'Data Management',
-    '--email': 'sqre-admin@lists.lsst.org',
-    '--user': 'sqreadmin',
-    '--token':  '$GITHUB_TOKEN',
-    '--fail-fast': true,
     '--debug': true,
+    '--dry-run': true,
+    '--token': '$GITHUB_TOKEN',
+    '--user': 'sqreadmin',
+    '--email': 'sqre-admin@lists.lsst.org',
+    '--allow-team': ['Data Management', 'DM Externals'],
+    '--external-team': 'DM Externals',
+    '--deny-team': 'DM Auxilliaries',
+    '--fail-fast': true,
+    '--manifest': buildId,
+    '--eups-tag': eupsTag,
   ]
 
-  runCodekitCmd(prog, defaultOptions, options, [gitTag, buildId])
-} // githubTagVersion
+  runCodekitCmd(prog, defaultOptions, options, [gitTag])
+} // githubTagRelease
 
 /**
  * Run the `github-tag-teams` script from `sqre-codekit` with parameters.
@@ -509,17 +519,30 @@ def void githubTagVersion(String gitTag, String buildId, Map options) {
 def void githubTagTeams(Map options) {
   def prog = 'github-tag-teams'
   def defaultOptions = [
-    '--dry-run': true,
-    '--org': 'lsst',
-    '--team': 'Data Management',
-    '--email': 'sqre-admin@lists.lsst.org',
-    '--user': 'sqreadmin',
-    '--token':  '$GITHUB_TOKEN',
     '--debug': true,
+    '--dry-run': true,
+    '--token': '$GITHUB_TOKEN',
+    '--user': 'sqreadmin',
+    '--email': 'sqre-admin@lists.lsst.org',
+    '--allow-team': 'DM Auxilliaries',
+    '--deny-team': 'DM Externals',
   ]
 
   runCodekitCmd(prog, defaultOptions, options, null)
 } // githubTagTeams
+
+/**
+ * Run the `github-get-ratelimit` script from `sqre-codekit`.
+ *
+ */
+def void githubGetRatelimit() {
+  def prog = 'github-get-ratelimit'
+  def defaultOptions = [
+    '--token': '$GITHUB_TOKEN',
+  ]
+
+  runCodekitCmd(prog, defaultOptions, null, null)
+}
 
 /**
  * Run a codekit cli command.
@@ -593,7 +616,7 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  def docImage  = 'lsstsqre/codekit:6.0.0'
+  def docImage  = 'lsstsqre/codekit:7.1.0'
 
   insideWrap(docImage) {
     withGithubAdminCredentials {
@@ -706,27 +729,29 @@ def lsstswBuildMatrix(List lsstswConfigs, Boolean wipeout=false) {
 /**
  * Clone lsstsw git repo
  */
-@NonCPS
 def void cloneLsstsw() {
+  def config = readYamlFile('etc/science_pipelines/build_matrix.yaml')
+
   gitNoNoise(
-    url: 'https://github.com/lsst/lsstsw.git',
-    branch: 'master',
+    url: githubSlugToUrl(config.lsstsw_repo_slug),
+    branch: config.lsstsw_repo_ref,
   )
 }
 
 /**
  * Clone ci-scripts git repo
  */
-@NonCPS
 def void cloneCiScripts() {
+  def config = readYamlFile('etc/science_pipelines/build_matrix.yaml')
+
   gitNoNoise(
-    url: 'https://github.com/lsst-sqre/ci-scripts.git',
-    branch: 'master',
+    url: githubSlugToUrl(config.ciscripts_repo_slug),
+    branch: config.ciscripts_repo_ref,
   )
 }
 
 /**
- * Clone git repo without generating a jenkins bulid changelog
+ * Clone git repo without generating a jenkins build changelog
  */
 def void gitNoNoise(Map args) {
   git([
@@ -738,12 +763,17 @@ def void gitNoNoise(Map args) {
 }
 
 /**
- * Parse yaml file into object.
+ * Parse yaml file into object -- parsed files are memoized.
  *
  * @param file String file to parse
  */
+// The @Memoized decorator seems to break pipeline serialization and this
+// method can not be labeled as @NonCPS.
+@Field Map yamlCache = [:]
 def Object readYamlFile(String file) {
-  readYaml(text: readFile(file))
+  def yaml = yamlCache[file] ?: readYaml(text: readFile(file))
+  yamlCache[file] = yaml
+  return yaml
 }
 
 def void buildTarballMatrix(
@@ -993,5 +1023,26 @@ def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
 
   return bx
 } // runRebuild
+
+/*
+ * Convert github "slug" to a URL.
+ *
+ * @param slug String
+ * @param scheme String Defaults to 'https'.
+ * @return url String
+ */
+@NonCPS
+def String githubSlugToUrl(String slug, String scheme = 'https') {
+  switch (scheme) {
+    case 'https':
+      return "https://github.com/${slug}.git"
+      break
+    case 'ssh':
+      return "ssh://git@github.com/${slug}.git"
+      break
+    default:
+      throw new Error("unknown scheme: ${scheme}")
+  }
+}
 
 return this;
