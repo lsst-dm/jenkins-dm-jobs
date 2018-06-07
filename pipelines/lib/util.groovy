@@ -748,7 +748,7 @@ def void cloneCiScripts() {
 }
 
 /**
- * Clone git repo without generating a jenkins bulid changelog
+ * Clone git repo without generating a jenkins build changelog
  */
 def void gitNoNoise(Map args) {
   git([
