@@ -1022,4 +1022,25 @@ def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
   return bx
 } // runRebuild
 
+/*
+ * Convert github "slug" to a URL.
+ *
+ * @param slug String
+ * @param scheme String Defaults to 'https'.
+ * @return url String
+ */
+@NonCPS
+def String githubSlugToUrl(String slug, String scheme = 'https') {
+  switch (scheme) {
+    case 'https':
+      return "https://github.com/${slug}.git"
+      break
+    case 'ssh':
+      return "ssh://git@github.com/${slug}.git"
+      break
+    default:
+      throw new Error("unknown scheme: ${scheme}")
+  }
+}
+
 return this;
