@@ -1,6 +1,7 @@
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.ZoneId
+import groovy.transform.Field
 
 /**
  * Remove leading whitespace from a multi-line String (probably a shellscript).
@@ -760,12 +761,17 @@ def void gitNoNoise(Map args) {
 }
 
 /**
- * Parse yaml file into object.
+ * Parse yaml file into object -- parsed files are memoized.
  *
  * @param file String file to parse
  */
+// The @Memoized decorator seems to break pipeline serialization and this
+// method can not be labeled as @NonCPS.
+@Field Map yamlCache = [:]
 def Object readYamlFile(String file) {
-  readYaml(text: readFile(file))
+  def yaml = yamlCache[file] ?: readYaml(text: readFile(file))
+  yamlCache[file] = yaml
+  return yaml
 }
 
 def void buildTarballMatrix(
