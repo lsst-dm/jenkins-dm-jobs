@@ -2,6 +2,30 @@ import util.Plumber
 
 def p = new Plumber(name: 'release/codekit/github-tag-release', dsl: this)
 p.pipeline().with {
+  def text = '''
+    Tag git repositories, in a GitHub org, that correspond to the products in
+    a published eups distrib tag.
+
+    Example:
+
+      $ github-tag-release \
+        --dry-run \
+        --verify \
+        --debug \
+        --org 'lsst' \
+        --allow-team 'Data Management' \
+        --allow-team 'DM Externals' \
+        --external-team 'DM Externals' \
+        --deny-team 'DM Auxilliaries' \
+        --email 'sqre-admin@lists.lsst.org' \
+        --user 'sqreadmin' \
+        --token "$GITHUB_TOKEN" \
+        --limit 10 \
+        --manifest 'b3595' \
+        'w.2018.18'
+  '''
+  description(text.replaceFirst("\n","").stripIndent())
+
   parameters {
     stringParam('GIT_TAG', null, 'git tag string. Eg. w.2018.22')
     stringParam('EUPS_TAG', null, 'eups tag string. Eg. w_2018_22')
