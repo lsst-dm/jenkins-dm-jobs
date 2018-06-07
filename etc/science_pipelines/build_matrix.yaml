@@ -66,3 +66,5 @@ lsstsw_repo_slug: lsst/lsstsw
 lsstsw_repo_ref: master
 ciscripts_repo_slug: lsst-sqre/ci-scripts
 ciscripts_repo_ref: master
+newinstall_url: https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh
+shebangtron_url: https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron
