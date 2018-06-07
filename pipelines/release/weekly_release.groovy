@@ -16,6 +16,8 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  util.requireParams(['YEAR', 'WEEK'])
+
   def gitTag = null
   def eupsTag = null
   def bx = null
@@ -33,13 +35,6 @@ notify.wrap {
       def week = null
 
       stage('format weekly tag') {
-        if (!params.YEAR) {
-          error 'YEAR parameter is required'
-        }
-        if (!params.WEEK) {
-          error 'WEEK parameter is required'
-        }
-
         year = params.YEAR.padLeft(4, "0")
         week = params.WEEK.padLeft(2, "0")
 

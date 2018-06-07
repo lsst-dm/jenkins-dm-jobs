@@ -16,6 +16,8 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  util.requireParams(['YEAR', 'MONTH', 'DAY'])
+
   def gitTag = null
   def eupsTag = null
   def bx = null
@@ -34,16 +36,6 @@ notify.wrap {
       def day = null
 
       stage('format nightly tag') {
-        if (!params.YEAR) {
-          error 'YEAR parameter is required'
-        }
-        if (!params.MONTH) {
-          error 'MONTH parameter is required'
-        }
-        if (!params.DAY) {
-          error 'DAY parameter is required'
-        }
-
         year = params.YEAR.padLeft(4, "0")
         month = params.MONTH.padLeft(2, "0")
         day = params.DAY.padLeft(2, "0")
