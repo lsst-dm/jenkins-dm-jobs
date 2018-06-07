@@ -531,6 +531,19 @@ def void githubTagTeams(Map options) {
 } // githubTagTeams
 
 /**
+ * Run the `github-get-ratelimit` script from `sqre-codekit`.
+ *
+ */
+def void githubGetRatelimit() {
+  def prog = 'github-get-ratelimit'
+  def defaultOptions = [
+    '--token': '$GITHUB_TOKEN',
+  ]
+
+  runCodekitCmd(prog, defaultOptions, null, null)
+}
+
+/**
  * Run a codekit cli command.
  *
  * @param prog String see `makeCliCmd`
