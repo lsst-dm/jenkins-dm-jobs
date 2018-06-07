@@ -740,11 +740,12 @@ def void cloneLsstsw() {
 /**
  * Clone ci-scripts git repo
  */
-@NonCPS
 def void cloneCiScripts() {
+  def config = readYamlFile('etc/science_pipelines/build_matrix.yaml')
+
   gitNoNoise(
-    url: 'https://github.com/lsst-sqre/ci-scripts.git',
-    branch: 'master',
+    url: githubSlugToUrl(config.ciscripts_repo_slug),
+    branch: config.ciscripts_repo_ref,
   )
 }
 
