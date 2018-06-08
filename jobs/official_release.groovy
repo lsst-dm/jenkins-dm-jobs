@@ -14,6 +14,7 @@ p.pipeline().with {
   description(text.replaceFirst("\n","").stripIndent())
 
   parameters {
+    choiceParam('EUPSPKG_SOURCE', ['git', 'package'], 'type of eupspkg to create -- "git" should always be used except for a final (non-rc) release')
     stringParam('EUPS_TAG', null, 'existing eups tag upon which to base the release. Eg. w_2018_22')
     stringParam('MANIFEST_ID', null, 'existing MANIFEST_ID/BUILD_ID that corresponds to the EUPS_TAG. Eg. b3638')
     stringParam('GIT_TAG', null, 'git tag to create for the new release. Eg. w.2018.22')

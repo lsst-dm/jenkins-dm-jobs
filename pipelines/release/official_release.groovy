@@ -16,14 +16,21 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['EUPS_TAG', 'GIT_TAG', 'MANIFEST_ID'])
+  util.requireParams([
+    'EUPSPKG_SOURCE',
+    'EUPS_TAG',
+    'GIT_TAG',
+    'MANIFEST_ID',
+  ])
 
-  def gitTag = params.GIT_TAG
-  def srcEupsTag = params.EUPS_TAG
+  def eupspkgSource = params.EUPSPKG_SOURCE
+  def gitTag        = params.GIT_TAG
+  def srcEupsTag    = params.EUPS_TAG
   def srcManifestId = params.MANIFEST_ID
 
   def eupsTag = params.GIT_TAG.tr('.', '_')
 
+  echo "EUPSPKG_SOURCE: ${eupspkgSource}"
   echo "[git] tag: ${gitTag}"
   echo "[eups] tag: ${srcEupsTag}"
   echo "manifest id: ${srcManifestId}"
@@ -92,12 +99,12 @@ notify.wrap {
 
         pub[eupsTag] = {
           retry(retries) {
-            util.runPublish(bx, eupsTag, product, 'git', publishJob)
+            util.runPublish(bx, eupsTag, product, eupspkgSource, publishJob)
           }
         }
         pub['o_latest'] = {
           retry(retries) {
-            util.runPublish(bx, 'o_latest', product, 'git', publishJob)
+            util.runPublish(bx, 'o_latest', product, eupspkgSource, publishJob)
           }
         }
 
