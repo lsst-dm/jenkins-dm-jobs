@@ -16,7 +16,16 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  util.requireParams([
+    'BUILD_ID',
+    'EUPSPKG_SOURCE',
+    'PRODUCT',
+    'TAG',
+    'TIMEOUT',
+  ])
+
   def timelimit = params.TIMEOUT.toInteger()
+
   def can       = config.canonical
   def awsImage  = 'lsstsqre/awscli'
 
