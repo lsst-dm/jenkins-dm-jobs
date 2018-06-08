@@ -465,6 +465,20 @@ def void emptyDirs(List eds) {
 }
 
 /**
+ * Ensure directories exist and create any that are absent.
+ *
+ * @param dirs List of directories to ensure/create
+*/
+def void createDirs(List eds) {
+  eds.each { d ->
+    dir(d) {
+      // a file operation is needed to cause the dir() step to recreate the dir
+      writeFile(file: '.dummy', text: '')
+    }
+  }
+}
+
+/**
  * XXX this method was developed during the validate_drp conversion to pipeline
  * but is currently unusued.  It has been preserved as it might be useful in
  * other jobs.
