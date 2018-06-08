@@ -24,7 +24,11 @@ notify.wrap {
     'TIMEOUT',
   ])
 
-  def timelimit = params.TIMEOUT.toInteger()
+  def manifestId    = params.BUILD_ID
+  def eupspkgSource = params.EUPSPKG_SOURCE
+  def product       = params.PRODUCT
+  def eupsTag       = params.TAG
+  def timelimit     = params.TIMEOUT.toInteger()
 
   def can       = config.canonical
   def awsImage  = 'lsstsqre/awscli'
@@ -51,6 +55,10 @@ notify.wrap {
         def env = [
           "EUPS_PKGROOT=${pkgroot}",
           "EUPS_USERDATA=${cwd}/home/.eups_userdata",
+          "EUPSPKG_SOURCE=${eupspkgSource}",
+          "MANIFEST_ID=${manifestId}",
+          "EUPS_TAG=${eupsTag}",
+          "PRODUCT=${product}",
         ]
 
         withCredentials([[
@@ -62,8 +70,8 @@ notify.wrap {
             util.insideWrap(can.image) {
               util.bash '''
                 ARGS=()
-                ARGS+=('-b' "$BUILD_ID")
-                ARGS+=('-t' "$TAG")
+                ARGS+=('-b' "$MANIFEST_ID")
+                ARGS+=('-t' "$EUPS_TAG")
                 # enable debug output
                 ARGS+=('-d')
                 # split whitespace separated EUPS products into separate array
