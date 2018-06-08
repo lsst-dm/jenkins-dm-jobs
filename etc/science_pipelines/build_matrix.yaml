@@ -116,7 +116,7 @@ scipipe_release:
     git_ref: master
     dir: ''
   docker_registry:
-    repo: lsstsqre/centos
+    repo: lsstsqre/jhoblitt-moe-centos
 newinstall:
   dockerfile:
     github_repo: lsst-sqre/docker-newinstall
