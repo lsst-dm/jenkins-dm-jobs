@@ -20,21 +20,21 @@ notify.wrap {
     'EUPSPKG_SOURCE',
     'EUPS_TAG',
     'GIT_TAG',
-    'MANIFEST_ID',
+    'SOURCE_EUPS_TAG',
+    'SOURCE_MANIFEST_ID',
   ])
 
   def eupspkgSource = params.EUPSPKG_SOURCE
+  def eupsTag       = params.EUPS_TAG
   def gitTag        = params.GIT_TAG
-  def srcEupsTag    = params.EUPS_TAG
-  def srcManifestId = params.MANIFEST_ID
-
-  def eupsTag = params.GIT_TAG.tr('.', '_')
+  def srcEupsTag    = params.SOURCE_EUPS_TAG
+  def srcManifestId = params.SOURCE_MANIFEST_ID
 
   echo "EUPSPKG_SOURCE: ${eupspkgSource}"
-  echo "[git] tag: ${gitTag}"
-  echo "[eups] tag: ${srcEupsTag}"
-  echo "manifest id: ${srcManifestId}"
-  echo "publish build with [eups] tag: ${eupsTag}"
+  echo "publish [eups] tag: ${eupsTag}"
+  echo "publish [git] tag: ${gitTag}"
+  echo "source [eups] tag: ${srcEupsTag}"
+  echo "source manifest id: ${srcManifestId}"
 
   def bx = null
 
