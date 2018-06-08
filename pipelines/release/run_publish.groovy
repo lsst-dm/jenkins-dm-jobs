@@ -20,14 +20,14 @@ notify.wrap {
     'BUILD_ID',
     'EUPSPKG_SOURCE',
     'PRODUCT',
-    'TAG',
+    'EUPS_TAG',
     'TIMEOUT',
   ])
 
   def manifestId    = params.BUILD_ID
   def eupspkgSource = params.EUPSPKG_SOURCE
   def product       = params.PRODUCT
-  def eupsTag       = params.TAG
+  def eupsTag       = params.EUPS_TAG
   def timelimit     = params.TIMEOUT.toInteger()
 
   def can       = config.canonical

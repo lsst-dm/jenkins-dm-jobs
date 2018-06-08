@@ -34,13 +34,9 @@ notify.wrap {
   }
 
   stage('eups publish [tag]') {
-    build job: publishJob,
-      parameters: [
-        string(name: 'EUPSPKG_SOURCE', value: 'git'),
-        string(name: 'BUILD_ID', value: bx),
-        string(name: 'TAG', value: params.EUPS_TAG),
-        string(name: 'PRODUCT', value: params.PRODUCT)
-      ]
+    retry(retries) {
+      util.tagProduct(bx, eupsTag, product, 'git', publishJob)
+    }
   }
 
   stage('archive') {

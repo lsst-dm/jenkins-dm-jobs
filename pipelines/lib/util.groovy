@@ -190,7 +190,7 @@ def void tagProduct(
     parameters: [
       string(name: 'EUPSPKG_SOURCE', value: eupspkgSource),
       string(name: 'BUILD_ID', value: buildId),
-      string(name: 'TAG', value: eupsTag),
+      string(name: 'EUPS_TAG', value: eupsTag),
       string(name: 'PRODUCT', value: product),
       string(name: 'TIMEOUT', value: timelimit.toString()), // hours
     ]
