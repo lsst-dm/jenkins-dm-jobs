@@ -194,15 +194,11 @@ def void linuxBuild(String imageName, String compiler, MinicondaEnv menv) {
   def localImageName = "${imageName}-local"
 
   try {
-    [
+    util.createDirs([
       buildDir,
       distDir,
       shDir,
-    ].each { d ->
-      dir(d) {
-        writeFile(file: '.dummy', text: '')
-      }
-    }
+    ])
 
     // sanitize build dir to ensure log collection is for the current build
     // only
@@ -272,15 +268,11 @@ def void osxBuild(
   def shName = "${shDir}/run.sh"
 
   try {
-    [
+    util.createDirs([
       buildDir,
       distDir,
       shDir,
-    ].each { d ->
-      dir(d) {
-        writeFile(file: '.dummy', text: '')
-      }
-    }
+    ])
 
     // sanitize build dir to ensure log collection is for the current build
     // only
