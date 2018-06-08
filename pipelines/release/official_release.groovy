@@ -20,6 +20,7 @@ notify.wrap {
     'EUPSPKG_SOURCE',
     'EUPS_TAG',
     'GIT_TAG',
+    'O_LATEST',
     'SOURCE_EUPS_TAG',
     'SOURCE_MANIFEST_ID',
   ])
@@ -27,6 +28,7 @@ notify.wrap {
   def eupspkgSource = params.EUPSPKG_SOURCE
   def eupsTag       = params.EUPS_TAG
   def gitTag        = params.GIT_TAG
+  def oLatest       = params.O_LATEST.toBoolean()
   def srcEupsTag    = params.SOURCE_EUPS_TAG
   def srcManifestId = params.SOURCE_MANIFEST_ID
 
@@ -102,9 +104,12 @@ notify.wrap {
             util.runPublish(bx, eupsTag, product, eupspkgSource, publishJob)
           }
         }
-        pub['o_latest'] = {
-          retry(retries) {
-            util.runPublish(bx, 'o_latest', product, eupspkgSource, publishJob)
+        if (oLatest) {
+          pub['o_latest'] = {
+            retry(retries) {
+              util.runPublish(bx,
+                'o_latest', product, eupspkgSource, publishJob)
+            }
           }
         }
 
@@ -114,7 +119,6 @@ notify.wrap {
       stage('wait for s3 sync') {
         sleep time: 15, unit: 'MINUTES'
       }
-
 
       stage('build eups tarballs') {
        def opt = [

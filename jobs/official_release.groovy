@@ -17,12 +17,14 @@ p.pipeline().with {
     choiceParam('EUPSPKG_SOURCE', ['git', 'package'],
       'type of eupspkg to create -- "git" should always be used except for a final (non-rc) release')
     stringParam('SOURCE_EUPS_TAG', null,
-      'existing eups tag upon which to base the release. Eg. w_2018_22')
+      'existing eups tag upon which to base the release. Eg. "w_2018_22"')
     stringParam('SOURCE_MANIFEST_ID', null,
-      'existing MANIFEST_ID/BUILD_ID that corresponds to SOURCE_EUPS_TAG. Eg. b3638')
+      'existing MANIFEST_ID/BUILD_ID that corresponds to SOURCE_EUPS_TAG. Eg. "b3638"')
     stringParam('GIT_TAG', null,
-      'git tag for the new release. Eg. v16.0.rc1')
+      'git tag for the new release. Eg. "v16.0.rc1"')
     stringParam('EUPS_TAG', null,
-      'eups tag for the new release. Eg. v16_0_rc1')
+      'eups tag for the new release. Eg. "v16_0_rc1"')
+    booleanParam('O_LATEST', false,
+      'update the eups "O_LATEST" tag -- should only be done for a final (non-rc) release')
   }
 }
