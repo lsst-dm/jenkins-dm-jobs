@@ -331,10 +331,7 @@ def void linuxSmoke(String imageName, String compiler, MinicondaEnv menv) {
   try {
     // smoke state is left at the end of the build for possible debugging but
     // each test needs to be run in a clean env.
-    dir(smokeDir) {
-      deleteDir()
-      writeFile(file: '.dummy', text: '')
-    }
+    util.emptyDirs([smokeDir])
 
     prepareSmoke(
       params.PRODUCT,

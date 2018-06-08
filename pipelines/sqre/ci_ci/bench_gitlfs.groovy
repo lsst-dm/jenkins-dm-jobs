@@ -37,9 +37,7 @@ notify.wrap {
       def image = docker.image(local)
 
       // pre-create results dir
-      dir(resultsDir) {
-        writeFile(file: '.dummy', text: '')
-      }
+      util.emptyDirs([resultsDir])
 
       // only hit github once
       dir(repoDirCached) {

@@ -282,12 +282,7 @@ def jenkinsWrapper() {
 
     // workspace relative dir for dot files to prevent bleed through between
     // jobs and subsequent builds.
-    dir('home') {
-      deleteDir()
-
-      // this is a lazy way to recreate the directory
-      writeFile(file: '.dummy', text: '')
-    }
+    emptyDirs([homeDir])
 
     // cleanup *all* conda cached package info
     [
