@@ -440,6 +440,21 @@ def void requireEnvVars(List rev) {
 }
 
 /**
+ * Validate that map contains AT LEAST the specified list of keys and raise
+ * an error on any that are missing.
+ *
+ * @param check Map object to inspect
+ * @param key List of required map keys
+ */
+def void requireMapKeys(Map check, List keys) {
+  keys.each { k ->
+    if (! check.containsKey(k)) {
+      error "${k} key is missing from Map"
+    }
+  }
+}
+
+/**
  * Empty directories by deleting and recreating them.
  *
  * @param dirs List of directories to empty
