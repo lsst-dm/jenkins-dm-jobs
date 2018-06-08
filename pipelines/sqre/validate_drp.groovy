@@ -15,6 +15,11 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    // config is not used directly in this job but loading it now is needed
+    // for the side effect of parsing/caching this file for
+    // `util.cloneCiScripts()` which will not be able to locate it once the
+    // cwd has changed.
+    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
   }
 }
 
