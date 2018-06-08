@@ -171,22 +171,24 @@ def slurpJson(String data) {
 /**
  * Create an EUPS distrib tag
  *
- * @param buildId bNNNN
- * @param eupsTag tag name
- * @param product whitespace delimited string of products to tag
- * @param publishJob job to trigger (does the actual work)
+ * @param buildId String bNNNN
+ * @param eupsTag String tag name
+ * @param product String whitespace delimited string of products to tag
+ * @param eupspkgSource String type of eupspkg package to create
+ * @param publishJob String job to trigger (does the actual work)
  * @param timelimit Integer build timeout in hours
  */
-def tagProduct(
+def void tagProduct(
   String buildId,
   String eupsTag,
   String product,
+  String eupspkgSource,
   String publishJob = 'release/run-publish',
   Integer timelimit = 1
 ) {
   build job: publishJob,
     parameters: [
-      string(name: 'EUPSPKG_SOURCE', value: 'git'),
+      string(name: 'EUPSPKG_SOURCE', value: eupspkgSource),
       string(name: 'BUILD_ID', value: buildId),
       string(name: 'TAG', value: eupsTag),
       string(name: 'PRODUCT', value: product),

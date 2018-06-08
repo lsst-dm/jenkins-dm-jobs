@@ -44,7 +44,7 @@ notify.wrap {
 
         pub[eupsTag] = {
           retry(retries) {
-            util.tagProduct(bx, eupsTag, product, publishJob)
+            util.tagProduct(bx, eupsTag, product, 'git', publishJob)
           }
         }
 
