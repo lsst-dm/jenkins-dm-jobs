@@ -37,40 +37,58 @@ notify.wrap {
 
   def can       = config.canonical
   def awsImage  = 'lsstsqre/awscli'
+  def slug      = "${can.label}.py${can.python}"
 
   def run = {
     ws(config.canonical_workspace) {
       def cwd = pwd()
 
+      def buildParams = [
+        EUPS_PKGROOT:       "${cwd}/distrib",
+        VERSIONDB_REPO:      versiondbRepo,
+        VERSIONDB_PUSH:      versiondbPush,
+        GIT_SSH_COMMAND:     'ssh -o StrictHostKeyChecking=no',
+        LSST_JUNIT_PREFIX:   slug,
+        LSST_PYTHON_VERSION: can.python,
+        LSST_COMPILER:       can.compiler,
+        // XXX this should be renamed in lsstsw to make it clear that its
+        // setting a github repo slug
+        REPOSFILE_REPO:      "${config.reposfile_repo_slug}",
+        BRANCH:              BRANCH,
+        PRODUCT:             PRODUCT,
+        SKIP_DEMO:           SKIP_DEMO,
+        SKIP_DOCS:           SKIP_DOCS,
+      ]
+
+      def runJW = {
+        // note that util.jenkinsWrapper() clones the ci-scripts repo, which is
+        // used by the push docs stage
+        try {
+          util.jenkinsWrapper(buildParams)
+        } finally {
+          util.jenkinsWrapperPost()
+        }
+      }
+
+      def withVersiondbCredentials = { invoke ->
+        sshagent (credentials: ['github-jenkins-versiondb']) {
+          invoke()
+        }
+      }
+
       stage('build') {
-        withEnv([
-          "EUPS_PKGROOT=${cwd}/distrib",
-          "VERSIONDB_REPO=${versiondbRepo}",
-          "VERSIONDB_PUSH=${versiondbPush}",
-          'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
-          "LSST_JUNIT_PREFIX=${can.label}.py${can.python}",
-          "LSST_PYTHON_VERSION=${can.python}",
-          "LSST_COMPILER=${can.compiler}",
-          // XXX this should be renamed in lsstsw to make it clear that its
-          // setting a github repo slug
-          "REPOSFILE_REPO=${config.reposfile_repo_slug}",
-         ]) {
-          // XXX note that util.jenkinsWrapper() clones the ci-scripts repo,
-          // which is used by the push docs stage
-          util.insideWrap(can.image) {
-            sshagent (credentials: ['github-jenkins-versiondb']) {
-              try {
-                util.jenkinsWrapper()
-              } finally {
-                util.jenkinsWrapperPost()
-              }
-            } // sshagent
-          } // util.insideWrap
-        } // withEnv
+        util.insideWrap(can.image) {
+          // only setup sshagent if we are going to push
+          if (versiondbPush) {
+            withVersiondbCredentials(runJW)
+          } else {
+            runJW()
+          }
+        } // util.insideWrap
       } // stage('build')
 
       stage('push docs') {
-        if (!params.SKIP_DOCS) {
+        if (skipDocs) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-doxygen-push',

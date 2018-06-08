@@ -16,7 +16,24 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireEnvVars(['WIPEOUT', 'BUILD_CONFIG'])
+  // env vars are used instead of the params object so that "params" can be
+  // set statically as env vars in calling jobs without exposing a "job param"
+  // in the jenkins ui.
+  util.requireEnvVars([
+    'BRANCH',
+    'BUILD_CONFIG',
+    'PRODUCT',
+    'SKIP_DEMO',
+    'SKIP_DOCS',
+    'WIPEOUT',
+  ])
+
+  def buildParams = [
+    BRANCH:    BRANCH,
+    PRODUCT:   PRODUCT,
+    SKIP_DEMO: SKIP_DEMO,
+    SKIP_DOCS: SKIP_DOCS,
+  ]
 
   def lsstswConfigs = config[BUILD_CONFIG]
   if (lsstswConfigs == null) {
@@ -25,7 +42,7 @@ notify.wrap {
 
   timeout(time: 23, unit: 'HOURS') {
     stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, WIPEOUT.toBoolean())
+      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean())
     }
   }
 } // notify.wrap

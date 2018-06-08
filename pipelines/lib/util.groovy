@@ -206,6 +206,7 @@ def void runPublish(
  * @param wipteout Delete all existing state before starting build
  */
 def lsstswBuild(
+  Map buildParams,
   String image,
   String label,
   String compiler,
@@ -214,14 +215,13 @@ def lsstswBuild(
   Boolean wipeout=false
 ) {
   def run = {
-    withEnv([
-      'SKIP_DOCS=true',
-      "LSST_JUNIT_PREFIX=${slug}",
-      "LSST_PYTHON_VERSION=${python}",
-      "LSST_COMPILER=${compiler}",
-    ]) {
-      jenkinsWrapper()
-    }
+    buildParams += [
+      LSST_JUNIT_PREFIX:   slug,
+      LSST_PYTHON_VERSION: python,
+      LSST_COMPILER:       compiler,
+    ]
+
+    jenkinsWrapper(buildParams)
   } // run
 
   def runDocker = {
@@ -266,10 +266,26 @@ def lsstswBuild(
 } // lsstswBuild
 
 /**
- * Run a jenkins_wrapper.sh
+ * Run a build using ci-scripts/jenkins_wrapper.sh
+ *
+ * Required keys are listed below. Any additional keys will also be set as env
+ * vars.
+ * @param buildParams.BRANCH String
+ * @param buildParams.PRODUCT String
+ * @param buildParams.SKIP_DEMO Boolean
+ * @param buildParams.SKIP_DOCS Boolean
  */
-def jenkinsWrapper() {
-  def cwd = pwd()
+def void jenkinsWrapper(Map buildParams) {
+  // minimum set of required keys -- additional are allowed
+  requireMapKeys(buildParams, [
+    'BRANCH',
+    'PRODUCT',
+    'SKIP_DEMO',
+    'SKIP_DOCS',
+  ])
+
+  def cwd     = pwd()
+  def homeDir = "${cwd}/home"
 
   try {
     dir('lsstsw') {
@@ -294,16 +310,23 @@ def jenkinsWrapper() {
       }
     }
 
+    def buildEnv = [
+      "WORKSPACE=${cwd}",
+      "HOME=${homeDir}",
+      "EUPS_USERDATA=${homeDir}/.eups_userdata",
+    ]
+
+    // Map -> List
+    buildParams.each { pair ->
+      buildEnv += pair.toString()
+    }
+
     withCredentials([[
       $class: 'StringBinding',
       credentialsId: 'cmirror-s3-bucket',
       variable: 'CMIRROR_S3_BUCKET'
     ]]) {
-      withEnv([
-        "WORKSPACE=${cwd}",
-        "HOME=${cwd}/home",
-        "EUPS_USERDATA=${cwd}/home/.eups_userdata",
-      ]) {
+      withEnv(buildEnv) {
         bash './ci-scripts/jenkins_wrapper.sh'
       }
     } // withCredentials([[
@@ -726,9 +749,14 @@ def void nodeTiny(Closure run) {
  * Execute a multiple multiple lsstsw builds using different configurations.
  *
  * @param config List of lsstsw build configurations
+ * @param buildParams Map of params/env vars for jenkins_wrapper.sh
  * @param wipeout Boolean wipeout the workspace build starting the build
  */
-def lsstswBuildMatrix(List lsstswConfigs, Boolean wipeout=false) {
+def lsstswBuildMatrix(
+  List lsstswConfigs,
+  Map buildParams,
+  Boolean wipeout=false
+) {
   def matrix = [:]
 
   // XXX validate config
@@ -739,6 +767,7 @@ def lsstswBuildMatrix(List lsstswConfigs, Boolean wipeout=false) {
 
     matrix[slug] = {
       lsstswBuild(
+        buildParams,
         item.image,
         item.label,
         item.compiler,

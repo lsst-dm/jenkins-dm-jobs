@@ -15,7 +15,8 @@ p.pipeline().with {
   concurrentBuild(true)
 
   environmentVariables(
-    WIPEOUT: false,
     BUILD_CONFIG: 'scipipe-lsstsw-matrix',
+    SKIP_DOCS: true,
+    WIPEOUT: false,
   )
 }
