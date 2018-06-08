@@ -35,7 +35,7 @@ notify.wrap {
 
   stage('eups publish [tag]') {
     retry(retries) {
-      util.tagProduct(bx, eupsTag, product, 'git', publishJob)
+      util.runPublish(bx, eupsTag, product, 'git', publishJob)
     }
   }
 

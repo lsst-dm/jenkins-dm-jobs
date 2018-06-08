@@ -178,7 +178,7 @@ def slurpJson(String data) {
  * @param publishJob String job to trigger (does the actual work)
  * @param timelimit Integer build timeout in hours
  */
-def void tagProduct(
+def void runPublish(
   String buildId,
   String eupsTag,
   String product,
@@ -194,7 +194,7 @@ def void tagProduct(
       string(name: 'PRODUCT', value: product),
       string(name: 'TIMEOUT', value: timelimit.toString()), // hours
     ]
-} // tagProduct
+} // runPublish
 
 /**
  * Run a lsstsw build.

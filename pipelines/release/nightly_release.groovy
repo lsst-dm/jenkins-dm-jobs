@@ -64,12 +64,12 @@ notify.wrap {
 
         pub[eupsTag] = {
           retry(retries) {
-            util.tagProduct(bx, eupsTag, product, 'git', publishJob)
+            util.runPublish(bx, eupsTag, product, 'git', publishJob)
           }
         }
         pub['d_latest'] = {
           retry(retries) {
-            util.tagProduct(bx, 'd_latest', product, 'git', publishJob)
+            util.runPublish(bx, 'd_latest', product, 'git', publishJob)
           }
         }
 
