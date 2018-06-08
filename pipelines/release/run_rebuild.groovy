@@ -16,6 +16,17 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  util.requireParams([
+    'BRANCH',
+    'PRODUCT',
+    'SKIP_DEMO',
+    'SKIP_DOCS',
+    'TIMEOUT',
+  ])
+
+  def skipDocs  = params.SKIP_DOCS.toBoolean()
+  def timelimit = params.TIMEOUT.toInteger()
+
   def versiondbPush = 'false'
   def versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'https')
 
@@ -24,7 +35,6 @@ notify.wrap {
     versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'ssh')
   }
 
-  def timelimit = params.TIMEOUT.toInteger()
   def can       = config.canonical
   def awsImage  = 'lsstsqre/awscli'
 
