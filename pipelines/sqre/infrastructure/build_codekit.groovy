@@ -9,6 +9,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    sqre = util.readYamlFile 'etc/sqre/config.yaml'
   }
 }
 
@@ -16,9 +17,9 @@ notify.wrap {
   util.requireParams(['CODEKIT_VER'])
 
   def image      = null
-  def regRepo    = 'lsstsqre/codekit'
-  def githubRepo = 'lsst-sqre/sqre-codekit'
-  def githubRef  = 'master'
+  def dockerRepo = sqre.codekit.docker_repo
+  def githubRepo = sqre.codekit.github_repo
+  def githubRef  = sqre.codekit.github_ref
   def buildDir   = 'docker'
   def codekitVer = params.CODEKIT_VER
   def pushLatest = params.LATEST
@@ -34,7 +35,7 @@ notify.wrap {
     stage('build') {
       dir(buildDir) {
         // ensure base image is always up to date
-        image = docker.build("${regRepo}", "--pull=true --no-cache --build-arg CODEKIT_VER=${codekitVer} .")
+        image = docker.build("${dockerRepo}", "--pull=true --no-cache --build-arg CODEKIT_VER=${codekitVer} .")
       }
     }
 

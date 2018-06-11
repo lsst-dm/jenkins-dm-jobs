@@ -665,9 +665,9 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  def docImage  = 'lsstsqre/codekit:7.1.0'
+  def codekitImage = "${sqre.codekit.docker_repo}:${sqre.codekit.version}"
 
-  insideWrap(docImage) {
+  insideWrap(codekitImage) {
     withGithubAdminCredentials {
       run()
     } // withGithubAdminCredentials
