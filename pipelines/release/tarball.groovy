@@ -503,12 +503,10 @@ def void s3PushVenv(String ... parts) {
 
   withEnv(env) {
     withEupsBucketEnv {
-      util.bash '''
+      util.bash """
         . venv/bin/activate
-        aws s3 sync --only-show-errors \
-          "${EUPS_PKGROOT}/" \
-          "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
-      '''
+        ${s3PushCmd()}
+      """
     } // withEupsBucketEnv
   } // withEnv
 }
@@ -532,14 +530,25 @@ def void s3PushDocker(String ... parts) {
     withEupsBucketEnv {
       docker.image(awsImage).inside {
         // alpine does not include bash by default
-        util.posixSh '''
-          aws s3 sync --only-show-errors \
-            "${EUPS_PKGROOT}/" \
-            "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
-        '''
+        util.posixSh(s3PushCmd())
       } // .inside
     } //withEupsBucketEnv
   } // withEnv
+}
+
+/**
+ * Returns a shell command string for pushing the EUPS_PKGROOT to s3.
+ *
+ * @return String cmd
+ */
+def String s3PushCmd() {
+  // do not interpolate now -- all values should come from the shell env.
+  return util.dedent('''
+    aws s3 sync \
+      --only-show-errors \
+      "${EUPS_PKGROOT}/" \
+      "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
+  ''')
 }
 
 /**

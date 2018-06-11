@@ -106,12 +106,16 @@ notify.wrap {
             def env = [
               "EUPS_PKGROOT=${cwd}/distrib",
               "HOME=${cwd}/home",
+              "EUPS_S3_OBJECT_PREFIX=stack/src/"
             ]
             withEnv(env) {
               docker.image(awsImage).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
-                  aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/
+                  aws s3 sync \
+                    --only-show-errors \
+                    "${EUPS_PKGROOT}/" \
+                    "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
                 '''
               } // .inside
             } // withEnv

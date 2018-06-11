@@ -113,7 +113,9 @@ notify.wrap {
                   # provides DOC_PUSH_PATH
                   . ./ci-scripts/settings.cfg.sh
 
-                  aws s3 cp --recursive \
+                  aws s3 cp \
+                    --only-show-errors \
+                    --recursive \
                     "${DOC_PUSH_PATH}/" \
                     "s3://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
                 '''
