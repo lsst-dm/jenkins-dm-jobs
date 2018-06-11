@@ -14,12 +14,12 @@ documenteer:
 awscli:
   github_repo: lsst-sqre/docker-awscli
   # branch of Dockerfile
-  github_ref: master
+  git_ref: master
   docker_repo: lsstsqre/awscli
   version: '1.14.61'
 codekit:
   github_repo: lsst-sqre/sqre-codekit
   # branch of Dockerfile
-  github_ref: master
+  git_ref: master
   docker_repo: lsstsqre/codekit
   version: '7.1.0'

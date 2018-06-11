@@ -26,7 +26,7 @@ notify.wrap {
 
   def dockerRepo = sqre.awscli.docker_repo
   def githubRepo = sqre.awscli.github_repo
-  def githubRef  = sqre.awscli.github_ref
+  def gitRef     = sqre.awscli.git_ref
 
   def image = null
 
@@ -34,7 +34,7 @@ notify.wrap {
     stage('checkout') {
       git([
         url: "https://github.com/${githubRepo}",
-        branch: githubRef,
+        branch: gitRef,
       ])
     }
 

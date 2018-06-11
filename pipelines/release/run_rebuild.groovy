@@ -34,9 +34,12 @@ notify.wrap {
   // not a normally exposed job param
   Boolean versiondbPush = (! params.NO_VERSIONDB_PUSH?.toBoolean())
   // default to safe
-  def versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'https')
+  def versiondbRepo = util.githubSlugToUrl(
+    config.versiondb.github_repo,
+    'https'
+  )
   if (versiondbPush) {
-    versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'ssh')
+    versiondbRepo = util.githubSlugToUrl(config.versiondb.github_repo, 'ssh')
   }
 
   def can         = config.canonical
@@ -57,7 +60,7 @@ notify.wrap {
         LSST_COMPILER:       can.compiler,
         // XXX this should be renamed in lsstsw to make it clear that its
         // setting a github repo slug
-        REPOSFILE_REPO:      "${config.reposfile_repo_slug}",
+        REPOSFILE_REPO:      "${config.repos.github_repo}",
         BRANCH:              BRANCH,
         PRODUCT:             PRODUCT,
         SKIP_DEMO:           SKIP_DEMO,

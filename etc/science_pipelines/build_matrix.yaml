@@ -68,15 +68,19 @@ tarball:
 #
 # low-level build parameters
 #
-reposfile_repo_slug: lsst/repos
-versiondb_repo_slug: lsst/versiondb
+repos:
+  github_repo: lsst/repos
+versiondb:
+  github_repo: lsst/versiondb
 canonical_node_label: jenkins-snowflake-1
 canonical_workspace: snowflake/release
 release_tag_org: lsst
-lsstsw_repo_slug: lsst/lsstsw
-lsstsw_repo_ref: master
-ciscripts_repo_slug: lsst-sqre/ci-scripts
-ciscripts_repo_ref: master
+lsstsw:
+  github_repo: lsst/lsstsw
+  git_ref: master
+ciscripts:
+  github_repo: lsst-sqre/ci-scripts
+  git_ref: master
 newinstall_url: https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh
 shebangtron_url: https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron
 release_docker_repo: lsstsqre/centos

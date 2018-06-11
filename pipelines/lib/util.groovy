@@ -788,8 +788,8 @@ def void cloneLsstsw() {
   def config = readYamlFile('etc/science_pipelines/build_matrix.yaml')
 
   gitNoNoise(
-    url: githubSlugToUrl(config.lsstsw_repo_slug),
-    branch: config.lsstsw_repo_ref,
+    url: githubSlugToUrl(config.lsstsw.github_repo),
+    branch: config.lsstsw.git_ref,
   )
 }
 
@@ -800,8 +800,8 @@ def void cloneCiScripts() {
   def config = readYamlFile('etc/science_pipelines/build_matrix.yaml')
 
   gitNoNoise(
-    url: githubSlugToUrl(config.ciscripts_repo_slug),
-    branch: config.ciscripts_repo_ref,
+    url: githubSlugToUrl(config.ciscripts.github_repo),
+    branch: config.ciscripts.git_ref,
   )
 }
 

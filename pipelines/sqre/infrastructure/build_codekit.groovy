@@ -26,7 +26,7 @@ notify.wrap {
 
   def dockerRepo = sqre.codekit.docker_repo
   def githubRepo = sqre.codekit.github_repo
-  def githubRef  = sqre.codekit.github_ref
+  def gitRef     = sqre.codekit.git_ref
   def buildDir   = 'docker'
 
   def image = null
@@ -35,7 +35,7 @@ notify.wrap {
     stage('checkout') {
       git([
         url: "https://github.com/${githubRepo}",
-        branch: githubRef,
+        branch: gitRef,
       ])
     }
 
