@@ -82,7 +82,7 @@ release:
   s3_wait_time: 15
   step:
     build_jupyterlabdemo:
-      image_name: lsstsqre/jld-lab
+      image_name: lsstsqre/jhoblitt-moe-jld-lab
     validate_drp:
       no_push: false
     documenteer:
