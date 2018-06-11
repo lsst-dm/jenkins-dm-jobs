@@ -1,0 +1,6 @@
+---
+#
+# d/w/o release pipeline params
+#
+build_jupyterlabdemo:
+  image_name: lsstsqre/jld-lab

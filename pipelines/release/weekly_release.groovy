@@ -12,6 +12,7 @@ node('jenkins-master') {
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
     config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    sqre = util.readYamlFile 'etc/sqre/config.yaml'
   }
 }
 
@@ -144,6 +145,10 @@ notify.wrap {
             parameters: [
               string(name: 'TAG', value: eupsTag),
               booleanParam(name: 'NO_PUSH', value: false),
+              string(
+                name: 'IMAGE_NAME',
+                value: sqre.build_jupyterlabdemo.image_name,
+              ),
             ],
             wait: false
         }
