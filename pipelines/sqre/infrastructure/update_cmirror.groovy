@@ -11,14 +11,15 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    sqre = util.readYamlFile 'etc/sqre/config.yaml'
   }
 }
 
 @Field String wgetImage = 'lsstsqre/wget'
 
 notify.wrap {
-  def hub_repo  = 'lsstsqre/cmirror'
-  def awsImage  = 'lsstsqre/awscli'
+  def hub_repo    = 'lsstsqre/cmirror'
+  def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.version}"
 
   def run = {
     def image = docker.image("${hub_repo}:latest")
@@ -75,7 +76,7 @@ notify.wrap {
         credentialsId: 'cmirror-s3-bucket',
         variable: 'CMIRROR_S3_BUCKET'
       ]]) {
-        docker.image(awsImage).inside {
+        docker.image(awscliImage).inside {
           catchError {
             util.posixSh '''
               aws s3 cp \

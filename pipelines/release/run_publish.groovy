@@ -12,6 +12,7 @@ node('jenkins-master') {
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
     config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    sqre = util.readYamlFile 'etc/sqre/config.yaml'
   }
 }
 
@@ -30,8 +31,8 @@ notify.wrap {
   def eupsTag       = params.EUPS_TAG
   def timelimit     = params.TIMEOUT.toInteger()
 
-  def can       = config.canonical
-  def awsImage  = 'lsstsqre/awscli'
+  def can         = config.canonical
+  def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.version}"
 
   def run = {
     ws(config.canonical_workspace) {
@@ -109,7 +110,7 @@ notify.wrap {
               "EUPS_S3_OBJECT_PREFIX=stack/src/"
             ]
             withEnv(env) {
-              docker.image(awsImage).inside {
+              docker.image(awscliImage).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
                   aws s3 cp \

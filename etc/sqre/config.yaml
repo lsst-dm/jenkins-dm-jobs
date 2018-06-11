@@ -8,3 +8,12 @@ validate_drp:
   no_push: false
 documenteer:
   publish: true
+#
+# general config values
+#
+awscli:
+  github_repo: lsst-sqre/docker-awscli
+  # branch of Dockerfile
+  github_ref: master
+  docker_repo: lsstsqre/awscli
+  version: '1.14.61'

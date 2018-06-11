@@ -12,6 +12,7 @@ node('jenkins-master') {
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
     config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    sqre = util.readYamlFile 'etc/sqre/config.yaml'
   }
 }
 
@@ -35,9 +36,9 @@ notify.wrap {
     versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'ssh')
   }
 
-  def can       = config.canonical
-  def awsImage  = 'lsstsqre/awscli'
-  def slug      = "${can.label}.py${can.python}"
+  def can         = config.canonical
+  def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.version}"
+  def slug        = "${can.label}.py${can.python}"
 
   def run = {
     ws(config.canonical_workspace) {
@@ -107,7 +108,7 @@ notify.wrap {
               // the current iteration of the awscli container is alpine based
               // and doesn't work with util.insideWrap.  However, the aws cli
               // seems to work OK without trying to lookup the username.
-              docker.image(awsImage).inside {
+              docker.image(awscliImage).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
                   # provides DOC_PUSH_PATH

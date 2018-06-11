@@ -9,6 +9,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    sqre = util.readYamlFile 'etc/sqre/config.yaml'
   }
 }
 
@@ -16,9 +17,9 @@ notify.wrap {
   util.requireParams(['AWSCLI_VER'])
 
   def image      = null
-  def hubRepo    = 'lsstsqre/awscli'
-  def githubRepo = 'lsst-sqre/docker-awscli'
-  def githubRef  = 'master'
+  def dockerRepo = sqre.awscli.docker_repo
+  def githubRepo = sqre.awscli.github_repo
+  def githubRef  = sqre.awscli.github_ref
   def ver        = params.AWSCLI_VER
   def pushLatest = params.LATEST
 
@@ -32,7 +33,7 @@ notify.wrap {
 
     stage('build') {
       // ensure base image is always up to date
-      image = docker.build("${hubRepo}", "--pull=true --no-cache --build-arg AWSCLI_VER=${ver} .")
+      image = docker.build("${dockerRepo}", "--pull=true --no-cache --build-arg AWSCLI_VER=${ver} .")
     }
 
     stage('push') {

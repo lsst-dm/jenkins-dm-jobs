@@ -14,6 +14,7 @@ node('jenkins-master') {
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
     config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    sqre = util.readYamlFile 'etc/sqre/config.yaml'
   }
 }
 
@@ -487,14 +488,14 @@ def void s3PushVenv(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
 
-  util.bash '''
+  util.bash """
     # do not assume virtualenv is present
     pip install virtualenv
     virtualenv venv
     . venv/bin/activate
     pip install --upgrade pip
-    pip install --upgrade awscli==1.14.2
-  '''
+    pip install --upgrade awscli==${sqre.awscli.version}
+  """
 
   def env = [
     "EUPS_PKGROOT=${cwd}/distrib",
@@ -518,7 +519,7 @@ def void s3PushVenv(String ... parts) {
 def void s3PushDocker(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
-  def awsImage  = 'lsstsqre/awscli'
+  def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.version}"
 
   def env = [
     "EUPS_PKGROOT=${cwd}/distrib",
@@ -528,7 +529,7 @@ def void s3PushDocker(String ... parts) {
 
   withEnv(env) {
     withEupsBucketEnv {
-      docker.image(awsImage).inside {
+      docker.image(awscliImage).inside {
         // alpine does not include bash by default
         util.posixSh(s3PushCmd())
       } // .inside
