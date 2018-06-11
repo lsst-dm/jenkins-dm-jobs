@@ -23,13 +23,13 @@ notify.wrap {
   def publishJob      = 'release/run-publish'
   def eupsTag         = 'qserv-dev'
 
-  def bx = null
+  def manifestId = null
 
   try {
     timeout(time: 30, unit: 'HOURS') {
       stage('build') {
         retry(retries) {
-          bx = util.runRebuild(buildJob, [
+          manifestId = util.runRebuild(buildJob, [
             PRODUCT: product,
             SKIP_DEMO: true,
             SKIP_DOCS: true,
@@ -43,7 +43,7 @@ notify.wrap {
 
         pub[eupsTag] = {
           retry(retries) {
-            util.runPublish(bx, eupsTag, product, 'git', publishJob)
+            util.runPublish(manifestId, eupsTag, product, 'git', publishJob)
           }
         }
 
@@ -56,8 +56,8 @@ notify.wrap {
 
       util.nodeTiny {
         results = [:]
-        if (bx) {
-          results['bnnn'] = bx
+        if (manifestId) {
+          results['manifest_id'] = manifestId
         }
         if (eupsTag) {
           results['eups_tag'] = eupsTag

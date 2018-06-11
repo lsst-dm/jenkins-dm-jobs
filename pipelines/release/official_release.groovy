@@ -45,7 +45,7 @@ notify.wrap {
   def buildJob        = 'release/run-rebuild'
   def publishJob      = 'release/run-publish'
 
-  def bx = null
+  def manifestId = null
 
   try {
     timeout(time: 30, unit: 'HOURS') {
@@ -86,7 +86,7 @@ notify.wrap {
 
       stage('build') {
         retry(retries) {
-          bx = util.runRebuild(buildJob, [
+          manifestId = util.runRebuild(buildJob, [
             BRANCH: gitTag,
             PRODUCT: product,
             SKIP_DEMO: false,
@@ -101,13 +101,14 @@ notify.wrap {
 
         pub[eupsTag] = {
           retry(retries) {
-            util.runPublish(bx, eupsTag, product, eupspkgSource, publishJob)
+            util.runPublish(manifestId,
+              eupsTag, product, eupspkgSource, publishJob)
           }
         }
         if (oLatest) {
           pub['o_latest'] = {
             retry(retries) {
-              util.runPublish(bx,
+              util.runPublish(manifestId,
                 'o_latest', product, eupspkgSource, publishJob)
             }
           }
@@ -172,7 +173,7 @@ notify.wrap {
           build job: 'sqre/validate_drp',
             parameters: [
               string(name: 'EUPS_TAG', value: eupsTag),
-              string(name: 'BNNNN', value: bx),
+              string(name: 'MANIFEST_ID', value: manifestId),
               string(name: 'COMPILER', value: can.compiler),
               booleanParam(
                 name: 'NO_PUSH',
@@ -204,8 +205,8 @@ notify.wrap {
 
       util.nodeTiny {
         results = [:]
-        if (bx) {
-          results['bnnn'] = bx
+        if (manifestId) {
+          results['manifest_id'] = manifestId
         }
         if (gitTag) {
           results['git_tag'] = gitTag

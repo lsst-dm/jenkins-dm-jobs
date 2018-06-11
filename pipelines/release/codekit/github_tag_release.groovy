@@ -15,7 +15,7 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
-    'BUILD_ID',
+    'MANIFEST_ID',
     'DRY_RUN',
     'EUPS_TAG',
     'GIT_TAG',
@@ -23,7 +23,7 @@ notify.wrap {
     'VERIFY',
   ])
 
-  String manifestID = params.BUILD_ID
+  String manifestId = params.MANIFEST_ID
   Boolean dryRun    = params.DRY_RUN
   String eupsTag    = params.EUPS_TAG
   String gitTag     = params.GIT_TAG

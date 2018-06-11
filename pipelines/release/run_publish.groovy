@@ -18,14 +18,14 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
-    'BUILD_ID',
+    'MANIFEST_ID',
     'EUPSPKG_SOURCE',
     'PRODUCT',
     'EUPS_TAG',
     'TIMEOUT',
   ])
 
-  String manifestId    = params.BUILD_ID
+  String manifestId    = params.MANIFEST_ID
   String eupspkgSource = params.EUPSPKG_SOURCE
   String product       = params.PRODUCT
   String eupsTag       = params.EUPS_TAG

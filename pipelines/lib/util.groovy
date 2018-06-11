@@ -171,7 +171,7 @@ def slurpJson(String data) {
 /**
  * Create an EUPS distrib tag
  *
- * @param buildId String bNNNN
+ * @param manifestId String MANIFEST_ID/BUILD_ID/BUILD/bNNNN
  * @param eupsTag String tag name
  * @param product String whitespace delimited string of products to tag
  * @param eupspkgSource String type of eupspkg package to create
@@ -179,7 +179,7 @@ def slurpJson(String data) {
  * @param timelimit Integer build timeout in hours
  */
 def void runPublish(
-  String buildId,
+  String manifestId,
   String eupsTag,
   String product,
   String eupspkgSource,
@@ -189,7 +189,7 @@ def void runPublish(
   build job: publishJob,
     parameters: [
       string(name: 'EUPSPKG_SOURCE', value: eupspkgSource),
-      string(name: 'BUILD_ID', value: buildId),
+      string(name: 'MANIFEST_ID', value: manifestId),
       string(name: 'EUPS_TAG', value: eupsTag),
       string(name: 'PRODUCT', value: product),
       string(name: 'TIMEOUT', value: timelimit.toString()), // hours
@@ -417,10 +417,10 @@ def jenkinsWrapperPost(String baseDir = null) {
 } // jenkinsWrapperPost
 
 /**
- * Parse bNNNN out of a manifest.txt format String.
+ * Parse manifest id out of a manifest.txt format String.
  *
  * @param manifest.txt as a String
- * @return String
+ * @return manifestId String
  */
 @NonCPS
 def String bxxxx(String manifest) {
@@ -533,13 +533,13 @@ def void getManifest(String rebuildId, String filename) {
  *
  * @param gitTag String name of git tag to create
  * @param eupsTag String name of eups distrib tag to select repos/refs to tag
- * @param buildId String bNNNN/manifest id to select repos/refs to tag
+ * @param manifestId String MANIFEST_ID/BUILD_ID/BUILD/bNNNN to select repos/refs to tag
  * @param options Map see `makeCliCmd`
  */
 def void githubTagRelease(
   String gitTag,
   String eupsTag,
-  String buildId,
+  String manifestId,
   Map options
 ) {
   def prog = 'github-tag-release'
@@ -553,7 +553,7 @@ def void githubTagRelease(
     '--external-team': 'DM Externals',
     '--deny-team': 'DM Auxilliaries',
     '--fail-fast': true,
-    '--manifest': buildId,
+    '--manifest': manifestId,
     '--eups-tag': eupsTag,
   ]
 
@@ -1036,7 +1036,7 @@ def ltdPush(Map args) {
  * @param opts.SKIP_DEMO Boolean Defaults to `false`.
  * @param opts.SKIP_DOCS Boolean Defaults to `false`.
  * @param opts.TIMEOUT String Defaults to `'8'`.
- * @return bxxxx String
+ * @return manifestId String
  */
 def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
   def defaultOpts = [
@@ -1058,7 +1058,7 @@ def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
     ],
     wait: true
 
-  def bx = null
+  def manifestId = null
   nodeTiny {
     manifest_artifact = 'lsstsw/build/manifest.txt'
 
@@ -1072,11 +1072,11 @@ def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
         ])
 
     def manifest = readFile manifest_artifact
-    bx = bxxxx(manifest)
-    echo "parsed bxxxx: ${bx}"
+    manifestId = bxxxx(manifest)
+    echo "parsed manifest id: ${manifestId}"
   } // nodeTiny
 
-  return bx
+  return manifestId
 } // runRebuild
 
 /*

@@ -28,14 +28,14 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
-    'BNNNN',
+    'MANIFEST_ID',
     'COMPILER',
     'EUPS_TAG',
     'NO_PUSH',
     'WIPEOUT',
   ])
 
-  String manifestId = params.BNNNN
+  String manifestId = params.MANIFEST_ID
   String compiler   = params.COMPILER
   String eupsTag    = params.EUPS_TAG
   Boolean noPush    = params.NO_PUSH

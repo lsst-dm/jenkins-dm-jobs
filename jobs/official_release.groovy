@@ -19,7 +19,7 @@ p.pipeline().with {
     stringParam('SOURCE_EUPS_TAG', null,
       'existing eups tag upon which to base the release. Eg. "w_2018_22"')
     stringParam('SOURCE_MANIFEST_ID', null,
-      'existing MANIFEST_ID/BUILD_ID that corresponds to SOURCE_EUPS_TAG. Eg. "b3638"')
+      'existing MANIFEST_ID/BUILD_ID/BUILD/bNNNN that corresponds to SOURCE_EUPS_TAG. Eg. "b3638"')
     stringParam('GIT_TAG', null,
       'git tag for the new release. Eg. "v16.0.rc1"')
     stringParam('EUPS_TAG', null,

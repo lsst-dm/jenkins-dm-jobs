@@ -37,10 +37,10 @@ notify.wrap {
   def buildJob   = 'release/run-rebuild'
   def publishJob = 'release/run-publish'
 
-  def bx = null
+  def manifestId = null
 
   retry(retries) {
-    bx = util.runRebuild(buildJob, [
+    manifestId = util.runRebuild(buildJob, [
       BRANCH: branch,
       PRODUCT: product,
       SKIP_DEMO: skipDemo,
@@ -50,19 +50,29 @@ notify.wrap {
 
   stage('eups publish [tag]') {
     retry(retries) {
-      util.runPublish(bx, eupsTag, product, 'git', publishJob)
+      util.runPublish(manifestId, eupsTag, product, 'git', publishJob)
     }
   }
 
   stage('archive') {
+    def resultsFile = 'results.json'
+
     util.nodeTiny {
-      results = [
-        bnnnn: bx
-      ]
-      dumpJson('results.json', results)
+      results = [:]
+      if (manifestId) {
+        results['manifest_id'] = manifestId
+      }
+      if (gitTag) {
+        results['git_tag'] = gitTag
+      }
+      if (eupsTag) {
+        results['eups_tag'] = eupsTag
+      }
+
+      util.dumpJson(resultsFile, results)
 
       archiveArtifacts([
-        artifacts: 'results.json',
+        artifacts: resultsFile,
         fingerprint: true
       ])
     }
