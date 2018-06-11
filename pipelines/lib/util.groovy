@@ -423,7 +423,7 @@ def jenkinsWrapperPost(String baseDir = null) {
  * @return manifestId String
  */
 @NonCPS
-def String bxxxx(String manifest) {
+def String parseManifestId(String manifest) {
   def m = manifest =~ /(?m)^BUILD=(b.*)/
   m ? m[0][1] : null
 }
@@ -1072,7 +1072,7 @@ def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
         ])
 
     def manifest = readFile manifest_artifact
-    manifestId = bxxxx(manifest)
+    manifestId = parseManifestId(manifest)
     echo "parsed manifest id: ${manifestId}"
   } // nodeTiny
 
