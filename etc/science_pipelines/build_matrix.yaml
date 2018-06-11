@@ -86,7 +86,7 @@ release:
     validate_drp:
       no_push: true
     documenteer:
-      publish: true
+      publish: false
 #
 # low-level build parameters
 #
