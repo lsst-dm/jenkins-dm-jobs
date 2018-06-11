@@ -14,7 +14,8 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams(['TYPE'])
-  def type = params.TYPE
+  String type = params.TYPE
+
   switch(type) {
     case 'DAILY':
     case 'WEEKLY':

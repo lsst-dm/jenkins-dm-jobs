@@ -27,23 +27,36 @@ node('jenkins-master') {
 @Field String manifest_base_url = 'https://raw.githubusercontent.com/lsst/versiondb/master/manifests'
 
 notify.wrap {
-  def required = [
-    'EUPS_TAG',
+  util.requireParams([
     'BNNNN',
     'COMPILER',
+    'EUPS_TAG',
+    'NO_PUSH',
+    'WIPEOUT',
+  ])
+
+  String manifestId = params.BNNNN
+  String compiler   = params.COMPILER
+  String eupsTag    = params.EUPS_TAG
+  Boolean noPush    = params.NO_PUSH
+  Boolean wipeout   = params.WIPEOUT
+
+  target = [
+    manifestId: manifestId,
+    compiler: compiler,
+    eupsTag: eupsTag,
+    noPush: noPush,
+    wipeout: wipeout,
   ]
 
-  util.requireParams(required)
-
-  def masterRetries     = 3
-  def verifyPortRetries = 1
+  def masterRetries = 3
 
   def matrix = [
     cfht: {
-      drp('cfht', 'master', false, true, masterRetries, 1)
+      drp('cfht', target, 'master', false, true, masterRetries, 1)
     },
     hsc: {
-      drp('hsc', 'master', false, true, masterRetries, 15)
+      drp('hsc', target, 'master', false, true, masterRetries, 15)
     },
   ]
 
@@ -56,6 +69,7 @@ notify.wrap {
  * Prepare, execute, and record results of a validation_drp run.
  *
  * @param datasetSlug String short name of dataset
+ * @param target Map docker image selection + build configuration
  * @param drpRef String validate_drp git repo ref. Defaults to 'master'
  * @param doPostqa Boolean Enables/disables running of post-qa. Defaults to true.
  * @param doDispatchqa Boolean Enables/disables running of displatch-verify. Defaults to true.
@@ -65,19 +79,15 @@ notify.wrap {
  */
 def void drp(
   String datasetSlug,
+  Map target,
   String drpRef = 'master',
   Boolean doPostqa = true,
   Boolean doDispatchqa = true,
   Integer retries = 3,
   Integer timelimit = 12
 ) {
-  def eupsTag   = params.EUPS_TAG
-  def buildId   = params.BNNNN
-  def noPush    = params.NO_PUSH
-  def compiler  = params.COMPILER
-
   def datasetInfo  = datasetLookup(datasetSlug)
-  def docImage     = "lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
+  def docImage     = "lsstsqre/centos:7-stack-lsst_distrib-${target.eupsTag}"
   def drpRepo      = 'https://github.com/lsst/validate_drp.git'
   def postqaVer    = '1.3.3'
   def jenkinsDebug = 'true'
@@ -112,7 +122,7 @@ def void drp(
         // stage manifest.txt early so we don't risk a long processing run and
         // then fail setting up to run post-qa
         // testing
-        downloadManifest(fakeManifestFile, buildId)
+        downloadManifest(fakeManifestFile, target.manifestId)
         downloadRepos(fakeReposFile)
 
         dir(ciDir) {
@@ -154,7 +164,7 @@ def void drp(
               drpDir,
               runSlug,
               ciDir,
-              compiler
+              target.compiler
             )
           } // dir
 
@@ -175,7 +185,7 @@ def void drp(
               datasetArchiveDir,
               fakeLsstswDir,
               datasetInfo['dataset'],
-              noPush
+              target.noPush
             )
           }
         } // inside
@@ -190,7 +200,7 @@ def void drp(
             datasetSlug,
             // docImage, // XXX DM-12669
             '0xdeadbeef',
-            noPush
+            target.noPush
           )
         }
       } // dir
@@ -208,7 +218,7 @@ def void drp(
     try {
       node('docker') {
         timeout(time: timelimit, unit: 'HOURS') {
-          if (params.WIPEOUT) {
+          if (target.wipeout) {
             deleteDir()
           }
 
@@ -792,10 +802,10 @@ def void downloadFile(String url, String destFile) {
  * Download `manifest.txt` from `lsst/versiondb`.
  *
  * @param destFile String path to write downloaded file
- * @param bxxxx String manifest build id aka bNNNN
+ * @param manifestId String manifest build id aka bNNNN
  */
-def void downloadManifest(String destFile, String bxxxx) {
-  def url = "${manifest_base_url}/${bxxxx}.txt"
+def void downloadManifest(String destFile, String manifestId) {
+  def url = "${manifest_base_url}/${manifestId}.txt"
   downloadFile(url, destFile)
 }
 

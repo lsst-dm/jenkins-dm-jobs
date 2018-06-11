@@ -15,21 +15,23 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
+    'NO_PUSH',
     'PRODUCT',
     'TAG',
     'TIMEOUT',
   ])
 
-  def product   = params.PRODUCT
-  def eupsTag   = params.TAG
-  def noPush    = params.NO_PUSH
-  def timelimit = params.TIMEOUT.toInteger()
+  String product    = params.PRODUCT
+  String eupsTag    = params.TAG
+  Boolean noPush    = params.NO_PUSH
+  Integer timelimit = params.TIMEOUT
 
-  def image     = null
-  def repo      = null
   def hubRepo   = config.release_docker_repo
   def hubTag    = "7-stack-lsst_distrib-${eupsTag}"
   def timestamp = util.epochMilliToUtc(currentBuild.startTimeInMillis)
+
+  def image     = null
+  def repo      = null
 
   def run = {
     stage('checkout') {

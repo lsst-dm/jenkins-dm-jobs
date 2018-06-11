@@ -13,16 +13,22 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['LTD_MASON_VER'])
+  util.requireParams([
+    'LATEST',
+    'LTD_MASON_VER',
+    'NO_PUSH',
+  ])
 
-  def image      = null
+  Boolean pushLatest = params.LATEST
+  String ver         = params.LTD_MASON_VER
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
   def hubRepo    = 'lsstsqre/ltd-mason'
   def githubRepo = 'lsst-sqre/ltd-mason'
   def githubRef  = 'master'
   def buildDir   = 'docker'
-  def ver        = params.LTD_MASON_VER
-  def pushLatest = params.LATEST
 
+  def image = null
 
   def run = {
     stage('checkout') {
@@ -40,7 +46,7 @@ notify.wrap {
     }
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'

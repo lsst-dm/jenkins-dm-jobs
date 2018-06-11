@@ -19,27 +19,35 @@ notify.wrap {
     'DRY_RUN',
     'EUPS_TAG',
     'GIT_TAG',
+    'LIMIT',
     'VERIFY',
   ])
 
+  String manifestID = params.BUILD_ID
+  Boolean dryRun    = params.DRY_RUN
+  String eupsTag    = params.EUPS_TAG
+  String gitTag     = params.GIT_TAG
+  String limit      = params.LIMIT // using as string; do not convert to int
+  Boolean verify    = params.VERIFY
+
   options = [
     '--org': config.release_tag_org,
-    '--dry-run': params.DRY_RUN,
+    '--dry-run': dryRun,
   ]
 
-  if (params.LIMIT) {
-    options.'--limit' = params.LIMIT
+  if (limit) {
+    options.'--limit' = limit
   }
 
-  if (params.VERIFY) {
+  if (verify) {
     options.'--verify' = true
   }
 
   node('docker') {
     util.githubTagRelease(
-      params.GIT_TAG,
-      params.EUPS_TAG,
-      params.BUILD_ID,
+      gitTag,
+      eupsTag,
+      manifestId,
       options
     )
   } // node

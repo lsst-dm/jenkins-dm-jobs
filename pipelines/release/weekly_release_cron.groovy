@@ -18,6 +18,7 @@ node('jenkins-master') {
 
 notify.wrap {
   def weeklyJob = 'release/weekly-release'
+
   def year = null
   def week = null
 

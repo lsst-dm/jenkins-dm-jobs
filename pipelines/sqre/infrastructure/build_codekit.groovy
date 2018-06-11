@@ -14,15 +14,22 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['CODEKIT_VER'])
+  util.requireParams([
+    'CODEKIT_VER',
+    'LATEST',
+    'NO_PUSH',
+  ])
 
-  def image      = null
+  String codekitVer  = params.CODEKIT_VER
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
   def dockerRepo = sqre.codekit.docker_repo
   def githubRepo = sqre.codekit.github_repo
   def githubRef  = sqre.codekit.github_ref
   def buildDir   = 'docker'
-  def codekitVer = params.CODEKIT_VER
-  def pushLatest = params.LATEST
+
+  def image = null
 
   def run = {
     stage('checkout') {
@@ -40,7 +47,7 @@ notify.wrap {
     }
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'

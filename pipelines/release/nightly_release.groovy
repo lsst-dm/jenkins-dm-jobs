@@ -19,28 +19,23 @@ node('jenkins-master') {
 notify.wrap {
   util.requireParams(['YEAR', 'MONTH', 'DAY'])
 
-  def gitTag = null
+  String year  = params.YEAR.padLeft(4, "0")
+  String month = params.MONTH.padLeft(2, "0")
+  String day   = params.DAY.padLeft(2, "0")
+
+  def product         = 'lsst_distrib'
+  def tarballProducts = product
+  def retries         = 3
+  def buildJob        = 'release/run-rebuild'
+  def publishJob      = 'release/run-publish'
+
+  def gitTag  = null
   def eupsTag = null
-  def bx = null
+  def bx      = null
 
   try {
     timeout(time: 30, unit: 'HOURS') {
-      def product         = 'lsst_distrib'
-      def tarballProducts = product
-
-      def retries = 3
-      def buildJob = 'release/run-rebuild'
-      def publishJob = 'release/run-publish'
-
-      def year = null
-      def month = null
-      def day = null
-
       stage('format nightly tag') {
-        year = params.YEAR.padLeft(4, "0")
-        month = params.MONTH.padLeft(2, "0")
-        day = params.DAY.padLeft(2, "0")
-
         gitTag = "d.${year}.${month}.${day}"
         echo "generated [git] tag: ${gitTag}"
 

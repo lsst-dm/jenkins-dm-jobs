@@ -14,14 +14,21 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['AWSCLI_VER'])
+  util.requireParams([
+    'AWSCLI_VER',
+    'LATEST',
+    'NO_PUSH',
+  ])
 
-  def image      = null
+  String ver         = params.AWSCLI_VER
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
   def dockerRepo = sqre.awscli.docker_repo
   def githubRepo = sqre.awscli.github_repo
   def githubRef  = sqre.awscli.github_ref
-  def ver        = params.AWSCLI_VER
-  def pushLatest = params.LATEST
+
+  def image = null
 
   def run = {
     stage('checkout') {
@@ -37,7 +44,7 @@ notify.wrap {
     }
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'

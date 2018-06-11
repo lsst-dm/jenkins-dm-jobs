@@ -13,23 +13,38 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  echo "branch: ${params.BRANCH}"
-  echo "product: ${params.PRODUCT}"
-  echo "skip demo: ${params.SKIP_DEMO}"
-  echo "skip docs: ${params.SKIP_DOCS}"
-  echo "[eups] tag: ${params.EUPS_TAG}"
+  util.requireParams([
+    'BRANCH',
+    'EUPS_TAG',
+    'PRODUCT',
+    'SKIP_DEMO',
+    'SKIP_DOCS',
+  ])
+
+  String branch    = params.BRANCH
+  String eupsTag   = params.EUPS_TAG
+  String product   = params.PRODUCT
+  Boolean skipDemo = params.SKIP_DEMO
+  Boolean skipDocs = params.SKIP_DOCS
+
+  echo "branch: ${branch}"
+  echo "[eups] tag: ${eupsTag}"
+  echo "product: ${product}"
+  echo "skip demo: ${skipDemo}"
+  echo "skip docs: ${skipDocs}"
+
+  def retries    = 3
+  def buildJob   = 'release/run-rebuild'
+  def publishJob = 'release/run-publish'
 
   def bx = null
-  def retries = 3
-  def buildJob = 'release/run-rebuild'
-  def publishJob = 'release/run-publish'
 
   retry(retries) {
     bx = util.runRebuild(buildJob, [
-      BRANCH: params.BRANCH,
-      PRODUCT: params.PRODUCT,
-      SKIP_DEMO: params.SKIP_DEMO.toBoolean(),
-      SKIP_DOCS: params.SKIP_DOCS.toBoolean(),
+      BRANCH: branch,
+      PRODUCT: product,
+      SKIP_DEMO: skipDemo,
+      SKIP_DOCS: skipDocs,
     ])
   }
 

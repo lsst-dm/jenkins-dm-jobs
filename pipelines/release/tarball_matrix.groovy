@@ -16,29 +16,34 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  util.requireParams([
+    'EUPS_TAG',
+    'PRODUCT',
+    'PUBLISH',
+    'RUN_DEMO',
+    'RUN_SCONS_CHECK',
+    'SMOKE',
+  ])
+
+  String eupsTag        = params.EUPS_TAG
+  String product        = params.PRODUCT
+  Boolean publish       = params.PUBLISH
+  Boolean runDemo       = params.RUN_DEMO
+  Boolean runSconsCheck = params.RUN_SCONS_CHECK
+  Boolean smoke         = params.SMOKE
+
   def retries = 3
 
-  def requiredParams = [
-    'PRODUCT',
-    'EUPS_TAG',
-  ]
-
-  requiredParams.each { p ->
-    if (!params.get(p)) {
-      error "${p} parameter is required"
-    }
-  }
-
   def opt = [
-    SMOKE: params.SMOKE,
-    RUN_DEMO: params.RUN_DEMO,
-    RUN_SCONS_CHECK: params.RUN_SCONS_CHECK,
-    PUBLISH: params.PUBLISH,
+    SMOKE: smoke,
+    RUN_DEMO: runDemo,
+    RUN_SCONS_CHECK: runSconsCheck,
+    PUBLISH: publish,
   ]
 
   timeout(time: 30, unit: 'HOURS') {
     stage('build eups tarballs') {
-      util.buildTarballMatrix(config, params.PRODUCT, params.EUPS_TAG, opt)
+      util.buildTarballMatrix(config, product, eupsTag, opt)
     }
   }
 } // notify.wrap

@@ -13,11 +13,20 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def image      = null
+  util.requireParams([
+    'LATEST',
+    'NO_PUSH',
+  ])
+
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
   def hubRepo    = 'lsstsqre/postqa'
   def githubRepo = 'lsst-sqre/docker-postqa'
   def githubRef  = 'master'
   def postqaVer  = '1.3.3'
+
+  def image = null
 
   def run = {
     stage('checkout') {
@@ -35,12 +44,15 @@ notify.wrap {
     }
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
           image.push(postqaVer)
+          if (pushLatest) {
+            image.push('latest')
+          }
         }
       }
     } // push

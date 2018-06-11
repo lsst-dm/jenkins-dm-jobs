@@ -16,18 +16,17 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def eupsTag = 'qserv-dev'
+  def product         = 'qserv_distrib'
+  def tarballProducts = product
+  def retries         = 3
+  def buildJob        = 'release/run-rebuild'
+  def publishJob      = 'release/run-publish'
+  def eupsTag         = 'qserv-dev'
+
   def bx = null
 
   try {
     timeout(time: 30, unit: 'HOURS') {
-      def product         = 'qserv_distrib'
-      def tarballProducts = product
-
-      def retries = 3
-      def buildJob = 'release/run-rebuild'
-      def publishJob = 'release/run-publish'
-
       stage('build') {
         retry(retries) {
           bx = util.runRebuild(buildJob, [

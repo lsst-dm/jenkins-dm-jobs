@@ -16,11 +16,14 @@ node('jenkins-master') {
 notify.wrap {
   util.requireParams(['DRY_RUN', 'GIT_TAG'])
 
+  Boolean dryRun = params.DRY_RUN
+  String gitTag  = params.GIT_TAG
+
   node('docker') {
     util.githubTagTeams([
-      '--dry-run': params.DRY_RUN,
+      '--dry-run': dryRun,
       '--org': config.release_tag_org,
-      '--tag': params.GIT_TAG,
+      '--tag': gitTag,
     ])
   } // node
 } // notify.wrap

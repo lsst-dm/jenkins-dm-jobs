@@ -19,26 +19,22 @@ node('jenkins-master') {
 notify.wrap {
   util.requireParams(['YEAR', 'WEEK'])
 
-  def gitTag = null
+  String year = params.YEAR.padLeft(4, "0")
+  String week = params.WEEK.padLeft(2, "0")
+
+  def product         = 'lsst_distrib'
+  def tarballProducts = product
+  def retries         = 3
+  def buildJob        = 'release/run-rebuild'
+  def publishJob      = 'release/run-publish'
+
+  def gitTag  = null
   def eupsTag = null
-  def bx = null
+  def bx      = null
 
   try {
     timeout(time: 30, unit: 'HOURS') {
-      def product         = 'lsst_distrib'
-      def tarballProducts = product
-
-      def retries = 3
-      def buildJob = 'release/run-rebuild'
-      def publishJob = 'release/run-publish'
-
-      def year = null
-      def week = null
-
       stage('format weekly tag') {
-        year = params.YEAR.padLeft(4, "0")
-        week = params.WEEK.padLeft(2, "0")
-
         gitTag = "w.${year}.${week}"
         echo "generated [git] tag: ${gitTag}"
 

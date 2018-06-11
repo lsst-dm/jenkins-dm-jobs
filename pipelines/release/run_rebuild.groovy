@@ -25,14 +25,17 @@ notify.wrap {
     'TIMEOUT',
   ])
 
-  def skipDocs  = params.SKIP_DOCS.toBoolean()
-  def timelimit = params.TIMEOUT.toInteger()
+  String branch     = params.BRANCH
+  String product    = params.PRODUCT
+  Boolean skipDemo  = params.SKIP_DEMO
+  Boolean skipDocs  = params.SKIP_DOCS
+  Integer timelimit = params.TIMEOUT
 
-  def versiondbPush = 'false'
+  // not a normally exposed job param
+  Boolean versiondbPush = (! params.NO_VERSIONDB_PUSH?.toBoolean())
+  // default to safe
   def versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'https')
-
-  if (! params.NO_VERSIONDB_PUSH) {
-    versiondbPush = 'true'
+  if (versiondbPush) {
     versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'ssh')
   }
 

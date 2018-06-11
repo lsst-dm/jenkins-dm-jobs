@@ -25,11 +25,14 @@ notify.wrap {
     'TIMEOUT',
   ])
 
-  def manifestId    = params.BUILD_ID
-  def eupspkgSource = params.EUPSPKG_SOURCE
-  def product       = params.PRODUCT
-  def eupsTag       = params.EUPS_TAG
-  def timelimit     = params.TIMEOUT.toInteger()
+  String manifestId    = params.BUILD_ID
+  String eupspkgSource = params.EUPSPKG_SOURCE
+  String product       = params.PRODUCT
+  String eupsTag       = params.EUPS_TAG
+  Integer timelimit    = params.TIMEOUT
+
+  // not a normally exposed job param
+  Boolean pushS3 = (! params.NO_PUSH?.toBoolean())
 
   def can         = config.canonical
   def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.version}"
@@ -92,7 +95,7 @@ notify.wrap {
       } // stage('publish')
 
       stage('push packages') {
-        if (! params.NO_PUSH) {
+        if (pushS3) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-eups-push',

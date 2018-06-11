@@ -26,12 +26,12 @@ notify.wrap {
     'SOURCE_MANIFEST_ID',
   ])
 
-  def eupspkgSource = params.EUPSPKG_SOURCE
-  def eupsTag       = params.EUPS_TAG
-  def gitTag        = params.GIT_TAG
-  def oLatest       = params.O_LATEST.toBoolean()
-  def srcEupsTag    = params.SOURCE_EUPS_TAG
-  def srcManifestId = params.SOURCE_MANIFEST_ID
+  String eupspkgSource = params.EUPSPKG_SOURCE
+  String eupsTag       = params.EUPS_TAG
+  String gitTag        = params.GIT_TAG
+  Boolean oLatest      = params.O_LATEST
+  String srcEupsTag    = params.SOURCE_EUPS_TAG
+  String srcManifestId = params.SOURCE_MANIFEST_ID
 
   echo "EUPSPKG_SOURCE: ${eupspkgSource}"
   echo "publish [eups] tag: ${eupsTag}"
@@ -39,17 +39,16 @@ notify.wrap {
   echo "source [eups] tag: ${srcEupsTag}"
   echo "source manifest id: ${srcManifestId}"
 
+  def product         = 'lsst_distrib'
+  def tarballProducts = product
+  def retries         = 3
+  def buildJob        = 'release/run-rebuild'
+  def publishJob      = 'release/run-publish'
+
   def bx = null
 
   try {
     timeout(time: 30, unit: 'HOURS') {
-      def product         = 'lsst_distrib'
-      def tarballProducts = product
-
-      def retries = 3
-      def buildJob = 'release/run-rebuild'
-      def publishJob = 'release/run-publish'
-
 
       stage('git tag eups products') {
         retry(retries) {

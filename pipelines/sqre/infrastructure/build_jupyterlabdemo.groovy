@@ -13,7 +13,23 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def timelimit = params.TIMEOUT.toInteger()
+  util.requireParams([
+    'BASE_IMAGE',
+    'IMAGE_NAME',
+    'NO_PUSH',
+    'PYVER',
+    'TAG',
+    'TAG_PREFIX',
+    'TIMEOUT',
+  ])
+
+  String tag         = params.TAG
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+  String pyver       = params.PYVER // use as opaque string
+  String baseImage   = params.BASE_IMAGE
+  String imageName   = params.IMAGE_NAME
+  String tagPrefix   = params.TAG_PREFIX
+  Integer timelimit  = params.TIMEOUT
 
   def run = {
     stage('checkout') {
@@ -25,35 +41,35 @@ notify.wrap {
 
     // ensure the current image is used
     stage('docker pull') {
-      docImage = "${params.BASE_IMAGE}:${params.TAG_PREFIX}${params.TAG}"
+      docImage = "${baseImage}:${tagPrefix}${tag}"
       docker.image(docImage).pull()
     }
 
     stage('build+push') {
       dir('jupyterlab') {
-        if (! params.NO_PUSH) {
+        if (pushDocker) {
           docker.withRegistry(
             'https://index.docker.io/v1/',
             'dockerhub-sqreadmin'
           ) {
             util.bash """
               ./bld \
-               -p '${params.PYVER}' \
-               -b '${params.BASE_IMAGE}' \
-               -n '${params.IMAGE_NAME}' \
-               -t '${params.TAG_PREFIX}' \
-               '${params.TAG}'
+               -p '${pyver}' \
+               -b '${baseImage}' \
+               -n '${imageName}' \
+               -t '${tagPrefix}' \
+               '${tag}'
             """
           }
         } else {
           util.bash """
               ./bld \
                -d \
-               -p '${params.PYVER}' \
-               -b '${params.BASE_IMAGE}' \
-               -n '${params.IMAGE_NAME}' \
-               -t '${params.TAG_PREFIX}' \
-               '${params.TAG}'
+               -p '${pyver}' \
+               -b '${baseImage}' \
+               -n '${imageName}' \
+               -t '${tagPrefix}' \
+               '${tag}'
               docker build .
           """
         }

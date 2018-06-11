@@ -13,6 +13,12 @@ node('jenkins-master') {
 }
 
 notify.wrap {
+  util.requireParams([
+    'PUSH',
+  ])
+
+  Boolean pushDocker = params.PUSH
+
   def image = null
   def hub_repo = 'lsstsqre/nginx-ssl-proxy'
 
@@ -28,7 +34,7 @@ notify.wrap {
       image = docker.build("${hub_repo}", '--no-cache --pull=true .')
     }
 
-    if (params.PUSH) {
+    if (pushDocker) {
       stage('push') {
         docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-sqreadmin') {
           image.push('latest')

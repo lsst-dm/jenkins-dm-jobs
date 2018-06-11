@@ -15,7 +15,9 @@ node('jenkins-master') {
 notify.wrap {
   util.requireParams(['GITHUB_USER'])
 
+  String githubUser = params.GITHUB_USER
+
   stage('lookup') {
-    echo notify.githubToSlackEz(params.GITHUB_USER)
+    echo notify.githubToSlackEz(githubUser)
   }
 } // notify.wrap
