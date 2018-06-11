@@ -544,8 +544,9 @@ def void s3PushDocker(String ... parts) {
 def String s3PushCmd() {
   // do not interpolate now -- all values should come from the shell env.
   return util.dedent('''
-    aws s3 sync \
+    aws s3 cp \
       --only-show-errors \
+      --recursive \
       "${EUPS_PKGROOT}/" \
       "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
   ''')

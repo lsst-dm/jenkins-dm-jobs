@@ -78,16 +78,18 @@ notify.wrap {
         docker.image(awsImage).inside {
           catchError {
             util.posixSh '''
-              aws s3 sync \
+              aws s3 cp \
                 --only-show-errors \
+                --recursive \
                 ./local_mirror/ \
                 "s3://${CMIRROR_S3_BUCKET}/pkgs/free/"
             '''
           }
           catchError {
             util.posixSh '''
-              aws s3 sync \
+              aws s3 cp \
                 --only-show-errors \
+                --recursive \
                 ./miniconda/ \
                 "s3://${CMIRROR_S3_BUCKET}/miniconda/"
             '''
