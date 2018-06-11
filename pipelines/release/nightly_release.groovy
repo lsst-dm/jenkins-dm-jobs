@@ -186,6 +186,10 @@ notify.wrap {
             parameters: [
               string(name: 'EUPS_TAG', value: eupsTag),
               string(name: 'LTD_SLUG', value: eupsTag),
+              booleanParam(
+                name: 'PUBLISH',
+                value: sqre.documenteer.publish,
+              ),
             ]
         }
       }
