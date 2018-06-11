@@ -84,7 +84,7 @@ release:
     build_jupyterlabdemo:
       image_name: lsstsqre/jhoblitt-moe-jld-lab
     validate_drp:
-      no_push: false
+      no_push: true
     documenteer:
       publish: true
 #
