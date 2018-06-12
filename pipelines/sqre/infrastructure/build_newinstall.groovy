@@ -50,6 +50,13 @@ notify.wrap {
       opt << '--pull=true'
       opt << '--no-cache'
       opt << "--build-arg NEWINSTALL_URL=\"${url}\""
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'eups-url',
+        variable: 'EUPS_URL'
+      ]]) {
+        opt << "--build-arg EUPS_PKGROOT_BASE_URL=\"${EUPS_URL}/stack\""
+      }
       opt << '.'
 
       dir(dockerDir) {
