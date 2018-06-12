@@ -1161,4 +1161,14 @@ def Object sqreConfig() {
   readYamlFile('etc/sqre/config.yaml')
 }
 
+/*
+ * Get default awscli docker image string
+ *
+ * @return awscliImage String
+ */
+@NonCPS
+def String defaultAwscliImage() {
+  sqreConfig().awscli.docker_registry.repo
+}
+
 return this;
