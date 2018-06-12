@@ -1113,4 +1113,19 @@ def String sanitizeDockerTag(String tag) {
   tag.tr('/', '_')
 }
 
+/**
+ * Derive a "slug" string from a lsstsw build configuration Map.
+ *
+ * @param lsstswConfig Map
+ * @return slug String
+ */
+@NonCPS
+def String lsstswConfigSlug(Map lsstswConfig) {
+  def lc = lsstswConfig
+  def displayName = lc.display_name ?: lc.label
+  def displayCompiler = lc.display_compiler ?: lc.compiler
+
+  "${displayName}.${displayCompiler}.py${lc.python}"
+}
+
 return this;
