@@ -820,6 +820,7 @@ def void gitNoNoise(Map args) {
  * Parse yaml file into object -- parsed files are memoized.
  *
  * @param file String file to parse
+ * @return yaml Object
  */
 // The @Memoized decorator seems to break pipeline serialization and this
 // method can not be labeled as @NonCPS.
@@ -1148,6 +1149,16 @@ def String sanitizeEupsTag(String tag) {
 @NonCPS
 def Object scipipeConfig() {
   readYamlFile('etc/science_pipelines/build_matrix.yaml')
+}
+
+/*
+ * Get sqre config
+ *
+ * @return tag Object
+ */
+@NonCPS
+def Object sqreConfig() {
+  readYamlFile('etc/sqre/config.yaml')
 }
 
 return this;
