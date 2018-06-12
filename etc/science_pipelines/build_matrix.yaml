@@ -81,7 +81,6 @@ lsstsw:
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: master
-newinstall_url: https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh
 shebangtron_url: https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron
 #
 # docker releases of science-pipelines/lsst_distrib
@@ -91,5 +90,9 @@ scipipe_release:
   git_ref: master
   docker_repo: lsstsqre/centos
 newinstall:
+  # location of Dockerfile -- not the script itself
+  github_repo: lsst-sqre/docker-newinstall
+  git_ref: master
   docker_repo: lsstsqre/newinstall
   docker_tag: latest
+  url: https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh

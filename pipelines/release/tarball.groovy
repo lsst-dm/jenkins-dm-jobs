@@ -743,7 +743,7 @@ def String buildScript(
     ciDir
   ) +
   util.dedent("""
-    curl -sSL ${config.newinstall_url} | bash -s -- -cb
+    curl -sSL ${config.newinstall.url} | bash -s -- -cb
     . ./loadLSST.bash
 
     for prod in ${products}; do
@@ -790,7 +790,7 @@ def String smokeScript(
    util.dedent("""
     export EUPS_PKGROOT="${eupsPkgroot}"
 
-    curl -sSL ${config.newinstall_url} | bash -s -- -cb
+    curl -sSL ${config.newinstall.url} | bash -s -- -cb
     . ./loadLSST.bash
 
     # override newinstall.sh configured EUPS_PKGROOT
