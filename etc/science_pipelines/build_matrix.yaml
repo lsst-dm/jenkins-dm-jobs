@@ -92,13 +92,16 @@ shebangtron:
 # docker releases of science-pipelines/lsst_distrib
 #
 scipipe_release:
-  github_repo: lsst-sqre/docker-tarballs
-  git_ref: master
-  docker_repo: lsstsqre/centos
+  dockerfile:
+    github_repo: lsst-sqre/docker-tarballs
+    git_ref: master
+  docker:
+    repo: lsstsqre/centos
 newinstall:
-  # location of Dockerfile -- not the script itself
-  github_repo: lsst-sqre/docker-newinstall
-  git_ref: master
-  docker_repo: lsstsqre/newinstall
-  docker_tag: latest
+  dockerfile:
+    github_repo: lsst-sqre/docker-newinstall
+    git_ref: master
+  docker:
+    repo: lsstsqre/newinstall
+    tag: latest
   url: https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh

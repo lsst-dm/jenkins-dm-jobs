@@ -24,9 +24,13 @@ notify.wrap {
   Boolean pushLatest = params.LATEST
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def dockerRepo = sqre.codekit.docker_repo
-  def githubRepo = sqre.codekit.github_repo
-  def gitRef     = sqre.codekit.git_ref
+  def codekit    = sqre.codekit
+  def dockerfile = codekit.dockerfile
+  def docker     = codekit.docker
+
+  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
+  def githubRef  = dockerfile.git_ref
+  def dockerRepo = docker.repo
   def buildDir   = 'docker'
 
   def image = null
@@ -34,7 +38,7 @@ notify.wrap {
   def run = {
     stage('checkout') {
       git([
-        url: "https://github.com/${githubRepo}",
+        url: githubRepo,
         branch: gitRef,
       ])
     }

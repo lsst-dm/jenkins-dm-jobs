@@ -14,16 +14,18 @@ documenteer:
 awscli:
   pypi:
     version: &awscli_ver '1.14.61'
-  github_repo: lsst-sqre/docker-awscli
-  # branch of Dockerfile
-  git_ref: master
-  docker_repo: lsstsqre/awscli
-  docker_tag: *awscli_ver
+  dockerfile:
+    github_repo: lsst-sqre/docker-awscli
+    git_ref: master
+  docker:
+    repo: lsstsqre/awscli
+    tag: *awscli_ver
 codekit:
   pypi:
     version: &codekit_ver '7.1.0'
-  github_repo: lsst-sqre/sqre-codekit
-  # branch of Dockerfile
-  git_ref: master
-  docker_repo: lsstsqre/codekit
-  docker_tag: *codekit_ver
+  dockerfile:
+    github_repo: lsst-sqre/sqre-codekit
+    git_ref: master
+  docker:
+    repo: lsstsqre/codekit
+    tag: *codekit_ver

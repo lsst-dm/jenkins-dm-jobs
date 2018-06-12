@@ -24,16 +24,20 @@ notify.wrap {
   Boolean pushLatest = params.LATEST
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def dockerRepo = sqre.awscli.docker_repo
-  def githubRepo = sqre.awscli.github_repo
-  def gitRef     = sqre.awscli.git_ref
+  def awscli     = sqre.awscli
+  def dockerfile = awscli.dockerfile
+  def docker     = awscli.docker
+
+  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
+  def githubRef  = dockerfile.git_ref
+  def dockerRepo = docker.repo
 
   def image = null
 
   def run = {
     stage('checkout') {
       git([
-        url: "https://github.com/${githubRepo}",
+        url: githubRepo,
         branch: gitRef,
       ])
     }
