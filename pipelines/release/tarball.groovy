@@ -624,7 +624,8 @@ def void s3PushVenv(String ... parts) {
 def void s3PushDocker(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
-  def awscliImage = "${sqre.awscli.docker.repo}:${sqre.awscli.docker.tag}"
+  def awscliImage = sqre.awscli.docker_registry.repo
+  awscliImage += ":${sqre.awscli.docker_registry.tag}"
 
   def env = [
     "EUPS_PKGROOT=${cwd}/distrib",

@@ -26,21 +26,21 @@ notify.wrap {
   Boolean noPush    = params.NO_PUSH
   Integer timelimit = params.TIMEOUT
 
-  def scipipe     = config.scipipe_release
-  def dockerfile  = scipipe.dockerfile
-  def docker      = scipipe.docker
-  def newinstall  = config.newinstall
-  def shebangtron = config.shebangtron
+  def scipipe        = config.scipipe_release
+  def dockerfile     = scipipe.dockerfile
+  def dockerRegistry = scipipe.docker_registry
+  def newinstall     = config.newinstall
+  def shebangtron    = config.shebangtron
 
   def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
   def githubRef  = dockerfile.git_ref
   def buildDir   = dockerfile.dir
-  def dockerRepo = docker.repo
+  def dockerRepo = dockerRegistry.repo
   def dockerTag  = "7-stack-lsst_distrib-${eupsTag}"
   def timestamp  = util.epochMilliToUtc(currentBuild.startTimeInMillis)
 
-  def newinstallImage = newinstall.docker.repo
-  newinstallImage += ":${newinstall.docker.tag}"
+  def newinstallImage = newinstall.docker_registry.repo
+  newinstallImage += ":${newinstall.docker_registry.tag}"
 
   def image = null
   def repo  = null

@@ -22,14 +22,14 @@ notify.wrap {
   Boolean pushLatest = params.LATEST
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def newinstall = config.newinstall
-  def dockerfile = newinstall.dockerfile
-  def docker     = newinstall.docker
+  def newinstall     = config.newinstall
+  def dockerfile     = newinstall.dockerfile
+  def dockerRegistry = newinstall.docker_registry
 
   def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
   def githubRef  = dockerfile.git_ref
   def buildDir   = dockerfile.dir
-  def dockerRepo = docker.repo
+  def dockerRepo = dockerRegistry.repo
   def url        = newinstall.url
 
   def image = null

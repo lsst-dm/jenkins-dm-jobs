@@ -18,7 +18,7 @@ awscli:
     github_repo: lsst-sqre/docker-awscli
     git_ref: master
     dir: ''
-  docker:
+  docker_registry:
     repo: lsstsqre/awscli
     tag: *awscli_ver
 codekit:
@@ -28,6 +28,6 @@ codekit:
     github_repo: lsst-sqre/sqre-codekit
     git_ref: master
     dir: docker
-  docker:
+  docker_registry:
     repo: lsstsqre/codekit
     tag: *codekit_ver

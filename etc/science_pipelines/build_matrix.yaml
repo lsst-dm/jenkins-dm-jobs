@@ -96,13 +96,13 @@ scipipe_release:
     github_repo: lsst-sqre/docker-tarballs
     git_ref: master
     dir: ''
-  docker:
+  docker_registry:
     repo: lsstsqre/centos
 newinstall:
   dockerfile:
     github_repo: lsst-sqre/docker-newinstall
     git_ref: master
-  docker:
+  docker_registry:
     repo: lsstsqre/newinstall
     tag: latest
     dir: ''

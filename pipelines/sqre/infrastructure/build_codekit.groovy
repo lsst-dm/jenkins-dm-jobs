@@ -24,14 +24,14 @@ notify.wrap {
   Boolean pushLatest = params.LATEST
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def codekit    = sqre.codekit
-  def dockerfile = codekit.dockerfile
-  def docker     = codekit.docker
+  def codekit        = sqre.codekit
+  def dockerfile     = codekit.dockerfile
+  def dockerRegistry = codekit.docker_registry
 
   def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
   def githubRef  = dockerfile.git_ref
   def buildDir   = dockerfile.dir
-  def dockerRepo = docker.repo
+  def dockerRepo = dockerRegistry.repo
 
   def image = null
 

@@ -38,7 +38,8 @@ notify.wrap {
   def lsstswConfig = canonical.lsstsw_config
 
   def slug = util.lsstswConfigSlug(lsstswConfig)
-  def awscliImage = "${sqre.awscli.docker.repo}:${sqre.awscli.docker.tag}"
+  def awscliImage = sqre.awscli.docker_registry.repo
+  awscliImage += ":${sqre.awscli.docker_registry.tag}"
 
   def run = {
     ws(canonical.workspace) {
