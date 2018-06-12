@@ -34,6 +34,7 @@ notify.wrap {
 
   def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
   def githubRef  = dockerfile.git_ref
+  def buildDir   = dockerfile.dir
   def dockerRepo = docker.repo
   def dockerTag  = "7-stack-lsst_distrib-${eupsTag}"
   def timestamp  = util.epochMilliToUtc(currentBuild.startTimeInMillis)
@@ -69,7 +70,9 @@ notify.wrap {
       opt << "--build-arg SHEBANGTRON_URL=\"${shebangtron.url}\""
       opt << '.'
 
-      image = docker.build("${dockerRepo}", opt.join(' '))
+      dir(buildDir) {
+        image = docker.build("${dockerRepo}", opt.join(' '))
+      }
     }
 
     stage('push') {

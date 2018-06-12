@@ -28,8 +28,8 @@ notify.wrap {
 
   def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
   def githubRef  = dockerfile.git_ref
+  def buildDir   = dockerfile.dir
   def dockerRepo = docker.repo
-  def dockerDir  = ''
   def url        = newinstall.url
 
   def image = null
@@ -61,7 +61,7 @@ notify.wrap {
       }
       opt << '.'
 
-      dir(dockerDir) {
+      dir(buildDir) {
         // ensure base image is always up to date
         image = docker.build("${dockerRepo}", opt.join(' '))
       }

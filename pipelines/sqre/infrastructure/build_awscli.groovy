@@ -30,6 +30,7 @@ notify.wrap {
 
   def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
   def githubRef  = dockerfile.git_ref
+  def buildDir   = dockerfile.dir
   def dockerRepo = docker.repo
 
   def image = null
@@ -43,8 +44,10 @@ notify.wrap {
     }
 
     stage('build') {
-      // ensure base image is always up to date
-      image = docker.build("${dockerRepo}", "--pull=true --no-cache --build-arg AWSCLI_VER=${ver} .")
+      dir(buildDir) {
+        // ensure base image is always up to date
+        image = docker.build("${dockerRepo}", "--pull=true --no-cache --build-arg AWSCLI_VER=${ver} .")
+      }
     }
 
     stage('push') {

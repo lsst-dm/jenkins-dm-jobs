@@ -30,8 +30,8 @@ notify.wrap {
 
   def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
   def githubRef  = dockerfile.git_ref
+  def buildDir   = dockerfile.dir
   def dockerRepo = docker.repo
-  def buildDir   = 'docker'
 
   def image = null
 
