@@ -1100,4 +1100,17 @@ def String githubSlugToUrl(String slug, String scheme = 'https') {
   }
 }
 
+/*
+ * Sanitize string for use as docker tag
+ *
+ * @param tag String
+ * @return tag String
+ */
+@NonCPS
+def String sanitizeDockerTag(String tag) {
+  // is there a canonical reference for the tag format?
+  // convert / to -
+  tag.tr('/', '_')
+}
+
 return this;
