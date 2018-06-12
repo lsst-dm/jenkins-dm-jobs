@@ -599,7 +599,7 @@ def void s3PushVenv(String ... parts) {
     virtualenv venv
     . venv/bin/activate
     pip install --upgrade pip
-    pip install --upgrade awscli==${sqre.awscli.version}
+    pip install --upgrade awscli==${sqre.awscli.pypi.version}
   """
 
   def env = [
@@ -624,7 +624,7 @@ def void s3PushVenv(String ... parts) {
 def void s3PushDocker(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
-  def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.version}"
+  def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.docker_tag}"
 
   def env = [
     "EUPS_PKGROOT=${cwd}/distrib",

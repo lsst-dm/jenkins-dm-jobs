@@ -19,7 +19,7 @@ node('jenkins-master') {
 
 notify.wrap {
   def hub_repo    = 'lsstsqre/cmirror'
-  def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.version}"
+  def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.docker_tag}"
 
   def run = {
     def image = docker.image("${hub_repo}:latest")
