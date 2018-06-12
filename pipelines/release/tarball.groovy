@@ -624,8 +624,6 @@ def void s3PushVenv(String ... parts) {
 def void s3PushDocker(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
-  def awscliImage = sqre.awscli.docker_registry.repo
-  awscliImage += ":${sqre.awscli.docker_registry.tag}"
 
   def env = [
     "EUPS_PKGROOT=${cwd}/distrib",
@@ -635,7 +633,7 @@ def void s3PushDocker(String ... parts) {
 
   withEnv(env) {
     withEupsBucketEnv {
-      docker.image(awscliImage).inside {
+      docker.image(util.defaultAwscliImage()).inside {
         // alpine does not include bash by default
         util.posixSh(s3PushCmd())
       } // .inside

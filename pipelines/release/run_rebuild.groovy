@@ -117,7 +117,7 @@ notify.wrap {
               // the current iteration of the awscli container is alpine based
               // and doesn't work with util.insideWrap.  However, the aws cli
               // seems to work OK without trying to lookup the username.
-              docker.image(awscliImage).inside {
+              docker.image(util.defaultAwscliImage()).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
                   # provides DOC_PUSH_PATH

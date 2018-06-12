@@ -19,8 +19,6 @@ node('jenkins-master') {
 
 notify.wrap {
   def hub_repo    = 'lsstsqre/cmirror'
-  def awscliImage = sqre.awscli.docker_registry.repo
-  awscliImage += ":${sqre.awscli.docker_registry.tag}"
 
   def run = {
     def image = docker.image("${hub_repo}:latest")
@@ -77,7 +75,7 @@ notify.wrap {
         credentialsId: 'cmirror-s3-bucket',
         variable: 'CMIRROR_S3_BUCKET'
       ]]) {
-        docker.image(awscliImage).inside {
+        docker.image(util.defaultAwscliImage()).inside {
           catchError {
             util.posixSh '''
               aws s3 cp \

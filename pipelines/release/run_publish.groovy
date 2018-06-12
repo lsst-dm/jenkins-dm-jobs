@@ -38,8 +38,6 @@ notify.wrap {
   def lsstswConfig = canonical.lsstsw_config
 
   def slug = util.lsstswConfigSlug(lsstswConfig)
-  def awscliImage = sqre.awscli.docker_registry.repo
-  awscliImage += ":${sqre.awscli.docker_registry.tag}"
 
   def run = {
     ws(canonical.workspace) {
@@ -117,7 +115,7 @@ notify.wrap {
               "EUPS_S3_OBJECT_PREFIX=stack/src/"
             ]
             withEnv(env) {
-              docker.image(awscliImage).inside {
+              docker.image(util.defaultAwscliImage()).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
                   aws s3 cp \
