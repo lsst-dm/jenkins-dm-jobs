@@ -26,8 +26,9 @@ notify.wrap {
   Boolean noPush    = params.NO_PUSH
   Integer timelimit = params.TIMEOUT
 
-  def scipipe    = config.scipipe_release
-  def newinstall = config.newinstall
+  def scipipe     = config.scipipe_release
+  def newinstall  = config.newinstall
+  def shebangtron = config.shebangtron
 
   def githubRepo = util.githubSlugToUrl(scipipe.github_repo, 'https')
   def githubRef  = scipipe.git_ref
@@ -63,6 +64,7 @@ notify.wrap {
       opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
       opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
       opt << "--build-arg BASE_IMAGE=\"${newinstallImage}\""
+      opt << "--build-arg SHEBANGTRON_URL=\"${shebangtron.url}\""
       opt << '.'
 
       image = docker.build("${dockerRepo}", opt.join(' '))
