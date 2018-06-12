@@ -26,18 +26,26 @@ notify.wrap {
   Boolean noPush    = params.NO_PUSH
   Integer timelimit = params.TIMEOUT
 
-  def hubRepo   = config.release_docker_repo
-  def hubTag    = "7-stack-lsst_distrib-${eupsTag}"
-  def timestamp = util.epochMilliToUtc(currentBuild.startTimeInMillis)
+  def scipipe    = config.scipipe_release
+  def newinstall = config.newinstall
 
-  def image     = null
-  def repo      = null
+  def githubRepo = util.githubSlugToUrl(scipipe.github_repo, 'https')
+  def githubRef  = scipipe.git_ref
+  def dockerRepo = scipipe.docker_repo
+  def dockerTag  = "7-stack-lsst_distrib-${eupsTag}"
+  def timestamp  = util.epochMilliToUtc(currentBuild.startTimeInMillis)
+
+  def newinstallImage = newinstall.docker_repo
+  newinstallImage += ":${newinstall.docker_tag}"
+
+  def image = null
+  def repo  = null
 
   def run = {
     stage('checkout') {
       repo = git([
-        url: 'https://github.com/lsst-sqre/docker-tarballs',
-        branch: 'master'
+        url: githubRepo,
+        branch: githubRef,
       ])
     }
 
@@ -54,10 +62,10 @@ notify.wrap {
       opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
       opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
       opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
-      opt << "--build-arg BASE_IMAGE=\"lsstsqre/newinstall:latest\""
+      opt << "--build-arg BASE_IMAGE=\"${newinstallImage}\""
       opt << '.'
 
-      image = docker.build("${hubRepo}", opt.join(' '))
+      image = docker.build("${dockerRepo}", opt.join(' '))
     }
 
     stage('push') {
@@ -66,7 +74,7 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          [hubTag, "${hubTag}-${timestamp}"].each { name ->
+          [dockerTag, "${dockerTag}-${timestamp}"].each { name ->
             image.push(name)
           }
         }

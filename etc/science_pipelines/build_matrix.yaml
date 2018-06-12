@@ -83,4 +83,13 @@ ciscripts:
   git_ref: master
 newinstall_url: https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh
 shebangtron_url: https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron
-release_docker_repo: lsstsqre/centos
+#
+# docker releases of science-pipelines/lsst_distrib
+#
+scipipe_release:
+  github_repo: lsst-sqre/docker-tarballs
+  git_ref: master
+  docker_repo: lsstsqre/centos
+newinstall:
+  docker_repo: lsstsqre/newinstall
+  docker_tag: latest
