@@ -1140,4 +1140,14 @@ def String sanitizeEupsTag(String tag) {
   tag.tr('.-', '_')
 }
 
+/*
+ * Get science-pipeline config
+ *
+ * @return tag Object
+ */
+@NonCPS
+def String scipipeConfig() {
+  readYamlFile('etc/science_pipelines/build_matrix.yaml')
+}
+
 return this;
