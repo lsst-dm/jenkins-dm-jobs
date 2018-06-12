@@ -20,6 +20,7 @@ notify.wrap {
   echo "[eups] tag: ${params.EUPS_TAG}"
 
   def bx = null
+  def retries = 3
   def buildJob = 'release/run-rebuild'
   def publishJob = 'release/run-publish'
 
