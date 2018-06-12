@@ -19,7 +19,7 @@ node('jenkins-master') {
     // for the side effect of parsing/caching this file for
     // `util.cloneCiScripts()` which will not be able to locate it once the
     // cwd has changed.
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    config = util.scipipeConfig()
   }
 }
 

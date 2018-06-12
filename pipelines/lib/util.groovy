@@ -784,7 +784,7 @@ def lsstswBuildMatrix(
  * Clone lsstsw git repo
  */
 def void cloneLsstsw() {
-  def config = readYamlFile('etc/science_pipelines/build_matrix.yaml')
+  def config = scipipeConfig()
 
   gitNoNoise(
     url: githubSlugToUrl(config.lsstsw.github_repo),
@@ -796,7 +796,7 @@ def void cloneLsstsw() {
  * Clone ci-scripts git repo
  */
 def void cloneCiScripts() {
-  def config = readYamlFile('etc/science_pipelines/build_matrix.yaml')
+  def config = scipipeConfig()
 
   gitNoNoise(
     url: githubSlugToUrl(config.ciscripts.github_repo),
@@ -1146,7 +1146,7 @@ def String sanitizeEupsTag(String tag) {
  * @return tag Object
  */
 @NonCPS
-def String scipipeConfig() {
+def Object scipipeConfig() {
   readYamlFile('etc/science_pipelines/build_matrix.yaml')
 }
 
