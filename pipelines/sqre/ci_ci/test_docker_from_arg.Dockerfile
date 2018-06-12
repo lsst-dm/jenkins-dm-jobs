@@ -1,0 +1,2 @@
+ARG base
+FROM $base
