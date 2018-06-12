@@ -25,7 +25,7 @@ notify.wrap {
   def githubSlug = 'lsst-sqre/ec2-snapshot'
   def githubRepo = "https://github.com/${githubSlug}"
   def githubRef  = 'master'
-  def dockerTag  = githubRef.tr('/', '_')
+  def dockerTag  = util.sanitizeDockerTag(githubRef)
   def dockerDir  = '.'
 
   def image = null
