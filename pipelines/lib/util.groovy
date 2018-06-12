@@ -1126,4 +1126,17 @@ def String lsstswConfigSlug(Map lsstswConfig) {
   "${displayName}.${displayCompiler}.py${lc.python}"
 }
 
+/*
+ * Sanitize string for use as an eups tag
+ *
+ * @param tag String
+ * @return tag String
+ */
+@NonCPS
+def String sanitizeEupsTag(String tag) {
+  // eups doesn't like dots in tags, convert to underscores
+  // by policy, we're not allowing dash either
+  tag.tr('.-', '_')
+}
+
 return this;
