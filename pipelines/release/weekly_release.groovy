@@ -32,184 +32,181 @@ notify.wrap {
   def eupsTag    = null
   def manifestId = null
 
+  def run = {
+    stage('format weekly tag') {
+      gitTag = "w.${year}.${week}"
+      echo "generated [git] tag: ${gitTag}"
+
+      // eups doesn't like dots in tags, convert to underscores
+      eupsTag = gitTag.tr('.', '_')
+      echo "generated [eups] tag: ${eupsTag}"
+    } // stage
+
+    stage('build') {
+      retry(retries) {
+        manifestId = util.runRebuild(buildJob, [
+          PRODUCT: product,
+          SKIP_DEMO: false,
+          SKIP_DOCS: false,
+          TIMEOUT: '8', // hours
+        ])
+      } // retry
+    } // stage
+
+    stage('eups publish') {
+      def pub = [:]
+
+      pub[eupsTag] = {
+        retry(retries) {
+          util.runPublish(manifestId, eupsTag, product, 'git', publishJob)
+        }
+      }
+      pub['w_latest'] = {
+        retry(retries) {
+          util.runPublish(manifestId, 'w_latest', product, 'git', publishJob)
+        }
+      }
+
+      parallel pub
+    } // stage
+
+    stage('wait for s3 sync') {
+      sleep time: 15, unit: 'MINUTES'
+    }
+
+    stage('git tag eups products') {
+      retry(retries) {
+        node('docker') {
+          // needs eups distrib tag to be sync'd from s3 -> k8s volume
+          util.githubTagRelease(
+            gitTag,
+            eupsTag,
+            manifestId,
+            [
+              '--dry-run': false,
+              '--org': config.release_tag_org,
+            ]
+          )
+        } // node
+      } // retry
+    } // stage
+
+    // add aux repo tags *after* tagging eups product repos so as to avoid a
+    // trainwreck if an aux repo has been pulled into the build (without
+    // first being removed from the aux team).
+    stage('git tag auxilliaries') {
+      retry(retries) {
+        node('docker') {
+          util.githubTagTeams(
+            [
+              '--dry-run': false,
+              '--org': config.release_tag_org,
+              '--tag': gitTag,
+            ]
+          )
+        } // node
+      } // retry
+    } // stage
+
+    stage('build eups tarballs') {
+     def opt = [
+        SMOKE: true,
+        RUN_DEMO: true,
+        RUN_SCONS_CHECK: true,
+        PUBLISH: true,
+      ]
+
+      util.buildTarballMatrix(config, tarballProducts, eupsTag, opt)
+    } // stage
+
+    stage('wait for s3 sync') {
+      sleep time: 15, unit: 'MINUTES'
+    }
+
+    stage('build stack image') {
+      retry(retries) {
+        build job: 'release/docker/build-stack',
+          parameters: [
+            string(name: 'PRODUCT', value: tarballProducts),
+            string(name: 'TAG', value: eupsTag),
+          ]
+      } // retry
+    } // stage
+
+    stage('build jupyterlabdemo image') {
+      retry(retries) {
+        // based on lsstsqre/stack image
+        build job: 'sqre/infrastructure/build-jupyterlabdemo',
+          parameters: [
+            string(name: 'TAG', value: eupsTag),
+            booleanParam(name: 'NO_PUSH', value: false),
+            string(
+              name: 'IMAGE_NAME',
+              value: sqre.build_jupyterlabdemo.image_name,
+            ),
+          ],
+          wait: false
+      } // retry
+    } // stage
+
+    stage('validate_drp') {
+      // XXX use the same compiler as is configured for the canonical build
+      // env.  This is a bit of a kludge.  It would be better to directly
+      // label the compiler used on the dockage image.
+      def can = config.canonical
+
+      retry(1) {
+        // based on lsstsqre/stack image
+        build job: 'sqre/validate_drp',
+          parameters: [
+            string(name: 'EUPS_TAG', value: eupsTag),
+            string(name: 'MANIFEST_ID', value: manifestId),
+            string(name: 'COMPILER', value: can.compiler),
+            booleanParam(
+              name: 'NO_PUSH',
+              value: sqre.validate_drp.no_push,
+            ),
+            booleanParam(name: 'WIPEOUT', value: true),
+          ],
+          wait: false
+      } // retry
+    } // stage
+
+    stage('doc build') {
+      retry(retries) {
+        build job: 'sqre/infrastructure/documenteer',
+          parameters: [
+            string(name: 'EUPS_TAG', value: eupsTag),
+            string(name: 'LTD_SLUG', value: eupsTag),
+            booleanParam(
+              name: 'PUBLISH',
+              value: sqre.documenteer.publish,
+            ),
+          ]
+      } // retry
+    } // stage
+  } // run
+
   try {
     timeout(time: 30, unit: 'HOURS') {
-      stage('format weekly tag') {
-        gitTag = "w.${year}.${week}"
-        echo "generated [git] tag: ${gitTag}"
-
-        // eups doesn't like dots in tags, convert to underscores
-        eupsTag = gitTag.tr('.', '_')
-        echo "generated [eups] tag: ${eupsTag}"
-      }
-
-      stage('build') {
-        retry(retries) {
-          manifestId = util.runRebuild(buildJob, [
-            PRODUCT: product,
-            SKIP_DEMO: false,
-            SKIP_DOCS: false,
-            TIMEOUT: '8', // hours
-          ])
-        }
-      }
-
-      stage('eups publish') {
-        def pub = [:]
-
-        pub[eupsTag] = {
-          retry(retries) {
-            util.runPublish(manifestId, eupsTag, product, 'git', publishJob)
-          }
-        }
-        pub['w_latest'] = {
-          retry(retries) {
-            util.runPublish(manifestId, 'w_latest', product, 'git', publishJob)
-          }
-        }
-
-        parallel pub
-      }
-
-      stage('wait for s3 sync') {
-        sleep time: 15, unit: 'MINUTES'
-      }
-
-      stage('git tag eups products') {
-        retry(retries) {
-          node('docker') {
-            // needs eups distrib tag to be sync'd from s3 -> k8s volume
-            util.githubTagRelease(
-              gitTag,
-              eupsTag,
-              manifestId,
-              [
-                '--dry-run': false,
-                '--org': config.release_tag_org,
-              ]
-            )
-          } // node
-        } // retry
-      }
-
-      // add aux repo tags *after* tagging eups product repos so as to avoid a
-      // trainwreck if an aux repo has been pulled into the build (without
-      // first being removed from the aux team).
-      stage('git tag auxilliaries') {
-        retry(retries) {
-          node('docker') {
-            util.githubTagTeams(
-              [
-                '--dry-run': false,
-                '--org': config.release_tag_org,
-                '--tag': gitTag,
-              ]
-            )
-          } // node
-        } // retry
-      }
-
-      stage('build eups tarballs') {
-       def opt = [
-          SMOKE: true,
-          RUN_DEMO: true,
-          RUN_SCONS_CHECK: true,
-          PUBLISH: true,
-        ]
-
-        util.buildTarballMatrix(config, tarballProducts, eupsTag, opt)
-      }
-
-      stage('wait for s3 sync') {
-        sleep time: 15, unit: 'MINUTES'
-      }
-
-      stage('build stack image') {
-        retry(retries) {
-          build job: 'release/docker/build-stack',
-            parameters: [
-              string(name: 'PRODUCT', value: tarballProducts),
-              string(name: 'TAG', value: eupsTag),
-            ]
-        }
-      }
-
-      stage('build jupyterlabdemo image') {
-        retry(retries) {
-          // based on lsstsqre/stack image
-          build job: 'sqre/infrastructure/build-jupyterlabdemo',
-            parameters: [
-              string(name: 'TAG', value: eupsTag),
-              booleanParam(name: 'NO_PUSH', value: false),
-              string(
-                name: 'IMAGE_NAME',
-                value: sqre.build_jupyterlabdemo.image_name,
-              ),
-            ],
-            wait: false
-        }
-      }
-
-      stage('validate_drp') {
-        // XXX use the same compiler as is configured for the canonical build
-        // env.  This is a bit of a kludge.  It would be better to directly
-        // label the compiler used on the dockage image.
-        def can = config.canonical
-
-        retry(1) {
-          // based on lsstsqre/stack image
-          build job: 'sqre/validate_drp',
-            parameters: [
-              string(name: 'EUPS_TAG', value: eupsTag),
-              string(name: 'MANIFEST_ID', value: manifestId),
-              string(name: 'COMPILER', value: can.compiler),
-              booleanParam(
-                name: 'NO_PUSH',
-                value: sqre.validate_drp.no_push,
-              ),
-              booleanParam(name: 'WIPEOUT', value: true),
-            ],
-            wait: false
-        }
-      }
-
-      stage('doc build') {
-        retry(retries) {
-          build job: 'sqre/infrastructure/documenteer',
-            parameters: [
-              string(name: 'EUPS_TAG', value: eupsTag),
-              string(name: 'LTD_SLUG', value: eupsTag),
-              booleanParam(
-                name: 'PUBLISH',
-                value: sqre.documenteer.publish,
-              ),
-            ]
-        }
-      }
-    } // timeout
+      run()
+    }
   } finally {
     stage('archive') {
       def resultsFile = 'results.json'
 
       util.nodeTiny {
-        results = [:]
-        if (manifestId) {
-          results['manifest_id'] = manifestId
-        }
-        if (gitTag) {
-          results['git_tag'] = gitTag
-        }
-        if (eupsTag) {
-          results['eups_tag'] = eupsTag
-        }
-
-        util.dumpJson(resultsFile, results)
+        util.dumpJson(resultsFile, [
+          manifest_id: manifestId ?: null,
+          git_tag: gitTag ?: null,
+          eups_tag: eupsTag ?: null,
+        ])
 
         archiveArtifacts([
           artifacts: resultsFile,
           fingerprint: true
         ])
       }
-    }
+    } // stage
   } // try
 } // notify.wrap

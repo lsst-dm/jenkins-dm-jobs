@@ -39,42 +39,45 @@ notify.wrap {
 
   def manifestId = null
 
-  retry(retries) {
-    manifestId = util.runRebuild(buildJob, [
-      BRANCH: branch,
-      PRODUCT: product,
-      SKIP_DEMO: skipDemo,
-      SKIP_DOCS: skipDocs,
-    ])
-  }
+  def run = {
+    stage('build') {
+      retry(retries) {
+        manifestId = util.runRebuild(buildJob, [
+          BRANCH: branch,
+          PRODUCT: product,
+          SKIP_DEMO: skipDemo,
+          SKIP_DOCS: skipDocs,
+        ])
+      } // retry
+    } // stage
 
-  stage('eups publish [tag]') {
-    retry(retries) {
-      util.runPublish(manifestId, eupsTag, product, 'git', publishJob)
+    stage('eups publish') {
+      retry(retries) {
+        util.runPublish(manifestId, eupsTag, product, 'git', publishJob)
+      }
+    } // stage
+  } // run
+
+  try {
+    timeout(time: 30, unit: 'HOURS') {
+      run()
     }
-  }
+  } finally {
+    stage('archive') {
+      def resultsFile = 'results.json'
 
-  stage('archive') {
-    def resultsFile = 'results.json'
+      util.nodeTiny {
+        util.dumpJson(resultsFile, [
+          manifest_id: manifestId ?: null,
+          git_tag: gitTag ?: null,
+          eups_tag: eupsTag ?: null,
+        ])
 
-    util.nodeTiny {
-      results = [:]
-      if (manifestId) {
-        results['manifest_id'] = manifestId
+        archiveArtifacts([
+          artifacts: resultsFile,
+          fingerprint: true
+        ])
       }
-      if (gitTag) {
-        results['git_tag'] = gitTag
-      }
-      if (eupsTag) {
-        results['eups_tag'] = eupsTag
-      }
-
-      util.dumpJson(resultsFile, results)
-
-      archiveArtifacts([
-        artifacts: resultsFile,
-        fingerprint: true
-      ])
-    }
-  }
+    } // stage
+  } // try
 } // notify.wrap
