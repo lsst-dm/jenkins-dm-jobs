@@ -78,11 +78,3 @@ notify.wrap {
     }
   }
 } // notify.wrap
-
-@NonCPS
-def dumpJson(String filename, Map data) {
-  def json = new groovy.json.JsonBuilder(data)
-  def pretty = groovy.json.JsonOutput.prettyPrint(json.toString())
-  echo pretty
-  writeFile file: filename, text: pretty
-}
