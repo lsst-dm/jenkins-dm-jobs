@@ -801,7 +801,7 @@ def String smokeScript(
     done
 
     if [[ \$FIX_SHEBANGS == true ]]; then
-      curl -sSL ${config.shebangtron_url} | python
+      curl -sSL ${config.shebangtron.url} | python
     fi
 
     if [[ \$RUN_DEMO == true ]]; then

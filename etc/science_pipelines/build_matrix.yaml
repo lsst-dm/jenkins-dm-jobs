@@ -86,7 +86,8 @@ lsstsw:
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: master
-shebangtron_url: https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron
+shebangtron:
+  url: https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron
 #
 # docker releases of science-pipelines/lsst_distrib
 #
