@@ -1143,7 +1143,6 @@ def String sanitizeEupsTag(String tag) {
  *
  * @return tag Object
  */
-@NonCPS
 def Object scipipeConfig() {
   readYamlFile('etc/science_pipelines/build_matrix.yaml')
 }
@@ -1153,7 +1152,6 @@ def Object scipipeConfig() {
  *
  * @return tag Object
  */
-@NonCPS
 def Object sqreConfig() {
   readYamlFile('etc/sqre/config.yaml')
 }
@@ -1163,7 +1161,6 @@ def Object sqreConfig() {
  *
  * @return awscliImage String
  */
-@NonCPS
 def String defaultAwscliImage() {
   sqreConfig().awscli.docker_registry.repo
 }
@@ -1173,7 +1170,6 @@ def String defaultAwscliImage() {
  *
  * @return codekitImage String
  */
-@NonCPS
 def String defaultCodekitImage() {
   sqreConfig().codekit.docker_registry.repo
 }
