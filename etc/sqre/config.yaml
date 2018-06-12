@@ -18,8 +18,10 @@ awscli:
   docker_repo: lsstsqre/awscli
   version: '1.14.61'
 codekit:
+  pypi:
+    version: &codekit_ver '7.1.0'
   github_repo: lsst-sqre/sqre-codekit
   # branch of Dockerfile
   git_ref: master
   docker_repo: lsstsqre/codekit
-  version: '7.1.0'
+  docker_tag: *codekit_ver
