@@ -2,7 +2,7 @@ import util.Plumber
 
 def p = new Plumber(name: 'release/run-rebuild', dsl: this)
 p.pipeline().with {
-  description('run rebuild in the canoncial LSST DM build environment.  Only us this job when preparing to publish EUPS distrib packages.')
+  description('run rebuild in the canonical LSST DM build environment.  Only us this job when preparing to publish EUPS distrib packages.')
 
   parameters {
     stringParam('BRANCH', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" is implicitly appended to the right side of the list, if not specified.')
