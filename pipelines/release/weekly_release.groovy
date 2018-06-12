@@ -34,11 +34,9 @@ notify.wrap {
 
   def run = {
     stage('format weekly tag') {
-      gitTag = "w.${year}.${week}"
+      gitTag  = "w.${year}.${week}"
+      eupsTag = util.sanitizeEupsTag(gitTag)
       echo "generated [git] tag: ${gitTag}"
-
-      // eups doesn't like dots in tags, convert to underscores
-      eupsTag = gitTag.tr('.', '_')
       echo "generated [eups] tag: ${eupsTag}"
     } // stage
 
