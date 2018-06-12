@@ -119,11 +119,11 @@ scipipe_release:
     repo: lsstsqre/jhoblitt-moe-centos
 newinstall:
   dockerfile:
-    github_repo: lsst-sqre/docker-newinstall
-    git_ref: master
+    github_repo: jhoblitt/docker-newinstall
+    git_ref: tickets/DM-14631-altenv
     dir: ''
   docker_registry:
-    repo: lsstsqre/newinstall
+    repo: lsstsqre/jhoblitt-moe-newinstall
     tag: latest
   github_repo: lsst/lsst
   git_ref: master
