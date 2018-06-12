@@ -748,30 +748,28 @@ def void nodeTiny(Closure run) {
 /**
  * Execute a multiple multiple lsstsw builds using different configurations.
  *
- * @param config List of lsstsw build configurations
+ * @param matrixConfig List of lsstsw build configurations
  * @param buildParams Map of params/env vars for jenkins_wrapper.sh
  * @param wipeout Boolean wipeout the workspace build starting the build
  */
 def lsstswBuildMatrix(
-  List lsstswConfigs,
+  List matrixConfig,
   Map buildParams,
   Boolean wipeout=false
 ) {
   def matrix = [:]
 
   // XXX validate config
-  lsstswConfigs.each { item ->
-    def displayName = item.display_name ?: item.label
-    def displayCompiler = item.display_compiler ?: item.compiler
-    def slug = "${displayName}.${displayCompiler}.py${item.python}"
+  matrixConfig.each { lsstswConfig ->
+    def slug = lsstswConfigSlug(lsstswConfig)
 
     matrix[slug] = {
       lsstswBuild(
         buildParams,
-        item.image,
-        item.label,
-        item.compiler,
-        item.python,
+        lsstswConfig.image,
+        lsstswConfig.label,
+        lsstswConfig.compiler,
+        lsstswConfig.python,
         slug,
         wipeout
       )

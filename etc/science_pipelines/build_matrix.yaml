@@ -52,8 +52,6 @@ scipipe-lsstsw-ci_hsc:
 dax-lsstsw-matrix:
   - <<: *el7-py3
   - <<: *el7-py3-llvm
-canonical:
-  <<: *el7-py3
 tarball:
   - <<: *tarball_defaults
     <<: *el6-py3
@@ -66,14 +64,21 @@ tarball:
     <<: *osx-py3
     label: osx-10.11
 #
+# canonical build env -- Ie., release/{run-rebuild,run-publish}
+#
+canonical:
+  lsstsw_config:
+    <<: *el7-py3
+    label: jenkins-snowflake-1
+    display_name: centos-7
+  workspace: snowflake/release
+#
 # low-level build parameters
 #
 repos:
   github_repo: lsst/repos
 versiondb:
   github_repo: lsst/versiondb
-canonical_node_label: jenkins-snowflake-1
-canonical_workspace: snowflake/release
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw

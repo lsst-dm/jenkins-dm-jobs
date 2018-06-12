@@ -34,11 +34,14 @@ notify.wrap {
   // not a normally exposed job param
   Boolean pushS3 = (! params.NO_PUSH?.toBoolean())
 
-  def can         = config.canonical
+  def canonical    = config.canonical
+  def lsstswConfig = canonical.lsstsw_config
+
+  def slug = util.lsstswConfigSlug(lsstswConfig)
   def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.version}"
 
   def run = {
-    ws(config.canonical_workspace) {
+    ws(canonical.workspace) {
       def cwd = pwd()
 
       stage('publish') {
@@ -71,7 +74,7 @@ notify.wrap {
           variable: 'CMIRROR_S3_BUCKET'
         ]]) {
           withEnv(env) {
-            util.insideWrap(can.image) {
+            util.insideWrap(lsstswConfig.image) {
               util.bash '''
                 ARGS=()
                 ARGS+=('-b' "$MANIFEST_ID")
@@ -132,7 +135,7 @@ notify.wrap {
     } // ws
   } // run
 
-  node(config.canonical_node_label) {
+  node(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }

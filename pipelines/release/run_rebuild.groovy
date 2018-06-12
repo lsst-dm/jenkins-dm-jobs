@@ -42,12 +42,14 @@ notify.wrap {
     versiondbRepo = util.githubSlugToUrl(config.versiondb.github_repo, 'ssh')
   }
 
-  def can         = config.canonical
+  def canonical    = config.canonical
+  def lsstswConfig = canonical.lsstsw_config
+
+  def slug = util.lsstswConfigSlug(lsstswConfig)
   def awscliImage = "${sqre.awscli.docker_repo}:${sqre.awscli.version}"
-  def slug        = "${can.label}.py${can.python}"
 
   def run = {
-    ws(config.canonical_workspace) {
+    ws(canonical.workspace) {
       def cwd = pwd()
 
       def buildParams = [
@@ -56,11 +58,11 @@ notify.wrap {
         VERSIONDB_PUSH:      versiondbPush,
         GIT_SSH_COMMAND:     'ssh -o StrictHostKeyChecking=no',
         LSST_JUNIT_PREFIX:   slug,
-        LSST_PYTHON_VERSION: can.python,
-        LSST_COMPILER:       can.compiler,
+        LSST_PYTHON_VERSION: lsstswConfig.python,
+        LSST_COMPILER:       lsstswConfig.compiler,
         // XXX this should be renamed in lsstsw to make it clear that its
         // setting a github repo slug
-        REPOSFILE_REPO:      "${config.repos.github_repo}",
+        REPOSFILE_REPO:      config.repos.github_repo,
         BRANCH:              BRANCH,
         PRODUCT:             PRODUCT,
         SKIP_DEMO:           SKIP_DEMO,
@@ -84,7 +86,7 @@ notify.wrap {
       }
 
       stage('build') {
-        util.insideWrap(can.image) {
+        util.insideWrap(lsstswConfig.image) {
           // only setup sshagent if we are going to push
           if (versiondbPush) {
             withVersiondbCredentials(runJW)
@@ -134,7 +136,7 @@ notify.wrap {
     } // ws
   } // run
 
-  node(config.canonical_node_label) {
+  node(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }
