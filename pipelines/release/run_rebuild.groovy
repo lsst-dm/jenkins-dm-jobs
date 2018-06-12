@@ -46,8 +46,6 @@ notify.wrap {
   def lsstswConfig = canonical.lsstsw_config
 
   def slug = util.lsstswConfigSlug(lsstswConfig)
-  def codekitImage = sqre.codekit.docker_registry.repo
-  codekitImage += ":${sqre.codekit.docker_registry.tag}"
 
   def run = {
     ws(canonical.workspace) {
