@@ -1171,4 +1171,14 @@ def String defaultAwscliImage() {
   sqreConfig().awscli.docker_registry.repo
 }
 
+/*
+ * Get default codekit docker image string
+ *
+ * @return codekitImage String
+ */
+@NonCPS
+def String defaultCodekitImage() {
+  sqreConfig().codekit.docker_registry.repo
+}
+
 return this;
