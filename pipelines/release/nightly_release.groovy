@@ -12,7 +12,7 @@ node('jenkins-master') {
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
     config = util.scipipeConfig()
-    sqre = util.readYamlFile 'etc/sqre/config.yaml'
+    sqre = util.sqreConfig()
   }
 }
 
