@@ -15,6 +15,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    config = util.scipipeConfig()
   }
 }
 
@@ -31,9 +32,13 @@ notify.wrap {
   String ltdSlug         = params.LTD_SLUG
   Boolean publish        = params.PUBLISH
   String docTemplateRef  = params.TEMPLATE_REF
-  String docTemplateRepo = "https://github.com/${params.TEMPLATE_REPO}"
+  String docTemplateRepo = util.githubSlugToUrl(params.TEMPLATE_REPO)
 
-  def relImage = "lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
+  // optional
+  String relImage = params.RELEASE_IMAGE
+
+  def dockerRepo = config.scipipe_release.docker_registry.repo
+  relImage = relImage ?: "${dockerRepo}:7-stack-lsst_distrib-${eupsTag}"
 
   def run = {
     def meerImage = null

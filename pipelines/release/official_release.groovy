@@ -195,6 +195,7 @@ notify.wrap {
           parameters: [
             string(name: 'EUPS_TAG', value: eupsTag),
             string(name: 'LTD_SLUG', value: eupsTag),
+            string(name: 'RELEASE_IMAGE', value: stackResults.image),
             booleanParam(
               name: 'PUBLISH',
               value: sqre.documenteer.publish,
