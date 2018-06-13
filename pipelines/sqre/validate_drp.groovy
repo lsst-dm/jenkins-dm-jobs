@@ -58,11 +58,6 @@ notify.wrap {
         relImage: relImage,
       ])
     },
-    hsc: {
-      drp('hsc', target, 'master', false, true, masterRetries, 15, [
-        relImage: relImage,
-      ])
-    },
   ]
 
   stage('matrix') {
