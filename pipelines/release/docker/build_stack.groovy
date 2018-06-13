@@ -41,6 +41,7 @@ notify.wrap {
 
   def newinstallImage = newinstall.docker_registry.repo
   newinstallImage += ":${newinstall.docker_registry.tag}"
+  def baseImage = newinstallImage
 
   def image = null
   def repo  = null
@@ -66,7 +67,7 @@ notify.wrap {
       opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
       opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
       opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
-      opt << "--build-arg BASE_IMAGE=\"${newinstallImage}\""
+      opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
       opt << "--build-arg SHEBANGTRON_URL=\"${shebangtron.url}\""
       opt << '.'
 
@@ -90,8 +91,24 @@ notify.wrap {
   } // run
 
   node('docker') {
-    timeout(time: timelimit, unit: 'HOURS') {
-      run()
-    }
-  }
+    try {
+      timeout(time: timelimit, unit: 'HOURS') {
+        run()
+      }
+    } finally {
+      stage('archive') {
+        def resultsFile = 'results.json'
+
+        util.dumpJson(resultsFile,  [
+          base_image: baseImage ?: null,
+          image: "${dockerRepo}:${dockerTag}",
+        ])
+
+        archiveArtifacts([
+          artifacts: resultsFile,
+          fingerprint: true
+        ])
+      } // stage
+    } // try
+  } // node
 } // notify.wrap
