@@ -530,17 +530,36 @@ def void getManifest(String rebuildId, String filename) {
 /**
  * Run the `github-tag-release` script from `sqre-codekit` with parameters.
  *
- * @param gitTag String name of git tag to create
- * @param eupsTag String name of eups distrib tag to select repos/refs to tag
- * @param manifestId String MANIFEST_ID/BUILD_ID/BUILD/bNNNN to select repos/refs to tag
- * @param options Map see `makeCliCmd`
+ * Example:
+ *
+ *     util.githubTagRelease(
+ *       options: [
+ *         '--dry-run': true,
+ *         '--org': 'myorg'
+ *         '--manifest': 'b1234',
+ *         '--eups-tag': 'v999_0_0',
+ *       ],
+ *       args: ['999.0.0'],
+ *     )
+ *
+ * @param p Map
+ * @param p.options Map CLI --<options>. Required. See `makeCliCmd`
+ * @param p.options.'--org' String Required.
+ * @param p.options.'--manifest' String Required.
+ * @param p.options.'--eups-tag' String Required.
+ * @param p.args List Eg., `[<git tag>]` Required.
  */
-def void githubTagRelease(
-  String gitTag,
-  String eupsTag,
-  String manifestId,
-  Map options
-) {
+def void githubTagRelease(Map p) {
+  requireMapKeys(p, [
+    'args',
+    'options',
+  ])
+  requireMapKeys(p.options, [
+    '--org',
+    '--manifest',
+    '--eups-tag',
+  ])
+
   def prog = 'github-tag-release'
   def defaultOptions = [
     '--debug': true,
@@ -552,11 +571,9 @@ def void githubTagRelease(
     '--external-team': 'DM Externals',
     '--deny-team': 'DM Auxilliaries',
     '--fail-fast': true,
-    '--manifest': manifestId,
-    '--eups-tag': eupsTag,
   ]
 
-  runCodekitCmd(prog, defaultOptions, options, [gitTag])
+  runCodekitCmd(prog, defaultOptions, p.options, p.args)
 } // githubTagRelease
 
 /**

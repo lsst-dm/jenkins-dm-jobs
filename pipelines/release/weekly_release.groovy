@@ -78,13 +78,13 @@ notify.wrap {
         node('docker') {
           // needs eups distrib tag to be sync'd from s3 -> k8s volume
           util.githubTagRelease(
-            gitTag,
-            eupsTag,
-            manifestId,
-            [
+            options: [
               '--dry-run': false,
               '--org': config.release_tag_org,
-            ]
+              '--manifest': manifestId,
+              '--eups-tag': eupsTag,
+            ],
+            args: [gitTag],
           )
         } // node
       } // retry

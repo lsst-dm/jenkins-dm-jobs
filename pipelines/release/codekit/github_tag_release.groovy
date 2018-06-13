@@ -33,6 +33,8 @@ notify.wrap {
   options = [
     '--org': config.release_tag_org,
     '--dry-run': dryRun,
+    '--manifest': manifestId,
+    '--eups-tag': eupsTag,
   ]
 
   if (limit) {
@@ -45,10 +47,8 @@ notify.wrap {
 
   node('docker') {
     util.githubTagRelease(
-      gitTag,
-      eupsTag,
-      manifestId,
-      options
+      options: options,
+      args: [gitTag],
     )
   } // node
 } // notify.wrap
