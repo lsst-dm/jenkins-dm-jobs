@@ -52,6 +52,7 @@ notify.wrap {
       opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
       opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
       opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
+      opt << "--build-arg BASE_IMAGE=\"lsstsqre/newinstall:latest\""
       opt << '.'
 
       image = docker.build("${hubRepo}", opt.join(' '))
