@@ -65,25 +65,23 @@ notify.wrap {
     ]
   }
 
-  stage("${label}.${compiler}.${py.slug()}") {
-    // XXX this lookup table should be moved to a config file instead of being
-    // hardcoded
-    switch(label) {
-      case 'centos-7':
-        linuxTarballs(image, 'el7', compiler, py,
-          timeout, buildTarget, smokeConfig, wipeout, publish)
-        break
-      case 'centos-6':
-        linuxTarballs(image, 'el6', compiler, py,
-          timeout, buildTarget, smokeConfig, wipeout, publish)
-        break
-      case 'osx-10.11':
-        osxTarballs(label, '10.9', compiler, py,
-          timeout, buildTarget, smokeConfig, wipeout, publish)
-        break
-      default:
-        error "unsupported platform: ${label}"
-    }
+  // XXX this lookup table should be moved to a config file instead of being
+  // hardcoded
+  switch(label) {
+    case 'centos-7':
+      linuxTarballs(image, 'el7', compiler, py,
+        timeout, buildTarget, smokeConfig, wipeout, publish)
+      break
+    case 'centos-6':
+      linuxTarballs(image, 'el6', compiler, py,
+        timeout, buildTarget, smokeConfig, wipeout, publish)
+      break
+    case 'osx-10.11':
+      osxTarballs(label, '10.9', compiler, py,
+        timeout, buildTarget, smokeConfig, wipeout, publish)
+      break
+    default:
+      error "unsupported platform: ${label}"
   }
 } // notify.wrap
 
@@ -137,14 +135,20 @@ def void linuxTarballs(
       variable: 'EUPS_S3_BUCKET'
     ]]) {
       dir(envId) {
-        docker.image(imageName).pull()
-        linuxBuild(imageName, compiler, menv, buildTarget)
-        if (smokeConfig) {
-          linuxSmoke(imageName, compiler, menv, buildTarget, smokeConfig)
+        stage("build ${envId}") {
+          docker.image(imageName).pull()
+          linuxBuild(imageName, compiler, menv, buildTarget)
+        }
+        stage('smoke') {
+          if (smokeConfig) {
+            linuxSmoke(imageName, compiler, menv, buildTarget, smokeConfig)
+          }
         }
 
-        if (publish) {
-          s3PushDocker(envId)
+        stage('publish') {
+          if (publish) {
+            s3PushDocker(envId)
+          }
         }
       }
     } // withCredentials([[
@@ -207,20 +211,26 @@ def void osxTarballs(
       variable: 'EUPS_S3_BUCKET'
     ]]) {
       dir(envId) {
-        osxBuild(macosx_deployment_target, compiler, menv, buildTarget)
-
-        if (smokeConfig) {
-          osxSmoke(
-            macosx_deployment_target,
-            compiler,
-            menv,
-            buildTarget,
-            smokeConfig
-          )
+        stage('build') {
+          osxBuild(macosx_deployment_target, compiler, menv, buildTarget)
         }
 
-        if (publish) {
-          s3PushVenv(envId)
+        stage('smoke') {
+          if (smokeConfig) {
+            osxSmoke(
+              macosx_deployment_target,
+              compiler,
+              menv,
+              buildTarget,
+              smokeConfig
+            )
+          }
+        } //stage
+
+        stage('publish') {
+          if (publish) {
+            s3PushVenv(envId)
+          }
         }
       } // dir
     } // withCredentials
