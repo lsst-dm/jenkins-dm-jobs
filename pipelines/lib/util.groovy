@@ -1283,4 +1283,19 @@ def Object runBuildStack(Map p) {
   } // nodeTiny
 } // runBuildStack
 
+/**
+ * Sleep to ensure s3 objects have sync'd with the EUPS_PKGROOT.
+ *
+ * Example:
+ *
+ *     util.waitForS3()
+ */
+def void waitForS3() {
+  def config = scipipeConfig()
+
+  stage('wait for s3 sync') {
+    sleep(time: config.release.s3_wait_time, unit: 'MINUTES')
+  }
+} // waitForS3
+
 return this;

@@ -73,6 +73,12 @@ canonical:
     display_name: centos-7
   workspace: snowflake/release
 #
+# X-release pattern pipelines
+#
+release:
+  # minutes
+  s3_wait_time: 15
+#
 # low-level build parameters
 #
 repos:
