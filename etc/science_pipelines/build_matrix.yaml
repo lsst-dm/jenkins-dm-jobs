@@ -79,7 +79,7 @@ canonical:
 #
 release:
   # minutes
-  s3_wait_time: 15
+  s3_wait_time: 1
   step:
     build_jupyterlabdemo:
       image_name: lsstsqre/jhoblitt-moe-jld-lab
