@@ -1063,53 +1063,66 @@ def ltdPush(Map args) {
 /**
  * run `release/run-rebuild` job and parse result
  *
- * @param buildJob String job to trigger. Defaults to `release/rebuild`.
- * @param opts.BRANCH String
- * @param opts.PRODUCT String
- * @param opts.SKIP_DEMO Boolean Defaults to `false`.
- * @param opts.SKIP_DOCS Boolean Defaults to `false`.
- * @param opts.TIMEOUT String Defaults to `'8'`.
+ * Example:
+ *
+ *     manifestId = util.runRebuild(
+ *       parameters: [
+ *         PRODUCT: product,
+ *         SKIP_DEMO: true,
+ *         SKIP_DOCS: true,
+ *       ],
+ *     )
+ *
+ * @param p Map
+ * @param p.job String job to trigger. Defaults to `release/rebuild`.
+ * @param p.parameters.BRANCH String Defaults to `''`.
+ * @param p.parameters.PRODUCT String Defaults to `''`.
+ * @param p.parameters.SKIP_DEMO Boolean Defaults to `false`.
+ * @param p.parameters.SKIP_DOCS Boolean Defaults to `false`.
+ * @param p.parameters.TIMEOUT String Defaults to `'8'`.
  * @return manifestId String
  */
-def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
-  def defaultOpts = [
+def String runRebuild(Map p) {
+  def useP = [
+    job: 'release/run-rebuild',
+  ] + p
+
+  useP.parameters = [
     BRANCH: '',  // null is not a valid value for a string param
     PRODUCT: '',
     SKIP_DEMO: false,
     SKIP_DOCS: false,
     TIMEOUT: '8', // should be String
-  ]
-  def useOpts = defaultOpts + opts
+  ] + p.parameters
 
-  def result = build job: buildJob,
+  def result = build(
+    job: useP.job,
     parameters: [
-      string(name: 'BRANCH', value: useOpts.BRANCH),
-      string(name: 'PRODUCT', value: useOpts.PRODUCT),
-      booleanParam(name: 'SKIP_DEMO', value: useOpts.SKIP_DEMO),
-      booleanParam(name: 'SKIP_DOCS', value: useOpts.SKIP_DOCS),
-      string(name: 'TIMEOUT', value: useOpts.TIMEOUT), // hours
+      string(name: 'BRANCH', value: useP.parameters.BRANCH),
+      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      booleanParam(name: 'SKIP_DEMO', value: useP.parameters.SKIP_DEMO),
+      booleanParam(name: 'SKIP_DOCS', value: useP.parameters.SKIP_DOCS),
+      string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
     ],
-    wait: true
+    wait: true,
+  )
 
-  def manifestId = null
   nodeTiny {
-    manifest_artifact = 'lsstsw/build/manifest.txt'
+    manifestArtifact = 'lsstsw/build/manifest.txt'
 
     step([$class: 'CopyArtifact',
-          projectName: buildJob,
-          filter: manifest_artifact,
+          projectName: useP.job,
+          filter: manifestArtifact,
           selector: [
             $class: 'SpecificBuildSelector',
             buildNumber: result.id,
           ],
         ])
 
-    def manifest = readFile manifest_artifact
-    manifestId = parseManifestId(manifest)
+    def manifestId = parseManifestId(readFile(manifestArtifact))
     echo "parsed manifest id: ${manifestId}"
+    return manifestId
   } // nodeTiny
-
-  return manifestId
 } // runRebuild
 
 /*
@@ -1221,32 +1234,32 @@ def String defaultCodekitImage() {
  * @param opts.parameters.TIMEOUT String. Defaults to `1'`.
  * @return json Object
  */
-def Object runBuildStack(Map opts) {
+def Object runBuildStack(Map p) {
   // validate opts Map
-  requireMapKeys(opts, [
+  requireMapKeys(p, [
     'parameters',
   ])
-  def useOpts = [
+  def useP = [
     job: 'release/docker/build-stack',
-  ] + opts
+  ] + p
 
   // validate opts.parameters Map
-  requireMapKeys(opts.parameters, [
+  requireMapKeys(p.parameters, [
     'PRODUCT',
     'TAG',
   ])
-  useOpts.parameters = [
+  useP.parameters = [
     NO_PUSH: false,
     TIMEOUT: '1', // should be String
-  ] + opts.parameters
+  ] + p.parameters
 
   def result = build(
-    job: useOpts.job,
+    job: useP.job,
     parameters: [
-      string(name: 'PRODUCT', value: useOpts.parameters.PRODUCT),
-      string(name: 'TAG', value: useOpts.parameters.TAG),
-      booleanParam(name: 'NO_PUSH', value: useOpts.parameters.NO_PUSH),
-      string(name: 'TIMEOUT', value: useOpts.parameters.TIMEOUT),
+      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      string(name: 'TAG', value: useP.parameters.TAG),
+      booleanParam(name: 'NO_PUSH', value: useP.parameters.NO_PUSH),
+      string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT),
     ],
     wait: true
   )
@@ -1264,7 +1277,7 @@ def Object runBuildStack(Map opts) {
       ],
     ])
 
-    def json = readJSON(file: artifact)
+    def json = readJSON(file: resultsArtifact)
     echo "parsed ${resultsArtifact}: ${json}"
     return json
   } // nodeTiny

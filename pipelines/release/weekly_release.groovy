@@ -25,7 +25,6 @@ notify.wrap {
   def product         = 'lsst_distrib'
   def tarballProducts = product
   def retries         = 3
-  def buildJob        = 'release/run-rebuild'
   def publishJob      = 'release/run-publish'
 
   def gitTag       = null
@@ -43,12 +42,13 @@ notify.wrap {
 
     stage('build') {
       retry(retries) {
-        manifestId = util.runRebuild(buildJob, [
-          PRODUCT: product,
-          SKIP_DEMO: false,
-          SKIP_DOCS: false,
-          TIMEOUT: '8', // hours
-        ])
+        manifestId = util.runRebuild(
+          parameters: [
+            PRODUCT: product,
+            SKIP_DEMO: false,
+            SKIP_DOCS: false,
+          ],
+        )
       } // retry
     } // stage
 
@@ -125,7 +125,6 @@ notify.wrap {
     stage('build stack image') {
       retry(retries) {
         stackResults = util.runBuildStack(
-          job: 'release/docker/build-stack',
           parameters: [
             'PRODUCT': tarballProducts,
             'TAG': eupsTag,

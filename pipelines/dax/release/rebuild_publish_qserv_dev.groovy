@@ -19,7 +19,6 @@ notify.wrap {
   def product         = 'qserv_distrib'
   def tarballProducts = product
   def retries         = 3
-  def buildJob        = 'release/run-rebuild'
   def publishJob      = 'release/run-publish'
   def eupsTag         = 'qserv-dev'
 
@@ -28,12 +27,13 @@ notify.wrap {
   def run = {
     stage('build') {
       retry(retries) {
-        manifestId = util.runRebuild(buildJob, [
-          PRODUCT: product,
-          SKIP_DEMO: true,
-          SKIP_DOCS: true,
-          TIMEOUT: '8', // hours
-        ])
+        manifestId = util.runRebuild(
+          parameters: [
+            PRODUCT: product,
+            SKIP_DEMO: true,
+            SKIP_DOCS: true,
+          ],
+        )
       } // retry
     } // stage
 

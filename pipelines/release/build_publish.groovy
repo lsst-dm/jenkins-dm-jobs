@@ -34,7 +34,6 @@ notify.wrap {
   echo "skip docs: ${skipDocs}"
 
   def retries    = 3
-  def buildJob   = 'release/run-rebuild'
   def publishJob = 'release/run-publish'
 
   def manifestId = null
@@ -42,12 +41,14 @@ notify.wrap {
   def run = {
     stage('build') {
       retry(retries) {
-        manifestId = util.runRebuild(buildJob, [
-          BRANCH: branch,
-          PRODUCT: product,
-          SKIP_DEMO: skipDemo,
-          SKIP_DOCS: skipDocs,
-        ])
+        manifestId = util.runRebuild(
+          parameters: [
+            BRANCH: branch,
+            PRODUCT: product,
+            SKIP_DEMO: skipDemo,
+            SKIP_DOCS: skipDocs,
+          ],
+        )
       } // retry
     } // stage
 
