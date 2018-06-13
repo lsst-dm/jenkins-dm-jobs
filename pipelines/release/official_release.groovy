@@ -45,7 +45,8 @@ notify.wrap {
   def buildJob        = 'release/run-rebuild'
   def publishJob      = 'release/run-publish'
 
-  def manifestId = null
+  def manifestId   = null
+  def stackResults = null
 
   def run = {
     stage('git tag eups products') {
@@ -136,11 +137,13 @@ notify.wrap {
 
     stage('build stack image') {
       retry(retries) {
-        build job: 'release/docker/build-stack',
+        stackResults = util.runBuildStack(
+          job: 'release/docker/build-stack',
           parameters: [
-            string(name: 'PRODUCT', value: tarballProducts),
-            string(name: 'TAG', value: eupsTag),
-          ]
+            'PRODUCT': tarballProducts,
+            'TAG': eupsTag,
+          ],
+        )
       } // retry
     } // stage
 
@@ -154,6 +157,11 @@ notify.wrap {
             string(
               name: 'IMAGE_NAME',
               value: sqre.build_jupyterlabdemo.image_name,
+            ),
+            // BASE_IMAGE is the registry repo name *only* without a tag
+            string(
+              name: 'BASE_IMAGE',
+              value: stackResults.docker_registry.repo,
             ),
           ],
           wait: false

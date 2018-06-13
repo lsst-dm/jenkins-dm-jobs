@@ -91,6 +91,8 @@ shebangtron:
 #
 # docker releases of science-pipelines/lsst_distrib
 #
+# XXX this is currently release/docker/build-stack but should be renamed to not
+# use 'stack'
 scipipe_release:
   dockerfile:
     github_repo: lsst-sqre/docker-tarballs
