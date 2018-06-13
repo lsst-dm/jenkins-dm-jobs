@@ -55,10 +55,6 @@ dax-lsstsw-matrix:
   - <<: *el7-py3-llvm
 tarball:
   - <<: *tarball_defaults
-    <<: *el6-py3
-    platform: el6
-    osfamily: redhat
-  - <<: *tarball_defaults
     <<: *el7-py3
     platform: el7
     osfamily: redhat
