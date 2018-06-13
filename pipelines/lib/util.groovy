@@ -166,33 +166,56 @@ def slurpJson(String data) {
   slurper.parseText(data)
 }
 
-
 /**
  * Create an EUPS distrib tag
  *
- * @param manifestId String MANIFEST_ID/BUILD_ID/BUILD/bNNNN
- * @param eupsTag String tag name
- * @param product String whitespace delimited string of products to tag
- * @param eupspkgSource String type of eupspkg package to create
- * @param publishJob String job to trigger (does the actual work)
- * @param timelimit Integer build timeout in hours
+ * Example:
+ *
+ *     util.runPublish(
+ *       parameters: [
+ *         EUPSPKG_SOURCE: 'git',
+ *         MANIFEST_ID: manifestId,
+ *         EUPS_TAG: eupsTag,
+ *         PRODUCT: product,
+ *       ],
+ *     )
+ *
+ * @param p Map
+ * @param p.job String job to trigger. Defaults to `release/run-publish`.
+ * @param p.parameters.EUPSPKG_SOURCE String
+ * @param p.parameters.MANIFEST_ID String
+ * @param p.parameters.EUPS_TAG String
+ * @param p.parameters.PRODUCT String
+ * @param p.parameters.TIMEOUT String Defaults to `'1'`.
  */
-def void runPublish(
-  String manifestId,
-  String eupsTag,
-  String product,
-  String eupspkgSource,
-  String publishJob = 'release/run-publish',
-  Integer timelimit = 1
-) {
-  build job: publishJob,
+def void runPublish(Map p) {
+  requireMapKeys(p, [
+    'parameters',
+  ])
+  def useP = [
+    job: 'release/run-publish',
+  ] + p
+
+  requireMapKeys(p.parameters, [
+    'EUPSPKG_SOURCE',
+    'MANIFEST_ID',
+    'EUPS_TAG',
+    'PRODUCT',
+  ])
+  useP.parameters = [
+    TIMEOUT: '1' // should be string
+  ] + p.parameters
+
+  build(
+    job: useP.job,
     parameters: [
-      string(name: 'EUPSPKG_SOURCE', value: eupspkgSource),
-      string(name: 'MANIFEST_ID', value: manifestId),
-      string(name: 'EUPS_TAG', value: eupsTag),
-      string(name: 'PRODUCT', value: product),
-      string(name: 'TIMEOUT', value: timelimit.toString()), // hours
-    ]
+      string(name: 'EUPSPKG_SOURCE', value: useP.parameters.EUPSPKG_SOURCE),
+      string(name: 'MANIFEST_ID', value: useP.parameters.MANIFEST_ID),
+      string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
+      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT.toString()),
+    ],
+  )
 } // runPublish
 
 /**
@@ -1074,7 +1097,7 @@ def ltdPush(Map args) {
  *     )
  *
  * @param p Map
- * @param p.job String job to trigger. Defaults to `release/rebuild`.
+ * @param p.job String job to trigger. Defaults to `release/run-rebuild`.
  * @param p.parameters.BRANCH String Defaults to `''`.
  * @param p.parameters.PRODUCT String Defaults to `''`.
  * @param p.parameters.SKIP_DEMO Boolean Defaults to `false`.

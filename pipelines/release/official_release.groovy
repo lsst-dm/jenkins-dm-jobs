@@ -42,7 +42,6 @@ notify.wrap {
   def product         = 'lsst_distrib'
   def tarballProducts = product
   def retries         = 3
-  def publishJob      = 'release/run-publish'
 
   def manifestId   = null
   def stackResults = null
@@ -98,20 +97,20 @@ notify.wrap {
     stage('eups publish') {
       def pub = [:]
 
-      pub[eupsTag] = {
-        retry(retries) {
-          util.runPublish(manifestId,
-            eupsTag, product, eupspkgSource, publishJob)
-        }
-      }
-      if (oLatest) {
-        pub['o_latest'] = {
+      [eupsTag, 'o_latest'].each { tagName ->
+        pub[tagName] = {
           retry(retries) {
-            util.runPublish(manifestId,
-              'o_latest', product, eupspkgSource, publishJob)
-          }
-        }
-      }
+            util.runPublish(
+              parameters: [
+                EUPSPKG_SOURCE: eupspkgSource,
+                MANIFEST_ID: manifestId,
+                EUPS_TAG: tagName,
+                PRODUCT: product,
+              ],
+            )
+          } // retry
+        } // pub
+      } // each
 
       parallel pub
     } // stage

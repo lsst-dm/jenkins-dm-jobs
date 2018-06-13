@@ -25,7 +25,6 @@ notify.wrap {
   def product         = 'lsst_distrib'
   def tarballProducts = product
   def retries         = 3
-  def publishJob      = 'release/run-publish'
 
   def gitTag       = null
   def eupsTag      = null
@@ -55,16 +54,20 @@ notify.wrap {
     stage('eups publish') {
       def pub = [:]
 
-      pub[eupsTag] = {
-        retry(retries) {
-          util.runPublish(manifestId, eupsTag, product, 'git', publishJob)
-        }
-      }
-      pub['w_latest'] = {
-        retry(retries) {
-          util.runPublish(manifestId, 'w_latest', product, 'git', publishJob)
-        }
-      }
+      [eupsTag, 'w_latest'].each { tagName ->
+        pub[tagName] = {
+          retry(retries) {
+            util.runPublish(
+              parameters: [
+                EUPSPKG_SOURCE: 'git',
+                MANIFEST_ID: manifestId,
+                EUPS_TAG: tagName,
+                PRODUCT: product,
+              ],
+            )
+          } // retry
+        } // pub
+      } // each
 
       parallel pub
     } // stage

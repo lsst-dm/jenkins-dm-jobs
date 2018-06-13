@@ -33,8 +33,7 @@ notify.wrap {
   echo "skip demo: ${skipDemo}"
   echo "skip docs: ${skipDocs}"
 
-  def retries    = 3
-  def publishJob = 'release/run-publish'
+  def retries = 3
 
   def manifestId = null
 
@@ -54,7 +53,14 @@ notify.wrap {
 
     stage('eups publish') {
       retry(retries) {
-        util.runPublish(manifestId, eupsTag, product, 'git', publishJob)
+        util.runPublish(
+          parameters: [
+            EUPSPKG_SOURCE: 'git',
+            MANIFEST_ID: manifestId,
+            EUPS_TAG: eupsTag,
+            PRODUCT: product,
+          ],
+        )
       }
     } // stage
   } // run

@@ -19,7 +19,6 @@ notify.wrap {
   def product         = 'qserv_distrib'
   def tarballProducts = product
   def retries         = 3
-  def publishJob      = 'release/run-publish'
   def eupsTag         = 'qserv-dev'
 
   def manifestId = null
@@ -39,8 +38,15 @@ notify.wrap {
 
     stage('eups publish') {
       retry(retries) {
-        util.runPublish(manifestId, eupsTag, product, 'git', publishJob)
-      }
+        util.runPublish(
+          parameters: [
+            EUPSPKG_SOURCE: 'git',
+            MANIFEST_ID: manifestId,
+            EUPS_TAG: eupsTag,
+            PRODUCT: product,
+          ],
+        )
+      } // retry
     } // stage
   } // run
 
