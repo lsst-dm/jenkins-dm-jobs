@@ -129,8 +129,8 @@ notify.wrap {
       retry(retries) {
         stackResults = util.runBuildStack(
           parameters: [
-            'PRODUCT': tarballProducts,
-            'TAG': eupsTag,
+            PRODUCT: tarballProducts,
+            TAG: eupsTag,
           ],
         )
       } // retry
