@@ -102,6 +102,10 @@ notify.wrap {
         util.dumpJson(resultsFile,  [
           base_image: baseImage ?: null,
           image: "${dockerRepo}:${dockerTag}",
+          docker_registry: [
+            repo: dockerRepo,
+            tag: dockerTag
+          ],
         ])
 
         archiveArtifacts([
