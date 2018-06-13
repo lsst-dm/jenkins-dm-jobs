@@ -153,7 +153,7 @@ notify.wrap {
       // XXX use the same compiler as is configured for the canonical build
       // env.  This is a bit of a kludge.  It would be better to directly
       // label the compiler used on the dockage image.
-      def can = config.canonical
+      def lsstswConfig = config.canonical.lsstsw_config
 
       retry(1) {
         // based on lsstsqre/stack image
@@ -161,7 +161,7 @@ notify.wrap {
           parameters: [
             string(name: 'EUPS_TAG', value: eupsTag),
             string(name: 'MANIFEST_ID', value: manifestId),
-            string(name: 'COMPILER', value: can.compiler),
+            string(name: 'COMPILER', value: lsstswConfig.compiler),
             booleanParam(
               name: 'NO_PUSH',
               value: sqre.validate_drp.no_push,
