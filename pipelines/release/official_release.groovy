@@ -179,6 +179,7 @@ notify.wrap {
             string(name: 'EUPS_TAG', value: eupsTag),
             string(name: 'MANIFEST_ID', value: manifestId),
             string(name: 'COMPILER', value: lsstswConfig.compiler),
+            string(name: 'RELEASE_IMAGE', value: stackResults.image),
             booleanParam(
               name: 'NO_PUSH',
               value: sqre.validate_drp.no_push,

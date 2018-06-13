@@ -28,9 +28,9 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
-    'MANIFEST_ID',
     'COMPILER',
     'EUPS_TAG',
+    'MANIFEST_ID',
     'NO_PUSH',
     'WIPEOUT',
   ])
@@ -40,6 +40,12 @@ notify.wrap {
   String eupsTag    = params.EUPS_TAG
   Boolean noPush    = params.NO_PUSH
   Boolean wipeout   = params.WIPEOUT
+
+  // optional
+  String relImage = params.RELEASE_IMAGE
+
+  def dockerRepo = config.scipipe_release.docker_registry.repo
+  relImage = relImage ?: "${dockerRepo}:7-stack-lsst_distrib-${eupsTag}"
 
   target = [
     manifestId: manifestId,
@@ -53,7 +59,9 @@ notify.wrap {
 
   def matrix = [
     cfht: {
-      drp('cfht', target, 'master', false, true, masterRetries, 1)
+      drp('cfht', target, 'master', false, true, masterRetries, 1, [
+        relImage: relImage,
+      ])
     },
     hsc: {
       drp('hsc', target, 'master', false, true, masterRetries, 15)
@@ -84,10 +92,14 @@ def void drp(
   Boolean doPostqa = true,
   Boolean doDispatchqa = true,
   Integer retries = 3,
-  Integer timelimit = 12
+  Integer timelimit = 12,
+  Map p
 ) {
+  util.requireMapKeys(p, [
+    'relImage',
+  ])
+
   def datasetInfo  = datasetLookup(datasetSlug)
-  def docImage     = "lsstsqre/centos:7-stack-lsst_distrib-${target.eupsTag}"
   def drpRepo      = 'https://github.com/lsst/validate_drp.git'
   def postqaVer    = '1.3.3'
   def jenkinsDebug = 'true'
@@ -136,8 +148,8 @@ def void drp(
           }
         }
 
-        docker.image(docImage).pull()
-        util.insideWrap(docImage) {
+        docker.image(p.relImage).pull()
+        util.insideWrap(p.relImage) {
           // clone and build validate_drp from source
           dir(drpDir) {
             // the simplier git step doesn't support 'CleanBeforeCheckout'
@@ -198,7 +210,7 @@ def void drp(
             postqaVer,
             "${postqaDir}/post-qa.json",
             datasetSlug,
-            // docImage, // XXX DM-12669
+            // p.relImage, // XXX DM-12669
             '0xdeadbeef',
             target.noPush
           )
