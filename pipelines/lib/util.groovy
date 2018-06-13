@@ -1173,4 +1173,64 @@ def String defaultCodekitImage() {
   sqreConfig().codekit.docker_registry.repo
 }
 
+/**
+ * run `release/run-rebuild` job and parse result
+ *
+ * @param opts.job Name of job to trigger. Defaults to
+ *        `release/docker/build-stack`.
+ * @param opts.parameters.PRODUCT String. Required.
+ * @param opts.parameters.TAG String. Required.
+ * @param opts.parameters.NO_PUSH Boolean. Defaults to `false`.
+ * @param opts.parameters.TIMEOUT String. Defaults to `1'`.
+ * @return json Object
+ */
+def Object runBuildStack(Map opts) {
+  // validate opts Map
+  requireMapKeys(opts, [
+    'parameters',
+  ])
+  def useOpts = [
+    job: 'release/docker/build-stack',
+  ] + opts
+
+  // validate opts.parameters Map
+  requireMapKeys(opts.parameters, [
+    'PRODUCT',
+    'TAG',
+  ])
+  useOpts.parameters = [
+    NO_PUSH: false,
+    TIMEOUT: '1', // should be String
+  ] + opts.parameters
+
+  def result = build(
+    job: useOpts.job,
+    parameters: [
+      string(name: 'PRODUCT', value: useOpts.parameters.PRODUCT),
+      string(name: 'TAG', value: useOpts.parameters.TAG),
+      booleanParam(name: 'NO_PUSH', value: useOpts.parameters.NO_PUSH),
+      string(name: 'TIMEOUT', value: useOpts.parameters.TIMEOUT),
+    ],
+    wait: true
+  )
+
+  nodeTiny {
+    resultsArtifact = 'results.json'
+
+    step([
+      $class: 'CopyArtifact',
+      projectName: useP.job,
+      filter: resultsArtifact,
+      selector: [
+        $class: 'SpecificBuildSelector',
+        buildNumber: result.id,
+      ],
+    ])
+
+    def json = readJSON(file: artifact)
+    echo "parsed ${resultsArtifact}: ${json}"
+    return json
+  } // nodeTiny
+} // runBuildStack
+
 return this;
