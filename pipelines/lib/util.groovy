@@ -155,10 +155,9 @@ def dumpJson(String filename, Map data) {
 }
 
 /**
- * Serialize a Map to a JSON string and write it to a file.
+ * Parse a JSON string.
  *
- * @param filename output filename
- * @param data Map to serialize
+ * @param data String to parse.
  * @return LazyMap parsed JSON object
  */
 @NonCPS
