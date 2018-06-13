@@ -70,9 +70,7 @@ notify.wrap {
       parallel pub
     } // stage
 
-    stage('wait for s3 sync') {
-      sleep time: 15, unit: 'MINUTES'
-    }
+    util.waitForS3()
 
     // NOOP / DRY_RUN
     stage('git tag eups products') {
@@ -120,9 +118,7 @@ notify.wrap {
       util.buildTarballMatrix(config, tarballProducts, eupsTag, opt)
     } // stage
 
-    stage('wait for s3 sync') {
-      sleep time: 15, unit: 'MINUTES'
-    }
+    util.waitForS3()
 
     stage('build stack image') {
       retry(retries) {
