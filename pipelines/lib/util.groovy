@@ -887,16 +887,51 @@ def Object readYamlFile(String file) {
   return yaml
 }
 
-def void buildTarballMatrix(
-  Map config,
-  String product,
-  String eupsTag,
-  Map opt,
-  Integer retries = 3
-) {
+/**
+ * Build a multi-configuration matrix of eups tarballs.
+ *
+ * Example:
+ *
+ *     util.buildTarballMatrix(
+ *       tarballConfigs: config.tarball,
+ *       parameters: [
+ *         PRODUCT: tarballProducts,
+ *         SMOKE: true,
+ *         RUN_DEMO: true,
+ *         RUN_SCONS_CHECK: true,
+ *         PUBLISH: true,
+ *       ],
+ *       retries: retries,
+ *     )
+ *
+ * @param p Map
+ * @param p.tarballConfigs List
+ * @param p.parameters.PRODUCT String
+ * @param p.parameters.EUPS_TAG String
+ * @param p.parameters.TIMEOUT String Defaults to `'8'`.
+ * @param p.retries Integer Defaults to `1`.
+ */
+def void buildTarballMatrix(Map p) {
+  requireMapKeys(p, [
+    'tarballConfigs',
+    'parameters',
+  ])
+  def useP = [
+    retries: 1,
+  ] + p
+
+  requireMapKeys(p.parameters, [
+    'PRODUCT',
+    'EUPS_TAG',
+  ])
+  useP.parameters = [
+    TIMEOUT: '8', // should be String
+  ] + p.parameters
+  def param = useP.parameters
+
   def platform = [:]
 
-  config['tarball'].each { item ->
+  p.tarballConfigs.each { item ->
     def displayName = item.display_name ?: item.label
     def displayCompiler = item.display_compiler ?: item.compiler
 
@@ -904,17 +939,17 @@ def void buildTarballMatrix(
     slug += "-${item.miniver}-${item.lsstsw_ref}"
 
     platform["${displayName}.${displayCompiler}.${slug}"] = {
-      retry(retries) {
+      retry(useP.retries) {
         build job: 'release/tarball',
           parameters: [
-            string(name: 'PRODUCT', value: product),
-            string(name: 'EUPS_TAG', value: eupsTag),
-            booleanParam(name: 'SMOKE', value: opt.SMOKE),
-            booleanParam(name: 'RUN_DEMO', value: opt.RUN_DEMO),
-            booleanParam(name: 'RUN_SCONS_CHECK', value: opt.RUN_SCONS_CHECK),
-            booleanParam(name: 'PUBLISH', value: opt.PUBLISH),
+            string(name: 'PRODUCT', value: param.PRODUCT),
+            string(name: 'EUPS_TAG', value: param.EUPS_TAG),
+            booleanParam(name: 'SMOKE', value: param.SMOKE),
+            booleanParam(name: 'RUN_DEMO', value: param.RUN_DEMO),
+            booleanParam(name: 'RUN_SCONS_CHECK', value: param.RUN_SCONS_CHECK),
+            booleanParam(name: 'PUBLISH', value: param.PUBLISH),
             booleanParam(name: 'WIPEOUT', value: false),
-            string(name: 'TIMEOUT', value: '8'), // hours
+            string(name: 'TIMEOUT', value: param.TIMEOUT), // hours
             string(name: 'IMAGE', value: nullToEmpty(item.image)),
             string(name: 'LABEL', value: item.label),
             string(name: 'COMPILER', value: item.compiler),

@@ -118,14 +118,18 @@ notify.wrap {
     util.waitForS3()
 
     stage('build eups tarballs') {
-     def opt = [
-        SMOKE: true,
-        RUN_DEMO: true,
-        RUN_SCONS_CHECK: true,
-        PUBLISH: true,
-      ]
-
-      util.buildTarballMatrix(config, tarballProducts, eupsTag, opt)
+      util.buildTarballMatrix(
+        tarballConfigs: config.tarball,
+        parameters: [
+          PRODUCT: tarballProducts,
+          EUPS_TAG: eupsTag,
+          SMOKE: true,
+          RUN_DEMO: true,
+          RUN_SCONS_CHECK: true,
+          PUBLISH: true,
+        ],
+        retries: retries,
+      )
     } // stage
 
     util.waitForS3()

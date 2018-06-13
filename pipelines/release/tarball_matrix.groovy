@@ -34,16 +34,20 @@ notify.wrap {
 
   def retries = 3
 
-  def opt = [
-    SMOKE: smoke,
-    RUN_DEMO: runDemo,
-    RUN_SCONS_CHECK: runSconsCheck,
-    PUBLISH: publish,
-  ]
-
   timeout(time: 30, unit: 'HOURS') {
     stage('build eups tarballs') {
-      util.buildTarballMatrix(config, product, eupsTag, opt)
-    }
+      util.buildTarballMatrix(
+        tarballConfigs: config.tarball,
+        parameters: [
+          PRODUCT: tarballProducts,
+          EUPS_TAG: eupsTag,
+          SMOKE: smoke,
+          RUN_DEMO: runDemo,
+          RUN_SCONS_CHECK: runSconsCheck,
+          PUBLISH: publish,
+        ],
+        retries: retries,
+      )
+    } // stage
   }
 } // notify.wrap
