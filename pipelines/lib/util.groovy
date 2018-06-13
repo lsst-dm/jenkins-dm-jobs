@@ -579,9 +579,29 @@ def void githubTagRelease(Map p) {
 /**
  * Run the `github-tag-teams` script from `sqre-codekit` with parameters.
  *
- * @param options Map see `makeCliCmd`
+ * Example:
+ *
+ *     util.githubTagTeams(
+ *       options: [
+ *         '--dry-run': true,
+ *         '--org': 'myorg',
+ *         '--tag': '999.0.0',
+ *       ],
+ *     )
+ *
+ * @param p Map
+ * @param p.options Map CLI --<options>. Required. See `makeCliCmd`
+ * @param p.options.'--org' String Required.
+ * @param p.options.'--tag' String|List Required.
  */
-def void githubTagTeams(Map options) {
+def void githubTagTeams(Map p) {
+  requireMapKeys(p, [
+    'options',
+  ])
+  requireMapKeys(p.options, [
+    '--org',
+    '--tag',
+  ])
   def prog = 'github-tag-teams'
   def defaultOptions = [
     '--debug': true,
@@ -593,7 +613,7 @@ def void githubTagTeams(Map options) {
     '--deny-team': 'DM Externals',
   ]
 
-  runCodekitCmd(prog, defaultOptions, options, null)
+  runCodekitCmd(prog, defaultOptions, p.options, null)
 } // githubTagTeams
 
 /**

@@ -99,11 +99,11 @@ notify.wrap {
       retry(retries) {
         node('docker') {
           util.githubTagTeams(
-            [
+            options: [
               '--dry-run': true,
               '--org': config.release_tag_org,
               '--tag': gitTag,
-            ]
+            ],
           )
         } // node
       } // retry
