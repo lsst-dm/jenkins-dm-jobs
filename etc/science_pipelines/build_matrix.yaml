@@ -111,8 +111,10 @@ newinstall:
   dockerfile:
     github_repo: lsst-sqre/docker-newinstall
     git_ref: master
+    dir: ''
   docker_registry:
     repo: lsstsqre/newinstall
     tag: latest
-    dir: ''
   url: https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh
+  github_repo: lsst/lsst
+  git_ref: master

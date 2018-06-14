@@ -1254,6 +1254,20 @@ def String reposUrl() {
 }
 
 /*
+ * Generate URL to newinstall.sh
+ *
+ * @return url String
+ */
+def String newinstallUrl() {
+  def config = scipipeConfig()
+  return githubRawUrl(
+    slug: config.newinstall.github_repo,
+    ref: config.newinstall.git_ref,
+    path: 'scripts/newinstall.sh',
+  )
+}
+
+/*
  * Sanitize string for use as docker tag
  *
  * @param tag String
