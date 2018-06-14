@@ -1,5 +1,3 @@
-import groovy.transform.Field
-
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -22,8 +20,6 @@ node('jenkins-master') {
     config = util.scipipeConfig()
   }
 }
-
-@Field String repos_url = 'https://raw.githubusercontent.com/lsst/repos/master/etc/repos.yaml'
 
 notify.wrap {
   util.requireParams([
@@ -825,5 +821,6 @@ def void downloadManifest(String destFile, String manifestId) {
  * @param destFile String path to write downloaded file
  */
 def void downloadRepos(String destFile) {
-  downloadFile(repos_url, destFile)
+  def reposUrl = util.reposUrl()
+  downloadFile(reposUrl, destFile)
 }
