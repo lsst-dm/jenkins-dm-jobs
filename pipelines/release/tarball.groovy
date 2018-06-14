@@ -26,6 +26,8 @@ notify.wrap {
     'LABEL',
     'LSSTSW_REF',
     'MINIVER',
+    'OSFAMILY',
+    'PLATFORM',
     'PRODUCT',
     'PUBLISH',
     'PYTHON_VERSION',
@@ -42,6 +44,8 @@ notify.wrap {
   String lsstswRef      = params.LSSTSW_REF
   String miniver        = params.MINIVER
   String product        = params.PRODUCT
+  String osfamily       = params.OSFAMILY
+  String platform       = params.PLATFORM
   Boolean publish       = params.PUBLISH
   String pythonVersion  = params.PYTHON_VERSION
   Boolean runDemo       = params.RUN_DEMO
@@ -65,19 +69,13 @@ notify.wrap {
     ]
   }
 
-  // XXX this lookup table should be moved to a config file instead of being
-  // hardcoded
-  switch(label) {
-    case 'centos-7':
-      linuxTarballs(image, 'el7', compiler, py,
+  switch(osfamily) {
+    case 'redhat':
+      linuxTarballs(image, platform, compiler, py,
         timeout, buildTarget, smokeConfig, wipeout, publish)
       break
-    case 'centos-6':
-      linuxTarballs(image, 'el6', compiler, py,
-        timeout, buildTarget, smokeConfig, wipeout, publish)
-      break
-    case 'osx-10.11':
-      osxTarballs(label, '10.9', compiler, py,
+    case 'osx':
+      osxTarballs(label, platform, compiler, py,
         timeout, buildTarget, smokeConfig, wipeout, publish)
       break
     default:
@@ -971,7 +969,7 @@ def void emptyExistingDir(String path) {
  * @param buildDir String root path to newinstall.sh env
  * @param menv MinicondaEnv
  * @return String path to EupsBuildDir
-*/
+ */
 def String eupsBuildDir(String buildDir, MinicondaEnv menv) {
   return "${buildDir}/stack/${menv.slug()}/EupsBuildDir"
 }

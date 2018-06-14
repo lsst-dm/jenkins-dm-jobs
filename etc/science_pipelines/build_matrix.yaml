@@ -57,6 +57,8 @@ tarball:
     <<: *el6-py3
   - <<: *tarball_defaults
     <<: *el7-py3
+    platform: el7
+    osfamily: redhat
   # need newinstall.sh support for devtoolset-7
   # - <<: *tarball_defaults
   #  <<: *el7-dts7-py3

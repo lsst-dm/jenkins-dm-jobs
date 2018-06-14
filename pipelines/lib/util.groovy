@@ -956,6 +956,8 @@ def void buildTarballMatrix(Map p) {
             string(name: 'PYTHON_VERSION', value: item.python),
             string(name: 'MINIVER', value: item.miniver),
             string(name: 'LSSTSW_REF', value: item.lsstsw_ref),
+            string(name: 'OSFAMILY', value: item.osfamily),
+            string(name: 'PLATFORM', value: item.platform),
           ]
       } // retry
     } // platform
