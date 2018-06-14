@@ -26,11 +26,11 @@ notify.wrap {
   def dockerfile     = newinstall.dockerfile
   def dockerRegistry = newinstall.docker_registry
 
-  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo)
-  def githubRef  = dockerfile.git_ref
-  def buildDir   = dockerfile.dir
-  def dockerRepo = dockerRegistry.repo
-  def url        = newinstall.url
+  def githubRepo    = util.githubSlugToUrl(dockerfile.github_repo)
+  def githubRef     = dockerfile.git_ref
+  def buildDir      = dockerfile.dir
+  def dockerRepo    = dockerRegistry.repo
+  def newinstallUrl = util.newinstallUrl()
 
   def image = null
 
@@ -51,7 +51,7 @@ notify.wrap {
       // ensure base image is always up to date
       opt << '--pull=true'
       opt << '--no-cache'
-      opt << "--build-arg NEWINSTALL_URL=\"${url}\""
+      opt << "--build-arg NEWINSTALL_URL=\"${newinstallUrl}\""
       withCredentials([[
         $class: 'StringBinding',
         credentialsId: 'eups-url',
