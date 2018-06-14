@@ -1226,6 +1226,20 @@ def String githubRawUrl(Map p) {
 }
 
 /*
+ * Generate URL to versiondb manifest file.
+ *
+ * @param manifestId String
+ * @return url String
+ */
+def String versiondbManifestUrl(String manifestId) {
+  def config = scipipeConfig()
+  return githubRawUrl(
+    slug: config.versiondb.github_repo,
+    path: "manifests/${manifestId}.txt",
+  )
+}
+
+/*
  * Sanitize string for use as docker tag
  *
  * @param tag String
