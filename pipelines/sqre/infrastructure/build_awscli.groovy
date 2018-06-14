@@ -28,7 +28,7 @@ notify.wrap {
   def dockerfile      = awscli.dockerfile
   def dockerRegistry  = awscli.docker_registry
 
-  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
+  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo)
   def githubRef  = dockerfile.git_ref
   def buildDir   = dockerfile.dir
   def dockerRepo = dockerRegistry.repo

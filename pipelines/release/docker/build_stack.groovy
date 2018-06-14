@@ -32,7 +32,7 @@ notify.wrap {
   def newinstall     = config.newinstall
   def shebangtron    = config.shebangtron
 
-  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo, 'https')
+  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo)
   def githubRef  = dockerfile.git_ref
   def buildDir   = dockerfile.dir
   def dockerRepo = dockerRegistry.repo
