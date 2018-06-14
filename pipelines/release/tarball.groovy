@@ -564,8 +564,7 @@ def void prepareBuild(
     ciDir
   )
 
-  writeFile(file: shName, text: script)
-  util.bash "chmod a+x ${shName}"
+  writeScript(file: shName, text: script)
 }
 
 /**
@@ -591,8 +590,22 @@ def void prepareSmoke(
     ciDir
   )
 
-  writeFile(file: shName, text: script)
-  util.bash "chmod a+x ${shName}"
+  writeScript(file: shName, text: script)
+}
+
+/**
+ * write executable file
+ *
+ * @param p Map
+ * @param p.file String name of script file to write
+ * @param p.text String script text
+ */
+def void writeScript(Map p) {
+  echo "creating script ${p.file}:"
+  echo p.text
+
+  writeFile(file: p.file, text: p.text)
+  util.bash "chmod a+x ${p.file}"
 }
 
 /**
