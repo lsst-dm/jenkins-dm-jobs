@@ -875,6 +875,10 @@ def String scriptPreamble(
   String ciDir
 ) {
   util.dedent("""
+    #!/bin/bash
+
+    set -xe
+
     if [[ -n \$CMIRROR_S3_BUCKET ]]; then
         export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
         export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
