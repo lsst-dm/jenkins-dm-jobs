@@ -1268,6 +1268,20 @@ def String newinstallUrl() {
 }
 
 /*
+ * Generate URL to shebangtron
+ *
+ * @return url String
+ */
+def String shebangtronUrl() {
+  def config = scipipeConfig()
+  return githubRawUrl(
+    slug: config.shebangtron.github_repo,
+    ref: config.shebangtron.git_ref,
+    path: 'shebangtron',
+  )
+}
+
+/*
  * Sanitize string for use as docker tag
  *
  * @param tag String
