@@ -1205,6 +1205,27 @@ def String githubSlugToUrl(String slug, String scheme = 'https') {
 }
 
 /*
+ * Generate a github "raw" download URL.
+ *
+ * @param p.slug String
+ * @param p.path String
+ * @param p.ref String Defaults to 'master'
+ * @return url String
+ */
+def String githubRawUrl(Map p) {
+  requireMapKeys(p, [
+    'slug',
+    'path',
+  ])
+  def useP = [
+    ref: 'master',
+  ] + p
+
+  def baseUrl = 'https://raw.githubusercontent.com'
+  return "${baseUrl}/${useP.slug}/${useP.ref}/${useP.path}"
+}
+
+/*
  * Sanitize string for use as docker tag
  *
  * @param tag String
