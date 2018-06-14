@@ -78,6 +78,13 @@ canonical:
 release:
   # minutes
   s3_wait_time: 15
+  step:
+    build_jupyterlabdemo:
+      image_name: lsstsqre/jld-lab
+    validate_drp:
+      no_push: false
+    documenteer:
+      publish: true
 #
 # low-level build parameters
 #

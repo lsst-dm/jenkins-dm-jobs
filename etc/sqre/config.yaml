@@ -1,14 +1,5 @@
 ---
 #
-# d/w/o release pipeline params
-#
-build_jupyterlabdemo:
-  image_name: lsstsqre/jld-lab
-validate_drp:
-  no_push: false
-documenteer:
-  publish: true
-#
 # general config values
 #
 awscli:

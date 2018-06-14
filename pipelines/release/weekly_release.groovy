@@ -12,7 +12,6 @@ node('jenkins-master') {
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
     config = util.scipipeConfig()
-    sqre = util.sqreConfig()
   }
 }
 
@@ -145,7 +144,7 @@ notify.wrap {
             booleanParam(name: 'NO_PUSH', value: false),
             string(
               name: 'IMAGE_NAME',
-              value: sqre.build_jupyterlabdemo.image_name,
+              value: config.release.step.build_jupyterlabdemo.image_name,
             ),
             // BASE_IMAGE is the registry repo name *only* without a tag
             string(
@@ -173,7 +172,7 @@ notify.wrap {
             string(name: 'RELEASE_IMAGE', value: stackResults.image),
             booleanParam(
               name: 'NO_PUSH',
-              value: sqre.validate_drp.no_push,
+              value: config.release.step.validate_drp.no_push,
             ),
             booleanParam(name: 'WIPEOUT', value: true),
           ],
@@ -190,7 +189,7 @@ notify.wrap {
             string(name: 'RELEASE_IMAGE', value: stackResults.image),
             booleanParam(
               name: 'PUBLISH',
-              value: sqre.documenteer.publish,
+              value: config.release.step.documenteer.publish,
             ),
           ]
       } // retry
