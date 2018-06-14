@@ -17,7 +17,7 @@ notify.wrap {
     timeout(time: 4, unit: 'HOURS') {
       dir('qserv') {
         git([
-          url: 'https://github.com/lsst/qserv.git',
+          url: util.githubSlugToUrl('lsst/qserv'),
           branch: 'master'
         ])
       }

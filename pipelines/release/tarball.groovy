@@ -789,6 +789,8 @@ def String smokeScript(
   MinicondaEnv menv,
   String ciDir
 ) {
+  def baseUrl = util.githubSlugToUrl('lsst/base')
+
   scriptPreamble(
     compiler,
     macosx_deployment_target,
@@ -798,6 +800,7 @@ def String smokeScript(
   ) +
    util.dedent("""
     export EUPS_PKGROOT="${eupsPkgroot}"
+    export BASE_URL="${baseUrl}"
 
     curl -sSL ${config.newinstall.url} | bash -s -- -cb
     . ./loadLSST.bash
@@ -851,7 +854,7 @@ for line in sys.stdin:
       BASE_REF=$(eups list base | estring2ref)
 
       # sadly, git will not clone by sha1 -- only branch/tag names are allowed
-      git clone https://github.com/lsst/base.git
+      git clone "$BASE_URL"
       cd base
       git checkout "$BASE_REF"
       setup -k -r .

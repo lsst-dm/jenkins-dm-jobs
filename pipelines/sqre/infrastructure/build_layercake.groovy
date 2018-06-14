@@ -34,7 +34,7 @@ notify.wrap {
     def buildRepo = 'lsstsqre/centos'
 
     git([
-      url: 'https://github.com/lsst-sqre/packer-layercake.git',
+      url: util.githubSlugToUrl('lsst-sqre/packer-layercake'),
       branch: 'master',
       changelog: false,
       poll: false

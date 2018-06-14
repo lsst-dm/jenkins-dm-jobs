@@ -95,7 +95,7 @@ def void drp(
   ])
 
   def datasetInfo  = datasetLookup(datasetSlug)
-  def drpRepo      = 'https://github.com/lsst/validate_drp.git'
+  def drpRepo      = util.githubSlugToUrl('lsst/validate_drp')
   def postqaVer    = '1.3.3'
   def jenkinsDebug = 'true'
 
@@ -271,21 +271,21 @@ def Map datasetLookup(String datasetSlug) {
   switch(datasetSlug) {
     case 'cfht':
       info['dataset']     = 'validation_data_cfht'
-      info['datasetRepo'] = 'https://github.com/lsst/validation_data_cfht.git'
+      info['datasetRepo'] = util.githubSlugToUrl('lsst/validation_data_cfht')
       info['datasetRef']  = 'master'
       info['cloneTime']   = 15
       info['runTime']     = 15
       break
     case 'hsc':
       info['dataset']     = 'validation_data_hsc'
-      info['datasetRepo'] = 'https://github.com/lsst/validation_data_hsc.git'
+      info['datasetRepo'] = util.githubSlugToUrl('lsst/validation_data_hsc')
       info['datasetRef']  = 'master'
       info['cloneTime']   = 240
       info['runTime']     = 600
       break
     case 'decam':
       info['dataset']     = 'validation_data_decam'
-      info['datasetRepo'] = 'https://github.com/lsst/validation_data_decam.git'
+      info['datasetRepo'] = util.githubSlugToUrl('lsst/validation_data_decam')
       info['datasetRef']  = 'master'
       info['cloneTime']   = 60 // XXX untested
       info['runTime']     = 60 // XXX untested
