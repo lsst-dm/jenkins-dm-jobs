@@ -747,7 +747,6 @@ def void cleanup(String buildDir) {
 // nested steps and this may be difficult to comprehend in the future.
 // Consider moving all of this logic into an external driver script that is
 // called with parameters.
-@NonCPS
 def String buildScript(
   String products,
   String tag,
@@ -792,7 +791,6 @@ def String buildScript(
 /**
  * Generate shellscript to execute a "smoke" install test.
  */
-@NonCPS
 def String smokeScript(
   String products,
   String tag,
@@ -879,7 +877,6 @@ def String smokeScript(
 /**
  * Generate common shellscript boilerplate.
  */
-@NonCPS
 def String scriptPreamble(
   String compiler,
   String macosx_deployment_target='10.9',
@@ -975,7 +972,6 @@ def void emptyExistingDir(String path) {
  * @param menv MinicondaEnv
  * @return String path to EupsBuildDir
 */
-@NonCPS
 def String eupsBuildDir(String buildDir, MinicondaEnv menv) {
   return "${buildDir}/stack/${menv.slug()}/EupsBuildDir"
 }
