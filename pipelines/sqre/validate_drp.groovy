@@ -50,7 +50,7 @@ notify.wrap {
     wipeout: wipeout,
   ]
 
-  def masterRetries = 3
+  def masterRetries = 1
 
   def matrix = [
     cfht: {
@@ -243,7 +243,7 @@ def void drp(
         } // timeout
       } // node
     } catch(e) {
-      runNodeCleanup()
+      //runNodeCleanup()
       throw e
     }
   } // retry
