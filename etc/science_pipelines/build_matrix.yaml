@@ -94,7 +94,6 @@ ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: master
 shebangtron:
-  url: https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron
   github_repo: lsst/shebangtron
   git_ref: master
 #

@@ -30,14 +30,14 @@ notify.wrap {
   def dockerfile     = scipipe.dockerfile
   def dockerRegistry = scipipe.docker_registry
   def newinstall     = config.newinstall
-  def shebangtron    = config.shebangtron
 
-  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo)
-  def githubRef  = dockerfile.git_ref
-  def buildDir   = dockerfile.dir
-  def dockerRepo = dockerRegistry.repo
-  def dockerTag  = "7-stack-lsst_distrib-${eupsTag}"
-  def timestamp  = util.epochMilliToUtc(currentBuild.startTimeInMillis)
+  def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
+  def githubRef      = dockerfile.git_ref
+  def buildDir       = dockerfile.dir
+  def dockerRepo     = dockerRegistry.repo
+  def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
+  def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
+  def shebangtronUrl = util.shebangtronUrl()
 
   def newinstallImage = newinstall.docker_registry.repo
   newinstallImage += ":${newinstall.docker_registry.tag}"
@@ -68,7 +68,7 @@ notify.wrap {
       opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
       opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
       opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
-      opt << "--build-arg SHEBANGTRON_URL=\"${shebangtron.url}\""
+      opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
       opt << '.'
 
       dir(buildDir) {
