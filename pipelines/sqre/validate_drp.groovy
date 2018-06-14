@@ -24,7 +24,6 @@ node('jenkins-master') {
 }
 
 @Field String repos_url = 'https://raw.githubusercontent.com/lsst/repos/master/etc/repos.yaml'
-@Field String manifest_base_url = 'https://raw.githubusercontent.com/lsst/versiondb/master/manifests'
 
 notify.wrap {
   util.requireParams([
@@ -806,8 +805,7 @@ def void runDispatchqa(
  * @param destFile String path to write downloaded file
  */
 def void downloadFile(String url, String destFile) {
-  url = new URL(url)
-  writeFile(file: destFile, text: url.getText())
+  writeFile(file: destFile, text: new URL(url).getText())
 }
 
 /**
@@ -817,8 +815,8 @@ def void downloadFile(String url, String destFile) {
  * @param manifestId String manifest build id aka bNNNN
  */
 def void downloadManifest(String destFile, String manifestId) {
-  def url = "${manifest_base_url}/${manifestId}.txt"
-  downloadFile(url, destFile)
+  def manifestUrl = util.versiondbManifestUrl(manifestId)
+  downloadFile(manifestUrl, destFile)
 }
 
 /**
