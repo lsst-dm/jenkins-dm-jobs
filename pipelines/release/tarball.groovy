@@ -841,13 +841,13 @@ def String smokeScript(
     # py3.5+
     estring2ref() {
       python -c "
-import sys,re;
-for line in sys.stdin:
-  foo = re.sub(r'^\\s*(?:[\\w.-]+g([a-zA-Z0-9]+)|([\\w.-]+))(?:\\+[\\d]+)?\\s+.*', lambda m: m.group(1) or m.group(2), line)
-  if foo is line:
-    sys.exit(1)
-  print(foo)
-"
+    import sys,re;
+    for line in sys.stdin:
+      foo = re.sub(r'^\\s*(?:[\\w.-]+g([a-zA-Z0-9]+)|([\\w.-]+))(?:\\+[\\d]+)?\\s+.*', lambda m: m.group(1) or m.group(2), line)
+      if foo is line:
+        sys.exit(1)
+      print(foo)
+    "
     }
 
     if [[ \$RUN_SCONS_CHECK == true ]]; then
