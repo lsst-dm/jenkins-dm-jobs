@@ -1240,6 +1240,20 @@ def String versiondbManifestUrl(String manifestId) {
 }
 
 /*
+ * Generate URL to repos.yaml.
+ *
+ * @return url String
+ */
+def String reposUrl() {
+  def config = scipipeConfig()
+  return githubRawUrl(
+    slug: config.repos.github_repo,
+    ref: config.repos.git_ref,
+    path: 'etc/repos.yaml',
+  )
+}
+
+/*
  * Sanitize string for use as docker tag
  *
  * @param tag String

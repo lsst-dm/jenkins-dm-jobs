@@ -83,6 +83,7 @@ release:
 #
 repos:
   github_repo: lsst/repos
+  git_ref: master
 versiondb:
   github_repo: lsst/versiondb
 release_tag_org: lsst
