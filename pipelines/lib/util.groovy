@@ -1201,7 +1201,7 @@ def String runRebuild(Map p) {
 def String githubSlugToUrl(String slug, String scheme = 'https') {
   switch (scheme) {
     case 'https':
-      return "https://github.com/${slug}.git"
+      return "https://github.com/${slug}"
       break
     case 'ssh':
       return "ssh://git@github.com/${slug}.git"
