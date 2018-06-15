@@ -886,6 +886,7 @@ def String scriptPreamble(
     #!/bin/bash
 
     set -xe
+    set -o pipefail
 
     if [[ -n \$CMIRROR_S3_BUCKET ]]; then
         export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
