@@ -96,7 +96,7 @@ notify.wrap {
       } // stage('build')
 
       stage('push docs') {
-        if (skipDocs) {
+        if (!skipDocs) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-doxygen-push',
