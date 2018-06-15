@@ -36,8 +36,13 @@ notify.wrap {
     }
 
     stage('run image') {
+      echo "path outside of container is: ${pwd()}"
       image.inside { c ->
+        echo "path inside of container is: ${pwd()}"
         sh 'cat /arg.txt'
+        dir('test_dir') {
+          echo "path inside of container dir() is: ${pwd()}"
+        }
       }
     }
   }
