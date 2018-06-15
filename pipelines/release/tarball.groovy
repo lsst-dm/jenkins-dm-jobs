@@ -1,8 +1,4 @@
 node('jenkins-master') {
-  if (params.WIPEOUT) {
-    deleteDir()
-  }
-
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',
@@ -51,110 +47,131 @@ notify.wrap {
   Boolean runDemo       = params.RUN_DEMO
   Boolean runSconsCheck = params.RUN_SCONS_CHECK
   Boolean smoke         = params.SMOKE
-  Integer timeout       = params.TIMEOUT
+  Integer timelimit     = params.TIMEOUT
   Boolean wipeout       = params.WIPEOUT
 
-  def py = new MinicondaEnv(pythonVersion,miniver, lsstswRef)
-
-  def buildTarget = [
+  // buildConfig
+  def bc = [
+    eupsTag: eupsTag,
+    image: image,
+    label: label,
+    lsstswRef: lsstswRef,
+    miniver: miniver,
     product: product,
-    eups_tag: eupsTag,
+    osfamily: osfamily,
+    platform: platform,
+    publish: publish,
+    pythonVersion: pythonVersion,
+    runDemo: runDemo,
+    runSconsCheck: runSconsCheck,
+    smoke: smoke,
+    timelimit: timelimit,
+    wipeout: wipeout,
+    menv: new MinicondaEnv(pythonVersion, miniver, lsstswRef),
   ]
 
-  def smokeConfig = null
-  if (smoke) {
-    smokeConfig = [
-      run_demo: runDemo,
-      run_scons_check: runSconsCheck,
-    ]
+  bc.pkgrootSlug = pkgrootSlug(bc)
+
+  // if a docker image is specified, run on a 'docker' agent
+  if (bc.image) {
+    bc.nodeLabel = 'docker'
+  } else {
+    bc.nodeLabel = bc.label
+  }
+
+  if (bc.osfamily == 'osx') {
+    // use the platform string for now -- may need to diverge
+    bc.macosxDeploymentTarget = bc.platform
+  }
+
+  node(bc.nodeLabel) {
+    timeout(time: bc.timelimit, unit: 'HOURS') {
+      // layout can only be determined inside a node block
+      bc.layout = pathLayout(
+        buildConfig: bc,
+        rootDir: util.joinPath(pwd(), bc.pkgrootSlug),
+      ).asImmutable()
+
+      dir(bc.pkgrootSlug) {
+        // build configuration may not be changed past this point
+        buildTarballs(
+          buildConfig: bc.asImmutable(),
+        )
+      } // dir
+    } // timeout
+  } // node
+} // notify.wrap
+
+
+/** Construct tarballs from build + build layout configuration.
+ *
+ * @param p Map
+ * @param p.buildConfig Map
+ */
+def void buildTarballs(Map p) {
+  Map bc = p.buildConfig
+  Map l  = bc.layout
+
+  if (bc.wipeout) {
+    deleteDir()
+  } else {
+    // smoke state is left at the end of the build for possible debugging
+    // but each test needs to be run in a clean env.
+    util.emptyDirs([l.buildHomeDir, l.smokeDir])
+  }
+
+  // create all paths
+  util.createDirs(l.Dirs)
+
+  // sanitize the eups product build dir to ensure log collection is for the
+  // current build only.  This dir should not be created if it doesn't
+  // already exist.
+  emptyExistingDir(l.eupsBuildDir)
+
+  // checkout ci-scripts outside of docker container as the git step has
+  // historically been broken inside containers
+  dir(ciDir) {
+    util.cloneCiScripts()
   }
 
   switch(osfamily) {
     case 'redhat':
-      linuxTarballs(image, platform, compiler, py,
-        timeout, buildTarget, smokeConfig, wipeout, publish)
+      linuxTarballs(buildConfig: bc)
       break
     case 'osx':
-      osxTarballs(label, platform, compiler, py,
-        timeout, buildTarget, smokeConfig, wipeout, publish)
+      osxTarballs(buildConfig: bc)
       break
     default:
       error "unsupported platform: ${label}"
   }
-} // notify.wrap
+}
 
 /**
  * Build EUPS tarballs inside of a docker container.
  *
- * @param imageName docker image slug
- * @param platform Eg., 'el7'
- * @param compiler Eg., 'system-gcc'
- * @param menv Miniconda object
- * @param timelimit Integer build timeout in hours
- * @param buildTarget Map
- * @param buildTarget.product String
- * @param buildTarget.eups_tag String
- * @param smoke Map `null` disables running a smoke test
- * @param smoke.run_demo Boolean
- * @param smoke.run_scons_check Boolean
- * @param wipeout Boolean
- * @param publish Boolean
+ * @param p Map
+ * @param p.buildConfig Map
  */
-def void linuxTarballs(
-  String imageName,
-  String platform,
-  String compiler,
-  MinicondaEnv menv,
-  Integer timelimit,
-  Map buildTarget,
-  Map smokeConfig,
-  Boolean wipeout = false,
-  Boolean publish = false
-) {
-  def String slug = menv.slug()
-  def envId = util.joinPath('redhat', platform, compiler, slug)
+def void linuxTarballs(Map p) {
+  Map bc = p.buildConfig
 
-  def run = {
-    if (wipeout) {
-      deleteDir()
+  stage("build ${bc.pkgrootSlug}") {
+    util.insideWrap(bc.image) {
+      tarballBuild(buildConfig: bc)
     }
+  }
 
-    // these "credentials" aren't secrets -- just a convient way of setting
-    // globals for the instance. Thus, they don't need to be tightly scoped to a
-    // single sh step
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'cmirror-s3-bucket',
-      variable: 'CMIRROR_S3_BUCKET'
-    ],
-    [
-      $class: 'StringBinding',
-      credentialsId: 'eups-push-bucket',
-      variable: 'EUPS_S3_BUCKET'
-    ]]) {
-      dir(envId) {
-        stage("build ${envId}") {
-          docker.image(imageName).pull()
-          linuxBuild(imageName, compiler, menv, buildTarget)
-        }
-        stage('smoke') {
-          if (smokeConfig) {
-            linuxSmoke(imageName, compiler, menv, buildTarget, smokeConfig)
-          }
-        }
-
-        stage('publish') {
-          if (publish) {
-            s3PushDocker(envId)
-          }
-        }
+  stage('smoke') {
+    if (bc.smoke) {
+      util.insideWrap(bc.image) {
+        tarballSmoke(buildConfig: bc)
       }
-    } // withCredentials([[
-  } // run()
+    }
+  }
 
-  node('docker') {
-    timeout(time: timelimit, unit: 'HOURS') {
-      run()
+  stage('publish') {
+    if (bc.publish) {
+      s3PushDocker(buildConfig: bc)
     }
   }
 }
@@ -162,442 +179,91 @@ def void linuxTarballs(
 /**
  * Build EUPS tarballs in a regular directory.
  *
- * @param label String jenkins node label
- * @param macosx_deployment_target Eg., '10.9'
- * @param compiler Eg., 'system-gcc'
- * @param menv Miniconda object
- * @param timelmit Integer build timeout in hours
- * @param buildTarget Map
- * @param buildTarget.product String
- * @param buildTarget.eups_tag String
- * @param smoke Map `null` disables running a smoke test
- * @param smoke.run_demo Boolean
- * @param smoke.run_scons_check Boolean
- * @param wipeout Boolean
- * @param publish Boolean
+ * @param p Map
+ * @param p.buildConfig Map
  */
-def void osxTarballs(
-  String label,
-  String macosx_deployment_target,
-  String compiler,
-  MinicondaEnv menv,
-  Integer timelimit,
-  Map buildTarget,
-  Map smokeConfig,
-  Boolean wipeout = false,
-  Boolean publish = false
-) {
-  def String slug = menv.slug()
-  def envId = util.joinPath('osx', macosx_deployment_target, compiler, slug)
+def void osxTarballs(Map p) {
+  Map bc = p.buildConfig
 
-  def run = {
-    if (wipeout) {
-      deleteDir()
+  stage("build ${buildConfig.pkgrootSlug}") {
+    tarballBuild(buildConfig: bc)
+  }
+
+  stage('smoke') {
+    if (bc.smokeConfig) {
+      tarballSmoke(buildConfig: bc)
     }
+  }
 
-    // these "credentials" aren't secrets -- just a convient way of setting
-    // globals for the instance. Thus, they don't need to be tightly scoped to a
-    // single sh step
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'cmirror-s3-bucket',
-      variable: 'CMIRROR_S3_BUCKET'
-    ],
-    [
-      $class: 'StringBinding',
-      credentialsId: 'eups-push-bucket',
-      variable: 'EUPS_S3_BUCKET'
-    ]]) {
-      dir(envId) {
-        stage('build') {
-          osxBuild(macosx_deployment_target, compiler, menv, buildTarget)
+  stage('publish') {
+    if (bc.publish) {
+      s3PushVenv(buildConfig: bc)
+    }
+  }
+}
+
+/**
+ * Build EUPS tarball packages.
+ *
+ * @param p Map
+ * @param p.buildConfig Map
+ */
+def void tarballBuild(Map p) {
+  Map bc = p.buildConfig
+  Map l  = bc.layout
+
+  try {
+    def script = buildScript(buildConfig: bc)
+    writeScript(file: l.buildSh, text: script)
+
+    dir(l.buildDir) {
+      withTarballEnv {
+        withEnv([
+          "HOME=${l.buildHomeDir}",
+          "EUPS_USERDATA=${l.buildHomeDir}/.eups_userdata",
+          "CONDARC=${l.buildHomeDir}/.condarc",
+        ]) {
+          util.bash(l.buildSh)
         }
+      } // withTarballEnv
+    } // dir
+  } finally {
+    record(l.buildDir)
+    cleanup(l.buildDir)
+  }
+} // tarballBuild
 
-        stage('smoke') {
-          if (smokeConfig) {
-            osxSmoke(
-              macosx_deployment_target,
-              compiler,
-              menv,
-              buildTarget,
-              smokeConfig
-            )
-          }
-        } //stage
+/**
+ * Run smoke test(s) on constructed EUPS tarballs.
+ *
+ */
+def void tarballSmoke(Map p) {
+  Map bc = p.buildConfig
+  Map l  = p.layout
 
-        stage('publish') {
-          if (publish) {
-            s3PushVenv(envId)
-          }
+  try {
+    def script = smokeScript(buildConfig: bc)
+    writeScript(file: l.smokeSh, text: script)
+
+    dir(l.smokeDir) {
+      withTarballEnv {
+        withEnv([
+          "HOME=${l.smokeHomeDir}",
+          "EUPS_USERDATA=${l.smokeHomeDir}/.eups_userdata",
+          "CONDARC=${l.smokeHomeDir}/.condarc",
+
+          "RUN_DEMO=${bc.run_demo}",
+          "RUN_SCONS_CHECK=${bc.run_scons_check}",
+          "FIX_SHEBANGS=true",
+        ]) {
+          util.bash(l.smokeSh)
         }
-      } // dir
-    } // withCredentials
-  } // run
-
-  node(label) {
-    timeout(time: timelimit, unit: 'HOURS') {
-      run()
-    }
-  }
-}
-
-/**
- * Run Linux specific tarball build.
- *
- * @param imageName docker image slug
- * @param compiler Eg., 'system-gcc'
- * @param menv Miniconda object
- * @param buildTarget Map
- * @param buildTarget.product String
- * @param buildTarget.eups_tag String
- */
-def void linuxBuild(
-  String imageName,
-  String compiler,
-  MinicondaEnv menv,
-  Map buildTarget
-) {
-  def cwd      = pwd()
-  def buildDir = "${cwd}/build"
-  def distDir  = "${cwd}/distrib"
-  def shDir    = "${buildDir}/scripts"
-  def ciDir    = "${cwd}/ci-scripts"
-
-  def buildDirContainer = '/build'
-  def distDirContainer  = '/distrib'
-  def ciDirContainer    = '/ci-scripts'
-
-  def shBasename = 'run.sh'
-  def shName = "${shDir}/${shBasename}"
-  def localImageName = "${imageName}-local"
-
-  try {
-    util.createDirs([
-      buildDir,
-      distDir,
-      shDir,
-    ])
-
-    // sanitize build dir to ensure log collection is for the current build
-    // only
-    emptyExistingDir(eupsBuildDir(buildDir, menv))
-
-    prepareBuild(
-      buildTarget.product,
-      buildTarget.eups_tag,
-      shName,
-      distDirContainer,
-      compiler,
-      null,
-      menv,
-      ciDirContainer
-    )
-
-    dir(ciDir) {
-      util.cloneCiScripts()
-    }
-
-    util.wrapDockerImage(
-      image: imageName,
-      tag: localImageName,
-      pull: true,
-    )
-
-    withEnv([
-      "RUN=/build/scripts/${shBasename}",
-      "IMAGE=${localImageName}",
-      "BUILDDIR=${buildDir}",
-      "BUILDDIR_CONTAINER=${buildDirContainer}",
-      "DISTDIR=${distDir}",
-      "DISTDIR_CONTAINER=${distDirContainer}",
-      "CIDIR=${ciDir}",
-      "CIDIR_CONTAINER=${ciDirContainer}",
-    ]) {
-      // XXX refactor to use util.insideDockerWrap
-      util.bash '''
-        docker run \
-          -v "${BUILDDIR}:${BUILDDIR_CONTAINER}" \
-          -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
-          -v "${CIDIR}:${CIDIR_CONTAINER}" \
-          -w /build \
-          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
-          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-          -u "$(id -u -n)" \
-          "$IMAGE" \
-          bash -c "$RUN"
-      '''
-    } // withEnv
-  } finally {
-    record(buildDir, menv)
-    cleanup(buildDir)
-  }
-} // linuxBuild
-
-/**
- * Run OSX specific tarball build.
- *
- * @param macosx_deployment_target Eg., '10.9'
- * @param compiler Eg., 'system-gcc'
- * @param menv Miniconda object
- * @param buildTarget Map
- * @param buildTarget.product String
- * @param buildTarget.eups_tag String
- */
-def void osxBuild(
-  String macosx_deployment_target,
-  String compiler,
-  MinicondaEnv menv,
-  Map buildTarget
-) {
-  def cwd      = pwd()
-  def buildDir = "${cwd}/build"
-  def distDir  = "${cwd}/distrib"
-  def shDir    = "${buildDir}/scripts"
-  def ciDir    = "${cwd}/ci-scripts"
-
-  def shName = "${shDir}/run.sh"
-
-  try {
-    util.createDirs([
-      buildDir,
-      distDir,
-      shDir,
-    ])
-
-    // sanitize build dir to ensure log collection is for the current build
-    // only
-    emptyExistingDir(eupsBuildDir(buildDir, menv))
-
-    prepareBuild(
-      buildTarget.product,
-      buildTarget.eups_tag,
-      "${shName}",
-      distDir,
-      compiler,
-      macosx_deployment_target,
-      menv,
-      ciDir
-    )
-
-    dir(ciDir) {
-      util.cloneCiScripts()
-    }
-
-    dir(buildDir) {
-      util.bash shName
+      } // withTarballEnv
     }
   } finally {
-    record(buildDir, menv)
-    cleanup(buildDir)
+    record(l.smokeDir)
   }
-} // osxBuild
-
-/**
- * Run Linux specific tarball smoke test(s).
- *
- * @param imageName docker image slug
- * @param compiler Eg., 'system-gcc'
- * @param menv Miniconda object
- * @param buildTarget Map
- * @param buildTarget.product String
- * @param buildTarget.eups_tag String
- * @param smoke Map
- * @param smoke.run_demo Boolean
- * @param smoke.run_scons_check Boolean
- */
-def void linuxSmoke(
-  String imageName,
-  String compiler,
-  MinicondaEnv menv,
-  Map buildTarget,
-  Map smokeConfig
-) {
-  def cwd      = pwd()
-  def smokeDir = "${cwd}/smoke"
-  def distDir  = "${cwd}/distrib"
-  def shDir    = "${smokeDir}/scripts"
-  def ciDir    = "${cwd}/ci-scripts"
-
-  def smokeDirContainer = '/smoke'
-  def distDirContainer  = '/distrib'
-  def ciDirContainer    = '/ci-scripts'
-
-  def shBasename = 'run.sh'
-  def shName = "${shDir}/${shBasename}"
-  def localImageName = "${imageName}-local"
-
-  try {
-    // smoke state is left at the end of the build for possible debugging but
-    // each test needs to be run in a clean env.
-    util.emptyDirs([smokeDir])
-
-    prepareSmoke(
-      buildTarget.product,
-      buildTarget.eups_tag,
-      shName,
-      distDirContainer,
-      compiler,
-      null,
-      menv,
-      ciDirContainer
-    )
-
-    dir(ciDir) {
-      util.cloneCiScripts()
-    }
-
-    util.wrapDockerImage(
-      image: imageName,
-      tag: localImageName,
-      pull: true,
-    )
-
-    withEnv([
-      "RUN=/smoke/scripts/${shBasename}",
-      "IMAGE=${localImageName}",
-      "RUN_DEMO=${smokeConfig.run_demo}",
-      "RUN_SCONS_CHECK=${smokeConfig.run_scons_check}",
-      "SMOKEDIR=${smokeDir}",
-      "SMOKEDIR_CONTAINER=${smokeDirContainer}",
-      "DISTDIR=${distDir}",
-      "DISTDIR_CONTAINER=${distDirContainer}",
-      "CIDIR=${ciDir}",
-      "CIDIR_CONTAINER=${ciDirContainer}",
-    ]) {
-      // XXX refactor to use util.insideDockerWrap
-      util.bash '''
-        docker run \
-          -v "${SMOKEDIR}:${SMOKEDIR_CONTAINER}" \
-          -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
-          -v "${CIDIR}:${CIDIR_CONTAINER}" \
-          -w /smoke \
-          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
-          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-          -e RUN_DEMO="$RUN_DEMO" \
-          -e RUN_SCONS_CHECK="$RUN_SCONS_CHECK" \
-          -e FIX_SHEBANGS=true \
-          -u "$(id -u -n)" \
-          "$IMAGE" \
-          bash -c "$RUN"
-      '''
-    } // withEnv
-  } finally {
-    record(smokeDir, menv)
-  }
-} // linuxSmoke
-
-/**
- * Generate + write build script.
- *
- * @param macosx_deployment_target Eg., '10.9'
- * @param compiler Eg., 'system-gcc'
- * @param menv Miniconda object
- * @param buildTarget Map
- * @param buildTarget.product String
- * @param buildTarget.eups_tag String
- * @param smoke Map
- * @param smoke.run_demo Boolean
- * @param smoke.run_scons_check Boolean
- */
-def void osxSmoke(
-  String macosx_deployment_target,
-  String compiler,
-  MinicondaEnv menv,
-  Map buildTarget,
-  Map smokeConfig
-) {
-  def cwd      = pwd()
-  def smokeDir = "${cwd}/smoke"
-  def shName   = "${cwd}/scripts/smoke.sh"
-  def ciDir    = "${cwd}/ci-scripts"
-
-  try {
-    // smoke state is left at the end of the build for possible debugging but
-    // each test needs to be run in a clean env.
-    dir(smokeDir) {
-      deleteDir()
-    }
-
-    prepareSmoke(
-      buildTarget.product,
-      buildTarget.eups_tag,
-      shName,
-      "${cwd}/distrib",
-      compiler,
-      macosx_deployment_target,
-      menv,
-      ciDir
-    )
-
-    dir(ciDir) {
-      util.cloneCiScripts()
-    }
-
-    dir(smokeDir) {
-      withEnv([
-        "RUN_DEMO=${smokeConfig.run_demo}",
-        "RUN_SCONS_CHECK=${smokeConfig.run_scons_check}",
-        "FIX_SHEBANGS=true",
-      ]) {
-        util.bash shName
-      }
-    }
-  } finally {
-    record(smokeDir, menv)
-  }
-} // osxSmoke
-
-/**
- * Generate + write build script.
- */
-def void prepareBuild(
-  String product,
-  String eupsTag,
-  String shName,
-  String distribDir,
-  String compiler,
-  String macosx_deployment_target,
-  MinicondaEnv menv,
-  String ciDir
-) {
-  def script = buildScript(
-    product,
-    eupsTag,
-    distribDir,
-    compiler,
-    macosx_deployment_target,
-    menv,
-    ciDir
-  )
-
-  writeScript(file: shName, text: script)
-}
-
-/**
- * Generate + write smoke test script.
- */
-def void prepareSmoke(
-  String product,
-  String eupsTag,
-  String shName,
-  String distribDir,
-  String compiler,
-  String macosx_deployment_target,
-  MinicondaEnv menv,
-  String ciDir
-) {
-  def script = smokeScript(
-    product,
-    eupsTag,
-    distribDir,
-    compiler,
-    macosx_deployment_target,
-    menv,
-    ciDir
-  )
-
-  writeScript(file: shName, text: script)
-}
+} // tarballSmoke
 
 /**
  * write executable file
@@ -607,10 +273,13 @@ def void prepareSmoke(
  * @param p.text String script text
  */
 def void writeScript(Map p) {
-  echo "creating script ${p.file}:"
-  echo p.text
+  String file = p.file
+  String text = p.text
 
-  writeFile(file: p.file, text: p.text)
+  echo "creating script ${file}:"
+  echo text
+
+  writeFile(file: file, text: text)
   util.bash "chmod a+x ${p.file}"
 }
 
@@ -637,12 +306,12 @@ def void s3PushVenv(String ... parts) {
   ]
 
   withEnv(env) {
-    withEupsBucketEnv {
+    withEupsPushEnv {
       util.bash """
         . venv/bin/activate
         ${s3PushCmd()}
       """
-    } // withEupsBucketEnv
+    } // withEupsPushEnv
   } // withEnv
 }
 
@@ -657,16 +326,14 @@ def void s3PushDocker(String ... parts) {
   def env = [
     "EUPS_PKGROOT=${cwd}/distrib",
     "EUPS_S3_OBJECT_PREFIX=${objectPrefix}",
-    "HOME=${cwd}/home",
   ]
 
   withEnv(env) {
-    withEupsBucketEnv {
+    withEupsPushEnv {
       docker.image(util.defaultAwscliImage()).inside {
-        // alpine does not include bash by default
-        util.posixSh(s3PushCmd())
-      } // .inside
-    } //withEupsBucketEnv
+        util.bash(s3PushCmd())
+      }
+    } //withEupsPushEnv
   } // withEnv
 }
 
@@ -692,7 +359,7 @@ def String s3PushCmd() {
  * - AWS_SECRET_ACCESS_KEY
  * - EUPS_S3_BUCKET
  */
-def void withEupsBucketEnv(Closure run) {
+def void withEupsPushEnv(Closure run) {
   withCredentials([[
     $class: 'UsernamePasswordMultiBinding',
     credentialsId: 'aws-eups-push',
@@ -711,9 +378,7 @@ def void withEupsBucketEnv(Closure run) {
 /**
  *  Record logs
  */
-def void record(String buildDir, MinicondaEnv menv) {
-  def eupsBuildDir = eupsBuildDir(buildDir, menv)
-
+def void record(String rootDir) {
   def archive = [
     '**/*.log',
     '**/*.failed',
@@ -723,7 +388,7 @@ def void record(String buildDir, MinicondaEnv menv) {
     '**/pytest-*.xml',
   ]
 
-  dir(eupsBuildDir) {
+  dir(rootDir) {
     archiveArtifacts([
       artifacts: archive.join(', '),
       allowEmptyArchive: true,
@@ -748,35 +413,31 @@ def void cleanup(String buildDir) {
 
 /**
  * Generate shellscript to build EUPS distrib tarballs.
+ * @param p Map
+ * @param p.buildConfig Map
  */
-// XXX the dynamic build script construction has evolved into a fair number of
-// nested steps and this may be difficult to comprehend in the future.
-// Consider moving all of this logic into an external driver script that is
-// called with parameters.
-def String buildScript(
-  String products,
-  String tag,
-  String eupsPkgroot,
-  String compiler,
-  String macosx_deployment_target,
-  MinicondaEnv menv,
-  String ciDir
-) {
-  scriptPreamble(
-    compiler,
-    macosx_deployment_target,
-    menv,
-    true,
-    ciDir
-  ) +
+def String buildScript(Map p) {
+  Map bc = p.buildConfig
+  Map l  = bc.layout
+
   util.dedent("""
+    #!/bin/bash
+
+    set -xe
+    # do not allow | to hide curl failures
+    set -o pipefail
+
+    source "\${CCUTILS_DIR}/ccutils.sh"
+    cc::setup_first "\$LSST_COMPILER"
+
     curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
     . ./loadLSST.bash
 
-    for prod in ${products}; do
+    for prod in ${bc.products}; do
       eups distrib install "\$prod" -t "${tag}" -vvv
     done
 
+    # XXX
     export EUPS_PKGROOT="${eupsPkgroot}"
 
     # remove any pre-existing eups tags to prevent them from being
@@ -808,14 +469,16 @@ def String smokeScript(
 ) {
   def baseUrl = util.githubSlugToUrl('lsst/base')
 
-  scriptPreamble(
-    compiler,
-    macosx_deployment_target,
-    menv,
-    true,
-    ciDir
-  ) +
-   util.dedent("""
+  util.dedent("""
+    #!/bin/bash
+
+    set -xe
+    # do not allow | to hide curl failures
+    set -o pipefail
+
+    source "\${CCUTILS_DIR}/ccutils.sh"
+    cc::setup_first "${compiler}"
+
     export EUPS_PKGROOT="${eupsPkgroot}"
     export BASE_URL="${baseUrl}"
 
@@ -881,52 +544,6 @@ def String smokeScript(
 }
 
 /**
- * Generate common shellscript boilerplate.
- */
-def String scriptPreamble(
-  String compiler,
-  String macosx_deployment_target='10.9',
-  MinicondaEnv menv,
-  boolean useTarballs,
-  String ciDir
-) {
-  util.dedent("""
-    #!/bin/bash
-
-    set -xe
-    set -o pipefail
-
-    if [[ -n \$CMIRROR_S3_BUCKET ]]; then
-        export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
-        export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
-    fi
-
-    if [[ -n \$EUPS_S3_BUCKET ]]; then
-        export EUPS_PKGROOT_BASE_URL="https://\${EUPS_S3_BUCKET}/stack"
-    fi
-
-    # isolate eups cache files
-    export EUPS_USERDATA="\${PWD}/.eups"
-
-    # isolate conda config
-    export CONDARC="\${PWD}/.condarc"
-
-    if [[ \$(uname -s) == Darwin* ]]; then
-      export MACOSX_DEPLOYMENT_TARGET="${macosx_deployment_target}"
-    fi
-
-    export LSST_PYTHON_VERSION="${menv.pythonVersion}"
-    export MINICONDA_VERSION="${menv.minicondaVersion}"
-    export LSSTSW_REF="${menv.lsstswRef}"
-    export EUPS_USE_TARBALLS="${useTarballs}"
-
-    source "${ciDir}/ccutils.sh"
-    cc::setup_first "${compiler}"
-    """
-  )
-}
-
-/**
  * Represents a miniconda build environment.
  */
 class MinicondaEnv implements Serializable {
@@ -981,4 +598,97 @@ def void emptyExistingDir(String path) {
  */
 def String eupsBuildDir(String buildDir, MinicondaEnv menv) {
   return "${buildDir}/stack/${menv.slug()}/EupsBuildDir"
+}
+
+/**
+ * Relative path to EUPS_PKGROOT / ABI slug
+ *
+ * @param buildConfig Map "buildConfig"
+ * @return String slug
+ */
+def String pkgrootSlug(Map buildConfig) {
+  def path = [
+    buildConfig.osfamily,
+    buildConfig.platform,
+    buildConfig.compiler,
+    buildConfig.menv.slug(),
+  ]
+
+  return util.joinPath(path)
+}
+
+/**
+ * Setup CMIRROR_S3_BUCKET and EUPS_S3_BUCKET env vars
+ *
+ * @param p Map
+ * @param p.buildConfig Map
+ * @param run Closure
+ */
+def void withTarballEnv(Map p, Closure invoke) {
+  Map bc = p.buildConfig
+  Map l  = bc.layout
+
+  // these "credentials" aren't secrets -- just a convient way of setting
+  // globals for the instance. Thus, they don't need to be tightly scoped to a
+  // single sh step
+  withCredentials([[
+    $class: 'StringBinding',
+    credentialsId: 'cmirror-s3-bucket',
+    variable: 'CMIRROR_S3_BUCKET'
+  ],
+  [
+    $class: 'StringBinding',
+    credentialsId: 'eups-push-bucket',
+    variable: 'EUPS_S3_BUCKET'
+  ]]) {
+    withEnv([
+      "CONDA_CHANNELS=http://${CMIRROR_S3_BUCKET}/pkgs/free",
+      "MINICONDA_BASE_URL=http://${CMIRROR_S3_BUCKET}/miniconda",
+      "EUPS_PKGROOT_BASE_URL=https://${EUPS_S3_BUCKET}/stack",
+      "MACOSX_DEPLOYMENT_TARGET=${bc.macosxDeploymentTarget}",
+      "LSST_PYTHON_VERSION=${bc.menv.pythonVersion}",
+      "LSST_COMPILER=${bc.compiler}",
+      "MINICONDA_VERSION=${bc.menv.minicondaVersion}",
+      "LSSTSW_REF=${bc.menv.lsstswRef}",
+      "CCUTILS_DIR=${l.ciDir}",
+      "EUPS_USE_TARBALLS=true",
+    ]) {
+     invoke()
+    }
+  }
+} // withTarballEnv
+
+/**
+ * Generate directory path layout for build/smoke.
+ *
+ * @param p Map
+ * @param p.rootDir String
+ * @return layout Map
+ */
+def Map pathLayout(Map p) {
+  Map bc         = p.buildConfig
+  String rootDir = p.rootDir
+
+  def l = [
+    distDir:    "${rootDir}/distrib",
+    ciDir:      "${rootDir}/ci-scripts",
+
+    buildDir:     "${rootDir}/build",
+    buildHomeDir: "${buildDir}/home",
+    buildShDir:   "${buildDir}/scripts",
+    buildSh:      "${buildShDir}/build.sh",
+
+    smokeDir:     "${rootDir}/smoke",
+    smokeHomeDir: "${smokeDir}/home",
+    smokeShDir:   "${smokeDir}/scripts",
+    smokeSh:      "${smokeShDir}/smoke.sh",
+  ]
+
+  // create list of all dir names that can be pre-created -- excludes
+  // eupsBuildDir
+  l.'Dirs' = l.findAll { x -> x.key =~ /Dir$/ }.keySet().toList()
+
+  l.'eupsBuildDir' = eupsBuildDir(l.buildDir, bc.menv)
+
+  return layout
 }
