@@ -309,6 +309,10 @@ def void jenkinsWrapper(Map buildParams) {
   def cwd     = pwd()
   def homeDir = "${cwd}/home"
 
+  def config         = scipipeConfig()
+  def demoGithubRepo = config.lsst_dm_stack_demo.github_repo
+  def demoBaseUrl    = "${githubSlugToUrl(demoGithubRepo)}/archive"
+
   try {
     dir('lsstsw') {
       cloneLsstsw()
@@ -336,6 +340,7 @@ def void jenkinsWrapper(Map buildParams) {
       "WORKSPACE=${cwd}",
       "HOME=${homeDir}",
       "EUPS_USERDATA=${homeDir}/.eups_userdata",
+      "DEMO_BASE_URL=${demoBaseUrl}",
     ]
 
     // Map -> List
