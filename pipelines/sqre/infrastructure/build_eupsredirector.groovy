@@ -15,7 +15,7 @@ node('jenkins-master') {
 notify.wrap {
   def image      = null
   def hubRepo    = 'lsstsqre/eupsredirector'
-  def githubSlug = 'lsst-sqre/deploy-eups-redirect'
+  def githubSlug = 'lsst-sqre/deploy-pkgroot-redirect'
   def githubRepo = "https://github.com/${githubSlug}"
   def githubRef  = 'master'
   def dockerDir  = 'eupsredirector'
