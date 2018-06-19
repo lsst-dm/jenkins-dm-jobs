@@ -8,6 +8,7 @@ class Common {
   static void addNotification(Job job) {
     job.with {
       publishers {
+        /*
         slackNotifier {
           room(null)
           notifyAborted(true)
@@ -26,6 +27,7 @@ class Common {
           teamDomain(null)
           authToken(null)
         }
+        */
       }
     }
   }
