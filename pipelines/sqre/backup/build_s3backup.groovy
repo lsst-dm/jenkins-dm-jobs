@@ -13,8 +13,9 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def image = null
   def hub_repo = 'lsstsqre/s3backup'
+
+  def image = null
 
   def run = {
     stage('checkout') {

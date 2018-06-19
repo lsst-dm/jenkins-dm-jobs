@@ -11,194 +11,221 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    config = util.scipipeConfig()
+    sqre = util.sqreConfig() // side effect only
   }
 }
 
 notify.wrap {
-  util.requireParams(['EUPS_TAG', 'GIT_TAG', 'MANIFEST_ID'])
+  util.requireParams([
+    'EUPSPKG_SOURCE',
+    'EUPS_TAG',
+    'GIT_TAG',
+    'O_LATEST',
+    'SOURCE_EUPS_TAG',
+    'SOURCE_MANIFEST_ID',
+  ])
 
-  def gitTag = params.GIT_TAG
-  def srcEupsTag = params.EUPS_TAG
-  def srcManifestId = params.MANIFEST_ID
+  String eupspkgSource = params.EUPSPKG_SOURCE
+  String eupsTag       = params.EUPS_TAG
+  String gitTag        = params.GIT_TAG
+  Boolean oLatest      = params.O_LATEST
+  String srcEupsTag    = params.SOURCE_EUPS_TAG
+  String srcManifestId = params.SOURCE_MANIFEST_ID
 
-  def eupsTag = params.GIT_TAG.tr('.', '_')
+  echo "EUPSPKG_SOURCE: ${eupspkgSource}"
+  echo "publish [eups] tag: ${eupsTag}"
+  echo "publish [git] tag: ${gitTag}"
+  echo "source [eups] tag: ${srcEupsTag}"
+  echo "source manifest id: ${srcManifestId}"
 
-  echo "[git] tag: ${gitTag}"
-  echo "[eups] tag: ${srcEupsTag}"
-  echo "manifest id: ${srcManifestId}"
-  echo "publish build with [eups] tag: ${eupsTag}"
+  def product         = 'lsst_distrib'
+  def tarballProducts = product
+  def retries         = 3
 
-  def bx = null
+  def manifestId   = null
+  def stackResults = null
 
-  try {
-    timeout(time: 30, unit: 'HOURS') {
-      def product         = 'lsst_distrib'
-      def tarballProducts = product
+  def run = {
+    stage('git tag eups products') {
+      retry(retries) {
+        node('docker') {
+          // needs eups distrib tag to be sync'd from s3 -> k8s volume
+          util.githubTagRelease(
+            options: [
+              '--dry-run': false,
+              '--org': config.release_tag_org,
+              '--manifest': srcManifestId,
+              '--eups-tag': srcEupsTag,
+            ],
+            args: [gitTag],
+          )
+        } // node
+      } // retry
+    } // stage
 
-      def retries = 3
-      def buildJob = 'release/run-rebuild'
-      def publishJob = 'release/run-publish'
+    // add aux repo tags *after* tagging eups product repos so as to avoid a
+    // trainwreck if an aux repo has been pulled into the build (without
+    // first being removed from the aux team).
+    stage('git tag auxilliaries') {
+      retry(retries) {
+        node('docker') {
+          util.githubTagTeams(
+            options: [
+              '--dry-run': false,
+              '--org': config.release_tag_org,
+              '--tag': gitTag,
+            ],
+          )
+        } // node
+      } // retry
+    } // stage
 
-
-      stage('git tag eups products') {
-        retry(retries) {
-          node('docker') {
-            // needs eups distrib tag to be sync'd from s3 -> k8s volume
-            util.githubTagRelease(
-              gitTag,
-              srcEupsTag,
-              srcManifestId,
-              [
-                '--dry-run': false,
-                '--org': config.release_tag_org,
-              ]
-            )
-          } // node
-        } // retry
-      }
-
-      // add aux repo tags *after* tagging eups product repos so as to avoid a
-      // trainwreck if an aux repo has been pulled into the build (without
-      // first being removed from the aux team).
-      stage('git tag auxilliaries') {
-        retry(retries) {
-          node('docker') {
-            util.githubTagTeams(
-              [
-                '--dry-run': false,
-                '--org': config.release_tag_org,
-                '--tag': gitTag,
-              ]
-            )
-          } // node
-        } // retry
-      }
-
-      stage('build') {
-        retry(retries) {
-          bx = util.runRebuild(buildJob, [
+    stage('build') {
+      retry(retries) {
+        manifestId = util.runRebuild(
+          parameters: [
             BRANCH: gitTag,
             PRODUCT: product,
             SKIP_DEMO: false,
             SKIP_DOCS: false,
-            TIMEOUT: '8', // hours
-          ])
-        }
-      }
+          ],
+        )
+      } // retry
+    } // stage
 
-      stage('eups publish') {
-        def pub = [:]
+    stage('eups publish') {
+      def pub = [:]
 
-        pub[eupsTag] = {
+      [eupsTag, 'o_latest'].each { tagName ->
+        pub[tagName] = {
           retry(retries) {
-            util.tagProduct(bx, eupsTag, product, publishJob)
-          }
-        }
-        pub['o_latest'] = {
-          retry(retries) {
-            util.tagProduct(bx, 'o_latest', product, publishJob)
-          }
-        }
+            util.runPublish(
+              parameters: [
+                EUPSPKG_SOURCE: eupspkgSource,
+                MANIFEST_ID: manifestId,
+                EUPS_TAG: tagName,
+                PRODUCT: product,
+              ],
+            )
+          } // retry
+        } // pub
+      } // each
 
-        parallel pub
-      }
+      parallel pub
+    } // stage
 
-      stage('wait for s3 sync') {
-        sleep time: 15, unit: 'MINUTES'
-      }
+    util.waitForS3()
 
-
-      stage('build eups tarballs') {
-       def opt = [
+    stage('build eups tarballs') {
+      util.buildTarballMatrix(
+        tarballConfigs: config.tarball,
+        parameters: [
+          PRODUCT: tarballProducts,
+          EUPS_TAG: eupsTag,
           SMOKE: true,
           RUN_DEMO: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
-        ]
+        ],
+        retries: retries,
+      )
+    } // stage
 
-        util.buildTarballMatrix(config, tarballProducts, eupsTag, opt)
-      }
+    util.waitForS3()
 
-      stage('wait for s3 sync') {
-        sleep time: 15, unit: 'MINUTES'
-      }
+    stage('build stack image') {
+      retry(retries) {
+        stackResults = util.runBuildStack(
+          parameters: [
+            PRODUCT: tarballProducts,
+            TAG: eupsTag,
+          ],
+        )
+      } // retry
+    } // stage
 
-      stage('build stack image') {
-        retry(retries) {
-          build job: 'release/docker/build-stack',
-            parameters: [
-              string(name: 'PRODUCT', value: tarballProducts),
-              string(name: 'TAG', value: eupsTag),
-            ]
-        }
-      }
+    stage('build jupyterlabdemo image') {
+      retry(retries) {
+        // based on lsstsqre/stack image
+        build job: 'sqre/infrastructure/build-jupyterlabdemo',
+          parameters: [
+            string(name: 'TAG', value: eupsTag),
+            booleanParam(name: 'NO_PUSH', value: false),
+            string(
+              name: 'IMAGE_NAME',
+              value: config.release.step.build_jupyterlabdemo.image_name,
+            ),
+            // BASE_IMAGE is the registry repo name *only* without a tag
+            string(
+              name: 'BASE_IMAGE',
+              value: stackResults.docker_registry.repo,
+            ),
+          ],
+          wait: false
+      } // retry
+    } // stage
 
-      stage('build jupyterlabdemo image') {
-        retry(retries) {
-          // based on lsstsqre/stack image
-          build job: 'sqre/infrastructure/build-jupyterlabdemo',
-            parameters: [
-              string(name: 'TAG', value: eupsTag),
-              booleanParam(name: 'NO_PUSH', value: false),
-            ],
-            wait: false
-        }
-      }
+    stage('validate_drp') {
+      // XXX use the same compiler as is configured for the canonical build
+      // env.  This is a bit of a kludge.  It would be better to directly
+      // label the compiler used on the dockage image.
+      def lsstswConfig = config.canonical.lsstsw_config
 
-      stage('validate_drp') {
-        // XXX use the same compiler as is configured for the canoncial build
-        // env.  This is a bit of a kludge.  It would be better to directly
-        // label the compiler used on the dockage image.
-        def can = config.canonical
+      retry(1) {
+        // based on lsstsqre/stack image
+        build job: 'sqre/validate_drp',
+          parameters: [
+            string(name: 'EUPS_TAG', value: eupsTag),
+            string(name: 'MANIFEST_ID', value: manifestId),
+            string(name: 'COMPILER', value: lsstswConfig.compiler),
+            string(name: 'RELEASE_IMAGE', value: stackResults.image),
+            booleanParam(
+              name: 'NO_PUSH',
+              value: config.release.step.validate_drp.no_push,
+            ),
+            booleanParam(name: 'WIPEOUT', value: true),
+          ],
+          wait: false
+      } // retry
+    } // stage
 
-        retry(1) {
-          // based on lsstsqre/stack image
-          build job: 'sqre/validate_drp',
-            parameters: [
-              string(name: 'EUPS_TAG', value: eupsTag),
-              string(name: 'BNNNN', value: bx),
-              string(name: 'COMPILER', value: can.compiler),
-              booleanParam(name: 'NO_PUSH', value: false),
-              booleanParam(name: 'WIPEOUT', value: true),
-            ],
-            wait: false
-        }
-      }
+    stage('doc build') {
+      retry(retries) {
+        build job: 'sqre/infrastructure/documenteer',
+          parameters: [
+            string(name: 'EUPS_TAG', value: eupsTag),
+            string(name: 'LTD_SLUG', value: eupsTag),
+            string(name: 'RELEASE_IMAGE', value: stackResults.image),
+            booleanParam(
+              name: 'PUBLISH',
+              value: config.release.step.documenteer.publish,
+            ),
+          ]
+      } // retry
+    } // stage
+  } // run
 
-      stage('doc build') {
-        retry(retries) {
-          build job: 'sqre/infrastructure/documenteer',
-            parameters: [
-              string(name: 'EUPS_TAG', value: eupsTag),
-              string(name: 'LTD_SLUG', value: eupsTag),
-            ]
-        }
-      }
-    } // timeout
+  try {
+    timeout(time: 30, unit: 'HOURS') {
+      run()
+    }
   } finally {
     stage('archive') {
       def resultsFile = 'results.json'
 
       util.nodeTiny {
-        results = [:]
-        if (bx) {
-          results['bnnn'] = bx
-        }
-        if (gitTag) {
-          results['git_tag'] = gitTag
-        }
-        if (eupsTag) {
-          results['eups_tag'] = eupsTag
-        }
-
-        util.dumpJson(resultsFile, results)
+        util.dumpJson(resultsFile, [
+          manifest_id: manifestId ?: null,
+          git_tag: gitTag ?: null,
+          eups_tag: eupsTag ?: null,
+        ])
 
         archiveArtifacts([
           artifacts: resultsFile,
           fingerprint: true
         ])
       }
-    }
+    } // stage
   } // try
 } // notify.wrap

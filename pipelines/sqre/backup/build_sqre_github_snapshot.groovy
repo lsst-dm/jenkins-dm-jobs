@@ -13,14 +13,20 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def image      = null
+  util.requireParams([
+    'LATEST',
+    'NO_PUSH',
+  ])
+
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
   def hubRepo    = 'lsstsqre/sqre-github-snapshot'
   def githubRepo = 'lsst-sqre/sqre-git-snapshot'
   def githubRef  = 'refs/tags/0.2.1'
   def hubTag     = tagBasename(githubRef)
-  def pushLatest = params.LATEST
-  def noPush     = params.NO_PUSH
 
+  def image = null
 
   def run = {
     def abbrHash = null
@@ -47,7 +53,7 @@ notify.wrap {
     }
 
     stage('push') {
-      if (!noPush) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'

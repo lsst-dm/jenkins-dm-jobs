@@ -11,66 +11,65 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    config = util.scipipeConfig()
   }
 }
 
 notify.wrap {
-  def eupsTag = 'qserv-dev'
-  def bx = null
+  def product         = 'qserv_distrib'
+  def tarballProducts = product
+  def retries         = 3
+  def eupsTag         = 'qserv-dev'
 
-  try {
-    timeout(time: 30, unit: 'HOURS') {
-      def product         = 'qserv_distrib'
-      def tarballProducts = product
+  def manifestId = null
 
-      def retries = 3
-      def buildJob = 'release/run-rebuild'
-      def publishJob = 'release/run-publish'
-
-      stage('build') {
-        retry(retries) {
-          bx = util.runRebuild(buildJob, [
+  def run = {
+    stage('build') {
+      retry(retries) {
+        manifestId = util.runRebuild(
+          parameters: [
             PRODUCT: product,
             SKIP_DEMO: true,
             SKIP_DOCS: true,
-            TIMEOUT: '8', // hours
-          ])
-        }
-      }
+          ],
+        )
+      } // retry
+    } // stage
 
-      stage('eups publish') {
-        def pub = [:]
+    stage('eups publish') {
+      retry(retries) {
+        util.runPublish(
+          parameters: [
+            EUPSPKG_SOURCE: 'git',
+            MANIFEST_ID: manifestId,
+            EUPS_TAG: eupsTag,
+            PRODUCT: product,
+          ],
+        )
+      } // retry
+    } // stage
+  } // run
 
-        pub[eupsTag] = {
-          retry(retries) {
-            util.tagProduct(bx, eupsTag, product, publishJob)
-          }
-        }
-
-        parallel pub
-      }
-    } // timeout
+  try {
+    timeout(time: 30, unit: 'HOURS') {
+      run()
+    }
   } finally {
     stage('archive') {
       def resultsFile = 'results.json'
 
       util.nodeTiny {
-        results = [:]
-        if (bx) {
-          results['bnnn'] = bx
-        }
-        if (eupsTag) {
-          results['eups_tag'] = eupsTag
-        }
-
-        util.dumpJson(resultsFile, results)
+        util.dumpJson(resultsFile, [
+          manifest_id: manifestId ?: null,
+          git_tag: gitTag ?: null,
+          eups_tag: eupsTag ?: null,
+        ])
 
         archiveArtifacts([
           artifacts: resultsFile,
           fingerprint: true
         ])
       }
-    }
+    } // stage
   } // try
 } // notify.wrap

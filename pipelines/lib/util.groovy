@@ -155,10 +155,9 @@ def dumpJson(String filename, Map data) {
 }
 
 /**
- * Serialize a Map to a JSON string and write it to a file.
+ * Parse a JSON string.
  *
- * @param filename output filename
- * @param data Map to serialize
+ * @param data String to parse.
  * @return LazyMap parsed JSON object
  */
 @NonCPS
@@ -167,32 +166,57 @@ def slurpJson(String data) {
   slurper.parseText(data)
 }
 
-
 /**
  * Create an EUPS distrib tag
  *
- * @param buildId bNNNN
- * @param eupsTag tag name
- * @param product whitespace delimited string of products to tag
- * @param publishJob job to trigger (does the actual work)
- * @param timelimit Integer build timeout in hours
+ * Example:
+ *
+ *     util.runPublish(
+ *       parameters: [
+ *         EUPSPKG_SOURCE: 'git',
+ *         MANIFEST_ID: manifestId,
+ *         EUPS_TAG: eupsTag,
+ *         PRODUCT: product,
+ *       ],
+ *     )
+ *
+ * @param p Map
+ * @param p.job String job to trigger. Defaults to `release/run-publish`.
+ * @param p.parameters.EUPSPKG_SOURCE String
+ * @param p.parameters.MANIFEST_ID String
+ * @param p.parameters.EUPS_TAG String
+ * @param p.parameters.PRODUCT String
+ * @param p.parameters.TIMEOUT String Defaults to `'1'`.
  */
-def tagProduct(
-  String buildId,
-  String eupsTag,
-  String product,
-  String publishJob = 'release/run-publish',
-  Integer timelimit = 1
-) {
-  build job: publishJob,
+def void runPublish(Map p) {
+  requireMapKeys(p, [
+    'parameters',
+  ])
+  def useP = [
+    job: 'release/run-publish',
+  ] + p
+
+  requireMapKeys(p.parameters, [
+    'EUPSPKG_SOURCE',
+    'MANIFEST_ID',
+    'EUPS_TAG',
+    'PRODUCT',
+  ])
+  useP.parameters = [
+    TIMEOUT: '1' // should be string
+  ] + p.parameters
+
+  build(
+    job: useP.job,
     parameters: [
-      string(name: 'EUPSPKG_SOURCE', value: 'git'),
-      string(name: 'BUILD_ID', value: buildId),
-      string(name: 'TAG', value: eupsTag),
-      string(name: 'PRODUCT', value: product),
-      string(name: 'TIMEOUT', value: timelimit.toString()), // hours
-    ]
-} // tagProduct
+      string(name: 'EUPSPKG_SOURCE', value: useP.parameters.EUPSPKG_SOURCE),
+      string(name: 'MANIFEST_ID', value: useP.parameters.MANIFEST_ID),
+      string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
+      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT.toString()),
+    ],
+  )
+} // runPublish
 
 /**
  * Run a lsstsw build.
@@ -204,6 +228,7 @@ def tagProduct(
  * @param wipteout Delete all existing state before starting build
  */
 def lsstswBuild(
+  Map buildParams,
   String image,
   String label,
   String compiler,
@@ -212,14 +237,13 @@ def lsstswBuild(
   Boolean wipeout=false
 ) {
   def run = {
-    withEnv([
-      'SKIP_DOCS=true',
-      "LSST_JUNIT_PREFIX=${slug}",
-      "LSST_PYTHON_VERSION=${python}",
-      "LSST_COMPILER=${compiler}",
-    ]) {
-      jenkinsWrapper()
-    }
+    buildParams += [
+      LSST_JUNIT_PREFIX:   slug,
+      LSST_PYTHON_VERSION: python,
+      LSST_COMPILER:       compiler,
+    ]
+
+    jenkinsWrapper(buildParams)
   } // run
 
   def runDocker = {
@@ -264,10 +288,30 @@ def lsstswBuild(
 } // lsstswBuild
 
 /**
- * Run a jenkins_wrapper.sh
+ * Run a build using ci-scripts/jenkins_wrapper.sh
+ *
+ * Required keys are listed below. Any additional keys will also be set as env
+ * vars.
+ * @param buildParams.BRANCH String
+ * @param buildParams.PRODUCT String
+ * @param buildParams.SKIP_DEMO Boolean
+ * @param buildParams.SKIP_DOCS Boolean
  */
-def jenkinsWrapper() {
-  def cwd = pwd()
+def void jenkinsWrapper(Map buildParams) {
+  // minimum set of required keys -- additional are allowed
+  requireMapKeys(buildParams, [
+    'BRANCH',
+    'PRODUCT',
+    'SKIP_DEMO',
+    'SKIP_DOCS',
+  ])
+
+  def cwd     = pwd()
+  def homeDir = "${cwd}/home"
+
+  def config         = scipipeConfig()
+  def demoGithubRepo = config.lsst_dm_stack_demo.github_repo
+  def demoBaseUrl    = "${githubSlugToUrl(demoGithubRepo)}/archive"
 
   try {
     dir('lsstsw') {
@@ -280,12 +324,7 @@ def jenkinsWrapper() {
 
     // workspace relative dir for dot files to prevent bleed through between
     // jobs and subsequent builds.
-    dir('home') {
-      deleteDir()
-
-      // this is a lazy way to recreate the directory
-      writeFile(file: '.dummy', text: '')
-    }
+    emptyDirs([homeDir])
 
     // cleanup *all* conda cached package info
     [
@@ -297,16 +336,24 @@ def jenkinsWrapper() {
       }
     }
 
+    def buildEnv = [
+      "WORKSPACE=${cwd}",
+      "HOME=${homeDir}",
+      "EUPS_USERDATA=${homeDir}/.eups_userdata",
+      "DEMO_BASE_URL=${demoBaseUrl}",
+    ]
+
+    // Map -> List
+    buildParams.each { pair ->
+      buildEnv += pair.toString()
+    }
+
     withCredentials([[
       $class: 'StringBinding',
       credentialsId: 'cmirror-s3-bucket',
       variable: 'CMIRROR_S3_BUCKET'
     ]]) {
-      withEnv([
-        "WORKSPACE=${cwd}",
-        "HOME=${cwd}/home",
-        "EUPS_USERDATA=${cwd}/home/.eups_userdata",
-      ]) {
+      withEnv(buildEnv) {
         bash './ci-scripts/jenkins_wrapper.sh'
       }
     } // withCredentials([[
@@ -397,13 +444,13 @@ def jenkinsWrapperPost(String baseDir = null) {
 } // jenkinsWrapperPost
 
 /**
- * Parse bNNNN out of a manifest.txt format String.
+ * Parse manifest id out of a manifest.txt format String.
  *
  * @param manifest.txt as a String
- * @return String
+ * @return manifestId String
  */
 @NonCPS
-def String bxxxx(String manifest) {
+def String parseManifestId(String manifest) {
   def m = manifest =~ /(?m)^BUILD=(b.*)/
   m ? m[0][1] : null
 }
@@ -438,6 +485,21 @@ def void requireEnvVars(List rev) {
 }
 
 /**
+ * Validate that map contains AT LEAST the specified list of keys and raise
+ * an error on any that are missing.
+ *
+ * @param check Map object to inspect
+ * @param key List of required map keys
+ */
+def void requireMapKeys(Map check, List keys) {
+  keys.each { k ->
+    if (! check.containsKey(k)) {
+      error "${k} key is missing from Map"
+    }
+  }
+}
+
+/**
  * Empty directories by deleting and recreating them.
  *
  * @param dirs List of directories to empty
@@ -446,6 +508,20 @@ def void emptyDirs(List eds) {
   eds.each { d ->
     dir(d) {
       deleteDir()
+      // a file operation is needed to cause the dir() step to recreate the dir
+      writeFile(file: '.dummy', text: '')
+    }
+  }
+}
+
+/**
+ * Ensure directories exist and create any that are absent.
+ *
+ * @param dirs List of directories to ensure/create
+*/
+def void createDirs(List eds) {
+  eds.each { d ->
+    dir(d) {
       // a file operation is needed to cause the dir() step to recreate the dir
       writeFile(file: '.dummy', text: '')
     }
@@ -482,17 +558,36 @@ def void getManifest(String rebuildId, String filename) {
 /**
  * Run the `github-tag-release` script from `sqre-codekit` with parameters.
  *
- * @param gitTag String name of git tag to create
- * @param eupsTag String name of eups distrib tag to select repos/refs to tag
- * @param buildId String bNNNN/manifest id to select repos/refs to tag
- * @param options Map see `makeCliCmd`
+ * Example:
+ *
+ *     util.githubTagRelease(
+ *       options: [
+ *         '--dry-run': true,
+ *         '--org': 'myorg'
+ *         '--manifest': 'b1234',
+ *         '--eups-tag': 'v999_0_0',
+ *       ],
+ *       args: ['999.0.0'],
+ *     )
+ *
+ * @param p Map
+ * @param p.options Map CLI --<options>. Required. See `makeCliCmd`
+ * @param p.options.'--org' String Required.
+ * @param p.options.'--manifest' String Required.
+ * @param p.options.'--eups-tag' String Required.
+ * @param p.args List Eg., `[<git tag>]` Required.
  */
-def void githubTagRelease(
-  String gitTag,
-  String eupsTag,
-  String buildId,
-  Map options
-) {
+def void githubTagRelease(Map p) {
+  requireMapKeys(p, [
+    'args',
+    'options',
+  ])
+  requireMapKeys(p.options, [
+    '--org',
+    '--manifest',
+    '--eups-tag',
+  ])
+
   def prog = 'github-tag-release'
   def defaultOptions = [
     '--debug': true,
@@ -504,19 +599,37 @@ def void githubTagRelease(
     '--external-team': 'DM Externals',
     '--deny-team': 'DM Auxilliaries',
     '--fail-fast': true,
-    '--manifest': buildId,
-    '--eups-tag': eupsTag,
   ]
 
-  runCodekitCmd(prog, defaultOptions, options, [gitTag])
+  runCodekitCmd(prog, defaultOptions, p.options, p.args)
 } // githubTagRelease
 
 /**
  * Run the `github-tag-teams` script from `sqre-codekit` with parameters.
  *
- * @param options Map see `makeCliCmd`
+ * Example:
+ *
+ *     util.githubTagTeams(
+ *       options: [
+ *         '--dry-run': true,
+ *         '--org': 'myorg',
+ *         '--tag': '999.0.0',
+ *       ],
+ *     )
+ *
+ * @param p Map
+ * @param p.options Map CLI --<options>. Required. See `makeCliCmd`
+ * @param p.options.'--org' String Required.
+ * @param p.options.'--tag' String|List Required.
  */
-def void githubTagTeams(Map options) {
+def void githubTagTeams(Map p) {
+  requireMapKeys(p, [
+    'options',
+  ])
+  requireMapKeys(p.options, [
+    '--org',
+    '--tag',
+  ])
   def prog = 'github-tag-teams'
   def defaultOptions = [
     '--debug': true,
@@ -528,7 +641,7 @@ def void githubTagTeams(Map options) {
     '--deny-team': 'DM Externals',
   ]
 
-  runCodekitCmd(prog, defaultOptions, options, null)
+  runCodekitCmd(prog, defaultOptions, p.options, null)
 } // githubTagTeams
 
 /**
@@ -616,9 +729,7 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  def docImage  = 'lsstsqre/codekit:7.1.0'
-
-  insideWrap(docImage) {
+  insideWrap(defaultCodekitImage()) {
     withGithubAdminCredentials {
       run()
     } // withGithubAdminCredentials
@@ -699,24 +810,28 @@ def void nodeTiny(Closure run) {
 /**
  * Execute a multiple multiple lsstsw builds using different configurations.
  *
- * @param config List of lsstsw build configurations
+ * @param matrixConfig List of lsstsw build configurations
+ * @param buildParams Map of params/env vars for jenkins_wrapper.sh
  * @param wipeout Boolean wipeout the workspace build starting the build
  */
-def lsstswBuildMatrix(List lsstswConfigs, Boolean wipeout=false) {
+def lsstswBuildMatrix(
+  List matrixConfig,
+  Map buildParams,
+  Boolean wipeout=false
+) {
   def matrix = [:]
 
   // XXX validate config
-  lsstswConfigs.each { item ->
-    def displayName = item.display_name ?: item.label
-    def displayCompiler = item.display_compiler ?: item.compiler
-    def slug = "${displayName}.${displayCompiler}.py${item.python}"
+  matrixConfig.each { lsstswConfig ->
+    def slug = lsstswConfigSlug(lsstswConfig)
 
     matrix[slug] = {
       lsstswBuild(
-        item.image,
-        item.label,
-        item.compiler,
-        item.python,
+        buildParams,
+        lsstswConfig.image,
+        lsstswConfig.label,
+        lsstswConfig.compiler,
+        lsstswConfig.python,
         slug,
         wipeout
       )
@@ -730,11 +845,11 @@ def lsstswBuildMatrix(List lsstswConfigs, Boolean wipeout=false) {
  * Clone lsstsw git repo
  */
 def void cloneLsstsw() {
-  def config = readYamlFile('etc/science_pipelines/build_matrix.yaml')
+  def config = scipipeConfig()
 
   gitNoNoise(
-    url: githubSlugToUrl(config.lsstsw_repo_slug),
-    branch: config.lsstsw_repo_ref,
+    url: githubSlugToUrl(config.lsstsw.github_repo),
+    branch: config.lsstsw.git_ref,
   )
 }
 
@@ -742,11 +857,11 @@ def void cloneLsstsw() {
  * Clone ci-scripts git repo
  */
 def void cloneCiScripts() {
-  def config = readYamlFile('etc/science_pipelines/build_matrix.yaml')
+  def config = scipipeConfig()
 
   gitNoNoise(
-    url: githubSlugToUrl(config.ciscripts_repo_slug),
-    branch: config.ciscripts_repo_ref,
+    url: githubSlugToUrl(config.ciscripts.github_repo),
+    branch: config.ciscripts.git_ref,
   )
 }
 
@@ -766,6 +881,7 @@ def void gitNoNoise(Map args) {
  * Parse yaml file into object -- parsed files are memoized.
  *
  * @param file String file to parse
+ * @return yaml Object
  */
 // The @Memoized decorator seems to break pipeline serialization and this
 // method can not be labeled as @NonCPS.
@@ -776,16 +892,51 @@ def Object readYamlFile(String file) {
   return yaml
 }
 
-def void buildTarballMatrix(
-  Map config,
-  String product,
-  String eupsTag,
-  Map opt,
-  Integer retries = 3
-) {
+/**
+ * Build a multi-configuration matrix of eups tarballs.
+ *
+ * Example:
+ *
+ *     util.buildTarballMatrix(
+ *       tarballConfigs: config.tarball,
+ *       parameters: [
+ *         PRODUCT: tarballProducts,
+ *         SMOKE: true,
+ *         RUN_DEMO: true,
+ *         RUN_SCONS_CHECK: true,
+ *         PUBLISH: true,
+ *       ],
+ *       retries: retries,
+ *     )
+ *
+ * @param p Map
+ * @param p.tarballConfigs List
+ * @param p.parameters.PRODUCT String
+ * @param p.parameters.EUPS_TAG String
+ * @param p.parameters.TIMEOUT String Defaults to `'8'`.
+ * @param p.retries Integer Defaults to `1`.
+ */
+def void buildTarballMatrix(Map p) {
+  requireMapKeys(p, [
+    'tarballConfigs',
+    'parameters',
+  ])
+  def useP = [
+    retries: 1,
+  ] + p
+
+  requireMapKeys(p.parameters, [
+    'PRODUCT',
+    'EUPS_TAG',
+  ])
+  useP.parameters = [
+    TIMEOUT: '8', // should be String
+  ] + p.parameters
+  def param = useP.parameters
+
   def platform = [:]
 
-  config['tarball'].each { item ->
+  p.tarballConfigs.each { item ->
     def displayName = item.display_name ?: item.label
     def displayCompiler = item.display_compiler ?: item.compiler
 
@@ -793,23 +944,25 @@ def void buildTarballMatrix(
     slug += "-${item.miniver}-${item.lsstsw_ref}"
 
     platform["${displayName}.${displayCompiler}.${slug}"] = {
-      retry(retries) {
+      retry(useP.retries) {
         build job: 'release/tarball',
           parameters: [
-            string(name: 'PRODUCT', value: product),
-            string(name: 'EUPS_TAG', value: eupsTag),
-            booleanParam(name: 'SMOKE', value: opt.SMOKE),
-            booleanParam(name: 'RUN_DEMO', value: opt.RUN_DEMO),
-            booleanParam(name: 'RUN_SCONS_CHECK', value: opt.RUN_SCONS_CHECK),
-            booleanParam(name: 'PUBLISH', value: opt.PUBLISH),
+            string(name: 'PRODUCT', value: param.PRODUCT),
+            string(name: 'EUPS_TAG', value: param.EUPS_TAG),
+            booleanParam(name: 'SMOKE', value: param.SMOKE),
+            booleanParam(name: 'RUN_DEMO', value: param.RUN_DEMO),
+            booleanParam(name: 'RUN_SCONS_CHECK', value: param.RUN_SCONS_CHECK),
+            booleanParam(name: 'PUBLISH', value: param.PUBLISH),
             booleanParam(name: 'WIPEOUT', value: false),
-            string(name: 'TIMEOUT', value: '8'), // hours
+            string(name: 'TIMEOUT', value: param.TIMEOUT), // hours
             string(name: 'IMAGE', value: nullToEmpty(item.image)),
             string(name: 'LABEL', value: item.label),
             string(name: 'COMPILER', value: item.compiler),
             string(name: 'PYTHON_VERSION', value: item.python),
             string(name: 'MINIVER', value: item.miniver),
             string(name: 'LSSTSW_REF', value: item.lsstsw_ref),
+            string(name: 'OSFAMILY', value: item.osfamily),
+            string(name: 'PLATFORM', value: item.platform),
           ]
       } // retry
     } // platform
@@ -975,53 +1128,66 @@ def ltdPush(Map args) {
 /**
  * run `release/run-rebuild` job and parse result
  *
- * @param buildJob String job to trigger. Defaults to `release/rebuild`.
- * @param opts.BRANCH String
- * @param opts.PRODUCT String
- * @param opts.SKIP_DEMO Boolean Defaults to `false`.
- * @param opts.SKIP_DOCS Boolean Defaults to `false`.
- * @param opts.TIMEOUT String Defaults to `'8'`.
- * @return bxxxx String
+ * Example:
+ *
+ *     manifestId = util.runRebuild(
+ *       parameters: [
+ *         PRODUCT: product,
+ *         SKIP_DEMO: true,
+ *         SKIP_DOCS: true,
+ *       ],
+ *     )
+ *
+ * @param p Map
+ * @param p.job String job to trigger. Defaults to `release/run-rebuild`.
+ * @param p.parameters.BRANCH String Defaults to `''`.
+ * @param p.parameters.PRODUCT String Defaults to `''`.
+ * @param p.parameters.SKIP_DEMO Boolean Defaults to `false`.
+ * @param p.parameters.SKIP_DOCS Boolean Defaults to `false`.
+ * @param p.parameters.TIMEOUT String Defaults to `'8'`.
+ * @return manifestId String
  */
-def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
-  def defaultOpts = [
+def String runRebuild(Map p) {
+  def useP = [
+    job: 'release/run-rebuild',
+  ] + p
+
+  useP.parameters = [
     BRANCH: '',  // null is not a valid value for a string param
     PRODUCT: '',
     SKIP_DEMO: false,
     SKIP_DOCS: false,
     TIMEOUT: '8', // should be String
-  ]
-  def useOpts = defaultOpts + opts
+  ] + p.parameters
 
-  def result = build job: buildJob,
+  def result = build(
+    job: useP.job,
     parameters: [
-      string(name: 'BRANCH', value: useOpts.BRANCH),
-      string(name: 'PRODUCT', value: useOpts.PRODUCT),
-      booleanParam(name: 'SKIP_DEMO', value: useOpts.SKIP_DEMO),
-      booleanParam(name: 'SKIP_DOCS', value: useOpts.SKIP_DOCS),
-      string(name: 'TIMEOUT', value: useOpts.TIMEOUT), // hours
+      string(name: 'BRANCH', value: useP.parameters.BRANCH),
+      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      booleanParam(name: 'SKIP_DEMO', value: useP.parameters.SKIP_DEMO),
+      booleanParam(name: 'SKIP_DOCS', value: useP.parameters.SKIP_DOCS),
+      string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
     ],
-    wait: true
+    wait: true,
+  )
 
-  def bx = null
   nodeTiny {
-    manifest_artifact = 'lsstsw/build/manifest.txt'
+    manifestArtifact = 'lsstsw/build/manifest.txt'
 
     step([$class: 'CopyArtifact',
-          projectName: buildJob,
-          filter: manifest_artifact,
+          projectName: useP.job,
+          filter: manifestArtifact,
           selector: [
             $class: 'SpecificBuildSelector',
             buildNumber: result.id,
           ],
         ])
 
-    def manifest = readFile manifest_artifact
-    bx = bxxxx(manifest)
-    echo "parsed bxxxx: ${bx}"
+    def manifestId = parseManifestId(readFile(manifestArtifact))
+    echo "parsed manifest id: ${manifestId}"
+    return manifestId
   } // nodeTiny
-
-  return bx
 } // runRebuild
 
 /*
@@ -1035,7 +1201,7 @@ def String runRebuild(String buildJob='release/run-rebuild', Map opts) {
 def String githubSlugToUrl(String slug, String scheme = 'https') {
   switch (scheme) {
     case 'https':
-      return "https://github.com/${slug}.git"
+      return "https://github.com/${slug}"
       break
     case 'ssh':
       return "ssh://git@github.com/${slug}.git"
@@ -1044,5 +1210,234 @@ def String githubSlugToUrl(String slug, String scheme = 'https') {
       throw new Error("unknown scheme: ${scheme}")
   }
 }
+
+/*
+ * Generate a github "raw" download URL.
+ *
+ * @param p.slug String
+ * @param p.path String
+ * @param p.ref String Defaults to 'master'
+ * @return url String
+ */
+def String githubRawUrl(Map p) {
+  requireMapKeys(p, [
+    'slug',
+    'path',
+  ])
+  def useP = [
+    ref: 'master',
+  ] + p
+
+  def baseUrl = 'https://raw.githubusercontent.com'
+  return "${baseUrl}/${useP.slug}/${useP.ref}/${useP.path}"
+}
+
+/*
+ * Generate URL to versiondb manifest file.
+ *
+ * @param manifestId String
+ * @return url String
+ */
+def String versiondbManifestUrl(String manifestId) {
+  def config = scipipeConfig()
+  return githubRawUrl(
+    slug: config.versiondb.github_repo,
+    path: "manifests/${manifestId}.txt",
+  )
+}
+
+/*
+ * Generate URL to repos.yaml.
+ *
+ * @return url String
+ */
+def String reposUrl() {
+  def config = scipipeConfig()
+  return githubRawUrl(
+    slug: config.repos.github_repo,
+    ref: config.repos.git_ref,
+    path: 'etc/repos.yaml',
+  )
+}
+
+/*
+ * Generate URL to newinstall.sh
+ *
+ * @return url String
+ */
+def String newinstallUrl() {
+  def config = scipipeConfig()
+  return githubRawUrl(
+    slug: config.newinstall.github_repo,
+    ref: config.newinstall.git_ref,
+    path: 'scripts/newinstall.sh',
+  )
+}
+
+/*
+ * Generate URL to shebangtron
+ *
+ * @return url String
+ */
+def String shebangtronUrl() {
+  def config = scipipeConfig()
+  return githubRawUrl(
+    slug: config.shebangtron.github_repo,
+    ref: config.shebangtron.git_ref,
+    path: 'shebangtron',
+  )
+}
+
+/*
+ * Sanitize string for use as docker tag
+ *
+ * @param tag String
+ * @return tag String
+ */
+@NonCPS
+def String sanitizeDockerTag(String tag) {
+  // is there a canonical reference for the tag format?
+  // convert / to -
+  tag.tr('/', '_')
+}
+
+/**
+ * Derive a "slug" string from a lsstsw build configuration Map.
+ *
+ * @param lsstswConfig Map
+ * @return slug String
+ */
+@NonCPS
+def String lsstswConfigSlug(Map lsstswConfig) {
+  def lc = lsstswConfig
+  def displayName = lc.display_name ?: lc.label
+  def displayCompiler = lc.display_compiler ?: lc.compiler
+
+  "${displayName}.${displayCompiler}.py${lc.python}"
+}
+
+/*
+ * Sanitize string for use as an eups tag
+ *
+ * @param tag String
+ * @return tag String
+ */
+@NonCPS
+def String sanitizeEupsTag(String tag) {
+  // eups doesn't like dots in tags, convert to underscores
+  // by policy, we're not allowing dash either
+  tag.tr('.-', '_')
+}
+
+/*
+ * Get science-pipeline config
+ *
+ * @return tag Object
+ */
+def Object scipipeConfig() {
+  readYamlFile('etc/science_pipelines/build_matrix.yaml')
+}
+
+/*
+ * Get sqre config
+ *
+ * @return tag Object
+ */
+def Object sqreConfig() {
+  readYamlFile('etc/sqre/config.yaml')
+}
+
+/*
+ * Get default awscli docker image string
+ *
+ * @return awscliImage String
+ */
+def String defaultAwscliImage() {
+  sqreConfig().awscli.docker_registry.repo
+}
+
+/*
+ * Get default codekit docker image string
+ *
+ * @return codekitImage String
+ */
+def String defaultCodekitImage() {
+  sqreConfig().codekit.docker_registry.repo
+}
+
+/**
+ * run `release/run-rebuild` job and parse result
+ *
+ * @param opts.job Name of job to trigger. Defaults to
+ *        `release/docker/build-stack`.
+ * @param opts.parameters.PRODUCT String. Required.
+ * @param opts.parameters.TAG String. Required.
+ * @param opts.parameters.NO_PUSH Boolean. Defaults to `false`.
+ * @param opts.parameters.TIMEOUT String. Defaults to `1'`.
+ * @return json Object
+ */
+def Object runBuildStack(Map p) {
+  // validate opts Map
+  requireMapKeys(p, [
+    'parameters',
+  ])
+  def useP = [
+    job: 'release/docker/build-stack',
+  ] + p
+
+  // validate opts.parameters Map
+  requireMapKeys(p.parameters, [
+    'PRODUCT',
+    'TAG',
+  ])
+  useP.parameters = [
+    NO_PUSH: false,
+    TIMEOUT: '1', // should be String
+  ] + p.parameters
+
+  def result = build(
+    job: useP.job,
+    parameters: [
+      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      string(name: 'TAG', value: useP.parameters.TAG),
+      booleanParam(name: 'NO_PUSH', value: useP.parameters.NO_PUSH),
+      string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT),
+    ],
+    wait: true
+  )
+
+  nodeTiny {
+    resultsArtifact = 'results.json'
+
+    step([
+      $class: 'CopyArtifact',
+      projectName: useP.job,
+      filter: resultsArtifact,
+      selector: [
+        $class: 'SpecificBuildSelector',
+        buildNumber: result.id,
+      ],
+    ])
+
+    def json = readJSON(file: resultsArtifact)
+    echo "parsed ${resultsArtifact}: ${json}"
+    return json
+  } // nodeTiny
+} // runBuildStack
+
+/**
+ * Sleep to ensure s3 objects have sync'd with the EUPS_PKGROOT.
+ *
+ * Example:
+ *
+ *     util.waitForS3()
+ */
+def void waitForS3() {
+  def config = scipipeConfig()
+
+  stage('wait for s3 sync') {
+    sleep(time: config.release.s3_wait_time, unit: 'MINUTES')
+  }
+} // waitForS3
 
 return this;

@@ -9,33 +9,48 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    config = util.scipipeConfig()
   }
 }
 
 notify.wrap {
   util.requireParams([
+    'NO_PUSH',
     'PRODUCT',
     'TAG',
     'TIMEOUT',
   ])
 
-  def product   = params.PRODUCT
-  def eupsTag   = params.TAG
-  def noPush    = params.NO_PUSH
-  def timelimit = params.TIMEOUT.toInteger()
+  String product    = params.PRODUCT
+  String eupsTag    = params.TAG
+  Boolean noPush    = params.NO_PUSH
+  Integer timelimit = params.TIMEOUT
 
-  def image     = null
-  def repo      = null
-  def hubRepo   = config.release_docker_repo
-  def hubTag    = "7-stack-lsst_distrib-${eupsTag}"
-  def timestamp = util.epochMilliToUtc(currentBuild.startTimeInMillis)
+  def scipipe        = config.scipipe_release
+  def dockerfile     = scipipe.dockerfile
+  def dockerRegistry = scipipe.docker_registry
+  def newinstall     = config.newinstall
+
+  def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
+  def githubRef      = dockerfile.git_ref
+  def buildDir       = dockerfile.dir
+  def dockerRepo     = dockerRegistry.repo
+  def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
+  def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
+  def shebangtronUrl = util.shebangtronUrl()
+
+  def newinstallImage = newinstall.docker_registry.repo
+  newinstallImage += ":${newinstall.docker_registry.tag}"
+  def baseImage = newinstallImage
+
+  def image = null
+  def repo  = null
 
   def run = {
     stage('checkout') {
       repo = git([
-        url: 'https://github.com/lsst-sqre/docker-tarballs',
-        branch: 'master'
+        url: githubRepo,
+        branch: githubRef,
       ])
     }
 
@@ -52,10 +67,13 @@ notify.wrap {
       opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
       opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
       opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
-      opt << "--build-arg BASE_IMAGE=\"lsstsqre/newinstall:latest\""
+      opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
+      opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
       opt << '.'
 
-      image = docker.build("${hubRepo}", opt.join(' '))
+      dir(buildDir) {
+        image = docker.build("${dockerRepo}", opt.join(' '))
+      }
     }
 
     stage('push') {
@@ -64,7 +82,7 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          [hubTag, "${hubTag}-${timestamp}"].each { name ->
+          [dockerTag, "${dockerTag}-${timestamp}"].each { name ->
             image.push(name)
           }
         }
@@ -73,8 +91,28 @@ notify.wrap {
   } // run
 
   node('docker') {
-    timeout(time: timelimit, unit: 'HOURS') {
-      run()
-    }
-  }
+    try {
+      timeout(time: timelimit, unit: 'HOURS') {
+        run()
+      }
+    } finally {
+      stage('archive') {
+        def resultsFile = 'results.json'
+
+        util.dumpJson(resultsFile,  [
+          base_image: baseImage ?: null,
+          image: "${dockerRepo}:${dockerTag}",
+          docker_registry: [
+            repo: dockerRepo,
+            tag: dockerTag
+          ],
+        ])
+
+        archiveArtifacts([
+          artifacts: resultsFile,
+          fingerprint: true
+        ])
+      } // stage
+    } // try
+  } // node
 } // notify.wrap

@@ -17,9 +17,10 @@ node('jenkins-master') {
 
 notify.wrap {
   def releaseJob = 'release/nightly-release'
-  def year = null
+
+  def year  = null
   def month = null
-  def day = null
+  def day   = null
 
   stage('generate temporal coordinates') {
     def date = LocalDate.now(ZoneId.of('America/Los_Angeles'))

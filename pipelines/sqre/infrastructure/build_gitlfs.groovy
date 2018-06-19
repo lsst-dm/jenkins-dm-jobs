@@ -13,14 +13,21 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['LFS_VER'])
+  util.requireParams([
+    'LATEST',
+    'LFS_VER',
+    'NO_PUSH',
+  ])
 
-  def image      = null
+  String lfsVer      = params.LFS_VER
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = params.NO_PUSH
+
   def hubRepo    = 'lsstsqre/gitlfs'
   def githubRepo = 'lsst-sqre/docker-gitlfs'
   def githubRef  = 'master'
-  def lfsVer     = params.LFS_VER
-  def pushLatest = params.LATEST
+
+  def image = null
 
   def run = {
     stage('checkout') {
@@ -36,7 +43,7 @@ notify.wrap {
     }
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'

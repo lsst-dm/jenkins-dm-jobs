@@ -13,15 +13,22 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def image      = null
+  util.requireParams([
+    'LATEST',
+    'NO_PUSH',
+  ])
+
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
   def hubRepo    = 'lsstsqre/ec2-snapshot'
   def githubSlug = 'lsst-sqre/ec2-snapshot'
   def githubRepo = "https://github.com/${githubSlug}"
   def githubRef  = 'master'
-  def dockerTag  = githubRef.tr('/', '_')
+  def dockerTag  = util.sanitizeDockerTag(githubRef)
   def dockerDir  = '.'
-  def pushLatest = params.LATEST
-  def noPush     = params.NO_PUSH
+
+  def image = null
 
   def run = {
     def abbrHash = null
@@ -43,7 +50,7 @@ notify.wrap {
     }
 
     stage('push') {
-      if (!noPush) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'

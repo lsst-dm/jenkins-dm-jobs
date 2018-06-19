@@ -13,55 +13,78 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  echo "branch: ${params.BRANCH}"
-  echo "product: ${params.PRODUCT}"
-  echo "skip demo: ${params.SKIP_DEMO}"
-  echo "skip docs: ${params.SKIP_DOCS}"
-  echo "[eups] tag: ${params.EUPS_TAG}"
+  util.requireParams([
+    'BRANCH',
+    'EUPS_TAG',
+    'PRODUCT',
+    'SKIP_DEMO',
+    'SKIP_DOCS',
+  ])
 
-  def bx = null
+  String branch    = params.BRANCH
+  String eupsTag   = params.EUPS_TAG
+  String product   = params.PRODUCT
+  Boolean skipDemo = params.SKIP_DEMO
+  Boolean skipDocs = params.SKIP_DOCS
+
+  echo "branch: ${branch}"
+  echo "[eups] tag: ${eupsTag}"
+  echo "product: ${product}"
+  echo "skip demo: ${skipDemo}"
+  echo "skip docs: ${skipDocs}"
+
   def retries = 3
-  def buildJob = 'release/run-rebuild'
-  def publishJob = 'release/run-publish'
 
-  retry(retries) {
-    bx = util.runRebuild(buildJob, [
-      BRANCH: params.BRANCH,
-      PRODUCT: params.PRODUCT,
-      SKIP_DEMO: params.SKIP_DEMO.toBoolean(),
-      SKIP_DOCS: params.SKIP_DOCS.toBoolean(),
-    ])
-  }
+  def manifestId = null
 
-  stage('eups publish [tag]') {
-    build job: publishJob,
-      parameters: [
-        string(name: 'EUPSPKG_SOURCE', value: 'git'),
-        string(name: 'BUILD_ID', value: bx),
-        string(name: 'TAG', value: params.EUPS_TAG),
-        string(name: 'PRODUCT', value: params.PRODUCT)
-      ]
-  }
+  def run = {
+    stage('build') {
+      retry(retries) {
+        manifestId = util.runRebuild(
+          parameters: [
+            BRANCH: branch,
+            PRODUCT: product,
+            SKIP_DEMO: skipDemo,
+            SKIP_DOCS: skipDocs,
+          ],
+        )
+      } // retry
+    } // stage
 
-  stage('archive') {
-    util.nodeTiny {
-      results = [
-        bnnnn: bx
-      ]
-      dumpJson('results.json', results)
+    stage('eups publish') {
+      retry(retries) {
+        util.runPublish(
+          parameters: [
+            EUPSPKG_SOURCE: 'git',
+            MANIFEST_ID: manifestId,
+            EUPS_TAG: eupsTag,
+            PRODUCT: product,
+          ],
+        )
+      }
+    } // stage
+  } // run
 
-      archiveArtifacts([
-        artifacts: 'results.json',
-        fingerprint: true
-      ])
+  try {
+    timeout(time: 30, unit: 'HOURS') {
+      run()
     }
-  }
-} // notify.wrap
+  } finally {
+    stage('archive') {
+      def resultsFile = 'results.json'
 
-@NonCPS
-def dumpJson(String filename, Map data) {
-  def json = new groovy.json.JsonBuilder(data)
-  def pretty = groovy.json.JsonOutput.prettyPrint(json.toString())
-  echo pretty
-  writeFile file: filename, text: pretty
-}
+      util.nodeTiny {
+        util.dumpJson(resultsFile, [
+          manifest_id: manifestId ?: null,
+          git_tag: gitTag ?: null,
+          eups_tag: eupsTag ?: null,
+        ])
+
+        archiveArtifacts([
+          artifacts: resultsFile,
+          fingerprint: true
+        ])
+      }
+    } // stage
+  } // try
+} // notify.wrap

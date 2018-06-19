@@ -11,17 +11,36 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    config = util.scipipeConfig()
+    sqre = util.sqreConfig()
   }
 }
 
 notify.wrap {
-  def timelimit = params.TIMEOUT.toInteger()
-  def can       = config.canonical
-  def awsImage  = 'lsstsqre/awscli'
+  util.requireParams([
+    'MANIFEST_ID',
+    'EUPSPKG_SOURCE',
+    'PRODUCT',
+    'EUPS_TAG',
+    'TIMEOUT',
+  ])
+
+  String manifestId    = params.MANIFEST_ID
+  String eupspkgSource = params.EUPSPKG_SOURCE
+  String product       = params.PRODUCT
+  String eupsTag       = params.EUPS_TAG
+  Integer timelimit    = params.TIMEOUT
+
+  // not a normally exposed job param
+  Boolean pushS3 = (! params.NO_PUSH?.toBoolean())
+
+  def canonical    = config.canonical
+  def lsstswConfig = canonical.lsstsw_config
+
+  def slug = util.lsstswConfigSlug(lsstswConfig)
 
   def run = {
-    ws(config.canonical_workspace) {
+    ws(canonical.workspace) {
       def cwd = pwd()
 
       stage('publish') {
@@ -42,6 +61,10 @@ notify.wrap {
         def env = [
           "EUPS_PKGROOT=${pkgroot}",
           "EUPS_USERDATA=${cwd}/home/.eups_userdata",
+          "EUPSPKG_SOURCE=${eupspkgSource}",
+          "MANIFEST_ID=${manifestId}",
+          "EUPS_TAG=${eupsTag}",
+          "PRODUCT=${product}",
         ]
 
         withCredentials([[
@@ -50,11 +73,11 @@ notify.wrap {
           variable: 'CMIRROR_S3_BUCKET'
         ]]) {
           withEnv(env) {
-            util.insideWrap(can.image) {
+            util.insideWrap(lsstswConfig.image) {
               util.bash '''
                 ARGS=()
-                ARGS+=('-b' "$BUILD_ID")
-                ARGS+=('-t' "$TAG")
+                ARGS+=('-b' "$MANIFEST_ID")
+                ARGS+=('-t' "$EUPS_TAG")
                 # enable debug output
                 ARGS+=('-d')
                 # split whitespace separated EUPS products into separate array
@@ -74,7 +97,7 @@ notify.wrap {
       } // stage('publish')
 
       stage('push packages') {
-        if (! params.NO_PUSH) {
+        if (pushS3) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-eups-push',
@@ -89,12 +112,17 @@ notify.wrap {
             def env = [
               "EUPS_PKGROOT=${cwd}/distrib",
               "HOME=${cwd}/home",
+              "EUPS_S3_OBJECT_PREFIX=stack/src/"
             ]
             withEnv(env) {
-              docker.image(awsImage).inside {
+              docker.image(util.defaultAwscliImage()).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
-                  aws s3 sync "$EUPS_PKGROOT"/ s3://$EUPS_S3_BUCKET/stack/src/
+                  aws s3 cp \
+                    --only-show-errors \
+                    --recursive \
+                    "${EUPS_PKGROOT}/" \
+                    "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
                 '''
               } // .inside
             } // withEnv
@@ -106,7 +134,7 @@ notify.wrap {
     } // ws
   } // run
 
-  node(config.canonical_node_label) {
+  node(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }

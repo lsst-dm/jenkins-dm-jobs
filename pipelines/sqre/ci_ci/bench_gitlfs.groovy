@@ -15,8 +15,8 @@ node('jenkins-master') {
 notify.wrap {
   util.requireParams(['LFS_VER', 'RUNS'])
 
-  def lfsVer  = params.LFS_VER
-  def runs    = params.RUNS.toInteger()
+  String lfsVer = params.LFS_VER
+  Integer runs  = params.RUNS
 
   def gitRepo         = 'https://github.com/lsst/validation_data_cfht'
   def gitRef          = 'master'
@@ -37,9 +37,7 @@ notify.wrap {
       def image = docker.image(local)
 
       // pre-create results dir
-      dir(resultsDir) {
-        writeFile(file: '.dummy', text: '')
-      }
+      util.emptyDirs([resultsDir])
 
       // only hit github once
       dir(repoDirCached) {

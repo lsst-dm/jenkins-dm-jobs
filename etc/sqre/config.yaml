@@ -1,0 +1,24 @@
+---
+#
+# general config values
+#
+awscli:
+  pypi:
+    version: &awscli_ver '1.14.61'
+  dockerfile:
+    github_repo: lsst-sqre/docker-awscli
+    git_ref: master
+    dir: ''
+  docker_registry:
+    repo: lsstsqre/awscli
+    tag: *awscli_ver
+codekit:
+  pypi:
+    version: &codekit_ver '7.1.0'
+  dockerfile:
+    github_repo: lsst-sqre/sqre-codekit
+    git_ref: master
+    dir: docker
+  docker_registry:
+    repo: lsstsqre/codekit
+    tag: *codekit_ver

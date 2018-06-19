@@ -1,3 +1,5 @@
+def dockerfile = null
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -9,21 +11,16 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    dockerfile = readFile('pipelines/sqre/ci_ci/test_docker_from_arg.Dockerfile')
   }
 }
 
 notify.wrap {
-  util.requireParams(['DRY_RUN', 'GIT_TAG'])
-
-  Boolean dryRun = params.DRY_RUN
-  String gitTag  = params.GIT_TAG
-
   node('docker') {
-    util.githubTagTeams([
-      '--dry-run': dryRun,
-      '--org': config.release_tag_org,
-      '--tag': gitTag,
-    ])
-  } // node
-} // notify.wrap
+    writeFile(file: 'Dockerfile', text: dockerfile)
+
+    // testing that jenkins docker support doesn't blow up with an ARG used in
+    // the FROM
+    image = docker.build('fromtest:fromtag', '--build-arg base="centos:7" .')
+  }
+}

@@ -11,34 +11,43 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    config = util.scipipeConfig()
   }
 }
 
 notify.wrap {
-  def retries = 3
-
-  def requiredParams = [
-    'PRODUCT',
+  util.requireParams([
     'EUPS_TAG',
-  ]
+    'PRODUCT',
+    'PUBLISH',
+    'RUN_DEMO',
+    'RUN_SCONS_CHECK',
+    'SMOKE',
+  ])
 
-  requiredParams.each { p ->
-    if (!params.get(p)) {
-      error "${p} parameter is required"
-    }
-  }
+  String eupsTag        = params.EUPS_TAG
+  String product        = params.PRODUCT
+  Boolean publish       = params.PUBLISH
+  Boolean runDemo       = params.RUN_DEMO
+  Boolean runSconsCheck = params.RUN_SCONS_CHECK
+  Boolean smoke         = params.SMOKE
 
-  def opt = [
-    SMOKE: params.SMOKE,
-    RUN_DEMO: params.RUN_DEMO,
-    RUN_SCONS_CHECK: params.RUN_SCONS_CHECK,
-    PUBLISH: params.PUBLISH,
-  ]
+  def retries = 3
 
   timeout(time: 30, unit: 'HOURS') {
     stage('build eups tarballs') {
-      util.buildTarballMatrix(config, params.PRODUCT, params.EUPS_TAG, opt)
-    }
+      util.buildTarballMatrix(
+        tarballConfigs: config.tarball,
+        parameters: [
+          PRODUCT: tarballProducts,
+          EUPS_TAG: eupsTag,
+          SMOKE: smoke,
+          RUN_DEMO: runDemo,
+          RUN_SCONS_CHECK: runSconsCheck,
+          PUBLISH: publish,
+        ],
+        retries: retries,
+      )
+    } // stage
   }
 } // notify.wrap

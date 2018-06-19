@@ -13,8 +13,9 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def image = null
   def hub_repo = 'lsstsqre/sqre-github-snapshot'
+
+  def image = null
 
   def run = {
     stage('pull') {

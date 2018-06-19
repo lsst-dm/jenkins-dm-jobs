@@ -22,19 +22,25 @@ String mkBaseName(Integer majrelease) {
 // against performance. Note that this could also be achieved by artifact-ing
 // each image from a parallel branch and then doing the push all at once at the
 // cost of having to storage large artifacts within jenkins.
-
 notify.wrap {
+  util.requireParams([
+    'NO_PUSH',
+  ])
+
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
   def run = {
+    def baseRepo  = 'centos'
+    def buildRepo = 'lsstsqre/centos'
+
     git([
-      url: 'https://github.com/lsst-sqre/packer-layercake.git',
+      url: util.githubSlugToUrl('lsst-sqre/packer-layercake'),
       branch: 'master',
       changelog: false,
       poll: false
     ])
 
     def images = []
-    def baseRepo = 'centos'
-    def buildRepo = 'lsstsqre/centos'
 
     // centos major release version(s)
     [6, 7].each { majrelease ->
@@ -77,7 +83,7 @@ notify.wrap {
     } // conf
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (pushDocker) {
         images.each { item ->
           item.each { tag, build ->
             shipIt(build, tag)
@@ -97,7 +103,6 @@ notify.wrap {
 } // notify.wrap
 
 def String packIt(String templateFile, List options, String tag = '1.1.1') {
-
   def dockerSetup = '-v /var/run/docker.sock:/var/run/docker.sock'
   dockerSetup     = "-e HOME=${pwd()} ${dockerSetup}"
   def docImage    = "lsstsqre/cakepacker:${tag}"

@@ -11,56 +11,92 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    config = util.scipipeConfig()
+    sqre = util.sqreConfig()
   }
 }
 
 notify.wrap {
-  def versiondbPush = 'false'
-  def versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'https')
+  util.requireParams([
+    'BRANCH',
+    'PRODUCT',
+    'SKIP_DEMO',
+    'SKIP_DOCS',
+    'TIMEOUT',
+  ])
 
-  if (! params.NO_VERSIONDB_PUSH) {
-    versiondbPush = 'true'
-    versiondbRepo = util.githubSlugToUrl(config.versiondb_repo_slug, 'ssh')
+  String branch     = params.BRANCH
+  String product    = params.PRODUCT
+  Boolean skipDemo  = params.SKIP_DEMO
+  Boolean skipDocs  = params.SKIP_DOCS
+  Integer timelimit = params.TIMEOUT
+
+  // not a normally exposed job param
+  Boolean versiondbPush = (! params.NO_VERSIONDB_PUSH?.toBoolean())
+  // default to safe
+  def versiondbRepo = util.githubSlugToUrl(
+    config.versiondb.github_repo,
+    'https'
+  )
+  if (versiondbPush) {
+    versiondbRepo = util.githubSlugToUrl(config.versiondb.github_repo, 'ssh')
   }
 
-  def timelimit = params.TIMEOUT.toInteger()
-  def can       = config.canonical
-  def awsImage  = 'lsstsqre/awscli'
+  def canonical    = config.canonical
+  def lsstswConfig = canonical.lsstsw_config
+
+  def slug = util.lsstswConfigSlug(lsstswConfig)
 
   def run = {
-    ws(config.canonical_workspace) {
+    ws(canonical.workspace) {
       def cwd = pwd()
 
+      def buildParams = [
+        EUPS_PKGROOT:       "${cwd}/distrib",
+        VERSIONDB_REPO:      versiondbRepo,
+        VERSIONDB_PUSH:      versiondbPush,
+        GIT_SSH_COMMAND:     'ssh -o StrictHostKeyChecking=no',
+        LSST_JUNIT_PREFIX:   slug,
+        LSST_PYTHON_VERSION: lsstswConfig.python,
+        LSST_COMPILER:       lsstswConfig.compiler,
+        // XXX this should be renamed in lsstsw to make it clear that its
+        // setting a github repo slug
+        REPOSFILE_REPO:      config.repos.github_repo,
+        BRANCH:              BRANCH,
+        PRODUCT:             PRODUCT,
+        SKIP_DEMO:           SKIP_DEMO,
+        SKIP_DOCS:           SKIP_DOCS,
+      ]
+
+      def runJW = {
+        // note that util.jenkinsWrapper() clones the ci-scripts repo, which is
+        // used by the push docs stage
+        try {
+          util.jenkinsWrapper(buildParams)
+        } finally {
+          util.jenkinsWrapperPost()
+        }
+      }
+
+      def withVersiondbCredentials = { invoke ->
+        sshagent (credentials: ['github-jenkins-versiondb']) {
+          invoke()
+        }
+      }
+
       stage('build') {
-        withEnv([
-          "EUPS_PKGROOT=${cwd}/distrib",
-          "VERSIONDB_REPO=${versiondbRepo}",
-          "VERSIONDB_PUSH=${versiondbPush}",
-          'GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no',
-          "LSST_JUNIT_PREFIX=${can.label}.py${can.python}",
-          "LSST_PYTHON_VERSION=${can.python}",
-          "LSST_COMPILER=${can.compiler}",
-          // XXX this should be renamed in lsstsw to make it clear that its
-          // setting a github repo slug
-          "REPOSFILE_REPO=${config.reposfile_repo_slug}",
-         ]) {
-          // XXX note that util.jenkinsWrapper() clones the ci-scripts repo,
-          // which is used by the push docs stage
-          util.insideWrap(can.image) {
-            sshagent (credentials: ['github-jenkins-versiondb']) {
-              try {
-                util.jenkinsWrapper()
-              } finally {
-                util.jenkinsWrapperPost()
-              }
-            } // sshagent
-          } // util.insideWrap
-        } // withEnv
+        util.insideWrap(lsstswConfig.image) {
+          // only setup sshagent if we are going to push
+          if (versiondbPush) {
+            withVersiondbCredentials(runJW)
+          } else {
+            runJW()
+          }
+        } // util.insideWrap
       } // stage('build')
 
       stage('push docs') {
-        if (!params.SKIP_DOCS) {
+        if (!skipDocs) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-doxygen-push',
@@ -79,13 +115,15 @@ notify.wrap {
               // the current iteration of the awscli container is alpine based
               // and doesn't work with util.insideWrap.  However, the aws cli
               // seems to work OK without trying to lookup the username.
-              docker.image(awsImage).inside {
+              docker.image(util.defaultAwscliImage()).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
                   # provides DOC_PUSH_PATH
                   . ./ci-scripts/settings.cfg.sh
 
-                  aws s3 cp --recursive \
+                  aws s3 cp \
+                    --only-show-errors \
+                    --recursive \
                     "${DOC_PUSH_PATH}/" \
                     "s3://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
                 '''
@@ -97,7 +135,7 @@ notify.wrap {
     } // ws
   } // run
 
-  node(config.canonical_node_label) {
+  node(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }

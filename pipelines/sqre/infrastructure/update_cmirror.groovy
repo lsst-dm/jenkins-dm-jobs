@@ -11,14 +11,15 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    sqre = util.sqreConfig()
   }
 }
 
 @Field String wgetImage = 'lsstsqre/wget'
 
 notify.wrap {
-  def hub_repo  = 'lsstsqre/cmirror'
-  def awsImage  = 'lsstsqre/awscli'
+  def hub_repo = 'lsstsqre/cmirror'
+  def retries  = 3
 
   def run = {
     def image = docker.image("${hub_repo}:latest")
@@ -64,31 +65,36 @@ notify.wrap {
     }
 
     stage('push to s3') {
-      withCredentials([[
-        $class: 'UsernamePasswordMultiBinding',
-        credentialsId: 'aws-cmirror-push',
-        usernameVariable: 'AWS_ACCESS_KEY_ID',
-        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-      ],
-      [
-        $class: 'StringBinding',
-        credentialsId: 'cmirror-s3-bucket',
-        variable: 'CMIRROR_S3_BUCKET'
-      ]]) {
-        docker.image(awsImage).inside {
+      withCmirrorCredentials {
+        docker.image(util.defaultAwscliImage()).inside {
+          // XXX aws s3 sync appears to give up too easily on error and a
+          // failure on a single object will cause the job to fail, so it seems
+          // reasonable to retry the entire operation.
+          // See: https://github.com/aws/aws-cli/issues/1092
           catchError {
-            util.posixSh '''
-              aws s3 sync ./local_mirror/ s3://$CMIRROR_S3_BUCKET/pkgs/free/
-            '''
-          }
+            retry(retries) {
+              util.posixSh '''
+                aws s3 sync \
+                  --only-show-errors \
+                  ./local_mirror/ \
+                  "s3://${CMIRROR_S3_BUCKET}/pkgs/free/"
+              '''
+            } // retry
+          } // catchError
+
           catchError {
-            util.posixSh '''
-              aws s3 sync ./miniconda/ s3://$CMIRROR_S3_BUCKET/miniconda/
-            '''
-          }
+            retry(retries) {
+              util.posixSh '''
+                aws s3 sync \
+                  --only-show-errors \
+                  ./miniconda/ \
+                  "s3://${CMIRROR_S3_BUCKET}/miniconda/"
+              '''
+            } // retry
+          } // catchError
         } // .inside
-      } // withCredentials
-    } // stage('push to s3')
+      } // withCmirrorCredentials
+    } // stage
   } // run
 
   // the timeout should be <= the cron triggering interval to prevent builds
@@ -146,5 +152,31 @@ def runMirror(String imageId, String upstream, String platform) {
         --platform "$PLATFORM" \
         -vvv
     '''
+  }
+}
+
+/**
+ * Run block with "cmirror" credentials defined in env vars.
+ *
+ * Variables defined:
+ * - AWS_ACCESS_KEY_ID
+ * - AWS_SECRET_ACCESS_KEY
+ * - CMIRROR_S3_BUCKET
+ *
+ * @param run Closure Invoked inside of node step
+ */
+def void withCmirrorCredentials(Closure run) {
+  withCredentials([[
+    $class: 'UsernamePasswordMultiBinding',
+    credentialsId: 'aws-cmirror-push',
+    usernameVariable: 'AWS_ACCESS_KEY_ID',
+    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+  ],
+  [
+    $class: 'StringBinding',
+    credentialsId: 'cmirror-s3-bucket',
+    variable: 'CMIRROR_S3_BUCKET'
+  ]]) {
+    run()
   }
 }

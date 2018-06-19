@@ -9,37 +9,49 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    sqre = util.sqreConfig()
   }
 }
 
 notify.wrap {
-  util.requireParams(['CODEKIT_VER'])
+  util.requireParams([
+    'CODEKIT_VER',
+    'LATEST',
+    'NO_PUSH',
+  ])
 
-  def image      = null
-  def regRepo    = 'lsstsqre/codekit'
-  def githubRepo = 'lsst-sqre/sqre-codekit'
-  def githubRef  = 'master'
-  def buildDir   = 'docker'
-  def codekitVer = params.CODEKIT_VER
-  def pushLatest = params.LATEST
+  String codekitVer  = params.CODEKIT_VER
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
+  def codekit        = sqre.codekit
+  def dockerfile     = codekit.dockerfile
+  def dockerRegistry = codekit.docker_registry
+
+  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo)
+  def githubRef  = dockerfile.git_ref
+  def buildDir   = dockerfile.dir
+  def dockerRepo = dockerRegistry.repo
+
+  def image = null
 
   def run = {
     stage('checkout') {
       git([
-        url: "https://github.com/${githubRepo}",
-        branch: githubRef,
+        url: githubRepo,
+        branch: gitRef,
       ])
     }
 
     stage('build') {
       dir(buildDir) {
         // ensure base image is always up to date
-        image = docker.build("${regRepo}", "--pull=true --no-cache --build-arg CODEKIT_VER=${codekitVer} .")
+        image = docker.build("${dockerRepo}", "--pull=true --no-cache --build-arg CODEKIT_VER=${codekitVer} .")
       }
     }
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'

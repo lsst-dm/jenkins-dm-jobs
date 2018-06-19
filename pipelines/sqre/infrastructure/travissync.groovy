@@ -21,8 +21,9 @@ notify.wrap {
 } // notify.wrap
 
 def void doTravissync() {
-  def image = null
   def hub_repo = 'lsstsqre/travissync'
+
+  def image = null
 
   node('docker') {
     stage('pull') {

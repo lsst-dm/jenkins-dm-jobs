@@ -19,7 +19,7 @@ notify.wrap {
     def hubRepo = 'lsstsqre/gitlfs'
     def local = "${hubRepo}-local"
 
-    def gitRepo = 'https://github.com/lsst/validation_data_cfht.git'
+    def gitRepo = util.githubSlugToUrl('lsst/validation_data_cfht')
     def gitRef = 'master'
 
     util.wrapContainer(hubRepo, local)

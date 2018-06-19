@@ -9,18 +9,30 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    config = util.scipipeConfig()
   }
 }
 
 notify.wrap {
-  def image      = null
-  def hubRepo    = 'lsstsqre/newinstall'
-  def githubSlug = 'lsst-sqre/docker-newinstall'
-  def githubRepo = "https://github.com/${githubSlug}"
-  def githubRef  = 'master'
-  def dockerDir  = ''
-  def pushLatest = params.LATEST
-  def noPush     = params.NO_PUSH
+  util.requireParams([
+    'LATEST',
+    'NO_PUSH',
+  ])
+
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
+  def newinstall     = config.newinstall
+  def dockerfile     = newinstall.dockerfile
+  def dockerRegistry = newinstall.docker_registry
+
+  def githubRepo    = util.githubSlugToUrl(dockerfile.github_repo)
+  def githubRef     = dockerfile.git_ref
+  def buildDir      = dockerfile.dir
+  def dockerRepo    = dockerRegistry.repo
+  def newinstallUrl = util.newinstallUrl()
+
+  def image = null
 
   def run = {
     def abbrHash = null
@@ -35,19 +47,33 @@ notify.wrap {
     }
 
     stage('build') {
-      dir(dockerDir) {
+      def opt = []
+      // ensure base image is always up to date
+      opt << '--pull=true'
+      opt << '--no-cache'
+      opt << "--build-arg NEWINSTALL_URL=\"${newinstallUrl}\""
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'eups-url',
+        variable: 'EUPS_URL'
+      ]]) {
+        opt << "--build-arg EUPS_PKGROOT_BASE_URL=\"${EUPS_URL}/stack\""
+      }
+      opt << '.'
+
+      dir(buildDir) {
         // ensure base image is always up to date
-        image = docker.build("${hubRepo}", '--pull=true --no-cache .')
+        image = docker.build("${dockerRepo}", opt.join(' '))
       }
     }
 
     stage('push') {
-      if (!noPush) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(githubRef)
+          image.push(util.sanitizeDockerTag(githubRef))
           if (githubRef == 'master') {
             image.push("g${abbrHash}")
           }

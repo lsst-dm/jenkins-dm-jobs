@@ -13,11 +13,19 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def image      = null
+  util.requireParams([
+    'LATEST',
+    'NO_PUSH',
+  ])
+
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
   def hubRepo    = 'lsstsqre/wget'
   def githubRepo = 'lsst-sqre/docker-wget'
   def githubRef  = 'master'
-  def pushLatest = params.LATEST
+
+  def image = null
 
   def run = {
     stage('checkout') {
@@ -33,7 +41,7 @@ notify.wrap {
     }
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'

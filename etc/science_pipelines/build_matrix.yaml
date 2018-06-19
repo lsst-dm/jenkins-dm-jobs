@@ -52,13 +52,13 @@ scipipe-lsstsw-ci_hsc:
 dax-lsstsw-matrix:
   - <<: *el7-py3
   - <<: *el7-py3-llvm
-canonical:
-  <<: *el7-py3
 tarball:
   - <<: *tarball_defaults
     <<: *el6-py3
   - <<: *tarball_defaults
     <<: *el7-py3
+    platform: el7
+    osfamily: redhat
   # need newinstall.sh support for devtoolset-7
   # - <<: *tarball_defaults
   #  <<: *el7-dts7-py3
@@ -66,17 +66,66 @@ tarball:
     <<: *osx-py3
     label: osx-10.11
 #
+# canonical build env -- Ie., release/{run-rebuild,run-publish}
+#
+canonical:
+  lsstsw_config:
+    <<: *el7-py3
+    label: jenkins-snowflake-1
+    display_name: centos-7
+  workspace: snowflake/release
+#
+# X-release pattern pipelines
+#
+release:
+  # minutes
+  s3_wait_time: 15
+  step:
+    build_jupyterlabdemo:
+      image_name: lsstsqre/jld-lab
+    validate_drp:
+      no_push: false
+    documenteer:
+      publish: true
+#
 # low-level build parameters
 #
-reposfile_repo_slug: lsst/repos
-versiondb_repo_slug: lsst/versiondb
-canonical_node_label: jenkins-snowflake-1
-canonical_workspace: snowflake/release
+repos:
+  github_repo: lsst/repos
+  git_ref: master
+versiondb:
+  github_repo: lsst/versiondb
 release_tag_org: lsst
-lsstsw_repo_slug: lsst/lsstsw
-lsstsw_repo_ref: master
-ciscripts_repo_slug: lsst-sqre/ci-scripts
-ciscripts_repo_ref: master
-newinstall_url: https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh
-shebangtron_url: https://raw.githubusercontent.com/lsst/shebangtron/master/shebangtron
-release_docker_repo: lsstsqre/centos
+lsstsw:
+  github_repo: lsst/lsstsw
+  git_ref: master
+ciscripts:
+  github_repo: lsst-sqre/ci-scripts
+  git_ref: master
+shebangtron:
+  github_repo: lsst/shebangtron
+  git_ref: master
+#
+# docker releases of science-pipelines/lsst_distrib
+#
+# XXX this is currently release/docker/build-stack but should be renamed to not
+# use 'stack'
+scipipe_release:
+  dockerfile:
+    github_repo: lsst-sqre/docker-tarballs
+    git_ref: master
+    dir: ''
+  docker_registry:
+    repo: lsstsqre/centos
+newinstall:
+  dockerfile:
+    github_repo: lsst-sqre/docker-newinstall
+    git_ref: master
+    dir: ''
+  docker_registry:
+    repo: lsstsqre/newinstall
+    tag: latest
+  github_repo: lsst/lsst
+  git_ref: master
+lsst_dm_stack_demo:
+  github_repo: lsst/lsst_dm_stack_demo

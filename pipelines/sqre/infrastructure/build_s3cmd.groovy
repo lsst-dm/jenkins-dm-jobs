@@ -13,14 +13,21 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['S3CMD_VER'])
+  util.requireParams([
+    'LATEST',
+    'NO_PUSH',
+    'S3CMD_VER',
+  ])
 
-  def image      = null
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+  String ver         = params.S3CMD_VER
+
   def hubRepo    = 'lsstsqre/s3cmd'
   def githubRepo = 'lsst-sqre/docker-s3cmd'
   def githubRef  = 'master'
-  def ver        = params.S3CMD_VER
-  def pushLatest = params.LATEST
+
+  def image = null
 
   def run = {
     stage('checkout') {
@@ -36,7 +43,7 @@ notify.wrap {
     }
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'

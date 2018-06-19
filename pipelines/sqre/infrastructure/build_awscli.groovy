@@ -9,34 +9,49 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    sqre = util.sqreConfig()
   }
 }
 
 notify.wrap {
-  util.requireParams(['AWSCLI_VER'])
+  util.requireParams([
+    'AWSCLI_VER',
+    'LATEST',
+    'NO_PUSH',
+  ])
 
-  def image      = null
-  def hubRepo    = 'lsstsqre/awscli'
-  def githubRepo = 'lsst-sqre/docker-awscli'
-  def githubRef  = 'master'
-  def ver        = params.AWSCLI_VER
-  def pushLatest = params.LATEST
+  String ver         = params.AWSCLI_VER
+  Boolean pushLatest = params.LATEST
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
+
+  def awscli          = sqre.awscli
+  def dockerfile      = awscli.dockerfile
+  def dockerRegistry  = awscli.docker_registry
+
+  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo)
+  def githubRef  = dockerfile.git_ref
+  def buildDir   = dockerfile.dir
+  def dockerRepo = dockerRegistry.repo
+
+  def image = null
 
   def run = {
     stage('checkout') {
       git([
-        url: "https://github.com/${githubRepo}",
-        branch: githubRef,
+        url: githubRepo,
+        branch: gitRef,
       ])
     }
 
     stage('build') {
-      // ensure base image is always up to date
-      image = docker.build("${hubRepo}", "--pull=true --no-cache --build-arg AWSCLI_VER=${ver} .")
+      dir(buildDir) {
+        // ensure base image is always up to date
+        image = docker.build("${dockerRepo}", "--pull=true --no-cache --build-arg AWSCLI_VER=${ver} .")
+      }
     }
 
     stage('push') {
-      if (! params.NO_PUSH) {
+      if (pushDocker) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'

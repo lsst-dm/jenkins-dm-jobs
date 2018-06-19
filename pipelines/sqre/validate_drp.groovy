@@ -1,5 +1,3 @@
-import groovy.transform.Field
-
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -19,31 +17,49 @@ node('jenkins-master') {
     // for the side effect of parsing/caching this file for
     // `util.cloneCiScripts()` which will not be able to locate it once the
     // cwd has changed.
-    config = util.readYamlFile 'etc/science_pipelines/build_matrix.yaml'
+    config = util.scipipeConfig()
   }
 }
 
-@Field String repos_url = 'https://raw.githubusercontent.com/lsst/repos/master/etc/repos.yaml'
-@Field String manifest_base_url = 'https://raw.githubusercontent.com/lsst/versiondb/master/manifests'
-
 notify.wrap {
-  def required = [
-    'EUPS_TAG',
-    'BNNNN',
+  util.requireParams([
     'COMPILER',
+    'EUPS_TAG',
+    'MANIFEST_ID',
+    'NO_PUSH',
+    'WIPEOUT',
+  ])
+
+  String manifestId = params.MANIFEST_ID
+  String compiler   = params.COMPILER
+  String eupsTag    = params.EUPS_TAG
+  Boolean noPush    = params.NO_PUSH
+  Boolean wipeout   = params.WIPEOUT
+
+  // optional
+  String relImage = params.RELEASE_IMAGE
+
+  def dockerRepo = config.scipipe_release.docker_registry.repo
+  relImage = relImage ?: "${dockerRepo}:7-stack-lsst_distrib-${eupsTag}"
+
+  target = [
+    manifestId: manifestId,
+    compiler: compiler,
+    eupsTag: eupsTag,
+    noPush: noPush,
+    wipeout: wipeout,
   ]
 
-  util.requireParams(required)
-
-  def masterRetries     = 3
-  def verifyPortRetries = 1
+  def masterRetries = 3
 
   def matrix = [
     cfht: {
-      drp('cfht', 'master', false, true, masterRetries, 1)
+      drp('cfht', target, 'master', false, true, masterRetries, 1, [
+        relImage: relImage,
+      ])
     },
     hsc: {
-      drp('hsc', 'master', false, true, masterRetries, 15)
+      drp('hsc', target, 'master', false, true, masterRetries, 15)
     },
   ]
 
@@ -56,6 +72,7 @@ notify.wrap {
  * Prepare, execute, and record results of a validation_drp run.
  *
  * @param datasetSlug String short name of dataset
+ * @param target Map docker image selection + build configuration
  * @param drpRef String validate_drp git repo ref. Defaults to 'master'
  * @param doPostqa Boolean Enables/disables running of post-qa. Defaults to true.
  * @param doDispatchqa Boolean Enables/disables running of displatch-verify. Defaults to true.
@@ -65,20 +82,20 @@ notify.wrap {
  */
 def void drp(
   String datasetSlug,
+  Map target,
   String drpRef = 'master',
   Boolean doPostqa = true,
   Boolean doDispatchqa = true,
   Integer retries = 3,
-  Integer timelimit = 12
+  Integer timelimit = 12,
+  Map p
 ) {
-  def eupsTag   = params.EUPS_TAG
-  def buildId   = params.BNNNN
-  def noPush    = params.NO_PUSH
-  def compiler  = params.COMPILER
+  util.requireMapKeys(p, [
+    'relImage',
+  ])
 
   def datasetInfo  = datasetLookup(datasetSlug)
-  def docImage     = "lsstsqre/centos:7-stack-lsst_distrib-${eupsTag}"
-  def drpRepo      = 'https://github.com/lsst/validate_drp.git'
+  def drpRepo      = util.githubSlugToUrl('lsst/validate_drp')
   def postqaVer    = '1.3.3'
   def jenkinsDebug = 'true'
 
@@ -112,7 +129,7 @@ def void drp(
         // stage manifest.txt early so we don't risk a long processing run and
         // then fail setting up to run post-qa
         // testing
-        downloadManifest(fakeManifestFile, buildId)
+        downloadManifest(fakeManifestFile, target.manifestId)
         downloadRepos(fakeReposFile)
 
         dir(ciDir) {
@@ -126,8 +143,8 @@ def void drp(
           }
         }
 
-        docker.image(docImage).pull()
-        util.insideWrap(docImage) {
+        docker.image(p.relImage).pull()
+        util.insideWrap(p.relImage) {
           // clone and build validate_drp from source
           dir(drpDir) {
             // the simplier git step doesn't support 'CleanBeforeCheckout'
@@ -154,7 +171,7 @@ def void drp(
               drpDir,
               runSlug,
               ciDir,
-              compiler
+              target.compiler
             )
           } // dir
 
@@ -175,7 +192,7 @@ def void drp(
               datasetArchiveDir,
               fakeLsstswDir,
               datasetInfo['dataset'],
-              noPush
+              target.noPush
             )
           }
         } // inside
@@ -188,9 +205,9 @@ def void drp(
             postqaVer,
             "${postqaDir}/post-qa.json",
             datasetSlug,
-            // docImage, // XXX DM-12669
+            // p.relImage, // XXX DM-12669
             '0xdeadbeef',
-            noPush
+            target.noPush
           )
         }
       } // dir
@@ -208,7 +225,7 @@ def void drp(
     try {
       node('docker') {
         timeout(time: timelimit, unit: 'HOURS') {
-          if (params.WIPEOUT) {
+          if (target.wipeout) {
             deleteDir()
           }
 
@@ -254,21 +271,21 @@ def Map datasetLookup(String datasetSlug) {
   switch(datasetSlug) {
     case 'cfht':
       info['dataset']     = 'validation_data_cfht'
-      info['datasetRepo'] = 'https://github.com/lsst/validation_data_cfht.git'
+      info['datasetRepo'] = util.githubSlugToUrl('lsst/validation_data_cfht')
       info['datasetRef']  = 'master'
       info['cloneTime']   = 15
       info['runTime']     = 15
       break
     case 'hsc':
       info['dataset']     = 'validation_data_hsc'
-      info['datasetRepo'] = 'https://github.com/lsst/validation_data_hsc.git'
+      info['datasetRepo'] = util.githubSlugToUrl('lsst/validation_data_hsc')
       info['datasetRef']  = 'master'
       info['cloneTime']   = 240
       info['runTime']     = 600
       break
     case 'decam':
       info['dataset']     = 'validation_data_decam'
-      info['datasetRepo'] = 'https://github.com/lsst/validation_data_decam.git'
+      info['datasetRepo'] = util.githubSlugToUrl('lsst/validation_data_decam')
       info['datasetRef']  = 'master'
       info['cloneTime']   = 60 // XXX untested
       info['runTime']     = 60 // XXX untested
@@ -784,19 +801,18 @@ def void runDispatchqa(
  * @param destFile String path to write downloaded file
  */
 def void downloadFile(String url, String destFile) {
-  url = new URL(url)
-  writeFile(file: destFile, text: url.getText())
+  writeFile(file: destFile, text: new URL(url).getText())
 }
 
 /**
  * Download `manifest.txt` from `lsst/versiondb`.
  *
  * @param destFile String path to write downloaded file
- * @param bxxxx String manifest build id aka bNNNN
+ * @param manifestId String manifest build id aka bNNNN
  */
-def void downloadManifest(String destFile, String bxxxx) {
-  def url = "${manifest_base_url}/${bxxxx}.txt"
-  downloadFile(url, destFile)
+def void downloadManifest(String destFile, String manifestId) {
+  def manifestUrl = util.versiondbManifestUrl(manifestId)
+  downloadFile(manifestUrl, destFile)
 }
 
 /**
@@ -805,5 +821,6 @@ def void downloadManifest(String destFile, String bxxxx) {
  * @param destFile String path to write downloaded file
  */
 def void downloadRepos(String destFile) {
-  downloadFile(repos_url, destFile)
+  def reposUrl = util.reposUrl()
+  downloadFile(reposUrl, destFile)
 }
