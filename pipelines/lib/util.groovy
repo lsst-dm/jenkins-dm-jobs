@@ -1353,7 +1353,8 @@ def Object sqreConfig() {
  * @return awscliImage String
  */
 def String defaultAwscliImage() {
-  sqreConfig().awscli.docker_registry.repo
+  def dockerRegistry = sqreConfig().awscli.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
 
 /*
