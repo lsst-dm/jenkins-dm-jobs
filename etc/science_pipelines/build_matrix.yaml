@@ -55,6 +55,8 @@ dax-lsstsw-matrix:
 tarball:
   - <<: *tarball_defaults
     <<: *el6-py3
+    platform: el6
+    osfamily: redhat
   - <<: *tarball_defaults
     <<: *el7-py3
     platform: el7
@@ -65,6 +67,8 @@ tarball:
   - <<: *tarball_defaults
     <<: *osx-py3
     label: osx-10.11
+    platform: 10.9
+    osfamily: osx
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
