@@ -47,22 +47,41 @@ def String shebangerize(String script, String prog = '/bin/sh -xe') {
 /**
  * Build a docker image, constructing the `Dockerfile` from `config`.
  *
- * @param config String literal text of Dockerfile
- * @param tag String name of tag to apply to generated image
+ * Example:
+ *
+ *     util.buildImage(
+ *       config: dockerfileText,
+ *       tag: 'example/foo:bar',
+ *       pull: true,
+ *     )
+ *
+ * @param p Map
+ * @param p.config String literal text of Dockerfile (required)
+ * @param p.tag String name of tag to apply to generated image (required)
+ * @param p.pull Boolean always pull docker base image (optional)
  */
-def void buildImage(String config, String tag) {
-  writeFile(file: 'Dockerfile', text: config)
+def void buildImage(Map p) {
+  requireMapKeys(p, [
+    'config',
+    'tag',
+  ])
 
-  bash """
-    docker build -t "${tag}" \
-        --build-arg D_USER="\$(id -un)" \
-        --build-arg D_UID="\$(id -u)" \
-        --build-arg D_GROUP="\$(id -gn)" \
-        --build-arg D_GID="\$(id -g)" \
-        --build-arg D_HOME="\$HOME" \
-        .
-  """
-}
+  String config = p.config
+  String tag    = p.tag
+  Boolean pull  = p.pull ?: false
+
+  def opt = []
+  opt << "--pull=${pull}"
+  opt << '--build-arg D_USER="$(id -un)"'
+  opt << '--build-arg D_UID="$(id -u)"'
+  opt << '--build-arg D_GROUP="$(id -gn)"'
+  opt << '--build-arg D_GID="$(id -g)"'
+  opt << '--build-arg D_HOME="$HOME"'
+  opt << '.'
+
+  writeFile(file: 'Dockerfile', text: config)
+  docker.build(tag, opt.join(' '))
+} // buildImage
 
 /**
  * Create a thin "wrapper" container around {@code imageName} to map uid/gid of
