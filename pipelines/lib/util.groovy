@@ -112,7 +112,7 @@ def void wrapDockerImage(Map p) {
 
   def buildDir = 'docker'
   def config = dedent("""
-    FROM    ${image}
+    FROM ${image}
 
     ARG     D_USER
     ARG     D_UID

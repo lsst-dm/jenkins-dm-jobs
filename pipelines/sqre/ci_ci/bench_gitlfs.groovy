@@ -104,7 +104,7 @@ notify.wrap {
 def void wrapDockerImage(String imageName, String tag) {
   def buildDir = 'docker'
   def config = util.dedent("""
-    FROM    ${imageName}
+    FROM ${imageName}
 
     ARG     D_USER
     ARG     D_UID

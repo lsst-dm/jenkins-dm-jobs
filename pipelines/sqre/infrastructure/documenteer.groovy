@@ -46,7 +46,7 @@ notify.wrap {
 
     stage('prepare') {
       def config = util.dedent("""
-        FROM    ${relImage}
+        FROM ${relImage}
 
         USER    root
         RUN     yum -y install graphviz && yum -y clean all
