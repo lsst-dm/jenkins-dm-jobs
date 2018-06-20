@@ -53,7 +53,11 @@ notify.wrap {
       """)
 
       meerImage = "${relImage}-docubase"
-      util.buildImage(config, meerImage)
+      util.buildImage(
+        config: config,
+        tag: meerImage,
+        pull: true,
+      )
     } // stage
 
     dir(docTemplateDir) {

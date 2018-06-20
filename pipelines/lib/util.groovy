@@ -113,7 +113,11 @@ def void wrapContainer(String imageName, String tag) {
   // docker insists on recusrively checking file access under its execution
   // path -- so run it from a dedicated dir
   dir(buildDir) {
-    buildImage(config, tag)
+    buildImage(
+      config: config,
+      tag: tag,
+      pull: true,
+    )
 
     deleteDir()
   }
