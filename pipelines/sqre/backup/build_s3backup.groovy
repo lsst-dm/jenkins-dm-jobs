@@ -26,7 +26,7 @@ notify.wrap {
     }
 
     stage('build') {
-      image = docker.build("${hub_repo}", '--no-cache .')
+      image = docker.build(hub_repo, '--no-cache .')
     }
 
     stage('push') {
