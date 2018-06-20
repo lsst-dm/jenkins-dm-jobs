@@ -145,19 +145,38 @@ def void wrapContainer(Map p) {
 /**
  * Invoke block inside of a "wrapper" container.  See: wrapContainer
  *
- * @param docImage String name of docker image
+ * Example:
+ *
+ *     util.insideWrap(
+ *       image: 'example/foo:bar',
+ *       args: '-e HOME=/baz',
+ *       pull: true,
+ *     )
+ *
+ * @param p Map
+ * @param p.image String name of docker image (required)
+ * @param p.args String docker run args (optional)
+ * @param p.pull Boolean always pull docker image. Defaults to `false`
  * @param run Closure Invoked inside of wrapper container
  */
-def insideWrap(String docImage, String args=null, Closure run) {
-  def docLocal = "${docImage}-local"
+def insideWrap(Map p, Closure run) {
+  requireMapKeys(p, [
+    'image',
+  ])
+
+  String image = p.image
+  String args  = p.args ?: null
+  Boolean pull = p.pull ?: false
+
+  def imageLocal = "${image}-local"
 
   wrapContainer(
-    image: docImage,
-    tag: docLocal,
+    image: image,
+    tag: imageLocal,
+    pull: pull,
   )
-  def image = docker.image(docLocal)
 
-  image.inside(args) { run() }
+  docker.image(imageLocal).inside(args) { run() }
 }
 
 /**
