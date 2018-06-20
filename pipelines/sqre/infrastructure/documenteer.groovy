@@ -72,6 +72,7 @@ notify.wrap {
         util.runDocumenteer(
           docImage: meerImage,
           docTemplateDir: docTemplateDir,
+          docPull: false,
         )
       } // stage
 
