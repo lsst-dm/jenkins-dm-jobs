@@ -47,34 +47,72 @@ def String shebangerize(String script, String prog = '/bin/sh -xe') {
 /**
  * Build a docker image, constructing the `Dockerfile` from `config`.
  *
- * @param config String literal text of Dockerfile
- * @param tag String name of tag to apply to generated image
+ * Example:
+ *
+ *     util.buildImage(
+ *       config: dockerfileText,
+ *       tag: 'example/foo:bar',
+ *       pull: true,
+ *     )
+ *
+ * @param p Map
+ * @param p.config String literal text of Dockerfile (required)
+ * @param p.tag String name of tag to apply to generated image (required)
+ * @param p.pull Boolean always pull docker base image (optional)
  */
-def void buildImage(String config, String tag) {
-  writeFile(file: 'Dockerfile', text: config)
+def void buildImage(Map p) {
+  requireMapKeys(p, [
+    'config',
+    'tag',
+  ])
 
-  bash """
-    docker build -t "${tag}" \
-        --build-arg D_USER="\$(id -un)" \
-        --build-arg D_UID="\$(id -u)" \
-        --build-arg D_GROUP="\$(id -gn)" \
-        --build-arg D_GID="\$(id -g)" \
-        --build-arg D_HOME="\$HOME" \
-        .
-  """
-}
+  String config = p.config
+  String tag    = p.tag
+  Boolean pull  = p.pull ?: false
+
+  def opt = []
+  opt << "--pull=${pull}"
+  opt << '--build-arg D_USER="$(id -un)"'
+  opt << '--build-arg D_UID="$(id -u)"'
+  opt << '--build-arg D_GROUP="$(id -gn)"'
+  opt << '--build-arg D_GID="$(id -g)"'
+  opt << '--build-arg D_HOME="$HOME"'
+  opt << '.'
+
+  writeFile(file: 'Dockerfile', text: config)
+  docker.build(tag, opt.join(' '))
+} // buildImage
 
 /**
- * Create a thin "wrapper" container around {@code imageName} to map uid/gid of
+ * Create a thin "wrapper" container around {@code image} to map uid/gid of
  * the user invoking docker into the container.
  *
- * @param imageName docker image slug
- * @param tag name of tag to apply to generated image
+ * Example:
+ *
+ *     util.wrapDockerImage(
+ *       image: 'example/foo:bar',
+ *       tag: 'example/foo:bar-local',
+ *       pull: true,
+ *     )
+ *
+ * @param p Map
+ * @param p.image String name of docker base image (required)
+ * @param p.tag String name of tag to apply to generated image
+ * @param p.pull Boolean always pull docker base image. Defaults to `false`
  */
-def void wrapContainer(String imageName, String tag) {
+def void wrapDockerImage(Map p) {
+  requireMapKeys(p, [
+    'image',
+    'tag',
+  ])
+
+  String image = p.image
+  String tag   = p.tag
+  Boolean pull = p.pull ?: false
+
   def buildDir = 'docker'
   def config = dedent("""
-    FROM    ${imageName}
+    FROM ${image}
 
     ARG     D_USER
     ARG     D_UID
@@ -94,25 +132,51 @@ def void wrapContainer(String imageName, String tag) {
   // docker insists on recusrively checking file access under its execution
   // path -- so run it from a dedicated dir
   dir(buildDir) {
-    buildImage(config, tag)
+    buildImage(
+      config: config,
+      tag: tag,
+      pull: pull,
+    )
 
     deleteDir()
   }
-} // wrapContainer
+} // wrapDockerImage
 
 /**
- * Invoke block inside of a "wrapper" container.  See: wrapContainer
+ * Invoke block inside of a "wrapper" container.  See: wrapDockerImage
  *
- * @param docImage String name of docker image
+ * Example:
+ *
+ *     util.insideDockerWrap(
+ *       image: 'example/foo:bar',
+ *       args: '-e HOME=/baz',
+ *       pull: true,
+ *     )
+ *
+ * @param p Map
+ * @param p.image String name of docker image (required)
+ * @param p.args String docker run args (optional)
+ * @param p.pull Boolean always pull docker image. Defaults to `false`
  * @param run Closure Invoked inside of wrapper container
  */
-def insideWrap(String docImage, String args=null, Closure run) {
-  def docLocal = "${docImage}-local"
+def insideDockerWrap(Map p, Closure run) {
+  requireMapKeys(p, [
+    'image',
+  ])
 
-  wrapContainer(docImage, docLocal)
-  def image = docker.image(docLocal)
+  String image = p.image
+  String args  = p.args ?: null
+  Boolean pull = p.pull ?: false
 
-  image.inside(args) { run() }
+  def imageLocal = "${image}-local"
+
+  wrapDockerImage(
+    image: image,
+    tag: imageLocal,
+    pull: pull,
+  )
+
+  docker.image(imageLocal).inside(args) { run() }
 }
 
 /**
@@ -247,7 +311,10 @@ def lsstswBuild(
   } // run
 
   def runDocker = {
-    insideWrap(image) {
+    insideDockerWrap(
+      image: image,
+      pull: true,
+    ) {
       run()
     }
   } // runDocker
@@ -729,11 +796,14 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  insideWrap(defaultCodekitImage()) {
+  insideDockerWrap(
+    image: defaultCodekitImage(),
+    pull: true,
+  ) {
     withGithubAdminCredentials {
       run()
-    } // withGithubAdminCredentials
-  } // insideWrap
+    }
+  } // insideDockerWrap
 } // insideCodekit
 
 /**
@@ -1036,7 +1106,11 @@ def String instantToUtc(Instant moment) {
  * @param tag String tag of docker image to use.
  */
 def void librarianPuppet(String cmd='install', String tag='2.2.3') {
-  insideWrap("lsstsqre/cakepan:${tag}", "-e HOME=${pwd()}") {
+  insideDockerWrap(
+    image: "lsstsqre/cakepan:${tag}",
+    args: "-e HOME=${pwd()}",
+    pull: true,
+  ) {
     bash "librarian-puppet ${cmd}"
   }
 }
@@ -1048,10 +1122,12 @@ def void librarianPuppet(String cmd='install', String tag='2.2.3') {
  * @param args.eupsPath String path to EUPS installed productions (optional)
  * @param args.eupsTag String tag to setup. defaults to 'current'
  * @param args.docImage String defaults to: 'lsstsqre/documenteer-base'
+ * @param args.pull Boolean defaults to: `false`
  */
 def runDocumenteer(Map args) {
   def argDefaults = [
     docImage: 'lsstsqre/documenteer-base',
+    docPull: false,
     eupsTag: 'current',
   ]
   args = argDefaults + args
@@ -1069,7 +1145,10 @@ def runDocumenteer(Map args) {
   }
 
   withEnv(docEnv) {
-    insideWrap(args.docImage) {
+    insideDockerWrap(
+      image: args.docImage,
+      pull: args.docPull,
+    ) {
       dir(args.docTemplateDir) {
         bash '''
           source /opt/lsst/software/stack/loadLSST.bash
@@ -1079,7 +1158,7 @@ def runDocumenteer(Map args) {
           build-stack-docs -d . -v
         '''
       } // dir
-    }
+    } // insideDockerWrap
   } // withEnv
 } // runDocumenteer
 
@@ -1120,7 +1199,7 @@ def ltdPush(Map args) {
         sh '''
         /usr/bin/ltd-mason-travis --html-dir _build/html --verbose || true
         '''
-      } // insideWrap
+      } // .inside
     } // withCredentials
   } //withEnv
 } // ltdPush
@@ -1353,7 +1432,8 @@ def Object sqreConfig() {
  * @return awscliImage String
  */
 def String defaultAwscliImage() {
-  sqreConfig().awscli.docker_registry.repo
+  def dockerRegistry = sqreConfig().awscli.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
 
 /*
@@ -1362,7 +1442,8 @@ def String defaultAwscliImage() {
  * @return codekitImage String
  */
 def String defaultCodekitImage() {
-  sqreConfig().codekit.docker_registry.repo
+  def dockerRegistry = sqreConfig().codekit.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
 
 /**

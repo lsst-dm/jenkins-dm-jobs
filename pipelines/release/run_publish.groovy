@@ -73,7 +73,10 @@ notify.wrap {
           variable: 'CMIRROR_S3_BUCKET'
         ]]) {
           withEnv(env) {
-            util.insideWrap(lsstswConfig.image) {
+            util.insideDockerWrap(
+              image: lsstswConfig.image,
+              pull: true,
+            ) {
               util.bash '''
                 ARGS=()
                 ARGS+=('-b' "$MANIFEST_ID")
@@ -92,7 +95,7 @@ notify.wrap {
                 publish "${ARGS[@]}"
               '''
             }
-          } // util.insideWrap
+          } // util.insideDockerWrap
         }// withCredentials([[
       } // stage('publish')
 

@@ -29,7 +29,7 @@ notify.wrap {
       docker.image('centos:7').pull()
 
       dir('cmirror') {
-        image = docker.build("${hub_repo}", '--no-cache .')
+        image = docker.build(hub_repo, '--no-cache .')
       }
     }
 

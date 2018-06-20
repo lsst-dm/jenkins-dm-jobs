@@ -33,7 +33,7 @@ notify.wrap {
       def workDir         = pwd()
       def resultsDir      = "${workDir}/${resultsBasename}"
 
-      wrapContainer(hub, local)
+      wrapDockerImage(hub, local)
       def image = docker.image(local)
 
       // pre-create results dir
@@ -101,10 +101,10 @@ notify.wrap {
   }
 } // notify.wrap
 
-def void wrapContainer(String imageName, String tag) {
+def void wrapDockerImage(String imageName, String tag) {
   def buildDir = 'docker'
   def config = util.dedent("""
-    FROM    ${imageName}
+    FROM ${imageName}
 
     ARG     D_USER
     ARG     D_UID
@@ -124,20 +124,11 @@ def void wrapContainer(String imageName, String tag) {
   // docker insists on recusrively checking file access under its execution
   // path -- so run it from a dedicated dir
   dir(buildDir) {
-    writeFile(file: 'Dockerfile', text: config)
-
-    util.bash """
-      set -e
-      set -x
-
-      docker build -t "${tag}" \
-          --build-arg D_USER="\$(id -un)" \
-          --build-arg D_UID="\$(id -u)" \
-          --build-arg D_GROUP="\$(id -gn)" \
-          --build-arg D_GID="\$(id -g)" \
-          --build-arg D_HOME="\$HOME" \
-          .
-    """
+    util.buildImage(
+      config: config,
+      tag: tag,
+      pull: true,
+    )
 
     deleteDir()
   }

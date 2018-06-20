@@ -46,7 +46,7 @@ notify.wrap {
     stage('build') {
       dir(buildDir) {
         // ensure base image is always up to date
-        image = docker.build("${dockerRepo}", "--pull=true --no-cache --build-arg AWSCLI_VER=${ver} .")
+        image = docker.build(dockerRepo, "--pull=true --no-cache --build-arg AWSCLI_VER=${ver} .")
       }
     }
 

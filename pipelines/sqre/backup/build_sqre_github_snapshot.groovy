@@ -48,7 +48,7 @@ notify.wrap {
     stage('build') {
       dir('docker') {
         // ensure base image is always up to date
-        image = docker.build("${hubRepo}", "--pull=true --no-cache .")
+        image = docker.build(hubRepo, "--pull=true --no-cache .")
       }
     }
 

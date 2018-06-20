@@ -63,7 +63,7 @@ notify.wrap {
 
       dir(buildDir) {
         // ensure base image is always up to date
-        image = docker.build("${dockerRepo}", opt.join(' '))
+        image = docker.build(dockerRepo, opt.join(' '))
       }
     }
 

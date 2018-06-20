@@ -46,14 +46,18 @@ notify.wrap {
 
     stage('prepare') {
       def config = util.dedent("""
-        FROM    ${relImage}
+        FROM ${relImage}
 
         USER    root
         RUN     yum -y install graphviz && yum -y clean all
       """)
 
       meerImage = "${relImage}-docubase"
-      util.buildImage(config, meerImage)
+      util.buildImage(
+        config: config,
+        tag: meerImage,
+        pull: true,
+      )
     } // stage
 
     dir(docTemplateDir) {
@@ -68,6 +72,7 @@ notify.wrap {
         util.runDocumenteer(
           docImage: meerImage,
           docTemplateDir: docTemplateDir,
+          docPull: false,
         )
       } // stage
 

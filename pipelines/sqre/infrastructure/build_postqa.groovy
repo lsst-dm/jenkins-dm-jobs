@@ -40,7 +40,7 @@ notify.wrap {
       // ensure base image is always up to date
       docker.image('centos:7').pull()
 
-      image = docker.build("${hubRepo}", "--no-cache --build-arg POSTQA_VER=${postqaVer} .")
+      image = docker.build(hubRepo, "--no-cache --build-arg POSTQA_VER=${postqaVer} .")
     }
 
     stage('push') {
