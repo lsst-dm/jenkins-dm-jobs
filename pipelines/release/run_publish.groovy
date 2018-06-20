@@ -73,7 +73,7 @@ notify.wrap {
           variable: 'CMIRROR_S3_BUCKET'
         ]]) {
           withEnv(env) {
-            util.insideWrap(
+            util.insideDockerWrap(
               image: lsstswConfig.image,
               pull: true,
             ) {
@@ -95,7 +95,7 @@ notify.wrap {
                 publish "${ARGS[@]}"
               '''
             }
-          } // util.insideWrap
+          } // util.insideDockerWrap
         }// withCredentials([[
       } // stage('publish')
 

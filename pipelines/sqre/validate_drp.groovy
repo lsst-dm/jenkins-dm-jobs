@@ -143,7 +143,7 @@ def void drp(
           }
         }
 
-        util.insideWrap(
+        util.insideDockerWrap(
           image: p.relImage,
           pull: true,
         ) {
@@ -364,7 +364,7 @@ def void checkoutLFS(String gitRepo, String gitRef = 'master') {
   ])
 
   try {
-    util.insideWrap(
+    util.insideDockerWrap(
       image: docRepo,
       pull: true,
     ) {

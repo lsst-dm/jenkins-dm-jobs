@@ -147,7 +147,7 @@ def void wrapDockerImage(Map p) {
  *
  * Example:
  *
- *     util.insideWrap(
+ *     util.insideDockerWrap(
  *       image: 'example/foo:bar',
  *       args: '-e HOME=/baz',
  *       pull: true,
@@ -159,7 +159,7 @@ def void wrapDockerImage(Map p) {
  * @param p.pull Boolean always pull docker image. Defaults to `false`
  * @param run Closure Invoked inside of wrapper container
  */
-def insideWrap(Map p, Closure run) {
+def insideDockerWrap(Map p, Closure run) {
   requireMapKeys(p, [
     'image',
   ])
@@ -311,7 +311,7 @@ def lsstswBuild(
   } // run
 
   def runDocker = {
-    insideWrap(
+    insideDockerWrap(
       image: image,
       pull: true,
     ) {
@@ -796,14 +796,14 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  insideWrap(
+  insideDockerWrap(
     image: defaultCodekitImage(),
     pull: true,
   ) {
     withGithubAdminCredentials {
       run()
     }
-  } // insideWrap
+  } // insideDockerWrap
 } // insideCodekit
 
 /**
@@ -1106,7 +1106,7 @@ def String instantToUtc(Instant moment) {
  * @param tag String tag of docker image to use.
  */
 def void librarianPuppet(String cmd='install', String tag='2.2.3') {
-  insideWrap(
+  insideDockerWrap(
     image: "lsstsqre/cakepan:${tag}",
     args: "-e HOME=${pwd()}",
     pull: true,
@@ -1143,7 +1143,7 @@ def runDocumenteer(Map args) {
   }
 
   withEnv(docEnv) {
-    insideWrap(
+    insideDockerWrap(
       image: args.docImage,
       pull: true,
     ) {
@@ -1156,7 +1156,7 @@ def runDocumenteer(Map args) {
           build-stack-docs -d . -v
         '''
       } // dir
-    } // insideWrap
+    } // insideDockerWrap
   } // withEnv
 } // runDocumenteer
 

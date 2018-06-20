@@ -313,7 +313,7 @@ def void linuxBuild(
       "CIDIR=${ciDir}",
       "CIDIR_CONTAINER=${ciDirContainer}",
     ]) {
-      // XXX refactor to use util.insideWrap
+      // XXX refactor to use util.insideDockerWrap
       util.bash '''
         docker run \
           -v "${BUILDDIR}:${BUILDDIR_CONTAINER}" \
@@ -464,7 +464,7 @@ def void linuxSmoke(
       "CIDIR=${ciDir}",
       "CIDIR_CONTAINER=${ciDirContainer}",
     ]) {
-      // XXX refactor to use util.insideWrap
+      // XXX refactor to use util.insideDockerWrap
       util.bash '''
         docker run \
           -v "${SMOKEDIR}:${SMOKEDIR_CONTAINER}" \

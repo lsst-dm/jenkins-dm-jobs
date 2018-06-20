@@ -85,7 +85,7 @@ notify.wrap {
       }
 
       stage('build') {
-        util.insideWrap(
+        util.insideDockerWrap(
           image: lsstswConfig.image,
           pull: true,
         ) {
@@ -95,7 +95,7 @@ notify.wrap {
           } else {
             runJW()
           }
-        } // util.insideWrap
+        } // util.insideDockerWrap
       } // stage('build')
 
       stage('push docs') {
@@ -116,8 +116,8 @@ notify.wrap {
               "HOME=${cwd}/home",
             ]) {
               // the current iteration of the awscli container is alpine based
-              // and doesn't work with util.insideWrap.  However, the aws cli
-              // seems to work OK without trying to lookup the username.
+              // and doesn't work with util.insideDockerWrap.  However, the aws
+              // cli seems to work OK without trying to lookup the username.
               docker.image(util.defaultAwscliImage()).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
@@ -130,7 +130,7 @@ notify.wrap {
                     "${DOC_PUSH_PATH}/" \
                     "s3://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
                 '''
-              } // util.insideWrap
+              } // util.insideDockerWrap
             } // withEnv
           } // withCredentials
         }
