@@ -143,8 +143,10 @@ def void drp(
           }
         }
 
-        docker.image(p.relImage).pull()
-        util.insideWrap(p.relImage) {
+        util.insideWrap(
+          image: p.relImage,
+          pull: true,
+        ) {
           // clone and build validate_drp from source
           dir(drpDir) {
             // the simplier git step doesn't support 'CleanBeforeCheckout'
@@ -362,8 +364,10 @@ def void checkoutLFS(String gitRepo, String gitRef = 'master') {
   ])
 
   try {
-    docker.image(docRepo).pull()
-    util.insideWrap(docRepo) {
+    util.insideWrap(
+      image: docRepo,
+      pull: true,
+    ) {
       util.bash('git lfs pull origin')
     }
   } finally {

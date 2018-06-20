@@ -85,7 +85,10 @@ notify.wrap {
       }
 
       stage('build') {
-        util.insideWrap(lsstswConfig.image) {
+        util.insideWrap(
+          image: lsstswConfig.image,
+          pull: true,
+        ) {
           // only setup sshagent if we are going to push
           if (versiondbPush) {
             withVersiondbCredentials(runJW)

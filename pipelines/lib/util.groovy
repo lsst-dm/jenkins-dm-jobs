@@ -311,7 +311,10 @@ def lsstswBuild(
   } // run
 
   def runDocker = {
-    insideWrap(image) {
+    insideWrap(
+      image: image,
+      pull: true,
+    ) {
       run()
     }
   } // runDocker
@@ -793,10 +796,13 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  insideWrap(defaultCodekitImage()) {
+  insideWrap(
+    image: defaultCodekitImage(),
+    pull: true,
+  ) {
     withGithubAdminCredentials {
       run()
-    } // withGithubAdminCredentials
+    }
   } // insideWrap
 } // insideCodekit
 
@@ -1100,7 +1106,11 @@ def String instantToUtc(Instant moment) {
  * @param tag String tag of docker image to use.
  */
 def void librarianPuppet(String cmd='install', String tag='2.2.3') {
-  insideWrap("lsstsqre/cakepan:${tag}", "-e HOME=${pwd()}") {
+  insideWrap(
+    image: "lsstsqre/cakepan:${tag}",
+    args: "-e HOME=${pwd()}",
+    pull: true,
+  ) {
     bash "librarian-puppet ${cmd}"
   }
 }
@@ -1133,7 +1143,10 @@ def runDocumenteer(Map args) {
   }
 
   withEnv(docEnv) {
-    insideWrap(args.docImage) {
+    insideWrap(
+      image: args.docImage,
+      pull: true,
+    ) {
       dir(args.docTemplateDir) {
         bash '''
           source /opt/lsst/software/stack/loadLSST.bash
@@ -1143,7 +1156,7 @@ def runDocumenteer(Map args) {
           build-stack-docs -d . -v
         '''
       } // dir
-    }
+    } // insideWrap
   } // withEnv
 } // runDocumenteer
 
@@ -1184,7 +1197,7 @@ def ltdPush(Map args) {
         sh '''
         /usr/bin/ltd-mason-travis --html-dir _build/html --verbose || true
         '''
-      } // insideWrap
+      } // .inside
     } // withCredentials
   } //withEnv
 } // ltdPush
