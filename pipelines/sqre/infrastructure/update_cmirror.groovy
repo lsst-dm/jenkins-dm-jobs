@@ -118,7 +118,7 @@ def mirror(String imageId, String upstream, String platform) {
 def runMirror(String imageId, String upstream, String platform) {
   def localImageName = "${imageId}-local"
 
-  util.wrapContainer(
+  util.wrapDockerImage(
     image: imageId,
     tag: localImageName,
     pull: true,

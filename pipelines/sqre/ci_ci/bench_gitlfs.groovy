@@ -33,7 +33,7 @@ notify.wrap {
       def workDir         = pwd()
       def resultsDir      = "${workDir}/${resultsBasename}"
 
-      wrapContainer(hub, local)
+      wrapDockerImage(hub, local)
       def image = docker.image(local)
 
       // pre-create results dir
@@ -101,7 +101,7 @@ notify.wrap {
   }
 } // notify.wrap
 
-def void wrapContainer(String imageName, String tag) {
+def void wrapDockerImage(String imageName, String tag) {
   def buildDir = 'docker'
   def config = util.dedent("""
     FROM    ${imageName}

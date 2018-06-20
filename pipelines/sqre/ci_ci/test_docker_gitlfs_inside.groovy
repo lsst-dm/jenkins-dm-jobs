@@ -17,7 +17,7 @@ notify.wrap {
     def hubRepo = 'lsstsqre/gitlfs'
     def local = "${hubRepo}-local"
 
-    util.wrapContainer(
+    util.wrapDockerImage(
       image: hubRepo,
       tag: local,
       pull: true,

@@ -297,7 +297,7 @@ def void linuxBuild(
       util.cloneCiScripts()
     }
 
-    util.wrapContainer(
+    util.wrapDockerImage(
       image: imageName,
       tag: localImageName,
       pull: true,
@@ -446,7 +446,7 @@ def void linuxSmoke(
       util.cloneCiScripts()
     }
 
-    util.wrapContainer(
+    util.wrapDockerImage(
       image: imageName,
       tag: localImageName,
       pull: true,

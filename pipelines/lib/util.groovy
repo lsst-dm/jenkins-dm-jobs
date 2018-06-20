@@ -89,7 +89,7 @@ def void buildImage(Map p) {
  *
  * Example:
  *
- *     util.wrapContainer(
+ *     util.wrapDockerImage(
  *       image: 'example/foo:bar',
  *       tag: 'example/foo:bar-local',
  *       pull: true,
@@ -100,7 +100,7 @@ def void buildImage(Map p) {
  * @param p.tag String name of tag to apply to generated image
  * @param p.pull Boolean always pull docker base image. Defaults to `false`
  */
-def void wrapContainer(Map p) {
+def void wrapDockerImage(Map p) {
   requireMapKeys(p, [
     'image',
     'tag',
@@ -140,10 +140,10 @@ def void wrapContainer(Map p) {
 
     deleteDir()
   }
-} // wrapContainer
+} // wrapDockerImage
 
 /**
- * Invoke block inside of a "wrapper" container.  See: wrapContainer
+ * Invoke block inside of a "wrapper" container.  See: wrapDockerImage
  *
  * Example:
  *
@@ -170,7 +170,7 @@ def insideWrap(Map p, Closure run) {
 
   def imageLocal = "${image}-local"
 
-  wrapContainer(
+  wrapDockerImage(
     image: image,
     tag: imageLocal,
     pull: pull,
