@@ -108,7 +108,7 @@ def void wrapContainer(Map p) {
 
   String image = p.image
   String tag   = p.tag
-  Boolean pull = p.pull ?: true
+  Boolean pull = p.pull ?: false
 
   def buildDir = 'docker'
   def config = dedent("""
@@ -151,7 +151,10 @@ def void wrapContainer(Map p) {
 def insideWrap(String docImage, String args=null, Closure run) {
   def docLocal = "${docImage}-local"
 
-  wrapContainer(docImage, docLocal)
+  wrapContainer(
+    image: docImage,
+    tag: docLocal,
+  )
   def image = docker.image(docLocal)
 
   image.inside(args) { run() }

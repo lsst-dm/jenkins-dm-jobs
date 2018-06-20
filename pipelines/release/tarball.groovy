@@ -297,7 +297,11 @@ def void linuxBuild(
       util.cloneCiScripts()
     }
 
-    util.wrapContainer(imageName, localImageName)
+    util.wrapContainer(
+      image: imageName,
+      tag: localImageName,
+      pull: true,
+    )
 
     withEnv([
       "RUN=/build/scripts/${shBasename}",
@@ -442,7 +446,11 @@ def void linuxSmoke(
       util.cloneCiScripts()
     }
 
-    util.wrapContainer(imageName, localImageName)
+    util.wrapContainer(
+      image: imageName,
+      tag: localImageName,
+      pull: true,
+    )
 
     withEnv([
       "RUN=/smoke/scripts/${shBasename}",

@@ -118,7 +118,11 @@ def mirror(String imageId, String upstream, String platform) {
 def runMirror(String imageId, String upstream, String platform) {
   def localImageName = "${imageId}-local"
 
-  util.wrapContainer(imageId, localImageName)
+  util.wrapContainer(
+    image: imageId,
+    tag: localImageName,
+    pull: true,
+  )
 
   // archive a copy of the upstream repodata.json at (or as close to as is
   // possible) the time conda-mirror is run.  This may be useful for debugging
