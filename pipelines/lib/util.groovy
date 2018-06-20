@@ -84,16 +84,35 @@ def void buildImage(Map p) {
 } // buildImage
 
 /**
- * Create a thin "wrapper" container around {@code imageName} to map uid/gid of
+ * Create a thin "wrapper" container around {@code image} to map uid/gid of
  * the user invoking docker into the container.
  *
- * @param imageName docker image slug
- * @param tag name of tag to apply to generated image
+ * Example:
+ *
+ *     util.wrapContainer(
+ *       image: 'example/foo:bar',
+ *       tag: 'example/foo:bar-local',
+ *       pull: true,
+ *     )
+ *
+ * @param p Map
+ * @param p.image String name of docker base image (required)
+ * @param p.tag String name of tag to apply to generated image
+ * @param p.pull Boolean always pull docker base image. Defaults to `false`
  */
-def void wrapContainer(String imageName, String tag) {
+def void wrapContainer(Map p) {
+  requireMapKeys(p, [
+    'image',
+    'tag',
+  ])
+
+  String image = p.image
+  String tag   = p.tag
+  Boolean pull = p.pull ?: true
+
   def buildDir = 'docker'
   def config = dedent("""
-    FROM    ${imageName}
+    FROM    ${image}
 
     ARG     D_USER
     ARG     D_UID
@@ -116,7 +135,7 @@ def void wrapContainer(String imageName, String tag) {
     buildImage(
       config: config,
       tag: tag,
-      pull: true,
+      pull: pull,
     )
 
     deleteDir()
