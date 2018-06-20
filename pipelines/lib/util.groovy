@@ -1363,7 +1363,8 @@ def String defaultAwscliImage() {
  * @return codekitImage String
  */
 def String defaultCodekitImage() {
-  sqreConfig().codekit.docker_registry.repo
+  def dockerRegistry = sqreConfig().codekit.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
 
 /**
