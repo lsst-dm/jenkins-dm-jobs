@@ -61,7 +61,6 @@ notify.wrap {
       util.nodeTiny {
         util.dumpJson(resultsFile, [
           manifest_id: manifestId ?: null,
-          git_tag: gitTag ?: null,
           eups_tag: eupsTag ?: null,
         ])
 
