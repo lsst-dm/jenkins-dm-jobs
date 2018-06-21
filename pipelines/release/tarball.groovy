@@ -162,8 +162,7 @@ def void linuxTarballs(
 /**
  * Build EUPS tarballs in a regular directory.
  *
- * @param imageName docker image slug
- * @param platform build platform Eg., '10.11'
+ * @param label String jenkins node label
  * @param macosx_deployment_target Eg., '10.9'
  * @param compiler Eg., 'system-gcc'
  * @param menv Miniconda object
@@ -178,11 +177,12 @@ def void linuxTarballs(
  * @param publish Boolean
  */
 def void osxTarballs(
-  String label,
+  String label
   String macosx_deployment_target,
   String compiler,
   MinicondaEnv menv,
   Integer timelimit,
+  Map buildTarget,
   Map smokeConfig,
   Boolean wipeout = false,
   Boolean publish = false
