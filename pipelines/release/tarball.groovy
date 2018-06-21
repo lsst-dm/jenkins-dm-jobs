@@ -177,7 +177,7 @@ def void linuxTarballs(
  * @param publish Boolean
  */
 def void osxTarballs(
-  String label
+  String label,
   String macosx_deployment_target,
   String compiler,
   MinicondaEnv menv,
