@@ -67,7 +67,7 @@ tarball:
   - <<: *tarball_defaults
     <<: *osx-py3
     label: osx-10.11
-    platform: 10.9
+    platform: '10.9'
     osfamily: osx
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
