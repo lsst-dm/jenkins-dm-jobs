@@ -22,3 +22,11 @@ codekit:
   docker_registry:
     repo: lsstsqre/codekit
     tag: *codekit_ver
+s3sync:
+  dockerfile:
+    github_repo: lsst-sqre/deploy-publish-release
+    git_ref: master
+    dir: s3sync
+  docker_registry:
+    repo: lsstsqre/s3sync
+    tag: latest
