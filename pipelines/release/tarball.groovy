@@ -834,7 +834,7 @@ def String smokeScript(
     fi
 
     if [[ \$RUN_DEMO == true ]]; then
-      ${ciDir}/runManifestDemo.sh --tag "${tag}" --small
+      ${ciDir}/runManifestDemo.sh --eups-tag "${tag}" --small
     fi
   """ + '''
     #
