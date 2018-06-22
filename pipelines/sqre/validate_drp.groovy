@@ -59,7 +59,9 @@ notify.wrap {
       ])
     },
     hsc: {
-      drp('hsc', target, 'master', false, true, masterRetries, 15)
+      drp('hsc', target, 'master', false, true, masterRetries, 15, [
+        relImage: relImage,
+      ])
     },
   ]
 
