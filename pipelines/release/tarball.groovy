@@ -503,7 +503,7 @@ def void osxSmoke(
   String macosx_deployment_target,
   String compiler,
   MinicondaEnv menv,
-  Map bulidTarget,
+  Map buildTarget,
   Map smokeConfig
 ) {
   def cwd      = pwd()
