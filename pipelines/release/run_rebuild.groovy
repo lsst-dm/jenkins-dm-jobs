@@ -19,6 +19,7 @@ node('jenkins-master') {
 notify.wrap {
   util.requireParams([
     'BRANCH',
+    'PREP_ONLY',
     'PRODUCT',
     'SKIP_DEMO',
     'SKIP_DOCS',
@@ -26,6 +27,7 @@ notify.wrap {
   ])
 
   String branch     = params.BRANCH
+  Boolean prepOnly  = params.PREP_ONLY
   String product    = params.PRODUCT
   Boolean skipDemo  = params.SKIP_DEMO
   Boolean skipDocs  = params.SKIP_DOCS
@@ -62,10 +64,11 @@ notify.wrap {
         // XXX this should be renamed in lsstsw to make it clear that its
         // setting a github repo slug
         REPOSFILE_REPO:      config.repos.github_repo,
-        BRANCH:              BRANCH,
-        PRODUCT:             PRODUCT,
-        SKIP_DEMO:           SKIP_DEMO,
-        SKIP_DOCS:           SKIP_DOCS,
+        BRANCH:              branch,
+        PRODUCT:             product,
+        SKIP_DEMO:           skipDemo,
+        SKIP_DOCS:           skipDocs,
+        PREP_ONLY:           prepOnly,
       ]
 
       def runJW = {

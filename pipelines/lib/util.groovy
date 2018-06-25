@@ -1223,6 +1223,7 @@ def ltdPush(Map args) {
  * @param p.parameters.SKIP_DEMO Boolean Defaults to `false`.
  * @param p.parameters.SKIP_DOCS Boolean Defaults to `false`.
  * @param p.parameters.TIMEOUT String Defaults to `'8'`.
+ * @param p.parameters.PREP_ONLY Boolean Defaults to `false`.
  * @return manifestId String
  */
 def String runRebuild(Map p) {
@@ -1236,6 +1237,7 @@ def String runRebuild(Map p) {
     SKIP_DEMO: false,
     SKIP_DOCS: false,
     TIMEOUT: '8', // should be String
+    PREP_ONLY: false,
   ] + p.parameters
 
   def result = build(
@@ -1246,6 +1248,7 @@ def String runRebuild(Map p) {
       booleanParam(name: 'SKIP_DEMO', value: useP.parameters.SKIP_DEMO),
       booleanParam(name: 'SKIP_DOCS', value: useP.parameters.SKIP_DOCS),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
+      booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),
     ],
     wait: true,
   )
