@@ -32,7 +32,7 @@ notify.wrap {
   def newinstall     = config.newinstall
 
   def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
-  def githubRef      = dockerfile.git_ref
+  def gitRef         = dockerfile.git_ref
   def buildDir       = dockerfile.dir
   def dockerRepo     = dockerRegistry.repo
   def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
@@ -50,7 +50,7 @@ notify.wrap {
     stage('checkout') {
       repo = git([
         url: githubRepo,
-        branch: githubRef,
+        branch: gitRef,
       ])
     }
 

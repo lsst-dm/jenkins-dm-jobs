@@ -23,7 +23,7 @@ notify.wrap {
 
   def hubRepo    = 'lsstsqre/postqa'
   def githubRepo = 'lsst-sqre/docker-postqa'
-  def githubRef  = 'master'
+  def gitRef     = 'master'
   def postqaVer  = '1.3.3'
 
   def image = null
@@ -32,7 +32,7 @@ notify.wrap {
     stage('checkout') {
       git([
         url: "https://github.com/${githubRepo}",
-        branch: githubRef,
+        branch: gitRef,
       ])
     }
 

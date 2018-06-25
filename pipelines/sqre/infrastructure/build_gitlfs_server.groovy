@@ -24,7 +24,7 @@ notify.wrap {
   def hubRepo    = 'lsstsqre/gitlfs-server'
   def githubSlug = 'lsst-sqre/git-lfs-s3-server'
   def githubRepo = "https://github.com/${githubSlug}"
-  def githubRef  = 'master'
+  def gitRef     = 'master'
   def dockerDir  = 'docker'
 
   def image = null
@@ -35,7 +35,7 @@ notify.wrap {
     stage('checkout') {
       git([
         url: githubRepo,
-        branch: githubRef,
+        branch: gitRef,
       ])
 
       abbrHash = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
@@ -44,7 +44,7 @@ notify.wrap {
     stage('build') {
       dir(dockerDir) {
         // ensure base image is always up to date
-        image = docker.build("${hubRepo}", "--pull=true --no-cache --build-arg REPO=${githubRepo} --build-arg REF=${githubRef} .")
+        image = docker.build("${hubRepo}", "--pull=true --no-cache --build-arg REPO=${githubRepo} --build-arg REF=${gitRef} .")
       }
     }
 
@@ -54,8 +54,8 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(githubRef)
-          if (githubRef == 'master') {
+          image.push(gitRef)
+          if (gitRef == 'master') {
             image.push("g${abbrHash}")
           }
           if (pushLatest) {

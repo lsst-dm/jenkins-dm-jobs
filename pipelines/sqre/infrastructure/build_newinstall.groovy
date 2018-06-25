@@ -27,7 +27,7 @@ notify.wrap {
   def dockerRegistry = newinstall.docker_registry
 
   def githubRepo    = util.githubSlugToUrl(dockerfile.github_repo)
-  def githubRef     = dockerfile.git_ref
+  def gitRef        = dockerfile.git_ref
   def buildDir      = dockerfile.dir
   def dockerRepo    = dockerRegistry.repo
   def newinstallUrl = util.newinstallUrl()
@@ -40,7 +40,7 @@ notify.wrap {
     stage('checkout') {
       git([
         url: githubRepo,
-        branch: githubRef,
+        branch: gitRef,
       ])
 
       abbrHash = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
@@ -73,8 +73,8 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(util.sanitizeDockerTag(githubRef))
-          if (githubRef == 'master') {
+          image.push(util.sanitizeDockerTag(gitRef))
+          if (gitRef == 'master') {
             image.push("g${abbrHash}")
           }
           if (pushLatest) {
