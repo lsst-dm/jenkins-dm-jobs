@@ -62,10 +62,10 @@ notify.wrap {
         // XXX this should be renamed in lsstsw to make it clear that its
         // setting a github repo slug
         REPOSFILE_REPO:      config.repos.github_repo,
-        BRANCH:              BRANCH,
-        PRODUCT:             PRODUCT,
-        SKIP_DEMO:           SKIP_DEMO,
-        SKIP_DOCS:           SKIP_DOCS,
+        BRANCH:              branch,
+        PRODUCT:             product,
+        SKIP_DEMO:           skipDemo,
+        SKIP_DOCS:           skipDocs,
       ]
 
       def runJW = {
