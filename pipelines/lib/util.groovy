@@ -652,7 +652,6 @@ def void githubTagRelease(Map p) {
   requireMapKeys(p.options, [
     '--org',
     '--manifest',
-    '--eups-tag',
   ])
 
   def prog = 'github-tag-release'
