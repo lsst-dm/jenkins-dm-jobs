@@ -23,8 +23,8 @@ notify.wrap {
 
   def hubRepo    = 'lsstsqre/sqre-github-snapshot'
   def githubRepo = 'lsst-sqre/sqre-git-snapshot'
-  def githubRef  = 'refs/tags/0.2.1'
-  def hubTag     = tagBasename(githubRef)
+  def gitRef     = 'refs/tags/0.2.1'
+  def hubTag     = tagBasename(gitRef)
 
   def image = null
 
@@ -35,7 +35,7 @@ notify.wrap {
       checkout([
         $class: 'GitSCM',
         userRemoteConfigs: [[url: "https://github.com/${githubRepo}"]],
-        branches: [[name: githubRef]],
+        branches: [[name: gitRef]],
         poll: false
       ])
 

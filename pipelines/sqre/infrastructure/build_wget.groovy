@@ -23,7 +23,7 @@ notify.wrap {
 
   def hubRepo    = 'lsstsqre/wget'
   def githubRepo = 'lsst-sqre/docker-wget'
-  def githubRef  = 'master'
+  def gitRef     = 'master'
 
   def image = null
 
@@ -31,7 +31,7 @@ notify.wrap {
     stage('checkout') {
       git([
         url: "https://github.com/${githubRepo}",
-        branch: githubRef,
+        branch: gitRef,
       ])
     }
 
@@ -46,7 +46,7 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(githubRef)
+          image.push(gitRef)
           if (pushLatest) {
             image.push('latest')
           }

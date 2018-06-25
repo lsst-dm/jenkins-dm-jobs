@@ -24,7 +24,7 @@ notify.wrap {
   def hubRepo    = 'lsstsqre/documenteer-base'
   def githubSlug = 'lsst-sqre/docker-documenteer-base'
   def githubRepo = "https://github.com/${githubSlug}"
-  def githubRef  = 'master'
+  def gitRef     = 'master'
   def dockerDir  = ''
 
   def image = null
@@ -35,7 +35,7 @@ notify.wrap {
     stage('checkout') {
       git([
         url: githubRepo,
-        branch: githubRef,
+        branch: gitRef,
       ])
 
       abbrHash = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
@@ -58,8 +58,8 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(githubRef)
-          if (githubRef == 'master') {
+          image.push(gitRef)
+          if (gitRef == 'master') {
             image.push("g${abbrHash}")
           }
           if (pushLatest) {

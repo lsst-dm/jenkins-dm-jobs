@@ -24,8 +24,8 @@ notify.wrap {
   def hubRepo    = 'lsstsqre/ec2-snapshot'
   def githubSlug = 'lsst-sqre/ec2-snapshot'
   def githubRepo = "https://github.com/${githubSlug}"
-  def githubRef  = 'master'
-  def dockerTag  = util.sanitizeDockerTag(githubRef)
+  def gitRef     = 'master'
+  def dockerTag  = util.sanitizeDockerTag(gitRef)
   def dockerDir  = '.'
 
   def image = null
@@ -36,7 +36,7 @@ notify.wrap {
     stage('checkout') {
       git([
         url: githubRepo,
-        branch: githubRef,
+        branch: gitRef,
       ])
 
       abbrHash = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
@@ -56,7 +56,7 @@ notify.wrap {
           'dockerhub-sqreadmin'
         ) {
           image.push(dockerTag)
-          if (githubRef == 'master') {
+          if (gitRef == 'master') {
             image.push("g${abbrHash}")
           }
           if (pushLatest) {

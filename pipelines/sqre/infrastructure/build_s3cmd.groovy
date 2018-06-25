@@ -25,7 +25,7 @@ notify.wrap {
 
   def hubRepo    = 'lsstsqre/s3cmd'
   def githubRepo = 'lsst-sqre/docker-s3cmd'
-  def githubRef  = 'master'
+  def gitRef     = 'master'
 
   def image = null
 
@@ -33,7 +33,7 @@ notify.wrap {
     stage('checkout') {
       git([
         url: "https://github.com/${githubRepo}",
-        branch: githubRef,
+        branch: gitRef,
       ])
     }
 
