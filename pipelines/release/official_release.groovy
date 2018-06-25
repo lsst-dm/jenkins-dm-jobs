@@ -61,6 +61,8 @@ notify.wrap {
               '--manifest': srcManifestId,
               '--eups-tag': srcEupsTag, // ommited if null
               '--manifest-only': manifestOnly,
+              '--ignore-git-message': true,
+              '--ignore-git-tagger': true,
             ],
             args: [gitTag],
           )
