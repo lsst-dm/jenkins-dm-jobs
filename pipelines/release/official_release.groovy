@@ -21,6 +21,7 @@ notify.wrap {
     'EUPSPKG_SOURCE',
     'EUPS_TAG',
     'GIT_TAG',
+    'MANIFEST_ONLY',
     'O_LATEST',
     'SOURCE_EUPS_TAG',
     'SOURCE_MANIFEST_ID',
@@ -29,6 +30,7 @@ notify.wrap {
   String eupspkgSource = params.EUPSPKG_SOURCE
   String eupsTag       = params.EUPS_TAG
   String gitTag        = params.GIT_TAG
+  Boolean manifestOnly = params.MANIFEST_ONLY
   Boolean oLatest      = params.O_LATEST
   // '' means null
   String srcEupsTag    = util.emptyToNull(params.SOURCE_EUPS_TAG)
@@ -58,6 +60,7 @@ notify.wrap {
               '--org': config.release_tag_org,
               '--manifest': srcManifestId,
               '--eups-tag': srcEupsTag, // ommited if null
+              '--manifest-only': manifestOnly,
             ],
             args: [gitTag],
           )

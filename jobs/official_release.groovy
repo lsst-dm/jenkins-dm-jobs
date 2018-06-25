@@ -26,5 +26,6 @@ p.pipeline().with {
       'eups tag for the new release. Eg. "v16_0_rc1"')
     booleanParam('O_LATEST', false,
       'update the eups "O_LATEST" tag -- should only be done for a final (non-rc) release')
+    booleanParam('MANIFEST_ONLY', false, 'Do not cross reference a published eups tag with the manifest -- use only the metadata from the manifest to determine git tag location. This allows a git tag to be created without a prior eups tag.')
   }
 }
