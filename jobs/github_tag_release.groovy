@@ -33,5 +33,6 @@ p.pipeline().with {
     booleanParam('DRY_RUN', true, 'Dry run')
     stringParam('LIMIT', '3', 'limit operation to N products (only for testing)')
     booleanParam('VERIFY', false, 'Verify a previous release -- will not create git tags')
+    booleanParam('MANIFEST_ONLY', false, 'Do not cross reference a published eups tag with the manifest -- use only the metadata from the manifest to determine git tag location. This allows a git tag to be created without a prior eups tag.')
   }
 }
