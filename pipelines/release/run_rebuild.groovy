@@ -19,6 +19,7 @@ node('jenkins-master') {
 notify.wrap {
   util.requireParams([
     'BRANCH',
+    'PREP_ONLY',
     'PRODUCT',
     'SKIP_DEMO',
     'SKIP_DOCS',
@@ -26,6 +27,7 @@ notify.wrap {
   ])
 
   String branch     = params.BRANCH
+  Boolean prepOnly  = params.PREP_ONLY
   String product    = params.PRODUCT
   Boolean skipDemo  = params.SKIP_DEMO
   Boolean skipDocs  = params.SKIP_DOCS
@@ -66,6 +68,7 @@ notify.wrap {
         PRODUCT:             product,
         SKIP_DEMO:           skipDemo,
         SKIP_DOCS:           skipDocs,
+        PREP_ONLY:           prepOnly,
       ]
 
       def runJW = {
