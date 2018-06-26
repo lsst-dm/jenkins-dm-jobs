@@ -8,7 +8,7 @@ template:
   tarball_defaults: &tarball_defaults
     miniver: &miniver '4.3.21'
     lsstsw_ref: '10a4fa6'
-    timelimit: 8
+    timelimit: 6
   linux_compiler: &linux_compiler devtoolset-6
   platforms:
     - &el6-py3
@@ -70,6 +70,7 @@ tarball:
     label: osx-10.11
     platform: '10.9'
     osfamily: osx
+    timelimit: 12
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
