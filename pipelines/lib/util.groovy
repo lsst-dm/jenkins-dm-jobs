@@ -705,6 +705,7 @@ def void githubTagTeams(Map p) {
     '--email': 'sqre-admin@lists.lsst.org',
     '--allow-team': 'DM Auxilliaries',
     '--deny-team': 'DM Externals',
+    '--ignore-existing-tag': true,
   ]
 
   runCodekitCmd(prog, defaultOptions, p.options, null)

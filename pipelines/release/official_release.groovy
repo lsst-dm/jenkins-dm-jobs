@@ -70,7 +70,6 @@ notify.wrap {
       } // retry
     } // stage
 
-    /*
     // add aux repo tags *after* tagging eups product repos so as to avoid a
     // trainwreck if an aux repo has been pulled into the build (without
     // first being removed from the aux team).
@@ -87,7 +86,6 @@ notify.wrap {
         } // node
       } // retry
     } // stage
-    */
 
     stage('build') {
       retry(retries) {
