@@ -21,10 +21,12 @@ notify.wrap {
   String gitTag  = params.GIT_TAG
 
   node('docker') {
-    util.githubTagTeams([
-      '--dry-run': dryRun,
-      '--org': config.release_tag_org,
-      '--tag': gitTag,
-    ])
+    util.githubTagTeams(
+      options: [
+        '--dry-run': dryRun,
+        '--org': config.release_tag_org,
+        '--tag': gitTag,
+      ],
+    )
   } // node
 } // notify.wrap
