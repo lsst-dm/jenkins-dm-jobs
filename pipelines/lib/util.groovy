@@ -982,7 +982,6 @@ def Object readYamlFile(String file) {
  * @param p.tarballConfigs List
  * @param p.parameters.PRODUCT String
  * @param p.parameters.EUPS_TAG String
- * @param p.parameters.TIMEOUT String Defaults to `'8'`.
  * @param p.retries Integer Defaults to `1`.
  */
 def void buildTarballMatrix(Map p) {
@@ -990,7 +989,7 @@ def void buildTarballMatrix(Map p) {
     'tarballConfigs',
     'parameters',
   ])
-  def useP = [
+  p = [
     retries: 1,
   ] + p
 
@@ -998,10 +997,6 @@ def void buildTarballMatrix(Map p) {
     'PRODUCT',
     'EUPS_TAG',
   ])
-  useP.parameters = [
-    TIMEOUT: '8', // should be String
-  ] + p.parameters
-  def param = useP.parameters
 
   def platform = [:]
 
@@ -1013,17 +1008,20 @@ def void buildTarballMatrix(Map p) {
     slug += "-${item.miniver}-${item.lsstsw_ref}"
 
     platform["${displayName}.${displayCompiler}.${slug}"] = {
-      retry(useP.retries) {
+      retry(p.retries) {
         build job: 'release/tarball',
           parameters: [
-            string(name: 'PRODUCT', value: param.PRODUCT),
-            string(name: 'EUPS_TAG', value: param.EUPS_TAG),
-            booleanParam(name: 'SMOKE', value: param.SMOKE),
-            booleanParam(name: 'RUN_DEMO', value: param.RUN_DEMO),
-            booleanParam(name: 'RUN_SCONS_CHECK', value: param.RUN_SCONS_CHECK),
-            booleanParam(name: 'PUBLISH', value: param.PUBLISH),
+            string(name: 'PRODUCT', value: p.parameters.PRODUCT),
+            string(name: 'EUPS_TAG', value: p.parameters.EUPS_TAG),
+            booleanParam(name: 'SMOKE', value: p.parameters.SMOKE),
+            booleanParam(name: 'RUN_DEMO', value: p.parameters.RUN_DEMO),
+            booleanParam(
+              name: 'RUN_SCONS_CHECK',
+              value: p.parameters.RUN_SCONS_CHECK
+            ),
+            booleanParam(name: 'PUBLISH', value: p.parameters.PUBLISH),
             booleanParam(name: 'WIPEOUT', value: false),
-            string(name: 'TIMEOUT', value: param.TIMEOUT), // hours
+            string(name: 'TIMEOUT', value: item.timelimit.toString()), // hours
             string(name: 'IMAGE', value: nullToEmpty(item.image)),
             string(name: 'LABEL', value: item.label),
             string(name: 'COMPILER', value: item.compiler),
