@@ -32,7 +32,8 @@ notify.wrap {
   Boolean runSconsCheck = params.RUN_SCONS_CHECK
   Boolean smoke         = params.SMOKE
 
-  def retries = 3
+  def tarballProducts = product
+  def retries         = 3
 
   timeout(time: 30, unit: 'HOURS') {
     stage('build eups tarballs') {
