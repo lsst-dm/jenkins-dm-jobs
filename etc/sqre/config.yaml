@@ -30,3 +30,11 @@ s3sync:
   docker_registry:
     repo: lsstsqre/s3sync
     tag: latest
+eupsredirector:
+  dockerfile:
+    github_repo: lsst-sqre/terraform-pkgroot-redirect
+    git_ref: master
+    dir: eupsredirector
+  docker_registry:
+    repo: lsstsqre/eupsredirector
+    tag: latest
