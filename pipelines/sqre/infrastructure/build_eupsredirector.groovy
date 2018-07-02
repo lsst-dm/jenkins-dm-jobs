@@ -22,9 +22,9 @@ notify.wrap {
   Boolean pushLatest = params.LATEST
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def eupsredirector  = sqre.s3sync
-  def dockerfile      = eupsredirector.dockerfile
-  def dockerRegistry  = eupsredirector.docker_registry
+  def eupsredirector = sqre.eupsredirector
+  def dockerfile     = eupsredirector.dockerfile
+  def dockerRegistry = eupsredirector.docker_registry
 
   def githubRepo = util.githubSlugToUrl(dockerfile.github_repo)
   def gitRef     = dockerfile.git_ref
