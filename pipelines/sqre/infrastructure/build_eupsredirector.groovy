@@ -9,6 +9,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    sqre = util.sqreConfig()
   }
 }
 
@@ -21,15 +22,17 @@ notify.wrap {
   Boolean pushLatest = params.LATEST
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def hubRepo    = 'lsstsqre/eupsredirector'
-  def githubSlug = 'lsst-sqre/deploy-pkgroot-redirect'
-  def githubRepo = "https://github.com/${githubSlug}"
-  def gitRef     = 'master'
-  def dockerDir  = 'eupsredirector'
+  def eupsredirector  = sqre.s3sync
+  def dockerfile      = eupsredirector.dockerfile
+  def dockerRegistry  = eupsredirector.docker_registry
 
-  def image = null
+  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo)
+  def gitRef     = dockerfile.git_ref
+  def buildDir   = dockerfile.dir
+  def dockerRepo = dockerRegistry.repo
 
   def run = {
+    def image    = null
     def abbrHash = null
 
     stage('checkout') {
@@ -38,14 +41,16 @@ notify.wrap {
         branch: gitRef,
       ])
 
-      abbrHash = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+      abbrHash = sh(
+        returnStdout: true,
+        script: "git log -n 1 --pretty=format:'%h'",
+      ).trim()
     }
 
     stage('build') {
-      dir(dockerDir) {
+      dir(buildDir) {
         util.librarianPuppet()
-        // ensure base image is always up to date
-        image = docker.build(hubRepo, '--pull=true --no-cache .')
+        image = docker.build(dockerRepo, '--pull=true --no-cache .')
       }
     }
 
@@ -55,9 +60,9 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(gitRef)
-          if (gitRef == 'master') {
-            image.push("g${abbrHash}")
+          def safeRef = util.sanitizeDockerTag(gitRef)
+          [safeRef, "${safeRef}-g${abbrHash}"].each { tag ->
+            image.push(tag)
           }
           if (pushLatest) {
             image.push('latest')
