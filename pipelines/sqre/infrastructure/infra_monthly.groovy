@@ -122,6 +122,9 @@ notify.wrap {
         booleanParam(name: 'LATEST', value: true),
       ]
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infrastructure/build-mysqldump-to-s3'
+
     parallel tasks
   } // run
 
