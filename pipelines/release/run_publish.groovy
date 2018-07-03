@@ -67,36 +67,30 @@ notify.wrap {
           "PRODUCT=${product}",
         ]
 
-        withCredentials([[
-          $class: 'StringBinding',
-          credentialsId: 'cmirror-s3-bucket',
-          variable: 'CMIRROR_S3_BUCKET'
-        ]]) {
-          withEnv(env) {
-            util.insideDockerWrap(
-              image: lsstswConfig.image,
-              pull: true,
-            ) {
-              util.bash '''
-                ARGS=()
-                ARGS+=('-b' "$MANIFEST_ID")
-                ARGS+=('-t' "$EUPS_TAG")
-                # enable debug output
-                ARGS+=('-d')
-                # split whitespace separated EUPS products into separate array
-                # elements by not quoting
-                ARGS+=($PRODUCT)
+        withEnv(env) {
+          util.insideDockerWrap(
+            image: lsstswConfig.image,
+            pull: true,
+          ) {
+            util.bash '''
+              ARGS=()
+              ARGS+=('-b' "$MANIFEST_ID")
+              ARGS+=('-t' "$EUPS_TAG")
+              # enable debug output
+              ARGS+=('-d')
+              # split whitespace separated EUPS products into separate array
+              # elements by not quoting
+              ARGS+=($PRODUCT)
 
-                export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
+              export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
 
-                # setup.sh will unset $PRODUCTS
-                source ./lsstsw/bin/setup.sh
+              # setup.sh will unset $PRODUCTS
+              source ./lsstsw/bin/setup.sh
 
-                publish "${ARGS[@]}"
-              '''
-            }
-          } // util.insideDockerWrap
-        }// withCredentials([[
+              publish "${ARGS[@]}"
+            '''
+          }
+        } // util.insideDockerWrap
       } // stage('publish')
 
       stage('push packages') {

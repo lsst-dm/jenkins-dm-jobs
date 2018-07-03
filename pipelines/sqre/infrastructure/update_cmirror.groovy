@@ -175,13 +175,10 @@ def void withCmirrorCredentials(Closure run) {
     $class: 'UsernamePasswordMultiBinding',
     credentialsId: 'aws-cmirror-push',
     usernameVariable: 'AWS_ACCESS_KEY_ID',
-    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-  ],
-  [
-    $class: 'StringBinding',
-    credentialsId: 'cmirror-s3-bucket',
-    variable: 'CMIRROR_S3_BUCKET'
+    passwordVariable: 'AWS_SECRET_ACCESS_KEY',
   ]]) {
-    run()
+    util.withCondaMirrorEnv {
+      run()
+    }
   }
 }
