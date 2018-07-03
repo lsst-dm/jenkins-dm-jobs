@@ -1522,4 +1522,33 @@ def void waitForS3() {
   }
 } // waitForS3
 
+/**
+ * Invoke block conda mirror env vars.
+ *
+ * Example:
+ *
+ *     util.withCondaMirrorEnv {
+ *       util.bash './dostuff.sh'
+ *     }
+ *
+ * @param run Closure Invoked inside of wrapper container
+ */
+def void withCondaMirrorEnv(Closure run) {
+  // these "credentials" aren't secrets -- just a convient way of setting
+  // globals for the instance. Thus, they don't need to be tightly scoped to a
+  // single sh step
+  withCredentials([[
+    $class: 'StringBinding',
+    credentialsId: 'cmirror-s3-bucket',
+    variable: 'CMIRROR_S3_BUCKET'
+  ]]) {
+    withEnv([
+      "CONDA_CHANNELS=http://${CMIRROR_S3_BUCKET}/pkgs/free",
+      "MINICONDA_BASE_URL=http://${CMIRROR_S3_BUCKET}/miniconda",
+    ]) {
+      run()
+    }
+  } // withCredentials
+} // withCondaMirrorEnv
+
 return this;
