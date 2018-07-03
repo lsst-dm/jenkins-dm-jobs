@@ -43,6 +43,7 @@ notify.wrap {
       'osx-64',
       'noarch',
     ].each { platform ->
+      mirror(image.id, 'https://repo.continuum.io/pkgs/main/', platform)
       mirror(image.id, 'https://repo.continuum.io/pkgs/free/', platform)
     }
 
