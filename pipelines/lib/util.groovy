@@ -415,15 +415,12 @@ def void jenkinsWrapper(Map buildParams) {
       buildEnv += pair.toString()
     }
 
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'cmirror-s3-bucket',
-      variable: 'CMIRROR_S3_BUCKET'
-    ]]) {
+    // setup env vars to use a conda mirror
+    withCondaMirrorEnv {
       withEnv(buildEnv) {
         bash './ci-scripts/jenkins_wrapper.sh'
       }
-    } // withCredentials([[
+    }
   } finally {
     withEnv(["WORKSPACE=${cwd}"]) {
       bash '''

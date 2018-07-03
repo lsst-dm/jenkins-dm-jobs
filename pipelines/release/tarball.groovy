@@ -122,34 +122,31 @@ def void linuxTarballs(
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
     // single sh step
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'cmirror-s3-bucket',
-      variable: 'CMIRROR_S3_BUCKET'
-    ],
-    [
-      $class: 'StringBinding',
-      credentialsId: 'eups-push-bucket',
-      variable: 'EUPS_S3_BUCKET'
-    ]]) {
-      dir(envId) {
-        stage("build ${envId}") {
-          docker.image(imageName).pull()
-          linuxBuild(imageName, compiler, menv, buildTarget)
-        }
-        stage('smoke') {
-          if (smokeConfig) {
-            linuxSmoke(imageName, compiler, menv, buildTarget, smokeConfig)
+    withCondaMirrorEnv {
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'eups-push-bucket',
+        variable: 'EUPS_S3_BUCKET',
+      ]]) {
+        dir(envId) {
+          stage("build ${envId}") {
+            docker.image(imageName).pull()
+            linuxBuild(imageName, compiler, menv, buildTarget)
           }
-        }
+          stage('smoke') {
+            if (smokeConfig) {
+              linuxSmoke(imageName, compiler, menv, buildTarget, smokeConfig)
+            }
+          }
 
-        stage('publish') {
-          if (publish) {
-            s3PushDocker(envId)
+          stage('publish') {
+            if (publish) {
+              s3PushDocker(envId)
+            }
           }
         }
-      }
-    } // withCredentials([[
+      } // withCredentials
+    } // withCondaMirrorEnv
   } // run()
 
   node('docker') {
@@ -198,40 +195,37 @@ def void osxTarballs(
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
     // single sh step
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'cmirror-s3-bucket',
-      variable: 'CMIRROR_S3_BUCKET'
-    ],
-    [
-      $class: 'StringBinding',
-      credentialsId: 'eups-push-bucket',
-      variable: 'EUPS_S3_BUCKET'
-    ]]) {
-      dir(envId) {
-        stage('build') {
-          osxBuild(macosx_deployment_target, compiler, menv, buildTarget)
-        }
-
-        stage('smoke') {
-          if (smokeConfig) {
-            osxSmoke(
-              macosx_deployment_target,
-              compiler,
-              menv,
-              buildTarget,
-              smokeConfig
-            )
+    withCondaMirrorEnv {
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'eups-push-bucket',
+        variable: 'EUPS_S3_BUCKET',
+      ]]) {
+        dir(envId) {
+          stage('build') {
+            osxBuild(macosx_deployment_target, compiler, menv, buildTarget)
           }
-        } //stage
 
-        stage('publish') {
-          if (publish) {
-            s3PushVenv(envId)
+          stage('smoke') {
+            if (smokeConfig) {
+              osxSmoke(
+                macosx_deployment_target,
+                compiler,
+                menv,
+                buildTarget,
+                smokeConfig
+              )
+            }
+          } //stage
+
+          stage('publish') {
+            if (publish) {
+              s3PushVenv(envId)
+            }
           }
-        }
-      } // dir
-    } // withCredentials
+        } // dir
+      } // withCredentials
+    } // withCondaMirrorEnv
   } // run
 
   node(label) {
