@@ -112,7 +112,7 @@ notify.wrap {
 
 def mirror(String imageId, String upstream, String platform) {
   stage("mirror ${platform}") {
-    runMirror(imageId, 'https://repo.continuum.io/pkgs/free/', platform)
+    runMirror(imageId, upstream, platform)
   }
 }
 
