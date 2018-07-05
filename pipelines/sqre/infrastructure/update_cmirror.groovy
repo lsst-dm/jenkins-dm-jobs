@@ -123,16 +123,6 @@ def void mirrorCondaChannel(Map p) {
     fingerprint: true,
   ])
 
-  withEnv([
-    "UPSTREAM_URL=${upstreamUrl}",
-    "PLATFORM=${platform}",
-    "CHANNEL=${channel}",
-    "CHANNEL_DIR=${channelDir}",
-    "TMP_DIR=${tmpDir}",
-  ]) {
-    doMirror()
-  } // withEnv
-
   def doMirror = {
     retry(retries) {
       util.insideDockerWrap(
@@ -171,6 +161,16 @@ def void mirrorCondaChannel(Map p) {
       } // catchError
     } // withCmirrorCredentials
   } // doMirror
+
+  withEnv([
+    "UPSTREAM_URL=${upstreamUrl}",
+    "PLATFORM=${platform}",
+    "CHANNEL=${channel}",
+    "CHANNEL_DIR=${channelDir}",
+    "TMP_DIR=${tmpDir}",
+  ]) {
+    doMirror()
+  } // withEnv
 } // mirrorCondaChannel
 
 /**
