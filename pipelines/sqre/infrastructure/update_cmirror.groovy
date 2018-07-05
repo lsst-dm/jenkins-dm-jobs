@@ -151,8 +151,9 @@ def void mirrorCondaChannel(Map p) {
         retry(retries) {
           docker.image(util.defaultAwscliImage()).inside {
             util.posixSh '''
-              aws s3 sync \
+              aws s3 cp \
                 --only-show-errors \
+                --recursive \
                 "${CHANNEL_DIR}/${PLATFORM}" \
                 "s3://${CMIRROR_S3_BUCKET}/pkgs/${CHANNEL}/${PLATFORM}"
             '''
@@ -209,8 +210,9 @@ def void mirrorMinicondaInstallers(Map p) {
       retry(retries) {
         docker.image(util.defaultAwscliImage()).inside {
           util.posixSh '''
-            aws s3 sync \
+            aws s3 cp \
               --only-show-errors \
+              --recursive \
               ./miniconda/ \
               "s3://${CMIRROR_S3_BUCKET}/miniconda/"
           '''
