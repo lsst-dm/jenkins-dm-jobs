@@ -95,7 +95,7 @@ def void mirrorCondaChannel(Map p) {
   def cwd         = pwd()
   def upstreamUrl = "${mirrorBaseUrl}/${channel}/"
   def channelDir  = "${cwd}/local_mirror/${channel}"
-  def tmpDir      = "${cwd}/tmp/${channe}/${platform}"
+  def tmpDir      = "${cwd}/tmp/${channel}/${platform}"
   def repodatadir = "${cwd}/repodata/${channel}/${platform}"
 
   util.createDirs([
