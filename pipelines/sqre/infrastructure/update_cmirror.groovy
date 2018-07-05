@@ -116,15 +116,7 @@ def mirror(String imageId, String upstream, String platform) {
   }
 }
 
-def runMirror(String imageId, String upstream, String platform) {
-  def localImageName = "${imageId}-local"
-
-  util.wrapDockerImage(
-    image: imageId,
-    tag: localImageName,
-    pull: true,
-  )
-
+def runMirror(String image, String upstream, String platform) {
   // archive a copy of the upstream repodata.json at (or as close to as is
   // possible) the time conda-mirror is run.  This may be useful for debugging
   // suspected repodata.json issues as conda-mirror completely rewrites the
@@ -141,24 +133,25 @@ def runMirror(String imageId, String upstream, String platform) {
   ])
 
   withEnv([
-    "IMAGE=${localImageName}",
     "UPSTREAM=${upstream}",
     "PLATFORM=${platform}",
   ]) {
-    util.bash '''
-      docker run \
-        -v $(pwd)/tmp:/tmp \
-        -v $(pwd)/local_mirror:/local_mirror \
-        "$IMAGE" \
-        /miniconda/bin/conda-mirror \
-        --num-threads 0 \
-        --upstream-channel "$UPSTREAM" \
-        --target-directory /local_mirror \
-        --platform "$PLATFORM" \
-        -vvv
-    '''
-  }
-}
+    util.insideDockerWrap(
+      image: image,
+      pull: true,
+    ) {
+      util.bash '''
+        conda-mirror \
+          --temp-directory "$(pwd)/tmp" \
+          --num-threads 0 \
+          --upstream-channel "$UPSTREAM" \
+          --target-directory "$(pwd)/local_mirror" \
+          --platform "$PLATFORM" \
+          -vvv
+      '''
+    } // util.insideDockerWrap
+  } // withEnv
+} // runMirror
 
 /**
  * Run block with "cmirror" credentials defined in env vars.
