@@ -1,5 +1,3 @@
-import groovy.transform.Field
-
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -14,8 +12,6 @@ node('jenkins-master') {
     sqre = util.sqreConfig()
   }
 }
-
-@Field String wgetImage = 'lsstsqre/wget'
 
 notify.wrap {
   def retries = 3
@@ -43,7 +39,7 @@ notify.wrap {
     }
 
     stage('mirror miniconda') {
-      docker.image(wgetImage).inside {
+      docker.image(defaultWgetImage()).inside {
         util.posixSh '''
           wget \
             --mirror \
@@ -117,7 +113,7 @@ def runMirror(String upstream, String platform) {
   // suspected repodata.json issues as conda-mirror completely rewrites the
   // packages section of this file.
   dir("repodata/${platform}") {
-    docker.image(wgetImage).inside {
+    docker.image(defaultWgetImage()).inside {
       util.posixSh "wget ${upstream}${platform}/repodata.json"
     }
   }
@@ -173,5 +169,10 @@ def void withCmirrorCredentials(Closure run) {
 
 def String defaultCmirrorImage() {
   def dockerRegistry = sqre.cmirror.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
+}
+
+def String defaultWgetImage() {
+  def dockerRegistry = sqre.wget.docker_registry
   "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
