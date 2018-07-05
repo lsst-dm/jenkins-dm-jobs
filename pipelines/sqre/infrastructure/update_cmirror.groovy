@@ -18,10 +18,8 @@ notify.wrap {
 
   def run = {
     stage('prepare') {
-      util.bash '''
-        mkdir -p local_mirror tmp
-        chmod 777 local_mirror tmp
-      '''
+      // tmp dir use for download of upstream files
+      util.createDirs(['tmp'])
 
       // cleanup download repodata.json files between builds
       dir('repodata') {
