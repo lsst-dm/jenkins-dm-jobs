@@ -40,7 +40,7 @@ notify.wrap {
         mirrorConfig["${p} - ${c}"] = {
           node('docker') {
             timeout(time: 3, unit: 'HOURS') {
-              mirrorCondaChannel(c, p)
+              mirrorCondaChannel(c, p, retries: retries)
             }
           } // node
         } // mirrorConfig
@@ -99,7 +99,7 @@ def void mirrorCondaChannel(String channel, String platform, Map p) {
     deleteDir()
 
     docker.image(defaultWgetImage()).inside {
-      util.posixSh "wget ${upstreamUrl}${platform}/repodata.json"
+      util.posixSh "wget --no-verbose ${upstreamUrl}${platform}/repodata.json"
     }
   }
 
@@ -174,6 +174,7 @@ def void mirrorMinicondaInstallers(Map p) {
       util.posixSh '''
         wget \
           --mirror \
+          --no-verbose \
           --continue \
           --no-parent \
           --no-host-directories \
