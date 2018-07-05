@@ -40,7 +40,7 @@ notify.wrap {
         mirrorConfig["${p} - ${c}"] = {
           node('docker') {
             timeout(time: 3, unit: 'HOURS') {
-              mirrorCondaChannel(c, p)
+              mirrorCondaChannel(c, p, retries: retries)
             }
           } // node
         } // mirrorConfig
