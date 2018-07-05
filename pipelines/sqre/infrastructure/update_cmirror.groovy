@@ -48,8 +48,12 @@ notify.wrap {
     } // channels
 
     mirrorConfig['miniconda installers'] = {
-      mirrorMinicondaInstallers(retries: retries)
-    }
+      node('docker') {
+        timeout(time: 1, unit: 'HOURS') {
+          mirrorMinicondaInstallers(retries: retries)
+        }
+      } // node
+    } // mirrorConfig
 
     stage('mirror') {
       parallel mirrorConfig
