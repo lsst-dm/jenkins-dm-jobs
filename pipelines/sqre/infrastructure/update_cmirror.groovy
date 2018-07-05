@@ -102,7 +102,7 @@ notify.wrap {
 } // notify.wrap
 
 def mirror(String upstream, String platform) {
-  stage("mirror ${platform}") {
+  stage("mirror ${platform} - ${upstream}") {
     runMirror(upstream, platform)
   }
 }
