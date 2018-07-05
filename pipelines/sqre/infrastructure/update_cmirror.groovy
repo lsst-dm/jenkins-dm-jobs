@@ -37,7 +37,7 @@ notify.wrap {
     // mirror product of channels * platforms
     channels.each { c ->
       platforms.each { p ->
-        mirrorConfig["${p} - ${c}"] = {
+        mirrorConfig["${c}/${p}"] = {
           node('docker') {
             timeout(time: 3, unit: 'HOURS') {
               mirrorCondaChannel(
