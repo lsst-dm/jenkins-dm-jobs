@@ -88,7 +88,7 @@ def void mirrorCondaChannel(Map p) {
   p = [
     retries: 3
   ] + p
-  String channel = p.channel
+  String channel  = p.channel
   String platform = p.platform
   Integer retries = p.retries
 
