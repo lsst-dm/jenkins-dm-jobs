@@ -18,15 +18,10 @@ node('jenkins-master') {
 @Field String wgetImage = 'lsstsqre/wget'
 
 notify.wrap {
-  def hub_repo = 'lsstsqre/cmirror'
-  def retries  = 3
+  def retries = 3
 
   def run = {
-    def image = docker.image("${hub_repo}:latest")
-
     stage('prepare') {
-      image.pull()
-
       util.bash '''
         mkdir -p local_mirror tmp
         chmod 777 local_mirror tmp
@@ -43,8 +38,8 @@ notify.wrap {
       'osx-64',
       'noarch',
     ].each { platform ->
-      mirror(image.id, 'https://repo.continuum.io/pkgs/main/', platform)
-      mirror(image.id, 'https://repo.continuum.io/pkgs/free/', platform)
+      mirror('https://repo.continuum.io/pkgs/main/', platform)
+      mirror('https://repo.continuum.io/pkgs/free/', platform)
     }
 
     stage('mirror miniconda') {
@@ -110,13 +105,13 @@ notify.wrap {
   } // timeout
 } // notify.wrap
 
-def mirror(String imageId, String upstream, String platform) {
+def mirror(String upstream, String platform) {
   stage("mirror ${platform}") {
-    runMirror(imageId, upstream, platform)
+    runMirror(upstream, platform)
   }
 }
 
-def runMirror(String image, String upstream, String platform) {
+def runMirror(String upstream, String platform) {
   // archive a copy of the upstream repodata.json at (or as close to as is
   // possible) the time conda-mirror is run.  This may be useful for debugging
   // suspected repodata.json issues as conda-mirror completely rewrites the
@@ -137,7 +132,7 @@ def runMirror(String image, String upstream, String platform) {
     "PLATFORM=${platform}",
   ]) {
     util.insideDockerWrap(
-      image: image,
+      image: defaultCmirrorImage(),
       pull: true,
     ) {
       util.bash '''
@@ -174,4 +169,9 @@ def void withCmirrorCredentials(Closure run) {
       run()
     }
   }
+}
+
+def String defaultCmirrorImage() {
+  def dockerRegistry = sqre.cmirror.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
