@@ -122,7 +122,7 @@ def void linuxTarballs(
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
     // single sh step
-    withCondaMirrorEnv {
+    util.withCondaMirrorEnv {
       withCredentials([[
         $class: 'StringBinding',
         credentialsId: 'eups-push-bucket',
@@ -146,7 +146,7 @@ def void linuxTarballs(
           }
         }
       } // withCredentials
-    } // withCondaMirrorEnv
+    } // util.withCondaMirrorEnv
   } // run()
 
   node('docker') {
@@ -195,7 +195,7 @@ def void osxTarballs(
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
     // single sh step
-    withCondaMirrorEnv {
+    util.withCondaMirrorEnv {
       withCredentials([[
         $class: 'StringBinding',
         credentialsId: 'eups-push-bucket',
@@ -225,7 +225,7 @@ def void osxTarballs(
           }
         } // dir
       } // withCredentials
-    } // withCondaMirrorEnv
+    } // util.withCondaMirrorEnv
   } // run
 
   node(label) {
