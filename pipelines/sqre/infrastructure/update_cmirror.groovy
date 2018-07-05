@@ -21,16 +21,6 @@ notify.wrap {
   def retries = 3
 
   def run = {
-    stage('prepare') {
-      // tmp dir use for download of upstream files
-      util.createDirs(['tmp'])
-
-      // cleanup download repodata.json files between builds
-      dir('repodata') {
-        deleteDir()
-      }
-    }
-
     [
       'linux-64',
       'osx-64',
@@ -110,24 +100,35 @@ def mirror(String channel, String platform) {
 }
 
 def runMirror(String channel, String platform) {
+  def cwd         = pwd()
   def upstreamUrl = "${mirrorBaseUrl}/${channel}/"
-  def channelDir  = "${pwd()}/local_mirror/${channel}"
+  def channelDir  = "${cwd}/local_mirror/${channel}"
+  def tmpDir      = "${cwd}/tmp/${channe}/${platform}"
+  def repodatadir = "${cwd}/repodata/${channel}/${platform}"
 
-  // ensure destination mirror path exists
-  util.createDirs([channelDir])
+  util.createDirs([
+    // ensure destination mirror path exists
+    // dir tree should be ./local_mirror/${channel}/${platform}
+    channelDir,
+    // tmp dir use for download of upstream files
+    tmpDir,
+  ])
 
   // archive a copy of the upstream repodata.json at (or as close to as is
   // possible) the time conda-mirror is run.  This may be useful for debugging
   // suspected repodata.json issues as conda-mirror completely rewrites the
   // packages section of this file.
-  dir("repodata/${platform}") {
+  dir(repodataDir) {
+    // cleanup download repodata.json files between builds
+    deleteDir()
+
     docker.image(defaultWgetImage()).inside {
       util.posixSh "wget ${upstreamUrl}${platform}/repodata.json"
     }
   }
 
   archiveArtifacts([
-    artifacts: 'repodata/**/*',
+    artifacts: "${repodataDir}/*",
     fingerprint: true,
   ])
 
@@ -135,6 +136,7 @@ def runMirror(String channel, String platform) {
     "UPSTREAM_URL=${upstreamUrl}",
     "PLATFORM=${platform}",
     "TARGET_DIR=${channelDir}",
+    "TMP_DIR=${tmpDir}",
   ]) {
     util.insideDockerWrap(
       image: defaultCmirrorImage(),
@@ -142,9 +144,9 @@ def runMirror(String channel, String platform) {
     ) {
       util.bash '''
         conda-mirror \
-          --temp-directory "$(pwd)/tmp" \
           --num-threads 0 \
           --upstream-channel "$UPSTREAM_URL" \
+          --temp-directory "$TMP_DIR" \
           --target-directory "$TARGET_DIR" \
           --platform "$PLATFORM" \
           -vvv
