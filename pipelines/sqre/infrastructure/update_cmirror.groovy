@@ -88,6 +88,9 @@ def void mirrorCondaChannel(Map p) {
   p = [
     retries: 3
   ] + p
+  String channel = p.channel
+  String platform = p.platform
+  Integer retries = p.retries
 
   def cwd         = pwd()
   def upstreamUrl = "${mirrorBaseUrl}/${channel}/"
@@ -132,7 +135,7 @@ def void mirrorCondaChannel(Map p) {
   } // withEnv
 
   def doMirror = {
-    retry(p.retries) {
+    retry(retries) {
       util.insideDockerWrap(
         image: defaultCmirrorImage(),
         pull: true,
@@ -156,7 +159,7 @@ def void mirrorCondaChannel(Map p) {
       // seems reasonable to retry the entire operation.
       // See: https://github.com/aws/aws-cli/issues/1092
       catchError {
-        retry(p.retries) {
+        retry(retries) {
           docker.image(util.defaultAwscliImage()).inside {
             util.posixSh '''
               aws s3 sync \
@@ -181,8 +184,9 @@ def void mirrorMinicondaInstallers(Map p) {
   p = [
     retries: 3
   ] + p
+  Integer retries = p.retries
 
-  retry(p.retries) {
+  retry(retries) {
     docker.image(defaultWgetImage()).inside {
       util.posixSh '''
         wget \
@@ -203,7 +207,7 @@ def void mirrorMinicondaInstallers(Map p) {
 
   withCmirrorCredentials {
     catchError {
-      retry(p.retries) {
+      retry(retries) {
         docker.image(util.defaultAwscliImage()).inside {
           util.posixSh '''
             aws s3 sync \
