@@ -1,3 +1,7 @@
+import groovy.transform.Field
+
+@Field String mirrorBaseUrl = 'https://repo.continuum.io/pkgs'
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -32,8 +36,8 @@ notify.wrap {
       'osx-64',
       'noarch',
     ].each { platform ->
-      mirror('https://repo.continuum.io/pkgs/main/', platform)
-      mirror('https://repo.continuum.io/pkgs/free/', platform)
+      mirror('main', platform)
+      mirror('free', platform)
     }
 
     stage('mirror miniconda') {
@@ -99,20 +103,26 @@ notify.wrap {
   } // timeout
 } // notify.wrap
 
-def mirror(String upstream, String platform) {
-  stage("mirror ${platform} - ${upstream}") {
-    runMirror(upstream, platform)
+def mirror(String channel, String platform) {
+  stage("mirror ${platform} - ${channel}") {
+    runMirror(channel, platform)
   }
 }
 
-def runMirror(String upstream, String platform) {
+def runMirror(String channel, String platform) {
+  def upstreamUrl = "${mirrorBaseUrl}/${channel}/"
+  def channelDir  = "${pwd()}/local_mirror/${channel}"
+
+  // ensure destination mirror path exists
+  util.createDirs([channelDir])
+
   // archive a copy of the upstream repodata.json at (or as close to as is
   // possible) the time conda-mirror is run.  This may be useful for debugging
   // suspected repodata.json issues as conda-mirror completely rewrites the
   // packages section of this file.
   dir("repodata/${platform}") {
     docker.image(defaultWgetImage()).inside {
-      util.posixSh "wget ${upstream}${platform}/repodata.json"
+      util.posixSh "wget ${upstreamUrl}${platform}/repodata.json"
     }
   }
 
@@ -122,8 +132,9 @@ def runMirror(String upstream, String platform) {
   ])
 
   withEnv([
-    "UPSTREAM=${upstream}",
+    "UPSTREAM_URL=${upstreamUrl}",
     "PLATFORM=${platform}",
+    "TARGET_DIR=${channelDir}",
   ]) {
     util.insideDockerWrap(
       image: defaultCmirrorImage(),
@@ -133,8 +144,8 @@ def runMirror(String upstream, String platform) {
         conda-mirror \
           --temp-directory "$(pwd)/tmp" \
           --num-threads 0 \
-          --upstream-channel "$UPSTREAM" \
-          --target-directory "$(pwd)/local_mirror" \
+          --upstream-channel "$UPSTREAM_URL" \
+          --target-directory "$TARGET_DIR" \
           --platform "$PLATFORM" \
           -vvv
       '''
