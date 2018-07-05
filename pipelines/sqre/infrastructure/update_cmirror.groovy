@@ -130,7 +130,7 @@ def void mirrorCondaChannel(Map p) {
         pull: true,
       ) {
         util.bash '''
-          /miniconda/bin/conda-mirror
+          /miniconda/bin/conda-mirror \
             --num-threads 0 \
             --upstream-channel "$UPSTREAM_URL" \
             --temp-directory "$TMP_DIR" \
