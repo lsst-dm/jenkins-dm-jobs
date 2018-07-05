@@ -1,5 +1,7 @@
 import groovy.transform.Field
 
+@Field String mirrorBaseUrl = 'https://repo.continuum.io/pkgs'
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -15,150 +17,191 @@ node('jenkins-master') {
   }
 }
 
-@Field String wgetImage = 'lsstsqre/wget'
-
 notify.wrap {
-  def hub_repo = 'lsstsqre/cmirror'
-  def retries  = 3
+  def retries = 3
+
+  def channels = [
+    'main',
+    'free',
+  ]
+
+  def platforms = [
+    'linux-64',
+    'osx-64',
+    'noarch',
+  ]
 
   def run = {
-    def image = docker.image("${hub_repo}:latest")
+    def mirrorConfig = [:]
 
-    stage('prepare') {
-      image.pull()
+    // mirror product of channels * platforms
+    channels.each { c ->
+      platforms.each { p ->
+        mirrorConfig["${platform} - ${channel}"] = {
+          node('docker') {
+            timeout(time: 3, unit: 'HOURS') {
+              mirrorCondaChannel(c, p)
+            }
+          } // node
+        } // mirrorConfig
+      } // platforms
+    } // channels
 
-      util.bash '''
-        mkdir -p local_mirror tmp
-        chmod 777 local_mirror tmp
-      '''
-
-      // cleanup download repodata.json files between builds
-      dir('repodata') {
-        deleteDir()
-      }
+    mirrorConfig['miniconda installers'] = {
+      mirrorMinicondaInstallers(retries: retries)
     }
 
-    [
-      'linux-64',
-      'osx-64',
-      'noarch',
-    ].each { platform ->
-      mirror(image.id, 'https://repo.continuum.io/pkgs/main/', platform)
-      mirror(image.id, 'https://repo.continuum.io/pkgs/free/', platform)
+    stage('mirror') {
+      parallel mirrorConfig
     }
-
-    stage('mirror miniconda') {
-      docker.image(wgetImage).inside {
-        util.posixSh '''
-          wget \
-            --mirror \
-            --continue \
-            --no-parent \
-            --no-host-directories \
-            --progress=dot:giga \
-            -R "*.exe" \
-            -R "*ppc64le.sh" \
-            -R "*armv7l.sh" \
-            -R "*x86.sh" \
-            https://repo.continuum.io/miniconda/
-        '''
-      }
-    }
-
-    stage('push to s3') {
-      withCmirrorCredentials {
-        docker.image(util.defaultAwscliImage()).inside {
-          // XXX aws s3 sync appears to give up too easily on error and a
-          // failure on a single object will cause the job to fail, so it seems
-          // reasonable to retry the entire operation.
-          // See: https://github.com/aws/aws-cli/issues/1092
-          catchError {
-            retry(retries) {
-              util.posixSh '''
-                aws s3 sync \
-                  --only-show-errors \
-                  ./local_mirror/ \
-                  "s3://${CMIRROR_S3_BUCKET}/pkgs/free/"
-              '''
-            } // retry
-          } // catchError
-
-          catchError {
-            retry(retries) {
-              util.posixSh '''
-                aws s3 sync \
-                  --only-show-errors \
-                  ./miniconda/ \
-                  "s3://${CMIRROR_S3_BUCKET}/miniconda/"
-              '''
-            } // retry
-          } // catchError
-        } // .inside
-      } // withCmirrorCredentials
-    } // stage
   } // run
 
   // the timeout should be <= the cron triggering interval to prevent builds
   // pilling up in the backlog.
   timeout(time: 23, unit: 'HOURS') {
-    node('docker') {
-      // the longest observed runtime is ~6 hours
-      timeout(time: 9, unit: 'HOURS') {
-        run()
-      }
-    } // node
-  } // timeout
+    run()
+  }
 } // notify.wrap
 
-def mirror(String imageId, String upstream, String platform) {
-  stage("mirror ${platform}") {
-    runMirror(imageId, upstream, platform)
-  }
-}
+/**
+ * Mirror one platform of a conda channel
+ *
+ * @param channel String name of conda channel. Eg., `main`, `free`
+ * @param platform String name of conda platform. Eg., `linux-64', `noarch`
+ * @param p Map
+ * @param p.retries Integer defaults to `3`.
+ */
+def void mirrorCondaChannel(String channel, String platform, Map p) {
+  p = [
+    retries: 3
+  ] + p
 
-def runMirror(String imageId, String upstream, String platform) {
-  def localImageName = "${imageId}-local"
+  def cwd         = pwd()
+  def upstreamUrl = "${mirrorBaseUrl}/${channel}/"
+  def channelDir  = "${cwd}/local_mirror/${channel}"
+  def tmpDir      = "${cwd}/tmp/${channe}/${platform}"
+  def repodatadir = "${cwd}/repodata/${channel}/${platform}"
 
-  util.wrapDockerImage(
-    image: imageId,
-    tag: localImageName,
-    pull: true,
-  )
+  util.createDirs([
+    // ensure destination mirror path exists
+    // dir tree should be ./local_mirror/${channel}/${platform}
+    channelDir,
+    // tmp dir use for download of upstream files
+    tmpDir,
+  ])
 
   // archive a copy of the upstream repodata.json at (or as close to as is
   // possible) the time conda-mirror is run.  This may be useful for debugging
   // suspected repodata.json issues as conda-mirror completely rewrites the
   // packages section of this file.
-  dir("repodata/${platform}") {
-    docker.image(wgetImage).inside {
-      util.posixSh "wget ${upstream}${platform}/repodata.json"
+  dir(repodataDir) {
+    // cleanup download repodata.json files between builds
+    deleteDir()
+
+    docker.image(defaultWgetImage()).inside {
+      util.posixSh "wget ${upstreamUrl}${platform}/repodata.json"
     }
   }
 
   archiveArtifacts([
-    artifacts: 'repodata/**/*',
+    artifacts: "${repodataDir}/*",
     fingerprint: true,
   ])
 
   withEnv([
-    "IMAGE=${localImageName}",
-    "UPSTREAM=${upstream}",
+    "UPSTREAM_URL=${upstreamUrl}",
     "PLATFORM=${platform}",
+    "CHANNEL=${channel}",
+    "CHANNEL_DIR=${channelDir}",
+    "TMP_DIR=${tmpDir}",
   ]) {
-    util.bash '''
-      docker run \
-        -v $(pwd)/tmp:/tmp \
-        -v $(pwd)/local_mirror:/local_mirror \
-        "$IMAGE" \
-        /miniconda/bin/conda-mirror \
-        --num-threads 0 \
-        --upstream-channel "$UPSTREAM" \
-        --target-directory /local_mirror \
-        --platform "$PLATFORM" \
-        -vvv
-    '''
-  }
-}
+    doMirror()
+  } // withEnv
+
+  def doMirror = {
+    retry(p.retries) {
+      util.insideDockerWrap(
+        image: defaultCmirrorImage(),
+        pull: true,
+      ) {
+        util.bash '''
+          conda-mirror \
+            --num-threads 0 \
+            --upstream-channel "$UPSTREAM_URL" \
+            --temp-directory "$TMP_DIR" \
+            --target-directory "$CHANNEL_DIR" \
+            --platform "$PLATFORM" \
+            -vvv
+        '''
+      }
+    } // retry
+
+    // push local channel/platform mirror to s3
+    withCmirrorCredentials {
+      // XXX aws s3 sync appears to give up too easily on error and a
+      // failure on a single object will cause the job to fail, so it
+      // seems reasonable to retry the entire operation.
+      // See: https://github.com/aws/aws-cli/issues/1092
+      catchError {
+        retry(p.retries) {
+          docker.image(util.defaultAwscliImage()).inside {
+            util.posixSh '''
+              aws s3 sync \
+                --only-show-errors \
+                "${CHANNEL_DIR}/${PLATFORM}" \
+                "s3://${CMIRROR_S3_BUCKET}/pkgs/${CHANNEL}/${PLATFORM}"
+            '''
+          }
+        } // retry
+      } // catchError
+    } // withCmirrorCredentials
+  } // doMirror
+} // mirrorCondaChannel
+
+/**
+ * Mirror miniconda installer packages
+ *
+ * @param p Map
+ * @param p.retries Integer defaults to `3`.
+ */
+def void mirrorMinicondaInstallers(Map p) {
+  p = [
+    retries: 3
+  ] + p
+
+  retry(p.retries) {
+    docker.image(defaultWgetImage()).inside {
+      util.posixSh '''
+        wget \
+          --mirror \
+          --continue \
+          --no-parent \
+          --no-host-directories \
+          --progress=dot:giga \
+          -R "*.exe" \
+          -R "*ppc64le.sh" \
+          -R "*armv7l.sh" \
+          -R "*x86.sh" \
+          https://repo.continuum.io/miniconda/
+      '''
+    }
+  } // retrey
+
+  withCmirrorCredentials {
+    catchError {
+      retry(p.retries) {
+        docker.image(util.defaultAwscliImage()).inside {
+          util.posixSh '''
+            aws s3 sync \
+              --only-show-errors \
+              ./miniconda/ \
+              "s3://${CMIRROR_S3_BUCKET}/miniconda/"
+          '''
+        }
+      } // retry
+    } // catchError
+  } // withCmirrorCredentials
+} // mirrorMinicondaInstallers
 
 /**
  * Run block with "cmirror" credentials defined in env vars.
@@ -181,4 +224,14 @@ def void withCmirrorCredentials(Closure run) {
       run()
     }
   }
+}
+
+def String defaultCmirrorImage() {
+  def dockerRegistry = sqre.cmirror.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
+}
+
+def String defaultWgetImage() {
+  def dockerRegistry = sqre.wget.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }

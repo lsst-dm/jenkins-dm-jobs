@@ -38,3 +38,11 @@ eupsredirector:
   docker_registry:
     repo: lsstsqre/eupsredirector
     tag: latest
+cmirror:
+  docker_registry:
+    repo: lsstsqre/cmirror
+    tag: latest
+wget:
+  docker_registry:
+    repo: lsstsqre/wget
+    tag: latest
