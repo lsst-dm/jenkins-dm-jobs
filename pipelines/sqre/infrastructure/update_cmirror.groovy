@@ -40,7 +40,11 @@ notify.wrap {
         mirrorConfig["${p} - ${c}"] = {
           node('docker') {
             timeout(time: 3, unit: 'HOURS') {
-              mirrorCondaChannel(c, p, retries: retries)
+              mirrorCondaChannel(
+                channel: c,
+                platform: p,
+                retries: retries,
+              )
             }
           } // node
         } // mirrorConfig
@@ -70,12 +74,17 @@ notify.wrap {
 /**
  * Mirror one platform of a conda channel
  *
- * @param channel String name of conda channel. Eg., `main`, `free`
- * @param platform String name of conda platform. Eg., `linux-64', `noarch`
  * @param p Map
+ * @param p.channel String name of conda channel. Eg., `main`, `free`
+ * @param p.platform String name of conda platform. Eg., `linux-64', `noarch`
  * @param p.retries Integer defaults to `3`.
  */
-def void mirrorCondaChannel(String channel, String platform, Map p) {
+def void mirrorCondaChannel(Map p) {
+  util.requireMapKeys(p, [
+    'channel',
+    'platform',
+  ])
+
   p = [
     retries: 3
   ] + p
