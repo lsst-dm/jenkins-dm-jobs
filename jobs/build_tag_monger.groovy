@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructure/build-tag-monger', dsl: this)
+def p = new Plumber(name: 'sqre/infra/build-tag-monger', dsl: this)
 p.pipeline().with {
   description('Constructs docker images.')
 

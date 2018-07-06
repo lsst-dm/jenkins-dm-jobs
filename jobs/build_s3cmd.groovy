@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructure/build-s3cmd', dsl: this)
+def p = new Plumber(name: 'sqre/infra/build-s3cmd', dsl: this)
 p.pipeline().with {
   description('Constructs docker s3cmd images.')
 

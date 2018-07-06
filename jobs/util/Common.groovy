@@ -37,7 +37,7 @@ class Common {
       description('SQRE mission related jobs')
     }
 
-    dslFactory.folder('sqre/infrastructure') {
+    dslFactory.folder('sqre/infra') {
       description('Infrastructure jobs')
     }
 

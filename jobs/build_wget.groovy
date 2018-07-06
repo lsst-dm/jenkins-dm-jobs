@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructure/build-wget', dsl: this)
+def p = new Plumber(name: 'sqre/infra/build-wget', dsl: this)
 p.pipeline().with {
   description('Constructs docker wget images.')
 

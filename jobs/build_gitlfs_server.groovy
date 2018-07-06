@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructure/build-gitlfs-server', dsl: this)
+def p = new Plumber(name: 'sqre/infra/build-gitlfs-server', dsl: this)
 p.pipeline().with {
   description('Constructs docker gitlfs-server images.')
 

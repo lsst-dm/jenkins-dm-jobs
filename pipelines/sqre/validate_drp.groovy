@@ -253,7 +253,7 @@ def void drp(
  * Trigger jenkins-node-cleanup (disk space) and wait for it to complete.
  */
 def void runNodeCleanup() {
-  build job: 'sqre/infrastructure/jenkins-node-cleanup',
+  build job: 'sqre/infra/jenkins-node-cleanup',
     wait: true
 }
 

@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructure/build-newinstall', dsl: this)
+def p = new Plumber(name: 'sqre/infra/build-newinstall', dsl: this)
 p.pipeline().with {
   description('Constructs newinstall docker images.')
 
@@ -12,6 +12,6 @@ p.pipeline().with {
   // it would be slick if we could trigger based on dockerhub lsstsqre/centos
   // notifications but AFAIK, this can't be restricted by tag
   triggers {
-    upstream('sqre/infrastructure/build-layercake', 'SUCCESS')
+    upstream('sqre/infra/build-layercake', 'SUCCESS')
   }
 }

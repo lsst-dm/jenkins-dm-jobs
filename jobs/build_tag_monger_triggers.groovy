@@ -1,7 +1,7 @@
 import util.Common
 Common.makeFolders(this)
 
-def j = job('sqre/infrastructure/build-tag-monger-triggers') {
+def j = job('sqre/infra/build-tag-monger-triggers') {
   scm {
     git {
       remote {
@@ -17,7 +17,7 @@ def j = job('sqre/infrastructure/build-tag-monger-triggers') {
 
   steps {
     downstreamParameterized {
-      trigger('sqre/infrastructure/build-tag-monger') {}
+      trigger('sqre/infra/build-tag-monger') {}
     }
   }
 }

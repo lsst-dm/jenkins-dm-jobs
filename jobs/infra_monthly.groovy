@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructure/infra-monthly', dsl: this)
+def p = new Plumber(name: 'sqre/infra/infra-monthly', dsl: this)
 p.pipeline().with {
-  description('Periodic builds of infrastructure jobs.')
+  description('Periodic builds of infra jobs.')
 }

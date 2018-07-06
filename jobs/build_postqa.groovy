@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructure/build-postqa', dsl: this)
+def p = new Plumber(name: 'sqre/infra/build-postqa', dsl: this)
 p.pipeline().with {
   description('Constructs docker postqa images.')
 

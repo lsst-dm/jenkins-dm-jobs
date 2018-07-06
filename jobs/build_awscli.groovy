@@ -3,7 +3,7 @@ import org.yaml.snakeyaml.Yaml
 
 def sqre = new Yaml().load(readFileFromWorkspace('etc/sqre/config.yaml'))
 
-def p = new Plumber(name: 'sqre/infrastructure/build-awscli', dsl: this)
+def p = new Plumber(name: 'sqre/infra/build-awscli', dsl: this)
 p.pipeline().with {
   description('Constructs docker awscli images.')
 
