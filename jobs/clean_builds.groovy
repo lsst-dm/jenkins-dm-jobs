@@ -5,14 +5,14 @@ import util.CleanBuild
 
 [
   [
-    name: 'sci-pipe/lsst_distrib',
+    name: 'scipipe/lsst_distrib',
     product: 'lsst_distrib',
     skipDemo: false,
     skipDocs: false,
     seedJob: SEED_JOB,
   ],
   [
-    name: 'sci-pipe/ci_hsc',
+    name: 'scipipe/ci_hsc',
     product: 'ci_hsc',
     skipDemo: true,
     skipDocs: true,
