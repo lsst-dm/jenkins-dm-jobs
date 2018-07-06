@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructure/build-eupsredirector', dsl: this)
+def p = new Plumber(name: 'sqre/infra/build-eupsredirector', dsl: this)
 p.pipeline().with {
   description('Constructs docker lsstsqre/eupsredirector images.')
 

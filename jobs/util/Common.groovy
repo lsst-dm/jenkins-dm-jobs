@@ -37,7 +37,7 @@ class Common {
       description('SQRE mission related jobs')
     }
 
-    dslFactory.folder('sqre/infrastructure') {
+    dslFactory.folder('sqre/infra') {
       description('Infrastructure jobs')
     }
 
@@ -78,7 +78,7 @@ class Common {
     dslFactory.folder('sims') {
       description('LSST sims specific jobs.')
     }
-    dslFactory.folder('science-pipelines') {
+    dslFactory.folder('sci-pipe') {
       description('Science Pipelines / witchcraft.')
     }
   }

@@ -1,7 +1,7 @@
 import util.Common
 Common.makeFolders(this)
 
-multibranchPipelineJob('sqre/infrastructure/ci-scripts') {
+multibranchPipelineJob('sqre/infra/ci-scripts') {
   branchSources {
     github {
       repoOwner('lsst-sqre')

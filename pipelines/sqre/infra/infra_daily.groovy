@@ -19,7 +19,7 @@ notify.wrap {
     def tasks = [:]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/tag-monger'
+      name: 'sqre/infra/tag-monger'
 
     parallel tasks
   } // run

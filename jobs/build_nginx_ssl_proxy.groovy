@@ -1,7 +1,7 @@
 import util.Plumber
 
 def p = new Plumber(
-  name: 'sqre/infrastructure/build-nginx-ssl-proxy',
+  name: 'sqre/infra/build-nginx-ssl-proxy',
   dsl: this
 )
 p.pipeline().with {

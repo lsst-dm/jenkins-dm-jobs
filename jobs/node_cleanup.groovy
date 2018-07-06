@@ -1,7 +1,7 @@
 import util.Common
 Common.makeFolders(this)
 
-job('sqre/infrastructure/jenkins-node-cleanup') {
+job('sqre/infra/jenkins-node-cleanup') {
   // don't tie up a beefy build slave
   label('jenkins-master')
   concurrentBuild(false)
@@ -23,7 +23,7 @@ job('sqre/infrastructure/jenkins-node-cleanup') {
   // #systemGroovyScriptFile step
   steps {
     systemGroovyCommand(readFileFromWorkspace(
-      'scripts/sqre/infrastructure/jenkins_node_cleanup.groovy'
+      'scripts/sqre/infra/jenkins_node_cleanup.groovy'
     ))
   }
 }

@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructure/build-layercake', dsl: this)
+def p = new Plumber(name: 'sqre/infra/build-layercake', dsl: this)
 p.pipeline().with {
   description('Constructs stack of docker base images for sci-pipe releases.')
 

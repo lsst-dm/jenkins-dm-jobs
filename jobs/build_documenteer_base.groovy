@@ -1,7 +1,7 @@
 import util.Plumber
 
 def p = new Plumber(
-  name: 'sqre/infrastructure/build-documenteer-base',
+  name: 'sqre/infra/build-documenteer-base',
   dsl: this
 )
 p.pipeline().with {
@@ -13,6 +13,6 @@ p.pipeline().with {
   }
 
   triggers {
-    upstream('sqre/infrastructure/build-newinstall', 'SUCCESS')
+    upstream('sqre/infra/build-newinstall', 'SUCCESS')
   }
 }

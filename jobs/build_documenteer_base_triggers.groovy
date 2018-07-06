@@ -1,7 +1,7 @@
 import util.Common
 Common.makeFolders(this)
 
-def j = job('sqre/infrastructure/build-newinstall-triggers') {
+def j = job('sqre/infra/build-newinstall-triggers') {
   def repo = SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
   def ref  = SEED_JOB.scm.getBranches().get(0).getName()
 
@@ -20,7 +20,7 @@ def j = job('sqre/infrastructure/build-newinstall-triggers') {
 
   steps {
     downstreamParameterized {
-      trigger('sqre/infrastructure/build-documenteer-base') {}
+      trigger('sqre/infra/build-documenteer-base') {}
     }
   }
 }

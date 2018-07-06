@@ -19,27 +19,27 @@ notify.wrap {
     def tasks = [:]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-layercake',
+      name: 'sqre/infra/build-layercake',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-awscli',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-gitlfs-server',
+      name: 'sqre/infra/build-awscli',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
         booleanParam(name: 'LATEST', value: true),
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-s3cmd',
+      name: 'sqre/infra/build-gitlfs-server',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
+    triggerJob trigger: tasks,
+      name: 'sqre/infra/build-s3cmd',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
         booleanParam(name: 'LATEST', value: true),
@@ -56,20 +56,20 @@ notify.wrap {
       name: 'sqre/backup/build-s3backup'
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-ltd-mason',
+      name: 'sqre/infra/build-ltd-mason',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
         booleanParam(name: 'LATEST', value: true),
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-wget'
+      name: 'sqre/infra/build-wget'
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-cmirror'
+      name: 'sqre/infra/build-cmirror'
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-eupsredirector',
+      name: 'sqre/infra/build-eupsredirector',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
         booleanParam(name: 'LATEST', value: true),
@@ -83,47 +83,47 @@ notify.wrap {
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-gitlfs',
+      name: 'sqre/infra/build-gitlfs',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
         booleanParam(name: 'LATEST', value: true),
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-codekit',
+      name: 'sqre/infra/build-codekit',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
         booleanParam(name: 'LATEST', value: true),
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-nginx-ssl-proxy',
+      name: 'sqre/infra/build-nginx-ssl-proxy',
       parameters: [
         booleanParam(name: 'PUSH', value: true),
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-postqa',
+      name: 'sqre/infra/build-postqa',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-tag-monger',
+      name: 'sqre/infra/build-tag-monger',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
         booleanParam(name: 'LATEST', value: true),
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-s3sync',
+      name: 'sqre/infra/build-s3sync',
       parameters: [
         booleanParam(name: 'PUBLISH', value: true),
         booleanParam(name: 'LATEST', value: true),
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infrastructure/build-mysqldump-to-s3'
+      name: 'sqre/infra/build-mysqldump-to-s3'
 
     parallel tasks
   } // run

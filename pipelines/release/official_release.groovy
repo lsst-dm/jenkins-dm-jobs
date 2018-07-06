@@ -154,7 +154,7 @@ notify.wrap {
     stage('build jupyterlabdemo image') {
       retry(retries) {
         // based on lsstsqre/stack image
-        build job: 'sqre/infrastructure/build-jupyterlabdemo',
+        build job: 'sqre/infra/build-jupyterlabdemo',
           parameters: [
             string(name: 'TAG', value: eupsTag),
             booleanParam(name: 'NO_PUSH', value: false),
@@ -198,7 +198,7 @@ notify.wrap {
 
     stage('doc build') {
       retry(retries) {
-        build job: 'sqre/infrastructure/documenteer',
+        build job: 'sqre/infra/documenteer',
           parameters: [
             string(name: 'EUPS_TAG', value: eupsTag),
             string(name: 'LTD_SLUG', value: eupsTag),

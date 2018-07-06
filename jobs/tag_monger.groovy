@@ -1,4 +1,4 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/infrastructure/tag-monger', dsl: this)
+def p = new Plumber(name: 'sqre/infra/tag-monger', dsl: this)
 p.pipeline()

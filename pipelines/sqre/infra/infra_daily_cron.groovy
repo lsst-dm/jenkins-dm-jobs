@@ -13,9 +13,9 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def infraJob = 'sqre/infrastructure/infra-monthly'
+  def infraJob = 'sqre/infra/infra-daily'
 
-  stage('run infra-monthly') {
+  stage('run infra-daily') {
     build job: infraJob
   }
 } // notify.wrap
