@@ -59,6 +59,7 @@ notify.wrap {
         }
 
         def env = [
+          "HOME=${cwd}/home",
           "EUPS_PKGROOT=${pkgroot}",
           "EUPS_USERDATA=${cwd}/home/.eups_userdata",
           "EUPSPKG_SOURCE=${eupspkgSource}",
