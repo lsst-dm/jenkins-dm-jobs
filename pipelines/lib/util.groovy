@@ -1407,12 +1407,12 @@ def String sanitizeEupsTag(String tag) {
 }
 
 /*
- * Get science-pipeline config
+ * Get sci-pipe config
  *
  * @return tag Object
  */
 def Object scipipeConfig() {
-  readYamlFile('etc/science_pipelines/build_matrix.yaml')
+  readYamlFile('etc/sci_pipe/build_matrix.yaml')
 }
 
 /*

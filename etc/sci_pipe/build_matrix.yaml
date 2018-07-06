@@ -112,7 +112,7 @@ shebangtron:
   github_repo: lsst/shebangtron
   git_ref: master
 #
-# docker releases of science-pipelines/lsst_distrib
+# docker releases of sci-pipe/lsst_distrib
 #
 # XXX this is currently release/docker/build-stack but should be renamed to not
 # use 'stack'
