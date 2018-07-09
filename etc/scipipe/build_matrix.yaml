@@ -6,7 +6,7 @@
 #
 template:
   tarball_defaults: &tarball_defaults
-    miniver: &miniver '4.3.21'
+    miniver: &miniver '4.5.4'
     lsstsw_ref: '10a4fa6'
     timelimit: 6
   linux_compiler: &linux_compiler devtoolset-6
