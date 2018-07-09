@@ -113,8 +113,10 @@ def void mirrorCondaChannel(Map p) {
     // cleanup download repodata.json files between builds
     deleteDir()
 
-    docker.image(defaultWgetImage()).inside {
-      util.posixSh "wget --no-verbose ${upstreamUrl}${platform}/repodata.json"
+    retry(retries) {
+      docker.image(defaultWgetImage()).inside {
+        util.posixSh "wget --no-verbose ${upstreamUrl}${platform}/repodata.json"
+      }
     }
   }
 
