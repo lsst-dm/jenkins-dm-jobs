@@ -57,7 +57,7 @@ notify.wrap {
         credentialsId: 'eups-url',
         variable: 'EUPS_URL'
       ]]) {
-        opt << "--build-arg EUPS_PKGROOT_BASE_URL=\"${EUPS_URL}/stack\""
+        opt << "--build-arg LSST_EUPS_PKGROOT_BASE_URL=\"${EUPS_URL}/stack\""
       }
       opt << '.'
 

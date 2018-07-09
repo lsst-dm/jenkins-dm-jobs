@@ -891,12 +891,12 @@ def String scriptPreamble(
     set -o pipefail
 
     if [[ -n \$CMIRROR_S3_BUCKET ]]; then
-        export CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/free"
-        export MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
+        export LSST_CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/main http://\${CMIRROR_S3_BUCKET}/pkgs/free"
+        export LSST_MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
     fi
 
     if [[ -n \$EUPS_S3_BUCKET ]]; then
-        export EUPS_PKGROOT_BASE_URL="https://\${EUPS_S3_BUCKET}/stack"
+        export LSST_EUPS_PKGROOT_BASE_URL="https://\${EUPS_S3_BUCKET}/stack"
     fi
 
     # isolate eups cache files
@@ -910,9 +910,9 @@ def String scriptPreamble(
     fi
 
     export LSST_PYTHON_VERSION="${menv.pythonVersion}"
-    export MINICONDA_VERSION="${menv.minicondaVersion}"
-    export LSSTSW_REF="${menv.lsstswRef}"
-    export EUPS_USE_TARBALLS="${useTarballs}"
+    export LSST_MINICONDA_VERSION="${menv.minicondaVersion}"
+    export LSST_LSSTSW_REF="${menv.lsstswRef}"
+    export LSST_EUPS_USE_TARBALLS="${useTarballs}"
 
     source "${ciDir}/ccutils.sh"
     cc::setup_first "${compiler}"

@@ -1540,8 +1540,8 @@ def void withCondaMirrorEnv(Closure run) {
     variable: 'CMIRROR_S3_BUCKET'
   ]]) {
     withEnv([
-      "CONDA_CHANNELS=http://${CMIRROR_S3_BUCKET}/pkgs/main http://${CMIRROR_S3_BUCKET}/pkgs/free",
-      "MINICONDA_BASE_URL=http://${CMIRROR_S3_BUCKET}/miniconda",
+      "LSST_CONDA_CHANNELS=http://${CMIRROR_S3_BUCKET}/pkgs/main http://${CMIRROR_S3_BUCKET}/pkgs/free",
+      "LSST_MINICONDA_BASE_URL=http://${CMIRROR_S3_BUCKET}/miniconda",
     ]) {
       run()
     }
