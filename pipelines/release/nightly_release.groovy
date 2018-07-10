@@ -141,7 +141,8 @@ notify.wrap {
     stage('build jupyterlabdemo image') {
       retry(retries) {
         // based on lsstsqre/stack image
-        build job: 'sqre/infra/build-jupyterlabdemo',
+        build(
+          job: 'sqre/infra/build-jupyterlabdemo',
           parameters: [
             string(name: 'TAG', value: eupsTag),
             booleanParam(name: 'NO_PUSH', value: false),
@@ -155,7 +156,8 @@ notify.wrap {
               value: stackResults.docker_registry.repo,
             ),
           ],
-          wait: false
+          wait: false,
+        )
       } // retry
     } // stage
 
@@ -167,7 +169,8 @@ notify.wrap {
 
       retry(1) {
         // based on lsstsqre/stack image
-        build job: 'sqre/validate_drp',
+        build(
+          job: 'sqre/validate_drp',
           parameters: [
             string(name: 'EUPS_TAG', value: eupsTag),
             string(name: 'MANIFEST_ID', value: manifestId),
@@ -179,13 +182,15 @@ notify.wrap {
             ),
             booleanParam(name: 'WIPEOUT', value: true),
           ],
-          wait: false
+          wait: false,
+        )
       } // retry
     } // stage
 
     stage('doc build') {
       retry(retries) {
-        build job: 'sqre/infra/documenteer',
+        build(
+          job: 'sqre/infra/documenteer',
           parameters: [
             string(name: 'EUPS_TAG', value: eupsTag),
             string(name: 'LTD_SLUG', value: eupsTag),
@@ -194,7 +199,9 @@ notify.wrap {
               name: 'PUBLISH',
               value: config.release.step.documenteer.publish,
             ),
-          ]
+          ],
+          wait: false,
+        )
       } // retry
     } // stage
   } // run
