@@ -1117,7 +1117,7 @@ def void librarianPuppet(String cmd='install', String tag='2.2.3') {
  * @param args.eupsPath String path to EUPS installed productions (optional)
  * @param args.eupsTag String tag to setup. defaults to 'current'
  * @param args.docImage String defaults to: 'lsstsqre/documenteer-base'
- * @param args.pull Boolean defaults to: `false`
+ * @param args.docPull Boolean defaults to: `false`
  */
 def runDocumenteer(Map args) {
   def argDefaults = [
