@@ -1005,7 +1005,7 @@ def void buildTarballMatrix(Map p) {
     def slug = "miniconda${item.python}"
     slug += "-${item.miniver}-${item.lsstsw_ref}"
 
-    platform["${displayName}.${displayCompiler}.${slug}"] = {
+    def tarballBuild = {
       retry(p.retries) {
         build job: 'release/tarball',
           parameters: [
@@ -1030,6 +1030,19 @@ def void buildTarballMatrix(Map p) {
             string(name: 'PLATFORM', value: item.platform),
           ]
       } // retry
+    }
+
+    platform["${displayName}.${displayCompiler}.${slug}"] = {
+      if (item.allow_fail) {
+        try {
+          tarballBuild()
+        } catch (e) {
+          echo "giving up on build but suppressing error"
+          echo e
+        }
+      } else {
+        tarballBuild()
+      }
     } // platform
   } // each
 
