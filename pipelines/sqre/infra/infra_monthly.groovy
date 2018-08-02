@@ -123,7 +123,7 @@ notify.wrap {
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infra/build-mysqldump-to-s3'
+      name: 'sqre/backup/build-mysqldump-to-s3'
 
     parallel tasks
   } // run
