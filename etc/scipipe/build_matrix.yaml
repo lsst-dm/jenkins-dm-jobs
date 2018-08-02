@@ -71,6 +71,7 @@ tarball:
     platform: '10.9'
     osfamily: osx
     timelimit: 12
+    allow_fail: true
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
