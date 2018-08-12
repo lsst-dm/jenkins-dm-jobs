@@ -40,6 +40,10 @@ notify.wrap {
       poll: false
     ])
 
+    stage('prepare') {
+      util.librarianPuppet()
+    }
+
     def images = []
 
     // centos major release version(s)
@@ -49,7 +53,6 @@ notify.wrap {
       def baseTag = "${buildRepo}:${baseName}"
 
       stage(baseTag) {
-        util.librarianPuppet()
         def baseBuild = packIt('centos_stackbase.json', [
           "-var base_image=${baseImage}",
           "-var build_name=${baseName}",
