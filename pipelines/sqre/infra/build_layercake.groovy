@@ -32,6 +32,7 @@ notify.wrap {
   def run = {
     def baseRepo  = 'centos'
     def buildRepo = 'lsstsqre/centos'
+    def retries   = 3
 
     git([
       url: util.githubSlugToUrl('lsst-sqre/packer-layercake'),
@@ -39,6 +40,10 @@ notify.wrap {
       changelog: false,
       poll: false
     ])
+
+    stage('prepare') {
+      util.librarianPuppet()
+    }
 
     def images = []
 
@@ -49,7 +54,6 @@ notify.wrap {
       def baseTag = "${buildRepo}:${baseName}"
 
       stage(baseTag) {
-        util.librarianPuppet()
         def baseBuild = packIt('centos_stackbase.json', [
           "-var base_image=${baseImage}",
           "-var build_name=${baseName}",
@@ -72,11 +76,13 @@ notify.wrap {
         def tsTag = "${buildRepo}:${tsName}"
 
         stage(tsTag) {
-          tsBuild = packIt('centos_devtoolset.json', [
-            "-var base_image=${baseTag}",
-            "-var build_name=${tsName}",
-            "-var scl_compiler=${scl}",
-          ])
+          retry(retries) {
+            tsBuild = packIt('centos_devtoolset.json', [
+              "-var base_image=${baseTag}",
+              "-var build_name=${tsName}",
+              "-var scl_compiler=${scl}",
+            ])
+          } // retry
           images << [(tsTag): tsBuild]
         } // stage
       } // baseName, scl
@@ -86,7 +92,9 @@ notify.wrap {
       if (pushDocker) {
         images.each { item ->
           item.each { tag, build ->
-            shipIt(build, tag)
+            retry(retries) {
+              shipIt(build, tag)
+            }
           }
         }
       }
@@ -126,7 +134,7 @@ def String packIt(String templateFile, List options, String tag = '1.1.1') {
 }
 
 def void shipIt(Map build, String tag) {
-  def sha2  = build['artifact_id']
+  def sha2      = build['artifact_id']
   def timestamp = util.epochToUtc((build['build_time']))
 
   // push tag AND tag+utc
