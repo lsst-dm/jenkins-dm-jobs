@@ -57,7 +57,7 @@ class Skipped extends Node {}
 def threshold = 100
 def skippedLabels = [
   'lsst-dev',
-  'snowflake',
+//  'snowflake',
 ]
 // additional paths under slave's root path that should be removed if found
 def extraDirectoriesToDelete = []
