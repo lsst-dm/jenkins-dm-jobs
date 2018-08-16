@@ -60,8 +60,9 @@ def skippedLabels = [
 //  'snowflake',
 ]
 // additional paths under slave's root path that should be removed if found
-def extraDirectoriesToDelete = []
-
+def extraDirectoriesToDelete = [
+  'snowflake',
+]
 
 def deleteRemote(def path, boolean deleteContentsOnly) {
   boolean result = true
