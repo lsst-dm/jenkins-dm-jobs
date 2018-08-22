@@ -8,7 +8,7 @@ p.pipeline().with {
     stringParam('EUPS_TAG', null, '(required) EUPS distrib tag name. Eg. w_2017_45')
     stringParam('LTD_SLUG', null, '(required) LTD edition slug')
     stringParam('TEMPLATE_REPO', 'lsst/pipelines_lsst_io', 'github repo slug')
-    stringParam('TEMPLATE_REF', 'tickets/DM-11216', 'git repo ref')
+    stringParam('TEMPLATE_REF', 'master', 'git repo ref')
     stringParam('RELEASE_IMAGE', null, '(optional) Explicit name of release docker image including tag.')
     booleanParam('PUBLISH', true, 'Publish documenteer docs.')
   }
