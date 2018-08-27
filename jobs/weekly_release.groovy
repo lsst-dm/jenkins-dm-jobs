@@ -2,7 +2,7 @@ import util.Plumber
 
 def p = new Plumber(name: 'release/weekly-release', dsl: this)
 p.pipeline().with {
-  description('Tag and release the DM pipelines/dax "weekly".')
+  description('Tag and release the science-pipelines "weekly".')
 
   parameters {
     stringParam('YEAR', null, 'Gregorian calendar year.')
