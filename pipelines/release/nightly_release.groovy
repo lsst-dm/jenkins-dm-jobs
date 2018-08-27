@@ -138,7 +138,9 @@ notify.wrap {
       } // retry
     } // stage
 
-    stage('build jupyterlabdemo image') {
+    def triggerMe = [:]
+
+    triggerMe['build jupyterlabdemo image'] = {
       retry(retries) {
         // based on lsstsqre/stack image
         build(
@@ -159,9 +161,9 @@ notify.wrap {
           wait: false,
         )
       } // retry
-    } // stage
+    }
 
-    stage('validate_drp') {
+    triggerMe['validate_drp'] = {
       // XXX use the same compiler as is configured for the canonical build
       // env.  This is a bit of a kludge.  It would be better to directly
       // label the compiler used on the dockage image.
@@ -185,9 +187,9 @@ notify.wrap {
           wait: false,
         )
       } // retry
-    } // stage
+    }
 
-    stage('doc build') {
+    triggerMe['doc build'] = {
       retry(retries) {
         build(
           job: 'sqre/infra/documenteer',
@@ -203,6 +205,10 @@ notify.wrap {
           wait: false,
         )
       } // retry
+    }
+
+    stage('triggered jobs') {
+      parallel triggerMe
     } // stage
   } // run
 

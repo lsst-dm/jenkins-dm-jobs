@@ -1227,6 +1227,7 @@ def ltdPush(Map args) {
  *
  * @param p Map
  * @param p.job String job to trigger. Defaults to `release/run-rebuild`.
+ * @param p.parameters Map
  * @param p.parameters.BRANCH String Defaults to `''`.
  * @param p.parameters.PRODUCT String Defaults to `''`.
  * @param p.parameters.SKIP_DEMO Boolean Defaults to `false`.
