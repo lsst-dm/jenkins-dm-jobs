@@ -1038,7 +1038,7 @@ def void buildTarballMatrix(Map p) {
           tarballBuild()
         } catch (e) {
           echo "giving up on build but suppressing error"
-          echo e
+          echo e.toString()
         }
       } else {
         tarballBuild()
