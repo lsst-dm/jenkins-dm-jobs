@@ -25,7 +25,6 @@ class CleanBuild {
         }
       }
 
-      label('jenkins-master')
       keepDependencies()
 
       if (cron) {
