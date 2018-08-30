@@ -20,7 +20,6 @@ class Plumber {
     Common.makeFolders(dsl)
 
     dsl.pipelineJob(name) {
-      label('jenkins-master')
       keepDependencies()
       concurrentBuild(false)
 
