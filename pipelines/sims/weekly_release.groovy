@@ -23,8 +23,9 @@ notify.wrap {
     'LSST_DISTRIB_GIT_TAG',
   ])
 
-  String year = params.YEAR.padLeft(4, "0")
-  String week = params.WEEK.padLeft(2, "0")
+  String year              = params.YEAR.padLeft(4, "0")
+  String week              = params.WEEK.padLeft(2, "0")
+  String lsstDistribGitTag = params.LSST_DISTRIB_GIT_TAG
 
   def product         = 'lsst_sims'
   def tarballProducts = product
@@ -44,7 +45,7 @@ notify.wrap {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
-            BRANCH: "${params.LSST_DISTRIB_GIT_TAG}",
+            BRANCH: lsstDistribGitTag,
             PRODUCT: product,
             SKIP_DEMO: true,
             SKIP_DOCS: true,
