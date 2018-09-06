@@ -83,7 +83,7 @@ notify.wrap {
           PRODUCT: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: true,
-          RUN_DEMO: true,
+          RUN_DEMO: false,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
         ],
