@@ -205,6 +205,20 @@ notify.wrap {
       } // retry
     }
 
+    triggerMe['sims weekly'] = {
+      retry(retries) {
+        build(
+          job: 'sims/weekly-release',
+          parameters: [
+            stringParam(name: 'YEAR', value: year),
+            stringParam(name: 'WEEK', value: week)
+            stringParam(name: 'LSST_DISTRIB_GIT_TAG', value: gitTag)
+          ],
+          wait: false,
+        )
+      } // retry
+    }
+
     stage('triggered jobs') {
       parallel triggerMe
     } // stage
