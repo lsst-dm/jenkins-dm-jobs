@@ -29,7 +29,6 @@ notify.wrap {
         manifestId = util.runRebuild(
           parameters: [
             PRODUCT: product,
-            SKIP_DEMO: true,
             SKIP_DOCS: true,
           ],
         )

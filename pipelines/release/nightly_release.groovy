@@ -23,7 +23,7 @@ notify.wrap {
   String month = params.MONTH.padLeft(2, "0")
   String day   = params.DAY.padLeft(2, "0")
 
-  def product         = 'lsst_distrib'
+  def product         = scipipe.canonical.products
   def tarballProducts = product
   def retries         = 3
 
@@ -45,7 +45,6 @@ notify.wrap {
         manifestId = util.runRebuild(
           parameters: [
             PRODUCT: product,
-            SKIP_DEMO: false,
             SKIP_DOCS: false,
           ],
         )
@@ -117,7 +116,6 @@ notify.wrap {
           PRODUCT: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: true,
-          RUN_DEMO: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
         ],

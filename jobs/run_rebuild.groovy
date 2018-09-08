@@ -7,7 +7,6 @@ p.pipeline().with {
   parameters {
     stringParam('BRANCH', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" is implicitly appended to the right side of the list, if not specified.')
     stringParam('PRODUCT', null, 'Whitespace delimited list of EUPS products to build.')
-    booleanParam('SKIP_DEMO', false, 'Do not run the demo after all packages have completed building.')
     booleanParam('SKIP_DOCS', false, 'Do not build and publish documentation.')
     booleanParam('PREP_ONLY', false, 'Pass -p flag to lsstsw/bin/rebuild -- prepare git clones/a manifest but do not build products.')
     stringParam('TIMEOUT', '8', 'build timeout in hours')

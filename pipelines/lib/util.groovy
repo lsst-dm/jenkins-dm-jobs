@@ -361,7 +361,6 @@ def lsstswBuild(
  * vars.
  * @param buildParams.BRANCH String
  * @param buildParams.PRODUCT String
- * @param buildParams.SKIP_DEMO Boolean
  * @param buildParams.SKIP_DOCS Boolean
  */
 def void jenkinsWrapper(Map buildParams) {
@@ -369,16 +368,11 @@ def void jenkinsWrapper(Map buildParams) {
   requireMapKeys(buildParams, [
     'BRANCH',
     'PRODUCT',
-    'SKIP_DEMO',
     'SKIP_DOCS',
   ])
 
   def cwd     = pwd()
   def homeDir = "${cwd}/home"
-
-  def scipipe        = scipipeConfig()
-  def demoGithubRepo = scipipe.lsst_dm_stack_demo.github_repo
-  def demoBaseUrl    = "${githubSlugToUrl(demoGithubRepo)}/archive"
 
   try {
     dir('lsstsw') {
@@ -407,7 +401,6 @@ def void jenkinsWrapper(Map buildParams) {
       "WORKSPACE=${cwd}",
       "HOME=${homeDir}",
       "EUPS_USERDATA=${homeDir}/.eups_userdata",
-      "DEMO_BASE_URL=${demoBaseUrl}",
     ]
 
     // Map -> List
@@ -969,7 +962,6 @@ def Object readYamlFile(String file) {
  *       parameters: [
  *         PRODUCT: tarballProducts,
  *         SMOKE: true,
- *         RUN_DEMO: true,
  *         RUN_SCONS_CHECK: true,
  *         PUBLISH: true,
  *       ],
@@ -1012,7 +1004,6 @@ def void buildTarballMatrix(Map p) {
             string(name: 'PRODUCT', value: p.parameters.PRODUCT),
             string(name: 'EUPS_TAG', value: p.parameters.EUPS_TAG),
             booleanParam(name: 'SMOKE', value: p.parameters.SMOKE),
-            booleanParam(name: 'RUN_DEMO', value: p.parameters.RUN_DEMO),
             booleanParam(
               name: 'RUN_SCONS_CHECK',
               value: p.parameters.RUN_SCONS_CHECK
@@ -1220,7 +1211,6 @@ def ltdPush(Map args) {
  *     manifestId = util.runRebuild(
  *       parameters: [
  *         PRODUCT: product,
- *         SKIP_DEMO: true,
  *         SKIP_DOCS: true,
  *       ],
  *     )
@@ -1230,7 +1220,6 @@ def ltdPush(Map args) {
  * @param p.parameters Map
  * @param p.parameters.BRANCH String Defaults to `''`.
  * @param p.parameters.PRODUCT String Defaults to `''`.
- * @param p.parameters.SKIP_DEMO Boolean Defaults to `false`.
  * @param p.parameters.SKIP_DOCS Boolean Defaults to `false`.
  * @param p.parameters.TIMEOUT String Defaults to `'8'`.
  * @param p.parameters.PREP_ONLY Boolean Defaults to `false`.
@@ -1244,7 +1233,6 @@ def String runRebuild(Map p) {
   useP.parameters = [
     BRANCH: '',  // null is not a valid value for a string param
     PRODUCT: '',
-    SKIP_DEMO: false,
     SKIP_DOCS: false,
     TIMEOUT: '8', // should be String
     PREP_ONLY: false,
@@ -1255,7 +1243,6 @@ def String runRebuild(Map p) {
     parameters: [
       string(name: 'BRANCH', value: useP.parameters.BRANCH),
       string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
-      booleanParam(name: 'SKIP_DEMO', value: useP.parameters.SKIP_DEMO),
       booleanParam(name: 'SKIP_DOCS', value: useP.parameters.SKIP_DOCS),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
       booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),

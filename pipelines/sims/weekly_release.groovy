@@ -47,7 +47,6 @@ notify.wrap {
           parameters: [
             BRANCH: lsstDistribGitTag,
             PRODUCT: product,
-            SKIP_DEMO: true,
             SKIP_DOCS: true,
           ],
         )
@@ -84,7 +83,6 @@ notify.wrap {
           PRODUCT: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: true,
-          RUN_DEMO: false,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
         ],

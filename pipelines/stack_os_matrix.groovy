@@ -23,7 +23,6 @@ notify.wrap {
     'BRANCH',
     'BUILD_CONFIG',
     'PRODUCT',
-    'SKIP_DEMO',
     'SKIP_DOCS',
     'WIPEOUT',
   ])
@@ -31,7 +30,6 @@ notify.wrap {
   def buildParams = [
     BRANCH:    BRANCH,
     PRODUCT:   PRODUCT,
-    SKIP_DEMO: SKIP_DEMO,
     SKIP_DOCS: SKIP_DOCS,
   ]
 

@@ -17,20 +17,17 @@ notify.wrap {
     'BRANCH',
     'EUPS_TAG',
     'PRODUCT',
-    'SKIP_DEMO',
     'SKIP_DOCS',
   ])
 
   String branch    = params.BRANCH
   String eupsTag   = params.EUPS_TAG
   String product   = params.PRODUCT
-  Boolean skipDemo = params.SKIP_DEMO
   Boolean skipDocs = params.SKIP_DOCS
 
   echo "branch: ${branch}"
   echo "[eups] tag: ${eupsTag}"
   echo "product: ${product}"
-  echo "skip demo: ${skipDemo}"
   echo "skip docs: ${skipDocs}"
 
   def retries = 3
@@ -44,7 +41,6 @@ notify.wrap {
           parameters: [
             BRANCH: branch,
             PRODUCT: product,
-            SKIP_DEMO: skipDemo,
             SKIP_DOCS: skipDocs,
           ],
         )

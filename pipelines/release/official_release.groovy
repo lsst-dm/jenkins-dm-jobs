@@ -42,7 +42,7 @@ notify.wrap {
   echo "source [eups] tag: ${srcEupsTag}"
   echo "source manifest id: ${srcManifestId}"
 
-  def product         = 'lsst_distrib'
+  def product         = scipipe.canonical.products
   def tarballProducts = product
   def retries         = 3
 
@@ -93,7 +93,6 @@ notify.wrap {
           parameters: [
             BRANCH: gitTag,
             PRODUCT: product,
-            SKIP_DEMO: false,
             SKIP_DOCS: false,
           ],
         )
@@ -130,7 +129,6 @@ notify.wrap {
           PRODUCT: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: true,
-          RUN_DEMO: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
         ],

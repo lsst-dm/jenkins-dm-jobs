@@ -74,6 +74,7 @@ tarball:
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
 canonical:
+  products: lsst_distrib lsst_ci
   lsstsw_config:
     <<: *el7-py3
     label: jenkins-snowflake-1

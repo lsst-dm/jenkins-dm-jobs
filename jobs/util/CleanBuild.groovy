@@ -7,7 +7,6 @@ class CleanBuild {
   String name
   String product
   String branch = ''
-  Boolean skipDemo = true
   Boolean skipDocs = true
   String cron = 'H 19 * * *'
   String buildConfig = 'scipipe-lsstsw-matrix'
@@ -36,7 +35,6 @@ class CleanBuild {
       environmentVariables(
         PRODUCT: product,
         BRANCH: branch,
-        SKIP_DEMO: skipDemo,
         SKIP_DOCS: skipDocs,
         WIPEOUT: true,
         BUILD_CONFIG: buildConfig,

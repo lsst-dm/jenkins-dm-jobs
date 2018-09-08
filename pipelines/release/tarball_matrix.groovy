@@ -20,7 +20,6 @@ notify.wrap {
     'EUPS_TAG',
     'PRODUCT',
     'PUBLISH',
-    'RUN_DEMO',
     'RUN_SCONS_CHECK',
     'SMOKE',
   ])
@@ -28,7 +27,6 @@ notify.wrap {
   String eupsTag        = params.EUPS_TAG
   String product        = params.PRODUCT
   Boolean publish       = params.PUBLISH
-  Boolean runDemo       = params.RUN_DEMO
   Boolean runSconsCheck = params.RUN_SCONS_CHECK
   Boolean smoke         = params.SMOKE
 
@@ -43,7 +41,6 @@ notify.wrap {
           PRODUCT: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: smoke,
-          RUN_DEMO: runDemo,
           RUN_SCONS_CHECK: runSconsCheck,
           PUBLISH: publish,
         ],

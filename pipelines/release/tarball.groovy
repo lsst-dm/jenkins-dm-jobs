@@ -33,7 +33,6 @@ notify.wrap {
     'PRODUCT',
     'PUBLISH',
     'PYTHON_VERSION',
-    'RUN_DEMO',
     'RUN_SCONS_CHECK',
     'SMOKE',
     'TIMEOUT',
@@ -50,7 +49,6 @@ notify.wrap {
   String platform       = params.PLATFORM
   Boolean publish       = params.PUBLISH
   String pythonVersion  = params.PYTHON_VERSION
-  Boolean runDemo       = params.RUN_DEMO
   Boolean runSconsCheck = params.RUN_SCONS_CHECK
   Boolean smoke         = params.SMOKE
   Integer timeout       = params.TIMEOUT
@@ -66,7 +64,6 @@ notify.wrap {
   def smokeConfig = null
   if (smoke) {
     smokeConfig = [
-      run_demo: runDemo,
       run_scons_check: runSconsCheck,
     ]
   }
@@ -97,7 +94,6 @@ notify.wrap {
  * @param buildTarget.product String
  * @param buildTarget.eups_tag String
  * @param smoke Map `null` disables running a smoke test
- * @param smoke.run_demo Boolean
  * @param smoke.run_scons_check Boolean
  * @param wipeout Boolean
  * @param publish Boolean
@@ -170,7 +166,6 @@ def void linuxTarballs(
  * @param buildTarget.product String
  * @param buildTarget.eups_tag String
  * @param smoke Map `null` disables running a smoke test
- * @param smoke.run_demo Boolean
  * @param smoke.run_scons_check Boolean
  * @param wipeout Boolean
  * @param publish Boolean
@@ -398,7 +393,6 @@ def void osxBuild(
  * @param buildTarget.product String
  * @param buildTarget.eups_tag String
  * @param smoke Map
- * @param smoke.run_demo Boolean
  * @param smoke.run_scons_check Boolean
  */
 def void linuxSmoke(
@@ -451,7 +445,6 @@ def void linuxSmoke(
     withEnv([
       "RUN=/smoke/scripts/${shBasename}",
       "IMAGE=${localImageName}",
-      "RUN_DEMO=${smokeConfig.run_demo}",
       "RUN_SCONS_CHECK=${smokeConfig.run_scons_check}",
       "SMOKEDIR=${smokeDir}",
       "SMOKEDIR_CONTAINER=${smokeDirContainer}",
@@ -469,7 +462,6 @@ def void linuxSmoke(
           -w /smoke \
           -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-          -e RUN_DEMO="$RUN_DEMO" \
           -e RUN_SCONS_CHECK="$RUN_SCONS_CHECK" \
           -e FIX_SHEBANGS=true \
           -u "$(id -u -n)" \
@@ -492,7 +484,6 @@ def void linuxSmoke(
  * @param buildTarget.product String
  * @param buildTarget.eups_tag String
  * @param smoke Map
- * @param smoke.run_demo Boolean
  * @param smoke.run_scons_check Boolean
  */
 def void osxSmoke(
@@ -531,7 +522,6 @@ def void osxSmoke(
 
     dir(smokeDir) {
       withEnv([
-        "RUN_DEMO=${smokeConfig.run_demo}",
         "RUN_SCONS_CHECK=${smokeConfig.run_scons_check}",
         "FIX_SHEBANGS=true",
       ]) {
@@ -829,9 +819,6 @@ def String smokeScript(
       curl -sSL ${util.shebangtronUrl()} | python
     fi
 
-    if [[ \$RUN_DEMO == true ]]; then
-      ${ciDir}/runManifestDemo.sh --eups-tag "${tag}" --small
-    fi
   """ + '''
     #
     # use the same version of base that was just installed to rule out source
