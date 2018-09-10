@@ -1,3 +1,5 @@
+def scipipe = null
+
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -13,7 +15,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig() // side effect only
     sqre = util.sqreConfig()
   }
 }

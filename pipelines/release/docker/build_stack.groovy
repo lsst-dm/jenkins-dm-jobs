@@ -1,3 +1,5 @@
+def scipipe = null
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -9,7 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
   }
 }
 
@@ -26,10 +28,10 @@ notify.wrap {
   Boolean noPush    = params.NO_PUSH
   Integer timelimit = params.TIMEOUT
 
-  def scipipe        = config.scipipe_release
-  def dockerfile     = scipipe.dockerfile
-  def dockerRegistry = scipipe.docker_registry
-  def newinstall     = config.newinstall
+  def release        = scipipe.scipipe_release
+  def dockerfile     = release.dockerfile
+  def dockerRegistry = release.docker_registry
+  def newinstall     = release.newinstall
 
   def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
   def gitRef         = dockerfile.git_ref

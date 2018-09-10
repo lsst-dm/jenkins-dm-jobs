@@ -1,4 +1,4 @@
-def config = null
+def scipipe = null
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -11,7 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
   }
 }
 
@@ -38,7 +38,7 @@ notify.wrap {
   timeout(time: 30, unit: 'HOURS') {
     stage('build eups tarballs') {
       util.buildTarballMatrix(
-        tarballConfigs: config.tarball,
+        tarballConfigs: scipipe.tarball,
         parameters: [
           PRODUCT: tarballProducts,
           EUPS_TAG: eupsTag,

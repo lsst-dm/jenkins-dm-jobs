@@ -1,4 +1,4 @@
-def config = null
+def scipipe = null
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -11,7 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
     sqre = util.sqreConfig()
   }
 }
@@ -37,14 +37,14 @@ notify.wrap {
   Boolean versiondbPush = (! params.NO_VERSIONDB_PUSH?.toBoolean())
   // default to safe
   def versiondbRepo = util.githubSlugToUrl(
-    config.versiondb.github_repo,
+    scipipe.versiondb.github_repo,
     'https'
   )
   if (versiondbPush) {
-    versiondbRepo = util.githubSlugToUrl(config.versiondb.github_repo, 'ssh')
+    versiondbRepo = util.githubSlugToUrl(scipipe.versiondb.github_repo, 'ssh')
   }
 
-  def canonical    = config.canonical
+  def canonical    = scipipe.canonical
   def lsstswConfig = canonical.lsstsw_config
 
   def slug = util.lsstswConfigSlug(lsstswConfig)
@@ -63,7 +63,7 @@ notify.wrap {
         LSST_COMPILER:       lsstswConfig.compiler,
         // XXX this should be renamed in lsstsw to make it clear that its
         // setting a github repo slug
-        REPOSFILE_REPO:      config.repos.github_repo,
+        REPOSFILE_REPO:      scipipe.repos.github_repo,
         BRANCH:              branch,
         PRODUCT:             product,
         SKIP_DEMO:           skipDemo,

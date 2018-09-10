@@ -1,4 +1,4 @@
-def config = null
+def scipipe = null
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -11,7 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
     sqre = util.sqreConfig()
   }
 }
@@ -34,7 +34,7 @@ notify.wrap {
   // not a normally exposed job param
   Boolean pushS3 = (! params.NO_PUSH?.toBoolean())
 
-  def canonical    = config.canonical
+  def canonical    = scipipe.canonical
   def lsstswConfig = canonical.lsstsw_config
 
   def slug = util.lsstswConfigSlug(lsstswConfig)

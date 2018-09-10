@@ -1,3 +1,5 @@
+def scipipe = null
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -9,7 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
     sqre = util.sqreConfig() // side effect only
   }
 }
@@ -24,7 +26,7 @@ notify.wrap {
     util.githubTagTeams(
       options: [
         '--dry-run': dryRun,
-        '--org': config.release_tag_org,
+        '--org': scipipe.release_tag_org,
         '--tag': gitTag,
       ],
     )

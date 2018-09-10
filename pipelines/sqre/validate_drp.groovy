@@ -1,3 +1,5 @@
+def scipipe = null
+
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -13,11 +15,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    // config is not used directly in this job but loading it now is needed
-    // for the side effect of parsing/caching this file for
-    // `util.cloneCiScripts()` which will not be able to locate it once the
-    // cwd has changed.
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
   }
 }
 
@@ -39,7 +37,7 @@ notify.wrap {
   // optional
   String relImage = params.RELEASE_IMAGE
 
-  def dockerRepo = config.scipipe_release.docker_registry.repo
+  def dockerRepo = scipipe.scipipe_release.docker_registry.repo
   relImage = relImage ?: "${dockerRepo}:7-stack-lsst_distrib-${eupsTag}"
 
   target = [

@@ -1,4 +1,4 @@
-def config = null
+def scipipe = null
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -11,7 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
   }
 }
 
@@ -35,7 +35,7 @@ notify.wrap {
     SKIP_DOCS: SKIP_DOCS,
   ]
 
-  def lsstswConfigs = config[BUILD_CONFIG]
+  def lsstswConfigs = scipipe[BUILD_CONFIG]
   if (lsstswConfigs == null) {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
   }

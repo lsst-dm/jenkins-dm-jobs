@@ -376,8 +376,8 @@ def void jenkinsWrapper(Map buildParams) {
   def cwd     = pwd()
   def homeDir = "${cwd}/home"
 
-  def config         = scipipeConfig()
-  def demoGithubRepo = config.lsst_dm_stack_demo.github_repo
+  def scipipe        = scipipeConfig()
+  def demoGithubRepo = scipipe.lsst_dm_stack_demo.github_repo
   def demoBaseUrl    = "${githubSlugToUrl(demoGithubRepo)}/archive"
 
   try {
@@ -912,11 +912,11 @@ def lsstswBuildMatrix(
  * Clone lsstsw git repo
  */
 def void cloneLsstsw() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
 
   gitNoNoise(
-    url: githubSlugToUrl(config.lsstsw.github_repo),
-    branch: config.lsstsw.git_ref,
+    url: githubSlugToUrl(scipipe.lsstsw.github_repo),
+    branch: scipipe.lsstsw.git_ref,
   )
 }
 
@@ -924,11 +924,11 @@ def void cloneLsstsw() {
  * Clone ci-scripts git repo
  */
 def void cloneCiScripts() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
 
   gitNoNoise(
-    url: githubSlugToUrl(config.ciscripts.github_repo),
-    branch: config.ciscripts.git_ref,
+    url: githubSlugToUrl(scipipe.ciscripts.github_repo),
+    branch: scipipe.ciscripts.git_ref,
   )
 }
 
@@ -1330,9 +1330,9 @@ def String githubRawUrl(Map p) {
  * @return url String
  */
 def String versiondbManifestUrl(String manifestId) {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
   return githubRawUrl(
-    slug: config.versiondb.github_repo,
+    slug: scipipe.versiondb.github_repo,
     path: "manifests/${manifestId}.txt",
   )
 }
@@ -1343,10 +1343,10 @@ def String versiondbManifestUrl(String manifestId) {
  * @return url String
  */
 def String reposUrl() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
   return githubRawUrl(
-    slug: config.repos.github_repo,
-    ref: config.repos.git_ref,
+    slug: scipipe.repos.github_repo,
+    ref: scipipe.repos.git_ref,
     path: 'etc/repos.yaml',
   )
 }
@@ -1357,10 +1357,10 @@ def String reposUrl() {
  * @return url String
  */
 def String newinstallUrl() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
   return githubRawUrl(
-    slug: config.newinstall.github_repo,
-    ref: config.newinstall.git_ref,
+    slug: scipipe.newinstall.github_repo,
+    ref: scipipe.newinstall.git_ref,
     path: 'scripts/newinstall.sh',
   )
 }
@@ -1371,10 +1371,10 @@ def String newinstallUrl() {
  * @return url String
  */
 def String shebangtronUrl() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
   return githubRawUrl(
-    slug: config.shebangtron.github_repo,
-    ref: config.shebangtron.git_ref,
+    slug: scipipe.shebangtron.github_repo,
+    ref: scipipe.shebangtron.git_ref,
     path: 'shebangtron',
   )
 }
@@ -1526,10 +1526,10 @@ def Object runBuildStack(Map p) {
  *     util.waitForS3()
  */
 def void waitForS3() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
 
   stage('wait for s3 sync') {
-    sleep(time: config.release.s3_wait_time, unit: 'MINUTES')
+    sleep(time: scipipe.release.s3_wait_time, unit: 'MINUTES')
   }
 } // waitForS3
 
