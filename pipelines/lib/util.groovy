@@ -359,14 +359,14 @@ def lsstswBuild(
  *
  * Required keys are listed below. Any additional keys will also be set as env
  * vars.
- * @param buildParams.BRANCH String
+ * @param buildParams.REFS String
  * @param buildParams.PRODUCT String
  * @param buildParams.SKIP_DOCS Boolean
  */
 def void jenkinsWrapper(Map buildParams) {
   // minimum set of required keys -- additional are allowed
   requireMapKeys(buildParams, [
-    'BRANCH',
+    'REFS',
     'PRODUCT',
     'SKIP_DOCS',
   ])
@@ -1218,7 +1218,7 @@ def ltdPush(Map args) {
  * @param p Map
  * @param p.job String job to trigger. Defaults to `release/run-rebuild`.
  * @param p.parameters Map
- * @param p.parameters.BRANCH String Defaults to `''`.
+ * @param p.parameters.REFS String Defaults to `''`.
  * @param p.parameters.PRODUCT String Defaults to `''`.
  * @param p.parameters.SKIP_DOCS Boolean Defaults to `false`.
  * @param p.parameters.TIMEOUT String Defaults to `'8'`.
@@ -1231,7 +1231,7 @@ def String runRebuild(Map p) {
   ] + p
 
   useP.parameters = [
-    BRANCH: '',  // null is not a valid value for a string param
+    REFS: '',  // null is not a valid value for a string param
     PRODUCT: '',
     SKIP_DOCS: false,
     TIMEOUT: '8', // should be String
@@ -1241,7 +1241,7 @@ def String runRebuild(Map p) {
   def result = build(
     job: useP.job,
     parameters: [
-      string(name: 'BRANCH', value: useP.parameters.BRANCH),
+      string(name: 'REFS', value: useP.parameters.REFS),
       string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
       booleanParam(name: 'SKIP_DOCS', value: useP.parameters.SKIP_DOCS),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours

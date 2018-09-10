@@ -91,7 +91,7 @@ notify.wrap {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
-            BRANCH: gitTag,
+            REFS: gitTag,
             PRODUCT: product,
             SKIP_DOCS: false,
           ],

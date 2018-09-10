@@ -14,18 +14,18 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
-    'BRANCH',
+    'REFS',
     'EUPS_TAG',
     'PRODUCT',
     'SKIP_DOCS',
   ])
 
-  String branch    = params.BRANCH
+  String refs      = params.REFS
   String eupsTag   = params.EUPS_TAG
   String product   = params.PRODUCT
   Boolean skipDocs = params.SKIP_DOCS
 
-  echo "branch: ${branch}"
+  echo "refs: ${refs}"
   echo "[eups] tag: ${eupsTag}"
   echo "product: ${product}"
   echo "skip docs: ${skipDocs}"
@@ -39,7 +39,7 @@ notify.wrap {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
-            BRANCH: branch,
+            REFS: refs,
             PRODUCT: product,
             SKIP_DOCS: skipDocs,
           ],

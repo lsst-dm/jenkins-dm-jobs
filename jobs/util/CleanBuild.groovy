@@ -6,7 +6,7 @@ import javaposse.jobdsl.dsl.Job
 class CleanBuild {
   String name
   String product
-  String branch = ''
+  String refs = ''
   Boolean skipDocs = true
   String cron = 'H 19 * * *'
   String buildConfig = 'scipipe-lsstsw-matrix'
@@ -34,7 +34,7 @@ class CleanBuild {
 
       environmentVariables(
         PRODUCT: product,
-        BRANCH: branch,
+        REFS: refs,
         SKIP_DOCS: skipDocs,
         WIPEOUT: true,
         BUILD_CONFIG: buildConfig,

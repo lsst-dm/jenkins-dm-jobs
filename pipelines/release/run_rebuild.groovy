@@ -18,14 +18,14 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
-    'BRANCH',
+    'REFS',
     'PREP_ONLY',
     'PRODUCT',
     'SKIP_DOCS',
     'TIMEOUT',
   ])
 
-  String branch     = params.BRANCH
+  String refs       = params.REFS
   Boolean prepOnly  = params.PREP_ONLY
   String product    = params.PRODUCT
   Boolean skipDocs  = params.SKIP_DOCS
@@ -62,7 +62,7 @@ notify.wrap {
         // XXX this should be renamed in lsstsw to make it clear that its
         // setting a github repo slug
         REPOSFILE_REPO:      scipipe.repos.github_repo,
-        BRANCH:              branch,
+        REFS:                refs,
         PRODUCT:             product,
         SKIP_DOCS:           skipDocs,
         PREP_ONLY:           prepOnly,

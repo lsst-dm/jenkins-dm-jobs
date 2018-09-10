@@ -20,7 +20,7 @@ notify.wrap {
   // set statically as env vars in calling jobs without exposing a "job param"
   // in the jenkins ui.
   util.requireEnvVars([
-    'BRANCH',
+    'REFS',
     'BUILD_CONFIG',
     'PRODUCT',
     'SKIP_DOCS',
@@ -28,7 +28,7 @@ notify.wrap {
   ])
 
   def buildParams = [
-    BRANCH:    BRANCH,
+    REFS:      REFS,
     PRODUCT:   PRODUCT,
     SKIP_DOCS: SKIP_DOCS,
   ]
