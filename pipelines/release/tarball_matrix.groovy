@@ -18,19 +18,19 @@ node('jenkins-master') {
 notify.wrap {
   util.requireParams([
     'EUPS_TAG',
-    'PRODUCT',
+    'PRODUCTS',
     'PUBLISH',
     'RUN_SCONS_CHECK',
     'SMOKE',
   ])
 
   String eupsTag        = params.EUPS_TAG
-  String product        = params.PRODUCT
+  String products       = params.PRODUCTS
   Boolean publish       = params.PUBLISH
   Boolean runSconsCheck = params.RUN_SCONS_CHECK
   Boolean smoke         = params.SMOKE
 
-  def tarballProducts = product
+  def tarballProducts = products
   def retries         = 3
 
   timeout(time: 30, unit: 'HOURS') {
@@ -38,7 +38,7 @@ notify.wrap {
       util.buildTarballMatrix(
         tarballConfigs: scipipe.tarball,
         parameters: [
-          PRODUCT: tarballProducts,
+          PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: smoke,
           RUN_SCONS_CHECK: runSconsCheck,

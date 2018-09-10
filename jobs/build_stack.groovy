@@ -8,7 +8,7 @@ p.pipeline().with {
   description('Constructs docker images with EUPS tarballs.')
 
   parameters {
-    stringParam('PRODUCT', scipipe.canonical.products,
+    stringParam('PRODUCTS', scipipe.canonical.products,
       'Whitespace delimited list of EUPS products to build.')
     stringParam('TAG', null, 'EUPS distrib tag name. Eg. w_2016_08')
     booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')

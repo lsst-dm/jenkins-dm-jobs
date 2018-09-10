@@ -22,8 +22,8 @@ notify.wrap {
   String year = params.YEAR.padLeft(4, "0")
   String week = params.WEEK.padLeft(2, "0")
 
-  def product         = scipipe.canonical.products
-  def tarballProducts = product
+  def products        = scipipe.canonical.products
+  def tarballProducts = products
   def retries         = 3
 
   def gitTag       = null
@@ -43,7 +43,7 @@ notify.wrap {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
-            PRODUCT: product,
+            PRODUCTS: products,
             SKIP_DOCS: false,
           ],
         )
@@ -61,7 +61,7 @@ notify.wrap {
                 EUPSPKG_SOURCE: 'git',
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
-                PRODUCT: product,
+                PRODUCTS: products,
               ],
             )
           } // retry
@@ -111,7 +111,7 @@ notify.wrap {
       util.buildTarballMatrix(
         tarballConfigs: scipipe.tarball,
         parameters: [
-          PRODUCT: tarballProducts,
+          PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: true,
           RUN_SCONS_CHECK: true,
@@ -127,7 +127,7 @@ notify.wrap {
       retry(retries) {
         stackResults = util.runBuildStack(
           parameters: [
-            PRODUCT: tarballProducts,
+            PRODUCTS: tarballProducts,
             TAG: eupsTag,
           ],
         )

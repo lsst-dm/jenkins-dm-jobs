@@ -16,8 +16,8 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def product         = 'qserv_distrib'
-  def tarballProducts = product
+  def products        = 'qserv_distrib'
+  def tarballProducts = products
   def retries         = 3
   def eupsTag         = 'qserv-dev'
 
@@ -28,7 +28,7 @@ notify.wrap {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
-            PRODUCT: product,
+            PRODUCTS: products,
             SKIP_DOCS: true,
           ],
         )
@@ -42,7 +42,7 @@ notify.wrap {
             EUPSPKG_SOURCE: 'git',
             MANIFEST_ID: manifestId,
             EUPS_TAG: eupsTag,
-            PRODUCT: product,
+            PRODUCTS: products,
           ],
         )
       } // retry

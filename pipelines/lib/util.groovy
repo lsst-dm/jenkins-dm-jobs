@@ -240,7 +240,7 @@ def slurpJson(String data) {
  *         EUPSPKG_SOURCE: 'git',
  *         MANIFEST_ID: manifestId,
  *         EUPS_TAG: eupsTag,
- *         PRODUCT: product,
+ *         PRODUCTS: products,
  *       ],
  *     )
  *
@@ -249,7 +249,7 @@ def slurpJson(String data) {
  * @param p.parameters.EUPSPKG_SOURCE String
  * @param p.parameters.MANIFEST_ID String
  * @param p.parameters.EUPS_TAG String
- * @param p.parameters.PRODUCT String
+ * @param p.parameters.PRODUCTS String
  * @param p.parameters.TIMEOUT String Defaults to `'1'`.
  */
 def void runPublish(Map p) {
@@ -264,7 +264,7 @@ def void runPublish(Map p) {
     'EUPSPKG_SOURCE',
     'MANIFEST_ID',
     'EUPS_TAG',
-    'PRODUCT',
+    'PRODUCTS',
   ])
   useP.parameters = [
     TIMEOUT: '1' // should be string
@@ -276,7 +276,7 @@ def void runPublish(Map p) {
       string(name: 'EUPSPKG_SOURCE', value: useP.parameters.EUPSPKG_SOURCE),
       string(name: 'MANIFEST_ID', value: useP.parameters.MANIFEST_ID),
       string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
-      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT.toString()),
     ],
   )
@@ -360,14 +360,14 @@ def lsstswBuild(
  * Required keys are listed below. Any additional keys will also be set as env
  * vars.
  * @param buildParams.REFS String
- * @param buildParams.PRODUCT String
+ * @param buildParams.PRODUCTS String
  * @param buildParams.SKIP_DOCS Boolean
  */
 def void jenkinsWrapper(Map buildParams) {
   // minimum set of required keys -- additional are allowed
   requireMapKeys(buildParams, [
     'REFS',
-    'PRODUCT',
+    'PRODUCTS',
     'SKIP_DOCS',
   ])
 
@@ -960,7 +960,7 @@ def Object readYamlFile(String file) {
  *     util.buildTarballMatrix(
  *       tarballConfigs: config.tarball,
  *       parameters: [
- *         PRODUCT: tarballProducts,
+ *         PRODUCTS: tarballProducts,
  *         SMOKE: true,
  *         RUN_SCONS_CHECK: true,
  *         PUBLISH: true,
@@ -970,7 +970,7 @@ def Object readYamlFile(String file) {
  *
  * @param p Map
  * @param p.tarballConfigs List
- * @param p.parameters.PRODUCT String
+ * @param p.parameters.PRODUCTS String
  * @param p.parameters.EUPS_TAG String
  * @param p.retries Integer Defaults to `1`.
  */
@@ -984,7 +984,7 @@ def void buildTarballMatrix(Map p) {
   ] + p
 
   requireMapKeys(p.parameters, [
-    'PRODUCT',
+    'PRODUCTS',
     'EUPS_TAG',
   ])
 
@@ -1001,7 +1001,7 @@ def void buildTarballMatrix(Map p) {
       retry(p.retries) {
         build job: 'release/tarball',
           parameters: [
-            string(name: 'PRODUCT', value: p.parameters.PRODUCT),
+            string(name: 'PRODUCTS', value: p.parameters.PRODUCTS),
             string(name: 'EUPS_TAG', value: p.parameters.EUPS_TAG),
             booleanParam(name: 'SMOKE', value: p.parameters.SMOKE),
             booleanParam(
@@ -1210,7 +1210,7 @@ def ltdPush(Map args) {
  *
  *     manifestId = util.runRebuild(
  *       parameters: [
- *         PRODUCT: product,
+ *         PRODUCTS: products,
  *         SKIP_DOCS: true,
  *       ],
  *     )
@@ -1219,7 +1219,7 @@ def ltdPush(Map args) {
  * @param p.job String job to trigger. Defaults to `release/run-rebuild`.
  * @param p.parameters Map
  * @param p.parameters.REFS String Defaults to `''`.
- * @param p.parameters.PRODUCT String Defaults to `''`.
+ * @param p.parameters.PRODUCTS String Defaults to `''`.
  * @param p.parameters.SKIP_DOCS Boolean Defaults to `false`.
  * @param p.parameters.TIMEOUT String Defaults to `'8'`.
  * @param p.parameters.PREP_ONLY Boolean Defaults to `false`.
@@ -1232,7 +1232,7 @@ def String runRebuild(Map p) {
 
   useP.parameters = [
     REFS: '',  // null is not a valid value for a string param
-    PRODUCT: '',
+    PRODUCTS: '',
     SKIP_DOCS: false,
     TIMEOUT: '8', // should be String
     PREP_ONLY: false,
@@ -1242,7 +1242,7 @@ def String runRebuild(Map p) {
     job: useP.job,
     parameters: [
       string(name: 'REFS', value: useP.parameters.REFS),
-      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
       booleanParam(name: 'SKIP_DOCS', value: useP.parameters.SKIP_DOCS),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
       booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),
@@ -1450,7 +1450,7 @@ def String defaultCodekitImage() {
  *
  * @param opts.job Name of job to trigger. Defaults to
  *        `release/docker/build-stack`.
- * @param opts.parameters.PRODUCT String. Required.
+ * @param opts.parameters.PRODUCTS String. Required.
  * @param opts.parameters.TAG String. Required.
  * @param opts.parameters.NO_PUSH Boolean. Defaults to `false`.
  * @param opts.parameters.TIMEOUT String. Defaults to `1'`.
@@ -1467,7 +1467,7 @@ def Object runBuildStack(Map p) {
 
   // validate opts.parameters Map
   requireMapKeys(p.parameters, [
-    'PRODUCT',
+    'PRODUCTS',
     'TAG',
   ])
   useP.parameters = [
@@ -1478,7 +1478,7 @@ def Object runBuildStack(Map p) {
   def result = build(
     job: useP.job,
     parameters: [
-      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
       string(name: 'TAG', value: useP.parameters.TAG),
       booleanParam(name: 'NO_PUSH', value: useP.parameters.NO_PUSH),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT),

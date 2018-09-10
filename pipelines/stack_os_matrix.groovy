@@ -22,14 +22,14 @@ notify.wrap {
   util.requireEnvVars([
     'REFS',
     'BUILD_CONFIG',
-    'PRODUCT',
+    'PRODUCTS',
     'SKIP_DOCS',
     'WIPEOUT',
   ])
 
   def buildParams = [
     REFS:      REFS,
-    PRODUCT:   PRODUCT,
+    PRODUCTS:  PRODUCTS,
     SKIP_DOCS: SKIP_DOCS,
   ]
 

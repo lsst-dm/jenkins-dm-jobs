@@ -30,7 +30,7 @@ notify.wrap {
     'MINIVER',
     'OSFAMILY',
     'PLATFORM',
-    'PRODUCT',
+    'PRODUCTS',
     'PUBLISH',
     'PYTHON_VERSION',
     'RUN_SCONS_CHECK',
@@ -44,7 +44,7 @@ notify.wrap {
   String label          = params.LABEL
   String lsstswRef      = params.LSSTSW_REF
   String miniver        = params.MINIVER
-  String product        = params.PRODUCT
+  String products       = params.PRODUCTS
   String osfamily       = params.OSFAMILY
   String platform       = params.PLATFORM
   Boolean publish       = params.PUBLISH
@@ -57,7 +57,7 @@ notify.wrap {
   def py = new MinicondaEnv(pythonVersion,miniver, lsstswRef)
 
   def buildTarget = [
-    product: product,
+    products: products,
     eups_tag: eupsTag,
   ]
 
@@ -91,7 +91,7 @@ notify.wrap {
  * @param menv Miniconda object
  * @param timelimit Integer build timeout in hours
  * @param buildTarget Map
- * @param buildTarget.product String
+ * @param buildTarget.products String
  * @param buildTarget.eups_tag String
  * @param smoke Map `null` disables running a smoke test
  * @param smoke.run_scons_check Boolean
@@ -163,7 +163,7 @@ def void linuxTarballs(
  * @param menv Miniconda object
  * @param timelmit Integer build timeout in hours
  * @param buildTarget Map
- * @param buildTarget.product String
+ * @param buildTarget.products String
  * @param buildTarget.eups_tag String
  * @param smoke Map `null` disables running a smoke test
  * @param smoke.run_scons_check Boolean
@@ -239,7 +239,7 @@ def void osxTarballs(
  * @param compiler Eg., 'system-gcc'
  * @param menv Miniconda object
  * @param buildTarget Map
- * @param buildTarget.product String
+ * @param buildTarget.products String
  * @param buildTarget.eups_tag String
  */
 def void linuxBuild(
@@ -274,7 +274,7 @@ def void linuxBuild(
     emptyExistingDir(eupsBuildDir(buildDir, menv))
 
     prepareBuild(
-      buildTarget.product,
+      buildTarget.products,
       buildTarget.eups_tag,
       shName,
       distDirContainer,
@@ -331,7 +331,7 @@ def void linuxBuild(
  * @param compiler Eg., 'system-gcc'
  * @param menv Miniconda object
  * @param buildTarget Map
- * @param buildTarget.product String
+ * @param buildTarget.products String
  * @param buildTarget.eups_tag String
  */
 def void osxBuild(
@@ -360,7 +360,7 @@ def void osxBuild(
     emptyExistingDir(eupsBuildDir(buildDir, menv))
 
     prepareBuild(
-      buildTarget.product,
+      buildTarget.products,
       buildTarget.eups_tag,
       "${shName}",
       distDir,
@@ -390,7 +390,7 @@ def void osxBuild(
  * @param compiler Eg., 'system-gcc'
  * @param menv Miniconda object
  * @param buildTarget Map
- * @param buildTarget.product String
+ * @param buildTarget.products String
  * @param buildTarget.eups_tag String
  * @param smoke Map
  * @param smoke.run_scons_check Boolean
@@ -422,7 +422,7 @@ def void linuxSmoke(
     util.emptyDirs([smokeDir])
 
     prepareSmoke(
-      buildTarget.product,
+      buildTarget.products,
       buildTarget.eups_tag,
       shName,
       distDirContainer,
@@ -481,7 +481,7 @@ def void linuxSmoke(
  * @param compiler Eg., 'system-gcc'
  * @param menv Miniconda object
  * @param buildTarget Map
- * @param buildTarget.product String
+ * @param buildTarget.products String
  * @param buildTarget.eups_tag String
  * @param smoke Map
  * @param smoke.run_scons_check Boolean
@@ -506,7 +506,7 @@ def void osxSmoke(
     }
 
     prepareSmoke(
-      buildTarget.product,
+      buildTarget.products,
       buildTarget.eups_tag,
       shName,
       "${cwd}/distrib",
@@ -537,7 +537,7 @@ def void osxSmoke(
  * Generate + write build script.
  */
 def void prepareBuild(
-  String product,
+  String products,
   String eupsTag,
   String shName,
   String distribDir,
@@ -547,7 +547,7 @@ def void prepareBuild(
   String ciDir
 ) {
   def script = buildScript(
-    product,
+    products,
     eupsTag,
     distribDir,
     compiler,
@@ -563,7 +563,7 @@ def void prepareBuild(
  * Generate + write smoke test script.
  */
 def void prepareSmoke(
-  String product,
+  String products,
   String eupsTag,
   String shName,
   String distribDir,
@@ -573,7 +573,7 @@ def void prepareSmoke(
   String ciDir
 ) {
   def script = smokeScript(
-    product,
+    products,
     eupsTag,
     distribDir,
     compiler,

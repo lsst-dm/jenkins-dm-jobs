@@ -27,8 +27,8 @@ notify.wrap {
   String week              = params.WEEK.padLeft(2, "0")
   String lsstDistribGitTag = params.LSST_DISTRIB_GIT_TAG
 
-  def product         = 'lsst_sims'
-  def tarballProducts = product
+  def products        = 'lsst_sims'
+  def tarballProducts = products
   def retries         = 3
 
   def eupsTag            = null
@@ -46,7 +46,7 @@ notify.wrap {
         manifestId = util.runRebuild(
           parameters: [
             REFS: lsstDistribGitTag,
-            PRODUCT: product,
+            PRODUCTS: products,
             SKIP_DOCS: true,
           ],
         )
@@ -64,7 +64,7 @@ notify.wrap {
                 EUPSPKG_SOURCE: 'git',
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
-                PRODUCT: product,
+                PRODUCTS: products,
               ],
             )
           } // retry
@@ -80,7 +80,7 @@ notify.wrap {
       util.buildTarballMatrix(
         tarballConfigs: scipipe.tarball,
         parameters: [
-          PRODUCT: tarballProducts,
+          PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: true,
           RUN_SCONS_CHECK: true,

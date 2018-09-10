@@ -20,14 +20,14 @@ notify.wrap {
   util.requireParams([
     'REFS',
     'PREP_ONLY',
-    'PRODUCT',
+    'PRODUCTS',
     'SKIP_DOCS',
     'TIMEOUT',
   ])
 
   String refs       = params.REFS
   Boolean prepOnly  = params.PREP_ONLY
-  String product    = params.PRODUCT
+  String products   = params.PRODUCTS
   Boolean skipDocs  = params.SKIP_DOCS
   Integer timelimit = params.TIMEOUT
 
@@ -63,7 +63,7 @@ notify.wrap {
         // setting a github repo slug
         REPOSFILE_REPO:      scipipe.repos.github_repo,
         REFS:                refs,
-        PRODUCT:             product,
+        PRODUCTS:            products,
         SKIP_DOCS:           skipDocs,
         PREP_ONLY:           prepOnly,
       ]

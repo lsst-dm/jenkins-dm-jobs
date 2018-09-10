@@ -18,12 +18,12 @@ node('jenkins-master') {
 notify.wrap {
   util.requireParams([
     'NO_PUSH',
-    'PRODUCT',
+    'PRODUCTS',
     'TAG',
     'TIMEOUT',
   ])
 
-  String product    = params.PRODUCT
+  String products   = params.PRODUCTS
   String eupsTag    = params.TAG
   Boolean noPush    = params.NO_PUSH
   Integer timelimit = params.TIMEOUT
@@ -61,7 +61,7 @@ notify.wrap {
       // ensure base image is always up to date
       opt << '--pull=true'
       opt << '--no-cache'
-      opt << "--build-arg EUPS_PRODUCT=\"${product}\""
+      opt << "--build-arg EUPS_PRODUCTS=\"${products}\""
       opt << "--build-arg EUPS_TAG=\"${tag}\""
       opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\""
       opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\""

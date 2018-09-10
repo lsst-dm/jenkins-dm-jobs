@@ -684,7 +684,8 @@ def void runPostqa(
     "LSSTSW_DIR=${lsstswDir}",
     "OUTPUTFILE=${outputFile}",
     "NO_PUSH=${noPush}",
-    "PRODUCT=validate_drp",
+    "PRODUCT=validate_drp", // old
+    "PRODUCTS=validate_drp",
     "dataset=${datasetSlug}",
     "label=${label}",
   ]) {

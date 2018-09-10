@@ -8,7 +8,7 @@ p.pipeline().with {
   description('build and publish EUPS distrib "tarball" packages')
 
   parameters {
-    stringParam('PRODUCT', scipipe.canonical.products,
+    stringParam('PRODUCTS', scipipe.canonical.products,
       'Whitespace delimited list of EUPS products to build.')
     stringParam('EUPS_TAG', null, 'published EUPS tag')
     booleanParam('SMOKE', true, 'Run a post-build installation test of generated EUPS distrib traballs.')

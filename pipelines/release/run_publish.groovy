@@ -20,14 +20,14 @@ notify.wrap {
   util.requireParams([
     'MANIFEST_ID',
     'EUPSPKG_SOURCE',
-    'PRODUCT',
+    'PRODUCTS',
     'EUPS_TAG',
     'TIMEOUT',
   ])
 
   String manifestId    = params.MANIFEST_ID
   String eupspkgSource = params.EUPSPKG_SOURCE
-  String product       = params.PRODUCT
+  String products      = params.PRODUCTS
   String eupsTag       = params.EUPS_TAG
   Integer timelimit    = params.TIMEOUT
 
@@ -65,7 +65,7 @@ notify.wrap {
           "EUPSPKG_SOURCE=${eupspkgSource}",
           "MANIFEST_ID=${manifestId}",
           "EUPS_TAG=${eupsTag}",
-          "PRODUCT=${product}",
+          "PRODUCTS=${products}",
         ]
 
         withEnv(env) {
@@ -81,7 +81,7 @@ notify.wrap {
               ARGS+=('-d')
               # split whitespace separated EUPS products into separate array
               # elements by not quoting
-              ARGS+=($PRODUCT)
+              ARGS+=($PRODUCTS)
 
               export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
 

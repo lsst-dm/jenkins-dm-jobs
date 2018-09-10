@@ -42,8 +42,8 @@ notify.wrap {
   echo "source [eups] tag: ${srcEupsTag}"
   echo "source manifest id: ${srcManifestId}"
 
-  def product         = scipipe.canonical.products
-  def tarballProducts = product
+  def products        = scipipe.canonical.products
+  def tarballProducts = products
   def retries         = 3
 
   def manifestId   = null
@@ -92,7 +92,7 @@ notify.wrap {
         manifestId = util.runRebuild(
           parameters: [
             REFS: gitTag,
-            PRODUCT: product,
+            PRODUCTS: products,
             SKIP_DOCS: false,
           ],
         )
@@ -110,7 +110,7 @@ notify.wrap {
                 EUPSPKG_SOURCE: eupspkgSource,
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
-                PRODUCT: product,
+                PRODUCTS: products,
               ],
             )
           } // retry
@@ -126,7 +126,7 @@ notify.wrap {
       util.buildTarballMatrix(
         tarballConfigs: scipipe.tarball,
         parameters: [
-          PRODUCT: tarballProducts,
+          PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: true,
           RUN_SCONS_CHECK: true,
@@ -142,7 +142,7 @@ notify.wrap {
       retry(retries) {
         stackResults = util.runBuildStack(
           parameters: [
-            PRODUCT: tarballProducts,
+            PRODUCTS: tarballProducts,
             TAG: eupsTag,
           ],
         )

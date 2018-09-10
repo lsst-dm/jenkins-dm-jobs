@@ -5,7 +5,7 @@ import javaposse.jobdsl.dsl.Job
 
 class CleanBuild {
   String name
-  String product
+  String products
   String refs = ''
   Boolean skipDocs = true
   String cron = 'H 19 * * *'
@@ -14,7 +14,7 @@ class CleanBuild {
 
   Job build(DslFactory dslFactory) {
     if (! name) {
-      name = product
+      name = products
     }
 
     def j = dslFactory.pipelineJob(name) {
@@ -33,7 +33,7 @@ class CleanBuild {
       }
 
       environmentVariables(
-        PRODUCT: product,
+        PRODUCTS: products,
         REFS: refs,
         SKIP_DOCS: skipDocs,
         WIPEOUT: true,

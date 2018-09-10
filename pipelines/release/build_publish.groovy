@@ -16,18 +16,18 @@ notify.wrap {
   util.requireParams([
     'REFS',
     'EUPS_TAG',
-    'PRODUCT',
+    'PRODUCTS',
     'SKIP_DOCS',
   ])
 
   String refs      = params.REFS
   String eupsTag   = params.EUPS_TAG
-  String product   = params.PRODUCT
+  String products  = params.PRODUCTS
   Boolean skipDocs = params.SKIP_DOCS
 
   echo "refs: ${refs}"
   echo "[eups] tag: ${eupsTag}"
-  echo "product: ${product}"
+  echo "products: ${products}"
   echo "skip docs: ${skipDocs}"
 
   def retries = 3
@@ -40,7 +40,7 @@ notify.wrap {
         manifestId = util.runRebuild(
           parameters: [
             REFS: refs,
-            PRODUCT: product,
+            PRODUCTS: products,
             SKIP_DOCS: skipDocs,
           ],
         )
@@ -54,7 +54,7 @@ notify.wrap {
             EUPSPKG_SOURCE: 'git',
             MANIFEST_ID: manifestId,
             EUPS_TAG: eupsTag,
-            PRODUCT: product,
+            PRODUCTS: products,
           ],
         )
       }
