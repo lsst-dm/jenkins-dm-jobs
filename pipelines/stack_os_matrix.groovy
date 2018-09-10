@@ -28,9 +28,9 @@ notify.wrap {
   ])
 
   def buildParams = [
-    REFS:      REFS,
-    PRODUCTS:  PRODUCTS,
-    BUILD_DOCS: BUILD_DOCS,
+    LSST_REFS:      REFS,
+    LSST_PRODUCTS:  PRODUCTS,
+    LSST_BUILD_DOCS: BUILD_DOCS,
   ]
 
   def lsstswConfigs = scipipe[BUILD_CONFIG]

@@ -53,19 +53,19 @@ notify.wrap {
 
       def buildParams = [
         EUPS_PKGROOT:       "${cwd}/distrib",
-        VERSIONDB_REPO:      versiondbRepo,
-        VERSIONDB_PUSH:      versiondbPush,
         GIT_SSH_COMMAND:     'ssh -o StrictHostKeyChecking=no',
-        LSST_JUNIT_PREFIX:   slug,
-        LSST_PYTHON_VERSION: lsstswConfig.python,
+        LSST_BUILD_DOCS:     buildDocs,
         LSST_COMPILER:       lsstswConfig.compiler,
+        LSST_JUNIT_PREFIX:   slug,
+        LSST_PREP_ONLY:      prepOnly,
+        LSST_PRODUCTS:       products,
+        LSST_PYTHON_VERSION: lsstswConfig.python,
+        LSST_REFS:           refs,
         // XXX this should be renamed in lsstsw to make it clear that its
         // setting a github repo slug
         REPOSFILE_REPO:      scipipe.repos.github_repo,
-        REFS:                refs,
-        PRODUCTS:            products,
-        BUILD_DOCS:          buildDocs,
-        PREP_ONLY:           prepOnly,
+        VERSIONDB_PUSH:      versiondbPush,
+        VERSIONDB_REPO:      versiondbRepo,
       ]
 
       def runJW = {

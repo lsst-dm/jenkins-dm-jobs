@@ -302,9 +302,9 @@ def lsstswBuild(
 ) {
   def run = {
     buildParams += [
+      LSST_COMPILER:       compiler,
       LSST_JUNIT_PREFIX:   slug,
       LSST_PYTHON_VERSION: python,
-      LSST_COMPILER:       compiler,
     ]
 
     jenkinsWrapper(buildParams)
@@ -359,16 +359,15 @@ def lsstswBuild(
  *
  * Required keys are listed below. Any additional keys will also be set as env
  * vars.
- * @param buildParams.REFS String
- * @param buildParams.PRODUCTS String
- * @param buildParams.SKIP_DOCS Boolean
+ * @param buildParams.LSST_REFS String
+ * @param buildParams.LSST_PRODUCTS String
  */
 def void jenkinsWrapper(Map buildParams) {
   // minimum set of required keys -- additional are allowed
   requireMapKeys(buildParams, [
-    'REFS',
-    'PRODUCTS',
-    'SKIP_DOCS',
+    'LSST_COMPILER',
+    'LSST_PRODUCTS',
+    'LSST_REFS',
   ])
 
   def cwd     = pwd()
