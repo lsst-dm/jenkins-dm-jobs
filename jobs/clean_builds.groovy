@@ -35,15 +35,6 @@ import util.CleanBuild
     buildConfig: 'dax-lsstsw-matrix',
     seedJob: SEED_JOB,
   ],
-  [
-    name: 'sims/lsst_sims',
-    product: 'lsst_sims',
-    branch: 'w.2018.01',
-    cron: null,
-    skipDemo: true,
-    skipDocs: true,
-    seedJob: SEED_JOB,
-  ],
 ].each { j ->
   def clean = new CleanBuild(j)
 
