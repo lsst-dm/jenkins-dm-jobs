@@ -1,47 +1,34 @@
 import util.Common
+import org.yaml.snakeyaml.Yaml
 Common.makeFolders(this)
+
+def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrix.yaml'))
 
 import util.CleanBuild
 
 [
   [
     name: 'scipipe/lsst_distrib',
-    product: 'lsst_distrib',
-    skipDemo: false,
-    skipDocs: false,
+    products: scipipe.canonical.products,
+    buildDocs: true,
     seedJob: SEED_JOB,
   ],
   [
     name: 'scipipe/ci_hsc',
-    product: 'ci_hsc',
-    skipDemo: true,
-    skipDocs: true,
+    products: 'ci_hsc',
     buildConfig: 'scipipe-lsstsw-ci_hsc',
     seedJob: SEED_JOB,
   ],
   [
     name: 'dax/dax_webserv',
-    product: 'dax_webserv',
-    skipDemo: true,
-    skipDocs: true,
+    products: 'dax_webserv',
     buildConfig: 'dax-lsstsw-matrix',
     seedJob: SEED_JOB,
   ],
   [
     name: 'dax/qserv_distrib',
-    product: 'qserv_distrib',
-    skipDemo: true,
-    skipDocs: true,
+    products: 'qserv_distrib',
     buildConfig: 'dax-lsstsw-matrix',
-    seedJob: SEED_JOB,
-  ],
-  [
-    name: 'sims/lsst_sims',
-    product: 'lsst_sims',
-    branch: 'w.2018.01',
-    cron: null,
-    skipDemo: true,
-    skipDocs: true,
     seedJob: SEED_JOB,
   ],
 ].each { j ->

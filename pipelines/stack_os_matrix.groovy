@@ -1,4 +1,4 @@
-def config = null
+def scipipe = null
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -11,7 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
   }
 }
 
@@ -20,22 +20,20 @@ notify.wrap {
   // set statically as env vars in calling jobs without exposing a "job param"
   // in the jenkins ui.
   util.requireEnvVars([
-    'BRANCH',
+    'REFS',
     'BUILD_CONFIG',
-    'PRODUCT',
-    'SKIP_DEMO',
-    'SKIP_DOCS',
+    'PRODUCTS',
+    'BUILD_DOCS',
     'WIPEOUT',
   ])
 
   def buildParams = [
-    BRANCH:    BRANCH,
-    PRODUCT:   PRODUCT,
-    SKIP_DEMO: SKIP_DEMO,
-    SKIP_DOCS: SKIP_DOCS,
+    LSST_REFS:      REFS,
+    LSST_PRODUCTS:  PRODUCTS,
+    LSST_BUILD_DOCS: BUILD_DOCS,
   ]
 
-  def lsstswConfigs = config[BUILD_CONFIG]
+  def lsstswConfigs = scipipe[BUILD_CONFIG]
   if (lsstswConfigs == null) {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
   }

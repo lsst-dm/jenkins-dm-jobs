@@ -1,4 +1,4 @@
-def config = null
+def scipipe = null
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -11,39 +11,36 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
   }
 }
 
 notify.wrap {
   util.requireParams([
     'EUPS_TAG',
-    'PRODUCT',
+    'PRODUCTS',
     'PUBLISH',
-    'RUN_DEMO',
     'RUN_SCONS_CHECK',
     'SMOKE',
   ])
 
   String eupsTag        = params.EUPS_TAG
-  String product        = params.PRODUCT
+  String products       = params.PRODUCTS
   Boolean publish       = params.PUBLISH
-  Boolean runDemo       = params.RUN_DEMO
   Boolean runSconsCheck = params.RUN_SCONS_CHECK
   Boolean smoke         = params.SMOKE
 
-  def tarballProducts = product
+  def tarballProducts = products
   def retries         = 3
 
   timeout(time: 30, unit: 'HOURS') {
     stage('build eups tarballs') {
       util.buildTarballMatrix(
-        tarballConfigs: config.tarball,
+        tarballConfigs: scipipe.tarball,
         parameters: [
-          PRODUCT: tarballProducts,
+          PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: smoke,
-          RUN_DEMO: runDemo,
           RUN_SCONS_CHECK: runSconsCheck,
           PUBLISH: publish,
         ],

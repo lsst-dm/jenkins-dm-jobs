@@ -14,24 +14,21 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
-    'BRANCH',
+    'REFS',
     'EUPS_TAG',
-    'PRODUCT',
-    'SKIP_DEMO',
-    'SKIP_DOCS',
+    'PRODUCTS',
+    'BUILD_DOCS',
   ])
 
-  String branch    = params.BRANCH
-  String eupsTag   = params.EUPS_TAG
-  String product   = params.PRODUCT
-  Boolean skipDemo = params.SKIP_DEMO
-  Boolean skipDocs = params.SKIP_DOCS
+  String refs       = params.REFS
+  String eupsTag    = params.EUPS_TAG
+  String products   = params.PRODUCTS
+  Boolean buildDocs = params.BUILD_DOCS
 
-  echo "branch: ${branch}"
+  echo "refs: ${refs}"
   echo "[eups] tag: ${eupsTag}"
-  echo "product: ${product}"
-  echo "skip demo: ${skipDemo}"
-  echo "skip docs: ${skipDocs}"
+  echo "products: ${products}"
+  echo "build docs: ${buildDocs}"
 
   def retries = 3
 
@@ -42,10 +39,9 @@ notify.wrap {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
-            BRANCH: branch,
-            PRODUCT: product,
-            SKIP_DEMO: skipDemo,
-            SKIP_DOCS: skipDocs,
+            REFS: refs,
+            PRODUCTS: products,
+            BUILD_DOCS: buildDocs,
           ],
         )
       } // retry
@@ -58,7 +54,7 @@ notify.wrap {
             EUPSPKG_SOURCE: 'git',
             MANIFEST_ID: manifestId,
             EUPS_TAG: eupsTag,
-            PRODUCT: product,
+            PRODUCTS: products,
           ],
         )
       }

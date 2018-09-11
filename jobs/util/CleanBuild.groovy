@@ -5,17 +5,16 @@ import javaposse.jobdsl.dsl.Job
 
 class CleanBuild {
   String name
-  String product
-  String branch = ''
-  Boolean skipDemo = true
-  Boolean skipDocs = true
+  String products
+  String refs = ''
+  Boolean buildDocs = false
   String cron = 'H 19 * * *'
   String buildConfig = 'scipipe-lsstsw-matrix'
   Object seedJob
 
   Job build(DslFactory dslFactory) {
     if (! name) {
-      name = product
+      name = products
     }
 
     def j = dslFactory.pipelineJob(name) {
@@ -34,10 +33,9 @@ class CleanBuild {
       }
 
       environmentVariables(
-        PRODUCT: product,
-        BRANCH: branch,
-        SKIP_DEMO: skipDemo,
-        SKIP_DOCS: skipDocs,
+        PRODUCTS: products,
+        REFS: refs,
+        BUILD_DOCS: buildDocs,
         WIPEOUT: true,
         BUILD_CONFIG: buildConfig,
       )

@@ -240,7 +240,7 @@ def slurpJson(String data) {
  *         EUPSPKG_SOURCE: 'git',
  *         MANIFEST_ID: manifestId,
  *         EUPS_TAG: eupsTag,
- *         PRODUCT: product,
+ *         PRODUCTS: products,
  *       ],
  *     )
  *
@@ -249,7 +249,7 @@ def slurpJson(String data) {
  * @param p.parameters.EUPSPKG_SOURCE String
  * @param p.parameters.MANIFEST_ID String
  * @param p.parameters.EUPS_TAG String
- * @param p.parameters.PRODUCT String
+ * @param p.parameters.PRODUCTS String
  * @param p.parameters.TIMEOUT String Defaults to `'1'`.
  */
 def void runPublish(Map p) {
@@ -264,7 +264,7 @@ def void runPublish(Map p) {
     'EUPSPKG_SOURCE',
     'MANIFEST_ID',
     'EUPS_TAG',
-    'PRODUCT',
+    'PRODUCTS',
   ])
   useP.parameters = [
     TIMEOUT: '1' // should be string
@@ -276,7 +276,7 @@ def void runPublish(Map p) {
       string(name: 'EUPSPKG_SOURCE', value: useP.parameters.EUPSPKG_SOURCE),
       string(name: 'MANIFEST_ID', value: useP.parameters.MANIFEST_ID),
       string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
-      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT.toString()),
     ],
   )
@@ -302,9 +302,9 @@ def lsstswBuild(
 ) {
   def run = {
     buildParams += [
+      LSST_COMPILER:       compiler,
       LSST_JUNIT_PREFIX:   slug,
       LSST_PYTHON_VERSION: python,
-      LSST_COMPILER:       compiler,
     ]
 
     jenkinsWrapper(buildParams)
@@ -359,26 +359,19 @@ def lsstswBuild(
  *
  * Required keys are listed below. Any additional keys will also be set as env
  * vars.
- * @param buildParams.BRANCH String
- * @param buildParams.PRODUCT String
- * @param buildParams.SKIP_DEMO Boolean
- * @param buildParams.SKIP_DOCS Boolean
+ * @param buildParams.LSST_REFS String
+ * @param buildParams.LSST_PRODUCTS String
  */
 def void jenkinsWrapper(Map buildParams) {
   // minimum set of required keys -- additional are allowed
   requireMapKeys(buildParams, [
-    'BRANCH',
-    'PRODUCT',
-    'SKIP_DEMO',
-    'SKIP_DOCS',
+    'LSST_COMPILER',
+    'LSST_PRODUCTS',
+    'LSST_REFS',
   ])
 
   def cwd     = pwd()
   def homeDir = "${cwd}/home"
-
-  def config         = scipipeConfig()
-  def demoGithubRepo = config.lsst_dm_stack_demo.github_repo
-  def demoBaseUrl    = "${githubSlugToUrl(demoGithubRepo)}/archive"
 
   try {
     dir('lsstsw') {
@@ -407,7 +400,6 @@ def void jenkinsWrapper(Map buildParams) {
       "WORKSPACE=${cwd}",
       "HOME=${homeDir}",
       "EUPS_USERDATA=${homeDir}/.eups_userdata",
-      "DEMO_BASE_URL=${demoBaseUrl}",
     ]
 
     // Map -> List
@@ -912,11 +904,11 @@ def lsstswBuildMatrix(
  * Clone lsstsw git repo
  */
 def void cloneLsstsw() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
 
   gitNoNoise(
-    url: githubSlugToUrl(config.lsstsw.github_repo),
-    branch: config.lsstsw.git_ref,
+    url: githubSlugToUrl(scipipe.lsstsw.github_repo),
+    branch: scipipe.lsstsw.git_ref,
   )
 }
 
@@ -924,11 +916,11 @@ def void cloneLsstsw() {
  * Clone ci-scripts git repo
  */
 def void cloneCiScripts() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
 
   gitNoNoise(
-    url: githubSlugToUrl(config.ciscripts.github_repo),
-    branch: config.ciscripts.git_ref,
+    url: githubSlugToUrl(scipipe.ciscripts.github_repo),
+    branch: scipipe.ciscripts.git_ref,
   )
 }
 
@@ -967,9 +959,8 @@ def Object readYamlFile(String file) {
  *     util.buildTarballMatrix(
  *       tarballConfigs: config.tarball,
  *       parameters: [
- *         PRODUCT: tarballProducts,
+ *         PRODUCTS: tarballProducts,
  *         SMOKE: true,
- *         RUN_DEMO: true,
  *         RUN_SCONS_CHECK: true,
  *         PUBLISH: true,
  *       ],
@@ -978,7 +969,7 @@ def Object readYamlFile(String file) {
  *
  * @param p Map
  * @param p.tarballConfigs List
- * @param p.parameters.PRODUCT String
+ * @param p.parameters.PRODUCTS String
  * @param p.parameters.EUPS_TAG String
  * @param p.retries Integer Defaults to `1`.
  */
@@ -992,7 +983,7 @@ def void buildTarballMatrix(Map p) {
   ] + p
 
   requireMapKeys(p.parameters, [
-    'PRODUCT',
+    'PRODUCTS',
     'EUPS_TAG',
   ])
 
@@ -1009,10 +1000,9 @@ def void buildTarballMatrix(Map p) {
       retry(p.retries) {
         build job: 'release/tarball',
           parameters: [
-            string(name: 'PRODUCT', value: p.parameters.PRODUCT),
+            string(name: 'PRODUCTS', value: p.parameters.PRODUCTS),
             string(name: 'EUPS_TAG', value: p.parameters.EUPS_TAG),
             booleanParam(name: 'SMOKE', value: p.parameters.SMOKE),
-            booleanParam(name: 'RUN_DEMO', value: p.parameters.RUN_DEMO),
             booleanParam(
               name: 'RUN_SCONS_CHECK',
               value: p.parameters.RUN_SCONS_CHECK
@@ -1219,19 +1209,17 @@ def ltdPush(Map args) {
  *
  *     manifestId = util.runRebuild(
  *       parameters: [
- *         PRODUCT: product,
- *         SKIP_DEMO: true,
- *         SKIP_DOCS: true,
+ *         PRODUCTS: products,
+ *         BUILD_DOCS: true,
  *       ],
  *     )
  *
  * @param p Map
  * @param p.job String job to trigger. Defaults to `release/run-rebuild`.
  * @param p.parameters Map
- * @param p.parameters.BRANCH String Defaults to `''`.
- * @param p.parameters.PRODUCT String Defaults to `''`.
- * @param p.parameters.SKIP_DEMO Boolean Defaults to `false`.
- * @param p.parameters.SKIP_DOCS Boolean Defaults to `false`.
+ * @param p.parameters.REFS String Defaults to `''`.
+ * @param p.parameters.PRODUCTS String Defaults to `''`.
+ * @param p.parameters.BUILD_DOCS Boolean Defaults to `false`.
  * @param p.parameters.TIMEOUT String Defaults to `'8'`.
  * @param p.parameters.PREP_ONLY Boolean Defaults to `false`.
  * @return manifestId String
@@ -1242,10 +1230,9 @@ def String runRebuild(Map p) {
   ] + p
 
   useP.parameters = [
-    BRANCH: '',  // null is not a valid value for a string param
-    PRODUCT: '',
-    SKIP_DEMO: false,
-    SKIP_DOCS: false,
+    REFS: '',  // null is not a valid value for a string param
+    PRODUCTS: '',
+    BUILD_DOCS: false,
     TIMEOUT: '8', // should be String
     PREP_ONLY: false,
   ] + p.parameters
@@ -1253,10 +1240,9 @@ def String runRebuild(Map p) {
   def result = build(
     job: useP.job,
     parameters: [
-      string(name: 'BRANCH', value: useP.parameters.BRANCH),
-      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
-      booleanParam(name: 'SKIP_DEMO', value: useP.parameters.SKIP_DEMO),
-      booleanParam(name: 'SKIP_DOCS', value: useP.parameters.SKIP_DOCS),
+      string(name: 'REFS', value: useP.parameters.REFS),
+      string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
+      booleanParam(name: 'BUILD_DOCS', value: useP.parameters.BUILD_DOCS),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
       booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),
     ],
@@ -1330,9 +1316,9 @@ def String githubRawUrl(Map p) {
  * @return url String
  */
 def String versiondbManifestUrl(String manifestId) {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
   return githubRawUrl(
-    slug: config.versiondb.github_repo,
+    slug: scipipe.versiondb.github_repo,
     path: "manifests/${manifestId}.txt",
   )
 }
@@ -1343,10 +1329,10 @@ def String versiondbManifestUrl(String manifestId) {
  * @return url String
  */
 def String reposUrl() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
   return githubRawUrl(
-    slug: config.repos.github_repo,
-    ref: config.repos.git_ref,
+    slug: scipipe.repos.github_repo,
+    ref: scipipe.repos.git_ref,
     path: 'etc/repos.yaml',
   )
 }
@@ -1357,10 +1343,10 @@ def String reposUrl() {
  * @return url String
  */
 def String newinstallUrl() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
   return githubRawUrl(
-    slug: config.newinstall.github_repo,
-    ref: config.newinstall.git_ref,
+    slug: scipipe.newinstall.github_repo,
+    ref: scipipe.newinstall.git_ref,
     path: 'scripts/newinstall.sh',
   )
 }
@@ -1371,10 +1357,10 @@ def String newinstallUrl() {
  * @return url String
  */
 def String shebangtronUrl() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
   return githubRawUrl(
-    slug: config.shebangtron.github_repo,
-    ref: config.shebangtron.git_ref,
+    slug: scipipe.shebangtron.github_repo,
+    ref: scipipe.shebangtron.git_ref,
     path: 'shebangtron',
   )
 }
@@ -1463,7 +1449,7 @@ def String defaultCodekitImage() {
  *
  * @param opts.job Name of job to trigger. Defaults to
  *        `release/docker/build-stack`.
- * @param opts.parameters.PRODUCT String. Required.
+ * @param opts.parameters.PRODUCTS String. Required.
  * @param opts.parameters.TAG String. Required.
  * @param opts.parameters.NO_PUSH Boolean. Defaults to `false`.
  * @param opts.parameters.TIMEOUT String. Defaults to `1'`.
@@ -1480,7 +1466,7 @@ def Object runBuildStack(Map p) {
 
   // validate opts.parameters Map
   requireMapKeys(p.parameters, [
-    'PRODUCT',
+    'PRODUCTS',
     'TAG',
   ])
   useP.parameters = [
@@ -1491,7 +1477,7 @@ def Object runBuildStack(Map p) {
   def result = build(
     job: useP.job,
     parameters: [
-      string(name: 'PRODUCT', value: useP.parameters.PRODUCT),
+      string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
       string(name: 'TAG', value: useP.parameters.TAG),
       booleanParam(name: 'NO_PUSH', value: useP.parameters.NO_PUSH),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT),
@@ -1526,10 +1512,10 @@ def Object runBuildStack(Map p) {
  *     util.waitForS3()
  */
 def void waitForS3() {
-  def config = scipipeConfig()
+  def scipipe = scipipeConfig()
 
   stage('wait for s3 sync') {
-    sleep(time: config.release.s3_wait_time, unit: 'MINUTES')
+    sleep(time: scipipe.release.s3_wait_time, unit: 'MINUTES')
   }
 } // waitForS3
 

@@ -1,4 +1,4 @@
-def config = null
+def scipipe = null
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -11,40 +11,38 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
     sqre = util.sqreConfig()
   }
 }
 
 notify.wrap {
   util.requireParams([
-    'BRANCH',
+    'REFS',
     'PREP_ONLY',
-    'PRODUCT',
-    'SKIP_DEMO',
-    'SKIP_DOCS',
+    'PRODUCTS',
+    'BUILD_DOCS',
     'TIMEOUT',
   ])
 
-  String branch     = params.BRANCH
+  String refs       = params.REFS
   Boolean prepOnly  = params.PREP_ONLY
-  String product    = params.PRODUCT
-  Boolean skipDemo  = params.SKIP_DEMO
-  Boolean skipDocs  = params.SKIP_DOCS
+  String products   = params.PRODUCTS
+  Boolean buildDocs = params.BUILD_DOCS
   Integer timelimit = params.TIMEOUT
 
   // not a normally exposed job param
   Boolean versiondbPush = (! params.NO_VERSIONDB_PUSH?.toBoolean())
   // default to safe
   def versiondbRepo = util.githubSlugToUrl(
-    config.versiondb.github_repo,
+    scipipe.versiondb.github_repo,
     'https'
   )
   if (versiondbPush) {
-    versiondbRepo = util.githubSlugToUrl(config.versiondb.github_repo, 'ssh')
+    versiondbRepo = util.githubSlugToUrl(scipipe.versiondb.github_repo, 'ssh')
   }
 
-  def canonical    = config.canonical
+  def canonical    = scipipe.canonical
   def lsstswConfig = canonical.lsstsw_config
 
   def slug = util.lsstswConfigSlug(lsstswConfig)
@@ -55,20 +53,19 @@ notify.wrap {
 
       def buildParams = [
         EUPS_PKGROOT:       "${cwd}/distrib",
-        VERSIONDB_REPO:      versiondbRepo,
-        VERSIONDB_PUSH:      versiondbPush,
         GIT_SSH_COMMAND:     'ssh -o StrictHostKeyChecking=no',
-        LSST_JUNIT_PREFIX:   slug,
-        LSST_PYTHON_VERSION: lsstswConfig.python,
+        LSST_BUILD_DOCS:     buildDocs,
         LSST_COMPILER:       lsstswConfig.compiler,
+        LSST_JUNIT_PREFIX:   slug,
+        LSST_PREP_ONLY:      prepOnly,
+        LSST_PRODUCTS:       products,
+        LSST_PYTHON_VERSION: lsstswConfig.python,
+        LSST_REFS:           refs,
         // XXX this should be renamed in lsstsw to make it clear that its
         // setting a github repo slug
-        REPOSFILE_REPO:      config.repos.github_repo,
-        BRANCH:              branch,
-        PRODUCT:             product,
-        SKIP_DEMO:           skipDemo,
-        SKIP_DOCS:           skipDocs,
-        PREP_ONLY:           prepOnly,
+        REPOSFILE_REPO:      scipipe.repos.github_repo,
+        VERSIONDB_PUSH:      versiondbPush,
+        VERSIONDB_REPO:      versiondbRepo,
       ]
 
       def runJW = {
@@ -102,7 +99,7 @@ notify.wrap {
       } // stage('build')
 
       stage('push docs') {
-        if (!skipDocs) {
+        if (buildDocs) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-doxygen-push',

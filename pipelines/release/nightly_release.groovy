@@ -1,4 +1,4 @@
-def config = null
+def scipipe = null
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -11,7 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
     sqre = util.sqreConfig() // side effect only
   }
 }
@@ -23,8 +23,8 @@ notify.wrap {
   String month = params.MONTH.padLeft(2, "0")
   String day   = params.DAY.padLeft(2, "0")
 
-  def product         = 'lsst_distrib'
-  def tarballProducts = product
+  def products        = scipipe.canonical.products
+  def tarballProducts = products
   def retries         = 3
 
   def gitTag       = null
@@ -44,9 +44,8 @@ notify.wrap {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
-            PRODUCT: product,
-            SKIP_DEMO: false,
-            SKIP_DOCS: false,
+            PRODUCTS: products,
+            BUILD_DOCS: true,
           ],
         )
       } // retry
@@ -63,7 +62,7 @@ notify.wrap {
                 EUPSPKG_SOURCE: 'git',
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
-                PRODUCT: product,
+                PRODUCTS: products,
               ],
             )
           } // retry
@@ -83,7 +82,7 @@ notify.wrap {
           util.githubTagRelease(
             options: [
               '--dry-run': true,
-              '--org': config.release_tag_org,
+              '--org': scipipe.release_tag_org,
               '--manifest': manifestId,
               '--eups-tag': eupsTag,
             ],
@@ -102,7 +101,7 @@ notify.wrap {
           util.githubTagTeams(
             options: [
               '--dry-run': true,
-              '--org': config.release_tag_org,
+              '--org': scipipe.release_tag_org,
               '--tag': gitTag,
             ],
           )
@@ -112,12 +111,11 @@ notify.wrap {
 
     stage('build eups tarballs') {
       util.buildTarballMatrix(
-        tarballConfigs: config.tarball,
+        tarballConfigs: scipipe.tarball,
         parameters: [
-          PRODUCT: tarballProducts,
+          PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: true,
-          RUN_DEMO: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
         ],
@@ -131,7 +129,7 @@ notify.wrap {
       retry(retries) {
         stackResults = util.runBuildStack(
           parameters: [
-            PRODUCT: tarballProducts,
+            PRODUCTS: tarballProducts,
             TAG: eupsTag,
           ],
         )
@@ -150,7 +148,7 @@ notify.wrap {
             booleanParam(name: 'NO_PUSH', value: false),
             string(
               name: 'IMAGE_NAME',
-              value: config.release.step.build_jupyterlabdemo.image_name,
+              value: scipipe.release.step.build_jupyterlabdemo.image_name,
             ),
             // BASE_IMAGE is the registry repo name *only* without a tag
             string(
@@ -167,7 +165,7 @@ notify.wrap {
       // XXX use the same compiler as is configured for the canonical build
       // env.  This is a bit of a kludge.  It would be better to directly
       // label the compiler used on the dockage image.
-      def lsstswConfig = config.canonical.lsstsw_config
+      def lsstswConfig = scipipe.canonical.lsstsw_config
 
       retry(1) {
         // based on lsstsqre/stack image
@@ -180,7 +178,7 @@ notify.wrap {
             string(name: 'RELEASE_IMAGE', value: stackResults.image),
             booleanParam(
               name: 'NO_PUSH',
-              value: config.release.step.validate_drp.no_push,
+              value: scipipe.release.step.validate_drp.no_push,
             ),
             booleanParam(name: 'WIPEOUT', value: true),
           ],
@@ -199,7 +197,7 @@ notify.wrap {
             string(name: 'RELEASE_IMAGE', value: stackResults.image),
             booleanParam(
               name: 'PUBLISH',
-              value: config.release.step.documenteer.publish,
+              value: scipipe.release.step.documenteer.publish,
             ),
           ],
           wait: false,

@@ -1,4 +1,4 @@
-def config = null
+def scipipe = null
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -11,7 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
     sqre = util.sqreConfig() // side effect only
   }
 }
@@ -27,8 +27,8 @@ notify.wrap {
   String week              = params.WEEK.padLeft(2, "0")
   String lsstDistribGitTag = params.LSST_DISTRIB_GIT_TAG
 
-  def product         = 'lsst_sims'
-  def tarballProducts = product
+  def products        = 'lsst_sims'
+  def tarballProducts = products
   def retries         = 3
 
   def eupsTag            = null
@@ -45,10 +45,9 @@ notify.wrap {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
-            BRANCH: lsstDistribGitTag,
-            PRODUCT: product,
-            SKIP_DEMO: true,
-            SKIP_DOCS: true,
+            REFS: lsstDistribGitTag,
+            PRODUCTS: products,
+            BUILD_DOCS: false,
           ],
         )
       } // retry
@@ -65,7 +64,7 @@ notify.wrap {
                 EUPSPKG_SOURCE: 'git',
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
-                PRODUCT: product,
+                PRODUCTS: products,
               ],
             )
           } // retry
@@ -79,12 +78,11 @@ notify.wrap {
 
     stage('build eups tarballs') {
       util.buildTarballMatrix(
-        tarballConfigs: config.tarball,
+        tarballConfigs: scipipe.tarball,
         parameters: [
-          PRODUCT: tarballProducts,
+          PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
           SMOKE: true,
-          RUN_DEMO: false,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
         ],

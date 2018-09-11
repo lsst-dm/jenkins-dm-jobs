@@ -1,3 +1,5 @@
+def scipipe = null
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -9,27 +11,27 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
   }
 }
 
 notify.wrap {
   util.requireParams([
     'NO_PUSH',
-    'PRODUCT',
+    'PRODUCTS',
     'TAG',
     'TIMEOUT',
   ])
 
-  String product    = params.PRODUCT
+  String products   = params.PRODUCTS
   String eupsTag    = params.TAG
   Boolean noPush    = params.NO_PUSH
   Integer timelimit = params.TIMEOUT
 
-  def scipipe        = config.scipipe_release
-  def dockerfile     = scipipe.dockerfile
-  def dockerRegistry = scipipe.docker_registry
-  def newinstall     = config.newinstall
+  def release        = scipipe.scipipe_release
+  def dockerfile     = release.dockerfile
+  def dockerRegistry = release.docker_registry
+  def newinstall     = release.newinstall
 
   def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
   def gitRef         = dockerfile.git_ref
@@ -59,7 +61,7 @@ notify.wrap {
       // ensure base image is always up to date
       opt << '--pull=true'
       opt << '--no-cache'
-      opt << "--build-arg EUPS_PRODUCT=\"${product}\""
+      opt << "--build-arg EUPS_PRODUCTS=\"${products}\""
       opt << "--build-arg EUPS_TAG=\"${tag}\""
       opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\""
       opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\""

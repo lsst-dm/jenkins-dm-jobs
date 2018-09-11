@@ -1,4 +1,4 @@
-def config = null
+def scipipe = null
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -11,13 +11,13 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig() // possibly needed for side effects?
   }
 }
 
 notify.wrap {
-  def product         = 'qserv_distrib'
-  def tarballProducts = product
+  def products        = 'qserv_distrib'
+  def tarballProducts = products
   def retries         = 3
   def eupsTag         = 'qserv-dev'
 
@@ -28,9 +28,8 @@ notify.wrap {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
-            PRODUCT: product,
-            SKIP_DEMO: true,
-            SKIP_DOCS: true,
+            PRODUCTS: products,
+            BUILD_DOCS: false,
           ],
         )
       } // retry
@@ -43,7 +42,7 @@ notify.wrap {
             EUPSPKG_SOURCE: 'git',
             MANIFEST_ID: manifestId,
             EUPS_TAG: eupsTag,
-            PRODUCT: product,
+            PRODUCTS: products,
           ],
         )
       } // retry

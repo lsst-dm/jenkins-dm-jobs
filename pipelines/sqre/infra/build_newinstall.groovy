@@ -1,3 +1,5 @@
+def scipipe = null
+
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -9,7 +11,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    config = util.scipipeConfig()
+    scipipe = util.scipipeConfig()
   }
 }
 
@@ -22,7 +24,7 @@ notify.wrap {
   Boolean pushLatest = params.LATEST
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def newinstall     = config.newinstall
+  def newinstall     = scipipe.newinstall
   def dockerfile     = newinstall.dockerfile
   def dockerRegistry = newinstall.docker_registry
 
