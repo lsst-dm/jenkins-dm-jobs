@@ -1211,7 +1211,7 @@ def ltdPush(Map args) {
  *     manifestId = util.runRebuild(
  *       parameters: [
  *         PRODUCTS: products,
- *         SKIP_DOCS: true,
+ *         BUILD_DOCS: true,
  *       ],
  *     )
  *
@@ -1220,7 +1220,7 @@ def ltdPush(Map args) {
  * @param p.parameters Map
  * @param p.parameters.REFS String Defaults to `''`.
  * @param p.parameters.PRODUCTS String Defaults to `''`.
- * @param p.parameters.SKIP_DOCS Boolean Defaults to `false`.
+ * @param p.parameters.BUILD_DOCS Boolean Defaults to `false`.
  * @param p.parameters.TIMEOUT String Defaults to `'8'`.
  * @param p.parameters.PREP_ONLY Boolean Defaults to `false`.
  * @return manifestId String
@@ -1233,7 +1233,7 @@ def String runRebuild(Map p) {
   useP.parameters = [
     REFS: '',  // null is not a valid value for a string param
     PRODUCTS: '',
-    SKIP_DOCS: false,
+    BUILD_DOCS: false,
     TIMEOUT: '8', // should be String
     PREP_ONLY: false,
   ] + p.parameters
@@ -1243,7 +1243,7 @@ def String runRebuild(Map p) {
     parameters: [
       string(name: 'REFS', value: useP.parameters.REFS),
       string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
-      booleanParam(name: 'SKIP_DOCS', value: useP.parameters.SKIP_DOCS),
+      booleanParam(name: 'BUILD_DOCS', value: useP.parameters.BUILD_DOCS),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
       booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),
     ],

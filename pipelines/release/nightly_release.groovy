@@ -45,7 +45,7 @@ notify.wrap {
         manifestId = util.runRebuild(
           parameters: [
             PRODUCTS: products,
-            SKIP_DOCS: false,
+            BUILD_DOCS: true,
           ],
         )
       } // retry

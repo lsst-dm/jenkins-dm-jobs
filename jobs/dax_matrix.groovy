@@ -17,7 +17,7 @@ p.pipeline().with {
 
   environmentVariables(
     BUILD_CONFIG: 'dax-lsstsw-matrix',
-    SKIP_DOCS: true,
+    BUILD_DOCS: false,
     WIPEOUT: false,
   )
 }

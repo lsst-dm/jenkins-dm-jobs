@@ -17,18 +17,18 @@ notify.wrap {
     'REFS',
     'EUPS_TAG',
     'PRODUCTS',
-    'SKIP_DOCS',
+    'BUILD_DOCS',
   ])
 
-  String refs      = params.REFS
-  String eupsTag   = params.EUPS_TAG
-  String products  = params.PRODUCTS
-  Boolean skipDocs = params.SKIP_DOCS
+  String refs       = params.REFS
+  String eupsTag    = params.EUPS_TAG
+  String products   = params.PRODUCTS
+  Boolean buildDocs = params.BUILD_DOCS
 
   echo "refs: ${refs}"
   echo "[eups] tag: ${eupsTag}"
   echo "products: ${products}"
-  echo "skip docs: ${skipDocs}"
+  echo "build docs: ${buildDocs}"
 
   def retries = 3
 
@@ -41,7 +41,7 @@ notify.wrap {
           parameters: [
             REFS: refs,
             PRODUCTS: products,
-            SKIP_DOCS: skipDocs,
+            BUILD_DOCS: buildDocs,
           ],
         )
       } // retry

@@ -93,7 +93,7 @@ notify.wrap {
           parameters: [
             REFS: gitTag,
             PRODUCTS: products,
-            SKIP_DOCS: false,
+            BUILD_DOCS: true,
           ],
         )
       } // retry

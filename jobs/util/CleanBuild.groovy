@@ -7,7 +7,7 @@ class CleanBuild {
   String name
   String products
   String refs = ''
-  Boolean skipDocs = true
+  Boolean buildDocs = false
   String cron = 'H 19 * * *'
   String buildConfig = 'scipipe-lsstsw-matrix'
   Object seedJob
@@ -35,7 +35,7 @@ class CleanBuild {
       environmentVariables(
         PRODUCTS: products,
         REFS: refs,
-        SKIP_DOCS: skipDocs,
+        BUILD_DOCS: buildDocs,
         WIPEOUT: true,
         BUILD_CONFIG: buildConfig,
       )

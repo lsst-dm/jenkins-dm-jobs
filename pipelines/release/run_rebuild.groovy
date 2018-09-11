@@ -21,14 +21,14 @@ notify.wrap {
     'REFS',
     'PREP_ONLY',
     'PRODUCTS',
-    'SKIP_DOCS',
+    'BUILD_DOCS',
     'TIMEOUT',
   ])
 
   String refs       = params.REFS
   Boolean prepOnly  = params.PREP_ONLY
   String products   = params.PRODUCTS
-  Boolean skipDocs  = params.SKIP_DOCS
+  Boolean buildDocs = params.BUILD_DOCS
   Integer timelimit = params.TIMEOUT
 
   // not a normally exposed job param
@@ -64,7 +64,7 @@ notify.wrap {
         REPOSFILE_REPO:      scipipe.repos.github_repo,
         REFS:                refs,
         PRODUCTS:            products,
-        SKIP_DOCS:           skipDocs,
+        BUILD_DOCS:          buildDocs,
         PREP_ONLY:           prepOnly,
       ]
 
@@ -99,7 +99,7 @@ notify.wrap {
       } // stage('build')
 
       stage('push docs') {
-        if (!skipDocs) {
+        if (buildDocs) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-doxygen-push',

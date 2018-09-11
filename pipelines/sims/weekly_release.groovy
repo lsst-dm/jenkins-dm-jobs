@@ -47,7 +47,7 @@ notify.wrap {
           parameters: [
             REFS: lsstDistribGitTag,
             PRODUCTS: products,
-            SKIP_DOCS: true,
+            BUILD_DOCS: false,
           ],
         )
       } // retry

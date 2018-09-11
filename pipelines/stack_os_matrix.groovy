@@ -23,14 +23,14 @@ notify.wrap {
     'REFS',
     'BUILD_CONFIG',
     'PRODUCTS',
-    'SKIP_DOCS',
+    'BUILD_DOCS',
     'WIPEOUT',
   ])
 
   def buildParams = [
     REFS:      REFS,
     PRODUCTS:  PRODUCTS,
-    SKIP_DOCS: SKIP_DOCS,
+    BUILD_DOCS: BUILD_DOCS,
   ]
 
   def lsstswConfigs = scipipe[BUILD_CONFIG]
