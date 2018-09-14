@@ -752,11 +752,11 @@ def String buildScript(
     compiler,
     macosx_deployment_target,
     menv,
-    false,
+    true,
     ciDir
   ) +
   util.dedent("""
-    curl -sSL ${util.newinstallUrl()} | bash -sT -- -cb
+    curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
     . ./loadLSST.bash
 
     for prod in ${products}; do
