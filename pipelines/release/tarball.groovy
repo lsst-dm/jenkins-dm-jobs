@@ -756,7 +756,7 @@ def String buildScript(
     ciDir
   ) +
   util.dedent("""
-    curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
+    curl -sSL ${util.newinstallUrl()} | bash -sT -- -cb
     . ./loadLSST.bash
 
     for prod in ${products}; do
