@@ -752,7 +752,7 @@ def String buildScript(
     compiler,
     macosx_deployment_target,
     menv,
-    true,
+    false,
     ciDir
   ) +
   util.dedent("""
