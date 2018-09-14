@@ -957,7 +957,7 @@ def Object readYamlFile(String file) {
  * Example:
  *
  *     util.buildTarballMatrix(
- *       tarballConfigs: config.tarball,
+ *       tarballConfigs: config.tarball.build_config,
  *       parameters: [
  *         PRODUCTS: tarballProducts,
  *         SMOKE: true,

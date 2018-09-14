@@ -30,13 +30,13 @@ notify.wrap {
   Boolean runSconsCheck = params.RUN_SCONS_CHECK
   Boolean smoke         = params.SMOKE
 
-  def tarballProducts = products
+  def tarballProducts = scipipe.tarball.products
   def retries         = 3
 
   timeout(time: 30, unit: 'HOURS') {
     stage('build eups tarballs') {
       util.buildTarballMatrix(
-        tarballConfigs: scipipe.tarball,
+        tarballConfigs: scipipe.tarball.build_config,
         parameters: [
           PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,

@@ -28,7 +28,7 @@ notify.wrap {
   String lsstDistribGitTag = params.LSST_DISTRIB_GIT_TAG
 
   def products        = 'lsst_sims'
-  def tarballProducts = products
+  def tarballProducts = scipipe.tarball.products
   def retries         = 3
 
   def eupsTag            = null
@@ -78,7 +78,7 @@ notify.wrap {
 
     stage('build eups tarballs') {
       util.buildTarballMatrix(
-        tarballConfigs: scipipe.tarball,
+        tarballConfigs: scipipe.tarball.build_config,
         parameters: [
           PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,

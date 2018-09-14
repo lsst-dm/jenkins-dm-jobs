@@ -23,7 +23,7 @@ notify.wrap {
   String week = params.WEEK.padLeft(2, "0")
 
   def products        = scipipe.canonical.products
-  def tarballProducts = products
+  def tarballProducts = scipipe.tarball.products
   def retries         = 3
 
   def gitTag       = null
@@ -109,7 +109,7 @@ notify.wrap {
 
     stage('build eups tarballs') {
       util.buildTarballMatrix(
-        tarballConfigs: scipipe.tarball,
+        tarballConfigs: scipipe.tarball.build_config,
         parameters: [
           PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,

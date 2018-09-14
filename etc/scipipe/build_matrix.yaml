@@ -52,34 +52,44 @@ scipipe-lsstsw-ci_hsc:
 dax-lsstsw-matrix:
   - <<: *el7-py3
   - <<: *el7-py3-llvm
-tarball:
-  - <<: *tarball_defaults
-    <<: *el6-py3
-    platform: el6
-    osfamily: redhat
-  - <<: *tarball_defaults
-    <<: *el7-py3
-    platform: el7
-    osfamily: redhat
-  # need newinstall.sh support for devtoolset-7
-  # - <<: *tarball_defaults
-  #  <<: *el7-dts7-py3
-  - <<: *tarball_defaults
-    <<: *osx-py3
-    platform: '10.9'
-    osfamily: osx
-    timelimit: 8
-    allow_fail: true
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
 canonical:
-  products: lsst_distrib lsst_ci
+  products: &canonical_products lsst_distrib lsst_ci
   lsstsw_config:
     <<: *el7-py3
     label: jenkins-snowflake-1
     display_name: centos-7
   workspace: snowflake/release
+#
+# eups distrib tarball configuration -- used by
+# release/{*-release,tarball-matrix}
+#
+tarball:
+  # XXX This is a kludge around lsst_ci requiring git-lfs backed products that
+  # can not be `eups distrib install`ed. It should be aliased to
+  # `canonical.products` once lsst_ci is distrib installable.
+  # products: *canonical_products
+  products: lsst_distrib lsst_dm_stack_demo
+  build_config:
+    - <<: *tarball_defaults
+      <<: *el6-py3
+      platform: el6
+      osfamily: redhat
+    - <<: *tarball_defaults
+      <<: *el7-py3
+      platform: el7
+      osfamily: redhat
+    # need newinstall.sh support for devtoolset-7
+    # - <<: *tarball_defaults
+    #  <<: *el7-dts7-py3
+    - <<: *tarball_defaults
+      <<: *osx-py3
+      platform: '10.9'
+      osfamily: osx
+      timelimit: 8
+      allow_fail: true
 #
 # X-release pattern pipelines
 #
