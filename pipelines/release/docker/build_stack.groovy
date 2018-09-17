@@ -31,7 +31,7 @@ notify.wrap {
   def release        = scipipe.scipipe_release
   def dockerfile     = release.dockerfile
   def dockerRegistry = release.docker_registry
-  def newinstall     = release.newinstall
+  def newinstall     = scipipe.newinstall
 
   def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
   def gitRef         = dockerfile.git_ref
