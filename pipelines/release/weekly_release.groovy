@@ -25,6 +25,7 @@ notify.wrap {
   def products        = scipipe.canonical.products
   def tarballProducts = scipipe.tarball.products
   def retries         = 3
+  def extraDockerTags = '7-stack-lsst_distrib-w_latest w_latest'
 
   def gitTag       = null
   def eupsTag      = null
@@ -129,6 +130,7 @@ notify.wrap {
           parameters: [
             PRODUCTS: tarballProducts,
             EUPS_TAG: eupsTag,
+            DOCKER_TAGS: extraDockerTags,
           ],
         )
       } // retry
