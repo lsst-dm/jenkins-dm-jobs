@@ -52,12 +52,12 @@ notify.wrap {
 
   def matrix = [
     cfht: {
-      drp('cfht', target, 'master', false, true, masterRetries, 1, [
+      drp('cfht', target, 'master', true, masterRetries, 1, [
         relImage: relImage,
       ])
     },
     hsc: {
-      drp('hsc', target, 'master', false, true, masterRetries, 15, [
+      drp('hsc', target, 'master', true, masterRetries, 15, [
         relImage: relImage,
       ])
     },
@@ -74,7 +74,6 @@ notify.wrap {
  * @param datasetSlug String short name of dataset
  * @param target Map docker image selection + build configuration
  * @param drpRef String validate_drp git repo ref. Defaults to 'master'
- * @param doPostqa Boolean Enables/disables running of post-qa. Defaults to true.
  * @param doDispatchqa Boolean Enables/disables running of displatch-verify. Defaults to true.
  * @param retries Integer Number of times to retry after a failure
  * @param timelimit Integer Maximum number of hours per 'try'
@@ -84,7 +83,6 @@ def void drp(
   String datasetSlug,
   Map target,
   String drpRef = 'master',
-  Boolean doPostqa = true,
   Boolean doDispatchqa = true,
   Integer retries = 3,
   Integer timelimit = 12,
@@ -96,7 +94,6 @@ def void drp(
 
   def datasetInfo  = datasetLookup(datasetSlug)
   def drpRepo      = util.githubSlugToUrl('lsst/validate_drp')
-  def postqaVer    = '1.3.3'
   def jenkinsDebug = 'true'
 
   def run = { runSlug ->
@@ -110,7 +107,6 @@ def void drp(
     def fakeLsstswDir     = "${baseDir}/lsstsw-fake"
     def fakeManifestFile  = "${fakeLsstswDir}/build/manifest.txt"
     def fakeReposFile     = "${fakeLsstswDir}/etc/repos.yaml"
-    def postqaDir         = "${archiveDir}/postqa"
     def ciDir             = "${baseDir}/ci-scripts"
 
     try {
@@ -121,7 +117,6 @@ def void drp(
           datasetArchiveDir,
           "${fakeLsstswDir}/build",
           "${fakeLsstswDir}/etc",
-          postqaDir,
           homeDir,
           runDir,
         ])
@@ -198,20 +193,6 @@ def void drp(
             )
           }
         } // inside
-
-        // push results to squash, validate version
-        if (doPostqa) {
-          runPostqa(
-            "${runDir}/output.json",
-            fakeLsstswDir,
-            postqaVer,
-            "${postqaDir}/post-qa.json",
-            datasetSlug,
-            // p.relImage, // XXX DM-12669
-            '0xdeadbeef',
-            target.noPush
-          )
-        }
       } // dir
     } finally {
       // collect artifacats
@@ -599,116 +580,6 @@ def void runDrp(
     run()
   }
 }
-
-/**
- * push DRP results to squash using post-qa.
- *
- * @param resultFile String DRP output JSON file
- * @param lsstswDir String Path to (the fake) lsstsw dir
- * @param postqaVer String PYPI version of post-qa package to use
- * @param outputFile String A copy of the post-qa json sent to a squash
- * instance.
- * @param datasetSlug String The dataset "short" name.  Eg., cfht instead of
- * validation_data_cfht.
- * @param label String The execution environemnt.  In the matrix job
- * incarnation, this was the jenkins agent (node) label.  Eg., centos-7
- * However, it now probably makes more sense to set this to the docker image
- * name.
- * @param noPush Boolean if true, do not attempt to push data to squash.
- * Reguardless of that value, the output of a post-qa "dry run" is writen to
- * outputFile.
- */
-def void runPostqa(
-  String resultFile,
-  String lsstswDir,
-  String postqaVer,
-  String outputFile,
-  String datasetSlug,
-  String label,
-  Boolean noPush = true
-) {
-  def docImage = "lsstsqre/postqa:${postqaVer}"
-
-  def run = {
-    util.bash '''
-      # archive post-qa output
-      # XXX --api-url, --api-user, and --api-password are required even
-      # when --test is set
-      post-qa \
-        --lsstsw "$LSSTSW_DIR" \
-        --qa-json "$RESULTFILE" \
-        --api-url "$SQUASH_URL"  \
-        --api-user "$SQUASH_USER" \
-        --api-password "$SQUASH_PASS" \
-        --no-probe-git \
-        --test \
-        > "$OUTPUTFILE"
-      xz -T0 -9ev "$OUTPUTFILE"
-    '''
-
-    if (!noPush) {
-      util.bash '''
-        # submit post-qa
-        post-qa \
-          --lsstsw "$LSSTSW_DIR" \
-          --qa-json "$RESULTFILE" \
-          --api-url "$SQUASH_URL" \
-          --api-user "$SQUASH_USER" \
-          --api-password "$SQUASH_PASS" \
-          --no-probe-git
-      '''
-    }
-  } // run
-
-  /*
-  These env vars are expected by post-qa:
-  postqa/jenkinsenv.py
-  26:            'ci_id': os.getenv('BUILD_ID', 'demo'),
-  27:            'ci_name': os.getenv('PRODUCT', 'demo'),
-  28:            'ci_dataset': os.getenv('dataset', 'demo'),
-  29:            'ci_label': os.getenv('label', 'demo'),
-  30:            'ci_url': os.getenv('BUILD_URL', 'https://example.com'),
-
-  These are already present under pipeline:
-  - BUILD_ID
-  - BUILD_URL
-
-  This vars were defined automagically by matrixJob and now must be manually
-  set:
-  - PRODUCT
-  - dataset
-  - label
-  */
-  withEnv([
-    "RESULTFILE=${resultFile}",
-    "LSSTSW_DIR=${lsstswDir}",
-    "OUTPUTFILE=${outputFile}",
-    "NO_PUSH=${noPush}",
-    "PRODUCT=validate_drp", // old
-    "PRODUCTS=validate_drp",
-    "dataset=${datasetSlug}",
-    "label=${label}",
-  ]) {
-    withCredentials([[
-      $class: 'UsernamePasswordMultiBinding',
-      credentialsId: 'squash-api-user',
-      usernameVariable: 'SQUASH_USER',
-      passwordVariable: 'SQUASH_PASS',
-    ],
-    [
-      $class: 'StringBinding',
-      credentialsId: 'squash-api-url',
-      variable: 'SQUASH_URL',
-    ]]) {
-      def img = docker.image(docImage)
-      img.pull()
-      img.inside {
-        run()
-      }
-    } // withCredentials
-  } // withEnv
-}
-
 
 /**
  * push DRP results to squash using dispatch-verify.
