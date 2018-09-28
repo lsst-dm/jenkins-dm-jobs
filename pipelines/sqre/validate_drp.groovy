@@ -1,4 +1,5 @@
 def scipipe = null
+def sqre = null
 
 node('jenkins-master') {
   if (params.WIPEOUT) {
@@ -16,6 +17,7 @@ node('jenkins-master') {
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
     scipipe = util.scipipeConfig()
+    sqre = util.sqreConfig()
   }
 }
 
@@ -628,7 +630,7 @@ def void runDispatchqa(
           dispatch_verify.py \
             --env jenkins \
             --lsstsw "$LSSTSW_DIR" \
-            --url https://squash-restful-api.lsst.codes/ \
+            --url "$SQUASH_URL" \
             --user "$SQUASH_USER" \
             --password "$SQUASH_PASS" \
             $file
@@ -653,17 +655,13 @@ def void runDispatchqa(
     "ARCH_DIR=${archiveDir}",
     "NO_PUSH=${noPush}",
     "dataset=${datasetSlug}",
+    "SQUASH_URL=${sqre.squash.url}",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
       credentialsId: 'squash-api-user',
       usernameVariable: 'SQUASH_USER',
       passwordVariable: 'SQUASH_PASS',
-    ],
-    [
-      $class: 'StringBinding',
-      credentialsId: 'squash-api-url',
-      variable: 'SQUASH_URL',
     ]]) {
       run()
     } // withCredentials

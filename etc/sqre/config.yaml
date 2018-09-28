@@ -46,3 +46,5 @@ wget:
   docker_registry:
     repo: lsstsqre/wget
     tag: latest
+squash:
+  url: https://squash-restful-api.lsst.codes/
