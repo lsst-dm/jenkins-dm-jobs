@@ -17,14 +17,14 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
+    'EUPS_TAG',
     'NO_PUSH',
     'PRODUCTS',
-    'TAG',
     'TIMEOUT',
   ])
 
+  String eupsTag         = params.EUPS_TAG
   String products        = params.PRODUCTS
-  String eupsTag         = params.TAG
   Boolean noPush         = params.NO_PUSH
   Integer timelimit      = params.TIMEOUT
   String extraDockerTags = params.DOCKER_TAGS
@@ -73,7 +73,7 @@ notify.wrap {
       opt << '--pull=true'
       opt << '--no-cache'
       opt << "--build-arg EUPS_PRODUCTS=\"${products}\""
-      opt << "--build-arg EUPS_TAG=\"${tag}\""
+      opt << "--build-arg EUPS_TAG=\"${eupsTag}\""
       opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\""
       opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\""
       opt << "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\""

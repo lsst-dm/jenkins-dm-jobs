@@ -10,7 +10,7 @@ p.pipeline().with {
   parameters {
     stringParam('PRODUCTS', scipipe.canonical.products,
       'Whitespace delimited list of EUPS products to build.')
-    stringParam('TAG', null, 'EUPS distrib tag name. Eg. w_2016_08')
+    stringParam('EUPS_TAG', null, 'EUPS distrib tag name. Eg. w_2016_08')
     booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
     stringParam('TIMEOUT', '1', 'build timeout in hours')
     stringParam('DOCKER_TAGS', null, 'Optional whitespace delimited list of additional docker image tags.')

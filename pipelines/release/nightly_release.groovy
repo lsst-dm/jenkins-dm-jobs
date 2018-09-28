@@ -130,7 +130,7 @@ notify.wrap {
         stackResults = util.runBuildStack(
           parameters: [
             PRODUCTS: tarballProducts,
-            TAG: eupsTag,
+            EUPS_TAG: eupsTag,
           ],
         )
       } // retry
