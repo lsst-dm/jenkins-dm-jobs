@@ -13,7 +13,7 @@ p.pipeline().with {
     stringParam('EUPS_TAG', null, 'published EUPS tag')
     booleanParam('SMOKE', true, 'Run a post-build installation test of generated EUPS distrib traballs.')
     booleanParam('RUN_SCONS_CHECK', true, '(no-op without SMOKE) Manually checkout the "base" product and invoke "scons".')
-    booleanParam('PUBLISH', false, 'Publish generated EUPS distrib tarballs.')
+    booleanParam('PUBLISH', true, 'Publish generated EUPS distrib tarballs.')
   }
 
   concurrentBuild(true)
