@@ -23,10 +23,11 @@ notify.wrap {
     'TIMEOUT',
   ])
 
-  String products   = params.PRODUCTS
-  String eupsTag    = params.TAG
-  Boolean noPush    = params.NO_PUSH
-  Integer timelimit = params.TIMEOUT
+  String products        = params.PRODUCTS
+  String eupsTag         = params.TAG
+  Boolean noPush         = params.NO_PUSH
+  Integer timelimit      = params.TIMEOUT
+  String extraDockerTags = params.DOCKER_TAGS
 
   def release        = scipipe.scipipe_release
   def dockerfile     = release.dockerfile
@@ -47,6 +48,16 @@ notify.wrap {
 
   def image = null
   def repo  = null
+
+  def registryTags = [
+    dockerTag,
+    "${dockerTag}-${timestamp}",
+  ]
+
+  if (extraDockerTags) {
+    // manual constructor is needed "because java"
+    registryTags += Arrays.asList(extraDockerTags.split())
+  }
 
   def run = {
     stage('checkout') {
@@ -84,7 +95,7 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          [dockerTag, "${dockerTag}-${timestamp}"].each { name ->
+          registryTags.each { name ->
             image.push(name)
           }
         }
