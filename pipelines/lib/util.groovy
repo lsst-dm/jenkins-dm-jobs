@@ -1445,12 +1445,12 @@ def String defaultCodekitImage() {
 }
 
 /**
- * run `release/run-rebuild` job and parse result
+ * run `release/docker/build-stack` job and parse result
  *
  * @param opts.job Name of job to trigger. Defaults to
  *        `release/docker/build-stack`.
  * @param opts.parameters.PRODUCTS String. Required.
- * @param opts.parameters.TAG String. Required.
+ * @param opts.parameters.EUPS_TAG String. Required.
  * @param opts.parameters.NO_PUSH Boolean. Defaults to `false`.
  * @param opts.parameters.TIMEOUT String. Defaults to `1'`.
  * @return json Object
@@ -1467,7 +1467,7 @@ def Object runBuildStack(Map p) {
   // validate opts.parameters Map
   requireMapKeys(p.parameters, [
     'PRODUCTS',
-    'TAG',
+    'EUPS_TAG',
   ])
   useP.parameters = [
     NO_PUSH: false,
@@ -1478,7 +1478,7 @@ def Object runBuildStack(Map p) {
     job: useP.job,
     parameters: [
       string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
-      string(name: 'TAG', value: useP.parameters.TAG),
+      string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
       booleanParam(name: 'NO_PUSH', value: useP.parameters.NO_PUSH),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT),
     ],
