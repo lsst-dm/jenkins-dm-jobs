@@ -1447,40 +1447,42 @@ def String defaultCodekitImage() {
 /**
  * run `release/docker/build-stack` job and parse result
  *
- * @param opts.job Name of job to trigger. Defaults to
+ * @param p.job Name of job to trigger. Defaults to
  *        `release/docker/build-stack`.
- * @param opts.parameters.PRODUCTS String. Required.
- * @param opts.parameters.EUPS_TAG String. Required.
- * @param opts.parameters.NO_PUSH Boolean. Defaults to `false`.
- * @param opts.parameters.TIMEOUT String. Defaults to `1'`.
+ * @param p.parameters.PRODUCTS String. Required.
+ * @param p.parameters.EUPS_TAG String. Required.
+ * @param p.parameters.NO_PUSH Boolean. Defaults to `false`.
+ * @param p.parameters.TIMEOUT String. Defaults to `1'`.
  * @return json Object
  */
 def Object runBuildStack(Map p) {
-  // validate opts Map
+  // validate p Map
   requireMapKeys(p, [
     'parameters',
   ])
-  def useP = [
+  p = [
     job: 'release/docker/build-stack',
   ] + p
 
-  // validate opts.parameters Map
+  // validate p.parameters Map
   requireMapKeys(p.parameters, [
     'PRODUCTS',
     'EUPS_TAG',
   ])
-  useP.parameters = [
+  p.parameters = [
     NO_PUSH: false,
     TIMEOUT: '1', // should be String
+    DOCKER_TAGS: '',  // null is not a valid value for a string param
   ] + p.parameters
 
   def result = build(
-    job: useP.job,
+    job: p.job,
     parameters: [
-      string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
-      string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
-      booleanParam(name: 'NO_PUSH', value: useP.parameters.NO_PUSH),
-      string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT),
+      string(name: 'PRODUCTS', value: p.parameters.PRODUCTS),
+      string(name: 'EUPS_TAG', value: p.parameters.EUPS_TAG),
+      booleanParam(name: 'NO_PUSH', value: p.parameters.NO_PUSH),
+      string(name: 'TIMEOUT', value: p.parameters.TIMEOUT),
+      string(name: 'DOCKER_TAGS', value: p.parameters.DOCKER_TAGS),
     ],
     wait: true
   )
@@ -1490,7 +1492,7 @@ def Object runBuildStack(Map p) {
 
     step([
       $class: 'CopyArtifact',
-      projectName: useP.job,
+      projectName: p.job,
       filter: resultsArtifact,
       selector: [
         $class: 'SpecificBuildSelector',
