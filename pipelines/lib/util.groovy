@@ -1409,7 +1409,7 @@ def String sanitizeEupsTag(String tag) {
 /*
  * Get scipipe config
  *
- * @return tag Object
+ * @return config Object
  */
 def Object scipipeConfig() {
   readYamlFile('etc/scipipe/build_matrix.yaml')
@@ -1418,10 +1418,19 @@ def Object scipipeConfig() {
 /*
  * Get sqre config
  *
- * @return tag Object
+ * @return config Object
  */
 def Object sqreConfig() {
   readYamlFile('etc/sqre/config.yaml')
+}
+
+/*
+ * Get ap_verify config
+ *
+ * @return config Object
+ */
+def Object apVerifyConfig() {
+  readYamlFile('etc/scipipe/ap_verify.yaml')
 }
 
 /*
