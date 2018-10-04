@@ -1472,6 +1472,7 @@ def Object runBuildStack(Map p) {
   useP.parameters = [
     NO_PUSH: false,
     TIMEOUT: '1', // should be String
+    DOCKER_TAGS: '',  // null is not a valid value for a string param
   ] + p.parameters
 
   def result = build(
@@ -1481,6 +1482,7 @@ def Object runBuildStack(Map p) {
       string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
       booleanParam(name: 'NO_PUSH', value: useP.parameters.NO_PUSH),
       string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT),
+      string(name: 'DOCKER_TAGS', value: useP.parameters.DOCKER_TAGS),
     ],
     wait: true
   )
