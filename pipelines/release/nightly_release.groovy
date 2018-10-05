@@ -205,6 +205,18 @@ notify.wrap {
       } // retry
     }
 
+    triggerMe['ap_verify'] = {
+      retry(retries) {
+        build(
+          job: 'scipipe/ap_verify',
+          parameters: [
+            string(name: 'DOCKER_IMAGE', value: stackResults.image),
+          ],
+          wait: false,
+        )
+      } // retry
+    }
+
     stage('triggered jobs') {
       parallel triggerMe
     } // stage

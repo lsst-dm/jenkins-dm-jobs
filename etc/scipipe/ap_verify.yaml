@@ -1,0 +1,9 @@
+---
+ap_verify:
+  datasets:
+    - name: CI-HiTS2015
+      github_repo: lsst/ap_verify_ci_hits2015
+      git_ref: master
+      clone_timelimit: 15
+      retries: 3
+      run_timelimit: 60

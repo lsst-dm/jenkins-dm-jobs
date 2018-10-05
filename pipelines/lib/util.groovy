@@ -1409,7 +1409,7 @@ def String sanitizeEupsTag(String tag) {
 /*
  * Get scipipe config
  *
- * @return tag Object
+ * @return config Object
  */
 def Object scipipeConfig() {
   readYamlFile('etc/scipipe/build_matrix.yaml')
@@ -1418,10 +1418,19 @@ def Object scipipeConfig() {
 /*
  * Get sqre config
  *
- * @return tag Object
+ * @return config Object
  */
 def Object sqreConfig() {
   readYamlFile('etc/sqre/config.yaml')
+}
+
+/*
+ * Get ap_verify config
+ *
+ * @return config Object
+ */
+def Object apVerifyConfig() {
+  readYamlFile('etc/scipipe/ap_verify.yaml')
 }
 
 /*
@@ -1549,5 +1558,53 @@ def void withCondaMirrorEnv(Closure run) {
     }
   } // withCredentials
 } // withCondaMirrorEnv
+
+/**
+ * Create/update a clone of an lfs enabled git repo.
+ *
+ * Example:
+ *
+ *     util.checkoutLFS(
+ *       githubSlug: 'foo/bar',
+ *       gitRef: 'master',
+ *     )
+ *
+ * @param p Map
+ * @param p.gitRepo String github repo slug
+ * @param p.gitRef String git ref to checkout. Defaults to `master`
+ */
+def void checkoutLFS(Map p) {
+  util.requireMapKeys(p, [
+    'githubSlug',
+    'gitRef',
+  ])
+  p = [
+    gitRef: 'master',
+  ] + p
+
+  def gitRepo = util.githubSlugToUrl(p.githubSlug)
+
+  def lfsImage = 'lsstsqre/gitlfs'
+
+  // running a git clone in a docker.inside block is broken
+  git([
+    url: gitRepo,
+    branch: p.gitRef,
+    changelog: false,
+    poll: false
+  ])
+
+  try {
+    util.insideDockerWrap(
+      image: lfsImage,
+      pull: true,
+    ) {
+      util.bash('git lfs pull origin')
+    }
+  } finally {
+    // try not to break jenkins clone mangement
+    util.bash 'rm -f .git/hooks/post-checkout'
+  }
+} // checkoutLFS
 
 return this;
