@@ -133,7 +133,10 @@ def void drp(
         // clone validation dataset
         dir(datasetDir) {
           timeout(time: datasetInfo['cloneTime'], unit: 'MINUTES') {
-            checkoutLFS(datasetInfo['datasetRepo'], datasetInfo['datasetRef'])
+            util.checkoutLFS(
+              githubSlug: datasetInfo['datasetGithubRepo'],
+              gitRef: datasetInfo['datasetRef'],
+            )
           }
         }
 
@@ -252,25 +255,25 @@ def Map datasetLookup(String datasetSlug) {
   // perhaps this won't be the case in the future?
   switch(datasetSlug) {
     case 'cfht':
-      info['dataset']     = 'validation_data_cfht'
-      info['datasetRepo'] = util.githubSlugToUrl('lsst/validation_data_cfht')
-      info['datasetRef']  = 'master'
-      info['cloneTime']   = 15
-      info['runTime']     = 15
+      info['dataset']           = 'validation_data_cfht'
+      info['datasetGithubRepo'] = 'lsst/validation_data_cfht'
+      info['datasetRef']        = 'master'
+      info['cloneTime']         = 15
+      info['runTime']           = 15
       break
     case 'hsc':
-      info['dataset']     = 'validation_data_hsc'
-      info['datasetRepo'] = util.githubSlugToUrl('lsst/validation_data_hsc')
-      info['datasetRef']  = 'master'
-      info['cloneTime']   = 240
-      info['runTime']     = 600
+      info['dataset']           = 'validation_data_hsc'
+      info['datasetGithubRepo'] = 'lsst/validation_data_hsc'
+      info['datasetRef']        = 'master'
+      info['cloneTime']         = 240
+      info['runTime']           = 600
       break
     case 'decam':
-      info['dataset']     = 'validation_data_decam'
-      info['datasetRepo'] = util.githubSlugToUrl('lsst/validation_data_decam')
-      info['datasetRef']  = 'master'
-      info['cloneTime']   = 60 // XXX untested
-      info['runTime']     = 60 // XXX untested
+      info['dataset']           = 'validation_data_decam'
+      info['datasetGithubRepo'] = 'lsst/validation_data_decam'
+      info['datasetRef']        = 'master'
+      info['cloneTime']         = 60 // XXX untested
+      info['runTime']           = 60 // XXX untested
       break
     default:
       error "unknown datasetSlug: ${datasetSlug}"
@@ -325,36 +328,6 @@ def void record(String archiveDir, String drpDir, String lsstswDir) {
     allowEmptyResults: true,
   ])
 } // record
-
-/**
- * Create/update a clone of an lfs enabled git repo.
- *
- * @param gitRepo String URL of git repo to clone
- * @param gitRef String git ref to checkout
- */
-def void checkoutLFS(String gitRepo, String gitRef = 'master') {
-  def docRepo = 'lsstsqre/gitlfs'
-
-  // running a git clone in a docker.inside block is broken
-  git([
-    url: gitRepo,
-    branch: gitRef,
-    changelog: false,
-    poll: false
-  ])
-
-  try {
-    util.insideDockerWrap(
-      image: docRepo,
-      pull: true,
-    ) {
-      util.bash('git lfs pull origin')
-    }
-  } finally {
-    // try not to break jenkins clone mangement
-    util.bash 'rm -f .git/hooks/post-checkout'
-  }
-} // checkoutLFS
 
 /**
  * Build validate_drp
