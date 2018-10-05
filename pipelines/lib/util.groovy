@@ -1550,4 +1550,52 @@ def void withCondaMirrorEnv(Closure run) {
   } // withCredentials
 } // withCondaMirrorEnv
 
+/**
+ * Create/update a clone of an lfs enabled git repo.
+ *
+ * Example:
+ *
+ *     util.checkoutLFS(
+ *       githubSlug: 'foo/bar',
+ *       gitRef: 'master',
+ *     )
+ *
+ * @param p Map
+ * @param p.gitRepo String github repo slug
+ * @param p.gitRef String git ref to checkout. Defaults to `master`
+ */
+def void checkoutLFS(Map p) {
+  util.requireMapKeys(p, [
+    'githubSlug',
+    'gitRef',
+  ])
+  p = [
+    gitRef: 'master',
+  ] + p
+
+  def gitRepo = util.githubSlugToUrl(p.githubSlug)
+
+  def lfsImage = 'lsstsqre/gitlfs'
+
+  // running a git clone in a docker.inside block is broken
+  git([
+    url: gitRepo,
+    branch: p.gitRef,
+    changelog: false,
+    poll: false
+  ])
+
+  try {
+    util.insideDockerWrap(
+      image: lfsImage,
+      pull: true,
+    ) {
+      util.bash('git lfs pull origin')
+    }
+  } finally {
+    // try not to break jenkins clone mangement
+    util.bash 'rm -f .git/hooks/post-checkout'
+  }
+} // checkoutLFS
+
 return this;
