@@ -1,7 +1,5 @@
 import groovy.transform.Field
 
-def scipipe = null
-
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
