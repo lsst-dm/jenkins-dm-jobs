@@ -1,5 +1,3 @@
-def scipipe = null
-
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()

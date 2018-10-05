@@ -1,5 +1,3 @@
-def dockerfile = null
-
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
     checkout([
