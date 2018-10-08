@@ -11,6 +11,7 @@ node('jenkins-master') {
     util = load 'pipelines/lib/util.groovy'
     scipipe = util.scipipeConfig()
     sqre = util.sqreConfig() // side effect only
+    sims = util.simsConfig()
   }
 }
 
@@ -25,8 +26,8 @@ notify.wrap {
   String week              = params.WEEK.padLeft(2, "0")
   String lsstDistribGitTag = params.LSST_DISTRIB_GIT_TAG
 
-  def products        = 'lsst_sims'
-  def tarballProducts = scipipe.tarball.products
+  def products        = sims.canonical.products
+  def tarballProducts = sims.tarball.products
   def retries         = 3
 
   def eupsTag            = null
