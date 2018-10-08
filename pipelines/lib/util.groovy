@@ -1434,6 +1434,15 @@ def Object apVerifyConfig() {
 }
 
 /*
+ * Get sims config
+ *
+ * @return config Object
+ */
+def Object simsConfig() {
+  readYamlFile('etc/sims/config.yaml')
+}
+
+/*
  * Get default awscli docker image string
  *
  * @return awscliImage String
