@@ -1,0 +1,6 @@
+---
+# yamllint disable rule:line-length
+canonical:
+  products: &canonical_products lsst_sims
+tarball:
+  products: *canonical_products
