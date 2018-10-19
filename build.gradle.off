@@ -1,0 +1,46 @@
+apply plugin: 'groovy'
+apply plugin: 'codenarc'
+
+defaultTasks 'test'
+
+repositories {
+    jcenter()
+}
+
+configurations {
+    libs
+}
+
+dependencies {
+    libs 'org.yaml:snakeyaml:1.17'
+}
+
+task clean(type: Delete) {
+    delete 'lib'
+}
+
+task libs(type: Copy) {
+    into 'lib'
+    from configurations.libs
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.2.1'
+}
+
+// copied from
+// https://github.com/sheehan/job-dsl-gradle-example/blob/master/build.gradle
+sourceSets {
+    jobs {
+        groovy {
+            srcDirs 'jobs'
+        }
+    }
+    main {
+        groovy {
+            srcDirs = ['pipelines']
+        }
+    }
+}
+
+tasks.getByName('test').inputs.files(sourceSets.jobs.groovy.srcDirs)

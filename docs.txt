@@ -1,0 +1,9 @@
+
+
+. /opt/lsst/software/stack/loadLSST.bash
+git clone https://github.com/lsst/pipelines_lsst_io -b tickets/DM-11216
+cd pipelines_lsst_io/
+pip install --force-reinstall git+https://github.com/lsst-sqre/documenteer.git@tickets/DM-13584-current-astropy_helpers#egg=project[pipelines]
+setup -r .
+build-stack-docs -d . -v
+

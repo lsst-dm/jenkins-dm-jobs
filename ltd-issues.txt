@@ -1,0 +1,8 @@
+* ltd always returnning http 502
+* "branch" name???
+* seems slow to update? https://pipelines.lsst.io/
+* archive/html publish build?
+* select repo branch of pipelines_lsst_io?
+
+* dev job with branch/repo pipeline_lsst_io
+* sort out release pipelines for documenteer tag

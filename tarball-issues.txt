@@ -1,0 +1,17 @@
+
+# unsorted dir listing
+# https://wiki.debian.org/ReproducibleBuilds/FileOrderInTarballs
+tar --sort=name -cf archive.tar src
+
+# locale
+# https://wiki.debian.org/ReproducibleBuilds/Howto
+
+The build system should be patched to add LC_ALL=C.UTF-8 to the environment. 
+
+# Make sure that the mtime of the files in binary packages are deterministic. Example patch
+# https://wiki.debian.org/ReproducibleBuilds/Howto
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=807270
+touch --no-dereference --date='$(BUILD_DATE)'
+
+or tar --mtime ...
+gzip -n ...

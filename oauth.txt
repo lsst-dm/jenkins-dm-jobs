@@ -1,0 +1,4 @@
+
+channels:write
+chat:write:bot
+user:profile:read

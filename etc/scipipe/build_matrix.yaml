@@ -98,20 +98,20 @@ release:
   s3_wait_time: 15
   step:
     build_jupyterlabdemo:
-      image_name: lsstsqre/jld-lab
+      image_name: lsstsqre/jhoblitt-curly-jld-lab
     validate_drp:
-      no_push: false
+      no_push: true
     documenteer:
-      publish: true
+      publish: false
 #
 # low-level build parameters
 #
 repos:
-  github_repo: lsst/repos
+  github_repo: provingground-curly/repos
   git_ref: master
 versiondb:
-  github_repo: lsst/versiondb
-release_tag_org: lsst
+  github_repo: provingground-curly/versiondb
+release_tag_org: provingground-curly
 lsstsw:
   github_repo: lsst/lsstsw
   git_ref: master
@@ -132,14 +132,14 @@ scipipe_release:
     git_ref: master
     dir: ''
   docker_registry:
-    repo: lsstsqre/centos
+    repo: lsstsqre/jhoblitt-curly-centos
 newinstall:
   dockerfile:
     github_repo: lsst-sqre/docker-newinstall
     git_ref: master
     dir: ''
   docker_registry:
-    repo: lsstsqre/newinstall
+    repo: lsstsqre/jhoblitt-curly-newinstall
     tag: latest
   github_repo: lsst/lsst
   git_ref: master
