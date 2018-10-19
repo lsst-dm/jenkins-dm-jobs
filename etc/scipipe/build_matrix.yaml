@@ -129,22 +129,22 @@ release:
   s3_wait_time: 15
   step:
     build_sciplatlab:
-      image_name: lsstsqre/sciplat-lab
+      image_name: provinggroundcurly/sciplat-lab
     validate_drp:
-      no_push: false
+      no_push: true
     documenteer:
-      publish: true
+      publish: false
     ap_verify:
-      no_push: false
+      no_push: true
 #
 # low-level build parameters
 #
 repos:
-  github_repo: lsst/repos
+  github_repo: provingground-curly/repos
   git_ref: master
 versiondb:
-  github_repo: lsst/versiondb
-release_tag_org: lsst
+  github_repo: provingground-curly/versiondb
+release_tag_org: provingground-curly
 lsstsw:
   github_repo: lsst/lsstsw
   git_ref: master
@@ -165,14 +165,14 @@ scipipe_release:
     git_ref: master
     dir: ''
   docker_registry:
-    repo: lsstsqre/centos
+    repo: provinggroundcurly/centos
 newinstall:
   dockerfile:
     github_repo: lsst-sqre/docker-newinstall
     git_ref: master
     dir: ''
   docker_registry:
-    repo: lsstsqre/newinstall
+    repo: provinggroundcurly/newinstall
     tag: latest
-  github_repo: lsst/lsst
+  github_repo: provingground-curly/lsst
   git_ref: master
