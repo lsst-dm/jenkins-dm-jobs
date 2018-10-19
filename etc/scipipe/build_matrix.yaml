@@ -143,5 +143,3 @@ newinstall:
     tag: latest
   github_repo: lsst/lsst
   git_ref: master
-lsst_dm_stack_demo:
-  github_repo: lsst/lsst_dm_stack_demo
