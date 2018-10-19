@@ -90,7 +90,7 @@ canonical:
   products: &canonical_products lsst_distrib lsst_ci
   lsstsw_config:
     <<: *el7-py3
-    label: snowflake-0
+    label: docker
     display_name: centos-7
   workspace: snowflake/release
 #
