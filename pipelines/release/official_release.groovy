@@ -16,50 +16,74 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
-    'EUPSPKG_SOURCE',
-    'EUPS_TAG',
-    'GIT_TAG',
-    'MANIFEST_ONLY',
+    'SOURCE_GIT_REFS',
+    'RELEASE_GIT_TAG',
     'O_LATEST',
-    'SOURCE_EUPS_TAG',
-    'SOURCE_MANIFEST_ID',
   ])
 
-  String eupspkgSource = params.EUPSPKG_SOURCE
-  String eupsTag       = params.EUPS_TAG
-  String gitTag        = params.GIT_TAG
-  Boolean manifestOnly = params.MANIFEST_ONLY
-  Boolean oLatest      = params.O_LATEST
-  // '' means null
-  String srcEupsTag    = util.emptyToNull(params.SOURCE_EUPS_TAG)
-  String srcManifestId = params.SOURCE_MANIFEST_ID
+  String sourceGitRefs = params.SOURCE_GIT_REFS
+  String gitTag        = params.RELEASE_GIT_TAG
+  Boolean dockerLatest = params.O_LATEST
 
+  // generate eups tag from git tag
+  String eupsTag = util.sanitizeEupsTag(gitTag)
+
+  // determine if this is an rc release (does not start with an integer)
+  Boolean finalRelease = !!(gitTag =~ /^\d/)
+
+  // o_latest is only allowed for a final release
+  if (dockerLatest && !finalRelease) {
+    error "O_LATEST is only allowed on final (non-rc) releases"
+  }
+
+  // type of eupspkg to create -- "git" should always be used except for a
+  // final (non-rc) release
+  String eupspkgSource = finalRelease ? 'package' : 'git'
+
+  echo "final release (non-rc): ${finalRelease}"
   echo "EUPSPKG_SOURCE: ${eupspkgSource}"
-  echo "publish [eups] tag: ${eupsTag}"
+  echo "input git refs: ${sourceGitRefs}"
   echo "publish [git] tag: ${gitTag}"
-  echo "source [eups] tag: ${srcEupsTag}"
-  echo "source manifest id: ${srcManifestId}"
+  echo "publish [eups] tag: ${eupsTag}"
 
   def products        = scipipe.canonical.products
   def tarballProducts = scipipe.tarball.products
   def retries         = 3
-  def extraDockerTags = '7-stack-lsst_distrib-o_latest o_latest'
+  def extraDockerTags = ''
 
-  def manifestId   = null
-  def stackResults = null
+  if (dockerLatest) {
+    extraDockerTags = '7-stack-lsst_distrib-o_latest o_latest'
+  }
+
+  def gitTagOnlyManifestId = null
+  def manifestId           = null
+  def stackResults         = null
 
   def run = {
+    stage('generate manifest') {
+      retry(retries) {
+          gitTagOnlyManifestId = util.runRebuild(
+          parameters: [
+            PRODUCTS: products,
+            REFS: sourceGitRefs,
+            BUILD_DOCS: false,
+            PREP_ONLY: true,
+          ],
+        )
+      } // retry
+    } // stage
+
     stage('git tag eups products') {
       retry(retries) {
         node('docker') {
-          // needs eups distrib tag to be sync'd from s3 -> k8s volume
+          def vdbUrl = "https://github.com/${scipipe.versiondb.github_repo}"
           util.githubTagRelease(
             options: [
               '--dry-run': false,
               '--org': scipipe.release_tag_org,
-              '--manifest': srcManifestId,
-              '--eups-tag': srcEupsTag, // ommited if null
-              '--manifest-only': manifestOnly,
+              '--manifest': gitTagOnlyManifestId,
+              '--manifest-only': true,
+              '--eupstag-base-url': vdbUrl,
               '--ignore-git-message': true,
               '--ignore-git-tagger': true,
             ],
@@ -193,7 +217,7 @@ notify.wrap {
               name: 'NO_PUSH',
               value: scipipe.release.step.validate_drp.no_push,
             ),
-            booleanParam(name: 'WIPEOUT', value: true),
+            booleanParam(name: 'WIPEOUT', value: false),
           ],
           wait: false,
         )

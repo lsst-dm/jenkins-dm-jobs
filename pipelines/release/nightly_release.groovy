@@ -180,7 +180,7 @@ notify.wrap {
               name: 'NO_PUSH',
               value: scipipe.release.step.validate_drp.no_push,
             ),
-            booleanParam(name: 'WIPEOUT', value: true),
+            booleanParam(name: 'WIPEOUT', value: false),
           ],
           wait: false,
         )

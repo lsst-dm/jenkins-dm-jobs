@@ -9,6 +9,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    scipipe = util.scipipeConfig()
   }
 }
 
@@ -21,11 +22,14 @@ notify.wrap {
   Boolean pushLatest = params.LATEST
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def hubRepo    = 'lsstsqre/documenteer-base'
-  def githubSlug = 'lsst-sqre/docker-documenteer-base'
-  def githubRepo = "https://github.com/${githubSlug}"
-  def gitRef     = 'master'
-  def dockerDir  = ''
+  def documenteer    = sqrepipe.documenteer
+  def dockerfile     = documenteer.dockerfile
+  def dockerRegistry = documenteer.docker_registry
+
+  def githubRepo = util.githubSlugToUrl(dockerfile.github_repo)
+  def gitRef     = dockerfile.git_ref
+  def buildDir   = dockerfile.dir
+  def dockerRepo = dockerRegistry.repo
 
   def image = null
 
@@ -42,13 +46,13 @@ notify.wrap {
     }
 
     stage('build') {
-      dir(dockerDir) {
-        // ensure base image is always up to date
-        //image = docker.build(hubRepo, '--pull=true --no-cache .')
-        // XXX for unknown reasons, jenkins is choking on this Dockerfile
-        // running the build by hand seems to kludge around the problem...
-        util.bash("docker build -t ${hubRepo} --pull=true --no-cache .")
-        image = docker.image(hubRepo)
+      def opt = []
+      // ensure base image is always up to date
+      opt << '--pull=true'
+      opt << '--no-cache'
+
+      dir(buildDir) {
+        image = docker.build(dockerRepo, opt.join(' '))
       }
     }
 
@@ -58,7 +62,7 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(gitRef)
+          image.push(util.sanitizeDockerTag(gitRef))
           if (gitRef == 'master') {
             image.push("g${abbrHash}")
           }
