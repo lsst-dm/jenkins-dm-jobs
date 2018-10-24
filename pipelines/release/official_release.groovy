@@ -76,14 +76,14 @@ notify.wrap {
     stage('git tag eups products') {
       retry(retries) {
         node('docker') {
-          def vdbUrl = "https://github.com/${scipipe.versiondb.github_repo}"
+          def vdbUrl = "https://raw.githubusercontent.com/${scipipe.versiondb.github_repo}/master/manifests"
           util.githubTagRelease(
             options: [
               '--dry-run': false,
               '--org': scipipe.release_tag_org,
               '--manifest': gitTagOnlyManifestId,
               '--manifest-only': true,
-              '--eupstag-base-url': vdbUrl,
+              '--versiondb-base-url': vdbUrl,
               '--ignore-git-message': true,
               '--ignore-git-tagger': true,
             ],
