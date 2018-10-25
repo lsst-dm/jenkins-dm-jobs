@@ -9,7 +9,7 @@ p.pipeline().with {
     A new git repo tag will be applied AND a new eups tag will be published.
     The new eups tag is derived from the git tag name.
 
-    Eg., (git tag) `16.0.0-rc1` -> (eups tag) `16_0_0_rc1`
+    Eg., (git tag) `16.0.0.rc1` -> (eups tag) `16_0_0_rc1`
   '''
   description(text.replaceFirst("\n","").stripIndent())
 
