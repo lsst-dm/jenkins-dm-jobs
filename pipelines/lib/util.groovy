@@ -1630,4 +1630,28 @@ def void checkoutLFS(Map p) {
   }
 } // checkoutLFS
 
+/**
+ * Download URL resource and write it to disk.
+ *
+ * Example:
+ *
+ *     util.downloadFile(
+ *       url: 'https://example.org/foo/bar.baz',
+ *       destFile: 'foo/bar.baz',
+ *     )
+ *
+ * @param p Map
+ * @param p.url String URL to fetch
+ * @param p.destFile String path to write downloaded file
+ */
+def void downloadFile(Map p) {
+  requireMapKeys(p, [
+    'url',
+    'destFile',
+  ])
+
+  writeFile(file: p.destFile, text: new URL(p.url).getText())
+}
+
+
 return this;
