@@ -121,10 +121,12 @@ def void drp(
         ])
 
         // stage manifest.txt early so we don't risk a long processing run and
-        // then fail setting up to run post-qa
-        // testing
-        downloadManifest(fakeManifestFile, target.manifestId)
-        downloadRepos(fakeReposFile)
+        // then fail setting up to run dispatch_verify.py
+        util.downloadManifest(
+          destFile: fakeManifestFile,
+          manifestId: target.manifestId,
+        )
+        util.downloadRepos(destFile: fakeReposFile)
 
         dir(ciDir) {
           util.cloneCiScripts()
@@ -636,35 +638,4 @@ def void runDispatchqa(
       run()
     } // withCredentials
   } // withEnv
-}
-
-/**
- * Download URL resource and write it to disk.
- *
- * @param url String URL to fetch
- * @param destFile String path to write downloaded file
- */
-def void downloadFile(String url, String destFile) {
-  writeFile(file: destFile, text: new URL(url).getText())
-}
-
-/**
- * Download `manifest.txt` from `lsst/versiondb`.
- *
- * @param destFile String path to write downloaded file
- * @param manifestId String manifest build id aka bNNNN
- */
-def void downloadManifest(String destFile, String manifestId) {
-  def manifestUrl = util.versiondbManifestUrl(manifestId)
-  downloadFile(manifestUrl, destFile)
-}
-
-/**
- * Download a copy of `repos.yaml`
- *
- * @param destFile String path to write downloaded file
- */
-def void downloadRepos(String destFile) {
-  def reposUrl = util.reposUrl()
-  downloadFile(reposUrl, destFile)
 }
