@@ -1680,4 +1680,29 @@ def void downloadManifest(Map p) {
   )
 }
 
+/**
+ * Download a copy of `repos.yaml`
+ *
+ * Example:
+ *
+ *     util.downloadRepos(
+ *       destFile: 'foo/repos.yaml',
+ *     )
+ *
+ * @param p Map
+ * @param p.destFile String path to write downloaded file
+ */
+def void downloadRepos(Map p) {
+  requireMapKeys(p, [
+    'destFile',
+  ])
+
+  def reposUrl = reposUrl()
+  downloadFile(
+    url: reposUrl,
+    destFile: p.destFile,
+  )
+}
+
+
 return this;
