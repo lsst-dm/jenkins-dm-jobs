@@ -1450,6 +1450,15 @@ def Object simsConfig() {
 }
 
 /*
+ * Get validate_drp config
+ *
+ * @return config Object
+ */
+def Object validateDrpConfig() {
+  readYamlFile('etc/scipipe/validate_drp.yaml')
+}
+
+/*
  * Get default awscli docker image string
  *
  * @return awscliImage String
