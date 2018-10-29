@@ -42,11 +42,11 @@ template:
 scipipe-lsstsw-matrix:
   - <<: *el6-py3
   - <<: *el7-py3
-  - <<: *osx-py3
-    # label: osx-10.11||osx-10.12
-    display_name: osx
-    # compiler: ^clang-802.0.42$ ^clang-800.0.42.1$
-    display_compiler: clang
+  #- <<: *osx-py3
+  #  # label: osx-10.11||osx-10.12
+  #  display_name: osx
+  #  # compiler: ^clang-802.0.42$ ^clang-800.0.42.1$
+  #  display_compiler: clang
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-py3
 dax-lsstsw-matrix:
