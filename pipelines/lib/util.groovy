@@ -1653,5 +1653,31 @@ def void downloadFile(Map p) {
   writeFile(file: p.destFile, text: new URL(p.url).getText())
 }
 
+/**
+ * Download `manifest.txt` from `lsst/versiondb`.
+ *
+ * Example:
+ *
+ *     util.downloadManifest(
+ *       destFile: 'foo/manifest.txt',
+ *       manifestId: 'b1234',
+ *     )
+ *
+ * @param p Map
+ * @param p.destFile String path to write downloaded file
+ * @param p.manifestId String manifest build id aka bNNNN
+ */
+def void downloadManifest(Map p) {
+  requireMapKeys(p, [
+    'destFile',
+    'manifestId',
+  ])
+
+  def manifestUrl = versiondbManifestUrl(p.manifestId)
+  downloadFile(
+    url: manifestUrl,
+    destFile: p.destFile,
+  )
+}
 
 return this;
