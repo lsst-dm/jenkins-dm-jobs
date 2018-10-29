@@ -1597,7 +1597,7 @@ def void withCondaMirrorEnv(Closure run) {
  * @param p.gitRef String git ref to checkout. Defaults to `master`
  */
 def void checkoutLFS(Map p) {
-  util.requireMapKeys(p, [
+  requireMapKeys(p, [
     'githubSlug',
     'gitRef',
   ])
@@ -1605,7 +1605,7 @@ def void checkoutLFS(Map p) {
     gitRef: 'master',
   ] + p
 
-  def gitRepo = util.githubSlugToUrl(p.githubSlug)
+  def gitRepo = githubSlugToUrl(p.githubSlug)
 
   def lfsImage = 'lsstsqre/gitlfs'
 
@@ -1618,15 +1618,15 @@ def void checkoutLFS(Map p) {
   ])
 
   try {
-    util.insideDockerWrap(
+    insideDockerWrap(
       image: lfsImage,
       pull: true,
     ) {
-      util.bash('git lfs pull origin')
+      bash('git lfs pull origin')
     }
   } finally {
     // try not to break jenkins clone mangement
-    util.bash 'rm -f .git/hooks/post-checkout'
+    bash 'rm -f .git/hooks/post-checkout'
   }
 } // checkoutLFS
 
