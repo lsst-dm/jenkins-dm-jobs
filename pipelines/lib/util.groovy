@@ -369,6 +369,13 @@ def void jenkinsWrapper(Map buildParams) {
     'LSST_PRODUCTS',
     'LSST_REFS',
   ])
+  def scipipe = scipipeConfig()
+
+  buildParams = [
+    // XXX this should be renamed in lsstsw to make it clear that its setting a
+    // github repo slug
+    REPOSFILE_REPO: scipipe.repos.github_repo,
+  ] + buildParams
 
   def cwd     = pwd()
   def homeDir = "${cwd}/home"

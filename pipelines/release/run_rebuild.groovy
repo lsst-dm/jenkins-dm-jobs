@@ -59,9 +59,6 @@ notify.wrap {
         LSST_PRODUCTS:       products,
         LSST_PYTHON_VERSION: lsstswConfig.python,
         LSST_REFS:           refs,
-        // XXX this should be renamed in lsstsw to make it clear that its
-        // setting a github repo slug
-        REPOSFILE_REPO:      scipipe.repos.github_repo,
         VERSIONDB_PUSH:      versiondbPush,
         VERSIONDB_REPO:      versiondbRepo,
       ]
