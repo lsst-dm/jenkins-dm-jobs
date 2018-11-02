@@ -9,6 +9,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
+    sqre = util.sqreConfig()
   }
 }
 
@@ -29,14 +30,20 @@ notify.wrap {
 
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def run = {
-    def baseRepo  = 'centos'
-    def buildRepo = 'lsstsqre/centos'
-    def retries   = 3
+  def layercake = sqre.layercake
+  def packer    = layercake.packer
+  def gitRepo   = util.githubSlugToUrl(packer.github_repo)
+  def gitRef    = packer.git_ref
+  def buildDir  = packer.dir
 
+  def baseRepo  = 'centos'
+  def buildRepo = layercake.docker_registry.repo
+  def retries   = 3
+
+  def run = {
     git([
-      url: util.githubSlugToUrl('lsst-sqre/packer-layercake'),
-      branch: 'master',
+      url: gitRepo,
+      branch: gitRef,
       changelog: false,
       poll: false
     ])
@@ -47,46 +54,50 @@ notify.wrap {
 
     def images = []
 
-    // centos major release version(s)
-    [6, 7].each { majrelease ->
-      def baseImage = "${baseRepo}:${majrelease}"
-      def baseName = mkBaseName(majrelease)
-      def baseTag = "${buildRepo}:${baseName}"
-
-      stage(baseTag) {
-        def baseBuild = packIt('centos_stackbase.json', [
-          "-var base_image=${baseImage}",
-          "-var build_name=${baseName}",
-        ])
-        images << [(baseTag): baseBuild]
-      } // stage
-    } // majrelease
-
-    // scl compiler string(s)
-    [
-      [(mkBaseName(6)): 'devtoolset-6'],
-      [(mkBaseName(7)): 'devtoolset-6'],
-      [(mkBaseName(6)): 'devtoolset-7'],
-      [(mkBaseName(7)): 'devtoolset-7'],
-      [(mkBaseName(7)): 'llvm-toolset-7'],
-    ].each { conf ->
-      conf.each { baseName, scl ->
+    dir(buildDir) {
+      // centos major release version(s)
+      [6, 7].each { majrelease ->
+        def baseImage = "${baseRepo}:${majrelease}"
+        def baseName = mkBaseName(majrelease)
         def baseTag = "${buildRepo}:${baseName}"
-        def tsName = "${baseName}-${scl}"
-        def tsTag = "${buildRepo}:${tsName}"
 
-        stage(tsTag) {
-          retry(retries) {
-            tsBuild = packIt('centos_devtoolset.json', [
-              "-var base_image=${baseTag}",
-              "-var build_name=${tsName}",
-              "-var scl_compiler=${scl}",
-            ])
-          } // retry
-          images << [(tsTag): tsBuild]
+        stage(baseTag) {
+          def baseBuild = packIt('centos_stackbase.json', [
+            "-var base_image=${baseImage}",
+            "-var build_repository=${buildRepo}",
+            "-var build_name=${baseName}",
+          ])
+          images << [(baseTag): baseBuild]
         } // stage
-      } // baseName, scl
-    } // conf
+      } // majrelease
+
+      // scl compiler string(s)
+      [
+        [(mkBaseName(6)): 'devtoolset-6'],
+        [(mkBaseName(7)): 'devtoolset-6'],
+        [(mkBaseName(6)): 'devtoolset-7'],
+        [(mkBaseName(7)): 'devtoolset-7'],
+        [(mkBaseName(7)): 'llvm-toolset-7'],
+      ].each { conf ->
+        conf.each { baseName, scl ->
+          def baseTag = "${buildRepo}:${baseName}"
+          def tsName = "${baseName}-${scl}"
+          def tsTag = "${buildRepo}:${tsName}"
+
+          stage(tsTag) {
+            retry(retries) {
+              tsBuild = packIt('centos_devtoolset.json', [
+                "-var base_image=${baseTag}",
+                "-var build_repository=${buildRepo}",
+                "-var build_name=${tsName}",
+                "-var scl_compiler=${scl}",
+              ])
+            } // retry
+            images << [(tsTag): tsBuild]
+          } // stage
+        } // baseName, scl
+      } // conf
+    } // dir
 
     stage('push') {
       if (pushDocker) {
@@ -106,8 +117,8 @@ notify.wrap {
       timeout(time: 30, unit: 'MINUTES') {
         run()
       }
-    }
-  }
+    } // node
+  } // timeout
 } // notify.wrap
 
 def String packIt(String templateFile, List options, String tag = '1.1.1') {
