@@ -143,10 +143,3 @@ newinstall:
     tag: latest
   github_repo: lsst/lsst
   git_ref: master
-documenteer:
-  dockerfile:
-    github_repo: lsst-sqre/docker-documenteer-base
-    git_ref: master
-    dir: ''
-  docker_registry:
-    repo: lsstsqre/documenteer-base
