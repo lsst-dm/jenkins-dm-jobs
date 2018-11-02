@@ -41,8 +41,7 @@ notify.wrap {
   def shebangtronUrl = util.shebangtronUrl()
 
   def newinstallImage = newinstall.docker_registry.repo
-  newinstallImage += ":${newinstall.docker_registry.tag}"
-  def baseImage = newinstallImage
+  def baseImage       = "${newinstallImage}:${newinstall.docker_registry.tag}"
 
   def image = null
   def repo  = null

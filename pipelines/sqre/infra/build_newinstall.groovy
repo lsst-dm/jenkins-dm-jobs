@@ -10,6 +10,7 @@ node('jenkins-master') {
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
     scipipe = util.scipipeConfig()
+    sqre = util.sqreConfig()
   }
 }
 
@@ -32,6 +33,10 @@ notify.wrap {
   def dockerRepo    = dockerRegistry.repo
   def newinstallUrl = util.newinstallUrl()
 
+  def baseDockerRepo = sqre.layercake.docker_registry.repo
+  def baseDockerTag  = '7-stackbase-devtoolset-6'
+  def baseImage      = "${baseDockerRepo}:${baseDockerTag}"
+
   def image = null
 
   def run = {
@@ -51,6 +56,7 @@ notify.wrap {
       // ensure base image is always up to date
       opt << '--pull=true'
       opt << '--no-cache'
+      opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
       opt << "--build-arg NEWINSTALL_URL=\"${newinstallUrl}\""
       withCredentials([[
         $class: 'StringBinding',

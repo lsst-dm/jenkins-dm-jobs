@@ -48,3 +48,10 @@ wget:
     tag: latest
 squash:
   url: https://squash-restful-api.lsst.codes/
+layercake:
+  packer:
+    github_repo: lsst-sqre/packer-layercake
+    git_ref: master
+    dir: ''
+  docker_registry:
+    repo: lsstsqre/centos
