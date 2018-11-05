@@ -1,0 +1,32 @@
+---
+# *_timelimit is in minutes
+validate_drp:
+  defaults:
+    retries: 3
+    code:
+      github_repo: lsst/validate_drp
+      git_ref: master
+      clone_timelimit: 5
+    squash_push: true
+  datasets:
+    - display_name: cfht
+      name: validation_data_cfht
+      data:
+        github_repo: lsst/validation_data_cfht
+        git_ref: master
+        clone_timelimit: 15
+      run_timelimit: 15
+    - display_name: hsc
+      name: validation_data_hsc
+      data:
+        github_repo: lsst/validation_data_hsc
+        git_ref: master
+        clone_timelimit: 240
+      run_timelimit: 720
+    #- display_name: decam
+    #  name: validation_data_decam
+    #  data:
+    #    github_repo: lsst/validation_data_decam
+    #    git_ref: master
+    #    clone_timelimit: 60
+    #  run_timelimit: 60

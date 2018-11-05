@@ -14,95 +14,108 @@ node('jenkins-master') {
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
     scipipe = util.scipipeConfig()
-    sqre = util.sqreConfig()
+    sqre = util.sqreConfig() // for squash config
+    drp = util.validateDrpConfig()
   }
 }
 
 notify.wrap {
   util.requireParams([
     'COMPILER',
-    'EUPS_TAG',
+    'DOCKER_IMAGE',
     'MANIFEST_ID',
     'NO_PUSH',
     'WIPEOUT',
   ])
 
-  String manifestId = params.MANIFEST_ID
-  String compiler   = params.COMPILER
-  String eupsTag    = params.EUPS_TAG
-  Boolean noPush    = params.NO_PUSH
-  Boolean wipeout   = params.WIPEOUT
+  String compiler    = params.COMPILER
+  String dockerImage = params.DOCKER_IMAGE
+  String manifestId  = params.MANIFEST_ID
+  Boolean noPush     = params.NO_PUSH
+  Boolean wipeout    = params.WIPEOUT
 
-  // optional
-  String relImage = params.RELEASE_IMAGE
+  // run multiple datasets, if defined, in parallel
+  def matrix = [:]
+  def defaults = drp.validate_drp.defaults
+  drp.validate_drp.datasets.each { ds ->
+    def runSlug = datasetSlug(ds)
 
-  def dockerRepo = scipipe.scipipe_release.docker_registry.repo
-  relImage = relImage ?: "${dockerRepo}:7-stack-lsst_distrib-${eupsTag}"
+    // apply defaults
+    ds = defaults + ds
 
-  target = [
-    manifestId: manifestId,
-    compiler: compiler,
-    eupsTag: eupsTag,
-    noPush: noPush,
-    wipeout: wipeout,
-  ]
+    matrix[runSlug] = {
+      verifyDataset(
+        compiler: compiler,
+        dataset: ds,
+        dockerImage: dockerImage,
+        manifestId: manifestId,
+        // only push if build param & yaml config == true
+        noPush: noPush && ds.squash_push,
+        slug: runSlug,
+        wipeout: wipeout,
+      )
+    }
+  }
 
-  def masterRetries = 3
-
-  def matrix = [
-    cfht: {
-      drp('cfht', target, 'master', true, masterRetries, 1, [
-        relImage: relImage,
-      ])
-    },
-    hsc: {
-      drp('hsc', target, 'master', true, masterRetries, 15, [
-        relImage: relImage,
-      ])
-    },
-  ]
-
-  stage('matrix') {
+  stage('validate_drp matrix') {
     parallel(matrix)
   }
 } // notify.wrap
 
 /**
+ * Generate a "slug" to describe this dataset including branch name.
+ *
+ * @param p Map
+ */
+def String datasetSlug(Map ds) {
+  def slug = ds.display_name
+  if (ds.data.git_ref != 'master') {
+    slug += "-" + ds.data.git_ref.tr('/', '_')
+  }
+
+  return slug.toLowerCase()
+}
+
+/**
  * Prepare, execute, and record results of a validation_drp run.
  *
- * @param datasetSlug String short name of dataset
- * @param target Map docker image selection + build configuration
- * @param drpRef String validate_drp git repo ref. Defaults to 'master'
- * @param doDispatchqa Boolean Enables/disables running of displatch-verify. Defaults to true.
- * @param retries Integer Number of times to retry after a failure
- * @param timelimit Integer Maximum number of hours per 'try'
- * 'true'
+ * @param p Map
+ * @param p.compiler String
+ * @param p.dataset String
+ * @param p.dockerImage String
+ * @param p.manifestId String
+ * @param p.noPush Boolean
+ * @param p.slug String Name of dataset.
+ * @param p.wipeout Boolean
  */
-def void drp(
-  String datasetSlug,
-  Map target,
-  String drpRef = 'master',
-  Boolean doDispatchqa = true,
-  Integer retries = 3,
-  Integer timelimit = 12,
-  Map p
-) {
+def void verifyDataset(Map p) {
   util.requireMapKeys(p, [
-    'relImage',
+    'dataset',
+    'dockerImage',
+    'slug',
+    'noPush',
+    'wipeout',
   ])
 
-  def datasetInfo  = datasetLookup(datasetSlug)
-  def drpRepo      = util.githubSlugToUrl('lsst/validate_drp')
-  def jenkinsDebug = 'true'
+  // optional if not pushing results to squash
+  if (!p.noPush) {
+    util.requireMapKeys(p, [
+      'manifestId',
+    ])
+  }
 
-  def run = { runSlug ->
-    def baseDir           = "${pwd()}/${runSlug}"
-    def drpDir            = "${baseDir}/validate_drp"
-    def datasetDir        = "${baseDir}/${datasetInfo['dataset']}"
+  def ds         = p.dataset
+  def dsRepoName = ds.name
+
+  def run = {
+    // note that pwd() must be run inside of a node {} block
+    def baseDir           = "${pwd()}/${p.slug}"
+    def codeDir           = "${baseDir}/validate_drp"
+    def datasetDir        = "${baseDir}/${ds.name}"
     def homeDir           = "${baseDir}/home"
     def runDir            = "${baseDir}/run"
     def archiveDir        = "${baseDir}/archive"
-    def datasetArchiveDir = "${archiveDir}/${datasetInfo['dataset']}"
+    def datasetArchiveDir = "${archiveDir}/${ds.name}"
     def fakeLsstswDir     = "${baseDir}/lsstsw-fake"
     def fakeManifestFile  = "${fakeLsstswDir}/build/manifest.txt"
     def fakeReposFile     = "${fakeLsstswDir}/etc/repos.yaml"
@@ -124,7 +137,7 @@ def void drp(
         // then fail setting up to run dispatch_verify.py
         util.downloadManifest(
           destFile: fakeManifestFile,
-          manifestId: target.manifestId,
+          manifestId: p.manifestId,
         )
         util.downloadRepos(destFile: fakeReposFile)
 
@@ -132,97 +145,99 @@ def void drp(
           util.cloneCiScripts()
         }
 
-        // clone validation dataset
+        // clone dataset
         dir(datasetDir) {
-          timeout(time: datasetInfo['cloneTime'], unit: 'MINUTES') {
+          timeout(time: ds.data.clone_timelimit, unit: 'MINUTES') {
             util.checkoutLFS(
-              githubSlug: datasetInfo['datasetGithubRepo'],
-              gitRef: datasetInfo['datasetRef'],
+              githubSlug: ds.data.github_repo,
+              gitRef: ds.data.git_ref,
             )
-          }
-        }
+          } // timeout
+        } // dir
+
+        // clone and build from source
+        // XXX make this conditional on if we're going to build from source
+        dir(codeDir) {
+          timeout(time: ds.code.clone_timelimit, unit: 'MINUTES') {
+            // the simplier git step doesn't support 'CleanBeforeCheckout'
+            def codeRepoUrl = util.githubSlugToUrl(ds.code.github_repo)
+            def codeRef     = ds.code.git_ref
+
+            checkout(
+              scm: [
+                $class: 'GitSCM',
+                branches: [[name: "*/${codeRef}"]],
+                doGenerateSubmoduleConfigurations: false,
+                extensions: [[$class: 'CleanBeforeCheckout']],
+                submoduleCfg: [],
+                userRemoteConfigs: [[url: codeRepoUrl]]
+              ],
+              changelog: false,
+              poll: false,
+            )
+          } // timeout
+        } // dir
 
         util.insideDockerWrap(
-          image: p.relImage,
+          image: p.dockerImage,
           pull: true,
         ) {
-          // clone and build validate_drp from source
-          dir(drpDir) {
-            // the simplier git step doesn't support 'CleanBeforeCheckout'
-            timeout(time: 15, unit: 'MINUTES') {
-              checkout(
-                scm: [
-                  $class: 'GitSCM',
-                  branches: [[name: "*/${drpRef}"]],
-                  doGenerateSubmoduleConfigurations: false,
-                  extensions: [[$class: 'CleanBeforeCheckout']],
-                  submoduleCfg: [],
-                  userRemoteConfigs: [[url: drpRepo]]
-                ],
-                changelog: false,
-                poll: false,
-              )
-            } // timeout
 
+          /*
+          // XXX disable build from source for testing
+          // XXX make this conditional on if we're going to build from source
+          dir(codeDir) {
             // XXX DM-12663 validate_drp must be built from source / be
             // writable by the jenkins role user -- the version installed in
             // the container image can not be used.
             buildDrp(
               homeDir,
-              drpDir,
+              codeDir,
               runSlug,
               ciDir,
-              target.compiler
+              p.compiler
             )
           } // dir
+          */
 
-          timeout(time: datasetInfo['runTime'], unit: 'MINUTES') {
-            runDrp(
-              drpDir,
-              runDir,
-              datasetInfo['dataset'],
-              datasetDir,
-              datasetArchiveDir
-            )
-          } // timeout
+          runDrp(
+            runDir: runDir,
+            //codeDir: codeDir,
+            datasetName: ds.name,
+            datasetDir: datasetDir,
+            datasetArchiveDir: datasetArchiveDir,
+          )
+
           // push results to squash, verify version
-          if (doDispatchqa) {
-            runDispatchqa(
-              runDir,
-              drpDir,
-              datasetArchiveDir,
-              fakeLsstswDir,
-              datasetInfo['dataset'],
-              target.noPush
-            )
-          }
+          runDispatchqa(
+            runDir: runDir,
+            //codeDir: codeDir,
+            archiveDir: datasetArchiveDir,
+            lsstswDir: fakeLsstswDir,
+            datasetSlug: ds.display_name,
+            noPush: p.noPush
+          )
         } // inside
       } // dir
     } finally {
       // collect artifacats
       // note that this should be run relative to the origin workspace path so
       // that artifacts from parallel branches do not collide.
-      record(archiveDir, drpDir, fakeLsstswDir)
+      record(archiveDir, codeDir, fakeLsstswDir)
     }
   } // run
 
   // retrying is important as there is a good chance that the dataset will
   // fill the disk up
-  retry(retries) {
+  retry(ds.retries) {
     try {
       node('docker') {
-        timeout(time: timelimit, unit: 'HOURS') {
-          if (target.wipeout) {
+        timeout(time: ds.run_timelimit, unit: 'MINUTES') {
+          if (p.wipeout) {
             deleteDir()
           }
 
-          // create a unique sub-workspace for each parallel branch
-          def runSlug = datasetSlug
-          if (drpRef != 'master') {
-            runSlug += "-" + drpRef.tr('.', '_')
-          }
-
-          run(runSlug)
+          run()
         } // timeout
       } // node
     } catch(e) {
@@ -230,7 +245,7 @@ def void drp(
       throw e
     }
   } // retry
-} // drp
+} // verifyDataset
 
 /**
  * Trigger jenkins-node-cleanup (disk space) and wait for it to complete.
@@ -241,68 +256,24 @@ def void runNodeCleanup() {
 }
 
 /**
- * XXX this type of configuration data probably should be in an external config
- * file rather than mixed with code.
- *
- *  Lookup dataset details ("full" name / repo / ref)
- *
- * @param datasetSlug String short name of dataset
- * @return Map of dataset specific details
- */
-def Map datasetLookup(String datasetSlug) {
-  def info = [:]
-  info['datasetSlug'] = datasetSlug
-
-  // all of this information could presnetly be computed heuristically -- but
-  // perhaps this won't be the case in the future?
-  switch(datasetSlug) {
-    case 'cfht':
-      info['dataset']           = 'validation_data_cfht'
-      info['datasetGithubRepo'] = 'lsst/validation_data_cfht'
-      info['datasetRef']        = 'master'
-      info['cloneTime']         = 15
-      info['runTime']           = 15
-      break
-    case 'hsc':
-      info['dataset']           = 'validation_data_hsc'
-      info['datasetGithubRepo'] = 'lsst/validation_data_hsc'
-      info['datasetRef']        = 'master'
-      info['cloneTime']         = 240
-      info['runTime']           = 600
-      break
-    case 'decam':
-      info['dataset']           = 'validation_data_decam'
-      info['datasetGithubRepo'] = 'lsst/validation_data_decam'
-      info['datasetRef']        = 'master'
-      info['cloneTime']         = 60 // XXX untested
-      info['runTime']           = 60 // XXX untested
-      break
-    default:
-      error "unknown datasetSlug: ${datasetSlug}"
-  }
-
-  return info
-}
-
-/**
  *  Record logs
  *
  * @param archiveDir String path to drp output products that should be
  * persisted
- * @param drpDir String path to validate_drp build dir from which to collect
+ * @param codeDir String path to validate_drp build dir from which to collect
  * build time logs and/or junit output.
  */
-def void record(String archiveDir, String drpDir, String lsstswDir) {
+def void record(String archiveDir, String codeDir, String lsstswDir) {
   def archive = [
     "${archiveDir}/**/*",
-    "${drpDir}/**/*.log",
-    "${drpDir}/**/*.failed",
-    "${drpDir}/**/pytest-*.xml",
+    "${codeDir}/**/*.log",
+    "${codeDir}/**/*.failed",
+    "${codeDir}/**/pytest-*.xml",
     "${lsstswDir}/**/*",
   ]
 
   def reports = [
-    "${drpDir}/**/pytest-*.xml",
+    "${codeDir}/**/pytest-*.xml",
   ]
 
   // convert to relative paths
@@ -335,12 +306,12 @@ def void record(String archiveDir, String drpDir, String lsstswDir) {
  * Build validate_drp
  *
  * @param homemDir String path to $HOME -- where to put dotfiles
- * @param drpDir String path to validate_drp (code)
+ * @param codeDir String path to validate_drp (code)
  * @param runSlug String short name to describe this drp run
  */
 def void buildDrp(
   String homeDir,
-  String drpDir,
+  String codeDir,
   String runSlug,
   String ciDir,
   String compiler
@@ -349,13 +320,13 @@ def void buildDrp(
   withEnv([
     "HOME=${homeDir}",
     "EUPS_USERDATA=${homeDir}/.eups_userdata",
-    "DRP_DIR=${drpDir}",
+    "CODE_DIR=${codeDir}",
     "CI_DIR=${ciDir}",
     "LSST_JUNIT_PREFIX=${runSlug}",
     "LSST_COMPILER=${compiler}",
   ]) {
     util.bash '''
-      cd "$DRP_DIR"
+      cd "$CODE_DIR"
 
       SHOPTS=$(set +o)
       set +o xtrace
@@ -378,19 +349,23 @@ def void buildDrp(
  *
  * Run validate_drp driver script.
  *
- * @param drpDir String path to validate_drp (code)
- * @param runDir String runtime cwd for validate_drp
- * @param dataset String full name of the validation dataset
- * @param datasetDir String path to validation dataset
- * @param datasetArhiveDir String path to persist valildation output products
+ * @param p Map
+ * @param p.codeDir String path to validate_drp (code)
+ * @param p.runDir String runtime cwd for validate_drp
+ * @param p.dataset String full name of the validation dataset
+ * @param p.datasetDir String path to validation dataset
+ * @param p.datasetArchiveDir String path to persist valildation output products
  */
-def void runDrp(
-  String drpDir,
-  String runDir,
-  String dataset,
-  String datasetDir,
-  String datasetArchiveDir
-) {
+def void runDrp(Map p) {
+  util.requireMapKeys(p, [
+    'runDir',
+    'datasetName',
+    'datasetDir',
+    'datasetArchiveDir',
+  ])
+
+  p = [codeDir: ''] + p
+
   // run drp driver script
   def run = {
     util.bash '''
@@ -453,9 +428,17 @@ def void runDrp(
       SHOPTS=$(set +o)
       set +o xtrace
       source /opt/lsst/software/stack/loadLSST.bash
-      setup -k -r "$DRP_DIR"
-      setup -k -r "$DATASET_DIR"
       eval "$SHOPTS"
+
+      # if CODE_DIR is defined, set that up instead of the default validate_drp
+      # product
+      if [[ -n $CODE_DIR ]]; then
+        setup -k -r "$CODE_DIR"
+      else
+        setup validate_drp
+      fi
+
+      setup -k -r "$DATASET_DIR"
 
       case "$DATASET" in
         validation_data_cfht)
@@ -544,11 +527,11 @@ def void runDrp(
   } // run
 
   withEnv([
-    "DRP_DIR=${drpDir}",
-    "RUN_DIR=${runDir}",
-    "DATASET=${dataset}",
-    "DATASET_DIR=${datasetDir}",
-    "DATASET_ARCHIVE_DIR=${datasetArchiveDir}",
+    "CODE_DIR=${p.codeDir}",
+    "RUN_DIR=${p.runDir}",
+    "DATASET=${p.datasetName}",
+    "DATASET_DIR=${p.datasetDir}",
+    "DATASET_ARCHIVE_DIR=${p.datasetArchiveDir}",
     "JENKINS_DEBUG=true",
   ]) {
     run()
@@ -558,27 +541,36 @@ def void runDrp(
 /**
  * push DRP results to squash using dispatch-verify.
  *
- * @param resultPath
- * @param lsstswDir String Path to (the fake) lsstsw dir
- * @param datasetSlug String The dataset "short" name.  Eg., cfht instead of
+ * @param p Map
+ * @param p.resultPath
+ * @param p.lsstswDir String Path to (the fake) lsstsw dir
+ * @param p.datasetSlug String The dataset "short" name.  Eg., cfht instead of
  * validation_data_cfht.
- * @param noPush Boolean if true, do not attempt to push data to squash.
+ * @param p.noPush Boolean if true, do not attempt to push data to squash.
  * Reguardless of that value, the output of the characterization report is recorded
  */
-def void runDispatchqa(
-  String runDir,
-  String drpDir,
-  String archiveDir,
-  String lsstswDir,
-  String datasetSlug,
-  Boolean noPush = true
-) {
+def void runDispatchqa(Map p) {
+  util.requireMapKeys(p, [
+    'runDir',
+    'archiveDir',
+    'lsstswDir',
+    'datasetSlug',
+    'noPush',
+  ])
+
+  p = [codeDir: ''] + p
 
   def run = {
     util.bash '''
       source /opt/lsst/software/stack/loadLSST.bash
-      cd "$DRP_DIR"
-      setup -k -r .
+      # if CODE_DIR is defined, set that up instead of the default validate_drp
+      # product
+      if [[ -n $CODE_DIR ]]; then
+        setup -k -r "$CODE_DIR"
+      else
+        setup validate_drp
+      fi
+
       cd "$RUN_DIR"
 
       # compute characterization report
@@ -589,15 +581,20 @@ def void runDispatchqa(
       xz -T0 -9ev "$ARCH_DIR"/"$dataset"_char_report.rst
     '''
 
-    if (!noPush) {
+    if (!p.noPush) {
       util.bash '''
         source /opt/lsst/software/stack/loadLSST.bash
-        cd "$DRP_DIR"
-        setup -k -r .
+        # if CODE_DIR is defined, set that up instead of the default validate_drp
+        # product
+        if [[ -n $CODE_DIR ]]; then
+          setup -k -r "$CODE_DIR"
+        else
+          setup validate_drp
+        fi
+
         cd "$RUN_DIR"
 
         # submit via dispatch_verify
-        # XXX endpoint hardcoded until production SQuaSH is ready
         for file in $( ls *_output_*.json ); do
           dispatch_verify.py \
             --env jenkins \
@@ -621,12 +618,12 @@ def void runDispatchqa(
   - dataset
   */
   withEnv([
-    "LSSTSW_DIR=${lsstswDir}",
-    "RUN_DIR=${runDir}",
-    "DRP_DIR=${drpDir}",
-    "ARCH_DIR=${archiveDir}",
-    "NO_PUSH=${noPush}",
-    "dataset=${datasetSlug}",
+    "LSSTSW_DIR=${p.lsstswDir}",
+    "RUN_DIR=${p.runDir}",
+    "CODE_DIR=${p.codeDir}",
+    "ARCH_DIR=${p.archiveDir}",
+    "NO_PUSH=${p.noPush}",
+    "dataset=${p.datasetSlug}",
     "SQUASH_URL=${sqre.squash.url}",
   ]) {
     withCredentials([[
