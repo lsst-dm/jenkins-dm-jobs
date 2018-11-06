@@ -129,6 +129,7 @@ notify.wrap {
             PRODUCTS: tarballProducts,
             EUPS_TAG: eupsTag,
             DOCKER_TAGS: extraDockerTags,
+            MANIFEST_ID: manifestId,
           ],
         )
       } // retry
