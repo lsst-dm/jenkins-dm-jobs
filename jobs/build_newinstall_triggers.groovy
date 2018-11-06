@@ -23,6 +23,10 @@ def j = job('sqre/infra/build-newinstall-triggers') {
 
   triggers {
     githubPush()
+
+    // it would be slick if we could trigger based on dockerhub lsstsqre/centos
+    // notifications but AFAIK, this can't be restricted by tag
+    upstream('sqre/infra/build-layercake', 'SUCCESS')
   }
 
   steps {
