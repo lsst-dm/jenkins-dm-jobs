@@ -27,6 +27,9 @@ notify.wrap {
   Integer timelimit      = params.TIMEOUT
   String extraDockerTags = params.DOCKER_TAGS
 
+  // optional
+  String manifestId = params.MANIFEST_ID ?: ''
+
   def release        = scipipe.scipipe_release
   def dockerfile     = release.dockerfile
   def dockerRegistry = release.docker_registry
@@ -79,6 +82,7 @@ notify.wrap {
       opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
       opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
       opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
+      opt << "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\""
       opt << '.'
 
       dir(buildDir) {
