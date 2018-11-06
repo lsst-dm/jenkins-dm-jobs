@@ -1476,6 +1476,7 @@ def String defaultCodekitImage() {
  *        `release/docker/build-stack`.
  * @param p.parameters.PRODUCTS String. Required.
  * @param p.parameters.EUPS_TAG String. Required.
+ * @param p.parameters.MANIFEST_ID String. Required.
  * @param p.parameters.NO_PUSH Boolean. Defaults to `false`.
  * @param p.parameters.TIMEOUT String. Defaults to `1'`.
  * @return json Object
@@ -1493,6 +1494,7 @@ def Object runBuildStack(Map p) {
   requireMapKeys(p.parameters, [
     'PRODUCTS',
     'EUPS_TAG',
+    'MANIFEST_ID',
   ])
   p.parameters = [
     NO_PUSH: false,
@@ -1508,6 +1510,7 @@ def Object runBuildStack(Map p) {
       booleanParam(name: 'NO_PUSH', value: p.parameters.NO_PUSH),
       string(name: 'TIMEOUT', value: p.parameters.TIMEOUT),
       string(name: 'DOCKER_TAGS', value: p.parameters.DOCKER_TAGS),
+      string(name: 'MANIFEST_ID', value: p.parameters.MANIFEST_ID),
     ],
     wait: true
   )
