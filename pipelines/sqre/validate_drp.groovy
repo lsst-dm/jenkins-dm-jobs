@@ -573,8 +573,6 @@ def void runDispatchqa(Map p) {
         setup validate_drp
       fi
 
-      cd "$RUN_DIR"
-
       # compute characterization report
       reportPerformance.py \
         --output_file="$dataset"_char_report.rst \
@@ -593,8 +591,6 @@ def void runDispatchqa(Map p) {
         else
           setup validate_drp
         fi
-
-        cd "$RUN_DIR"
 
         # submit via dispatch_verify
         for file in $( ls *_output_*.json ); do
@@ -621,7 +617,6 @@ def void runDispatchqa(Map p) {
   */
   withEnv([
     "LSSTSW_DIR=${p.lsstswDir}",
-    "RUN_DIR=${p.runDir}",
     "CODE_DIR=${p.codeDir}",
     "ARCH_DIR=${p.archiveDir}",
     "NO_PUSH=${p.noPush}",
@@ -634,7 +629,9 @@ def void runDispatchqa(Map p) {
       usernameVariable: 'SQUASH_USER',
       passwordVariable: 'SQUASH_PASS',
     ]]) {
-      run()
+      dir(p.runDir) {
+        run()
+      }
     } // withCredentials
   } // withEnv
 }
