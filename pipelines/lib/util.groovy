@@ -1803,5 +1803,27 @@ def List xz(List patterns) {
   return files.collect { f -> "${f}.xz" }
 }
 
+/**
+ * Collect junit reports
+ *
+ * Example:
+ *
+ *     // note: the whitespace is needed to prevent the example from exiting
+ *     // the comment block -- not needed in real code
+ *     util.junit([
+ *       "${runDir}/** /pytest-*.xml",
+ *     ])
+ *
+ * @param testResults List paths to be collected.
+ */
+def void junit(List testResults) {
+  testResults = relPath(pwd(), testResults)
+
+  junit([
+    testResults: testResults.join(', '),
+    allowEmptyResults: true,
+  ])
+} // junit
+
 
 return this;
