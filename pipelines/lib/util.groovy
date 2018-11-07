@@ -1477,6 +1477,7 @@ def String defaultCodekitImage() {
  * @param p.parameters.PRODUCTS String. Required.
  * @param p.parameters.EUPS_TAG String. Required.
  * @param p.parameters.MANIFEST_ID String. Required.
+ * @param p.parameters.LSST_COMPILER String. Required.
  * @param p.parameters.NO_PUSH Boolean. Defaults to `false`.
  * @param p.parameters.TIMEOUT String. Defaults to `1'`.
  * @return json Object
@@ -1494,7 +1495,9 @@ def Object runBuildStack(Map p) {
   requireMapKeys(p.parameters, [
     'PRODUCTS',
     'EUPS_TAG',
+    // not required by the triggered job but as policy by this method.
     'MANIFEST_ID',
+    'LSST_COMPILER',
   ])
   p.parameters = [
     NO_PUSH: false,
@@ -1511,6 +1514,7 @@ def Object runBuildStack(Map p) {
       string(name: 'TIMEOUT', value: p.parameters.TIMEOUT),
       string(name: 'DOCKER_TAGS', value: p.parameters.DOCKER_TAGS),
       string(name: 'MANIFEST_ID', value: p.parameters.MANIFEST_ID),
+      string(name: 'LSST_COMPILER', value: p.parameters.LSST_COMPILER),
     ],
     wait: true
   )
