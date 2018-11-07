@@ -199,6 +199,11 @@ def void verifyDataset(Map p) {
               ciDir,
               lsstCompiler
             )
+
+            junit([
+              testResults: "${codeDir}/** /pytest-*.xml",
+              allowEmptyResults: true,
+            ])
           } // dir
           */
 
@@ -225,7 +230,14 @@ def void verifyDataset(Map p) {
       // collect artifacats
       // note that this should be run relative to the origin workspace path so
       // that artifacts from parallel branches do not collide.
-      record(archiveDir, codeDir, fakeLsstswDir)
+      def archive = [
+        "${archiveDir}/**/*",
+        "${codeDir}/**/*.log",
+        "${codeDir}/**/*.failed",
+        "${codeDir}/**/pytest-*.xml",
+        "${fakeLsstswDir}/**/*",
+      ]
+      util.record(archive)
     }
   } // run
 
@@ -256,53 +268,6 @@ def void runNodeCleanup() {
   build job: 'sqre/infra/jenkins-node-cleanup',
     wait: true
 }
-
-/**
- *  Record logs
- *
- * @param archiveDir String path to drp output products that should be
- * persisted
- * @param codeDir String path to validate_drp build dir from which to collect
- * build time logs and/or junit output.
- */
-def void record(String archiveDir, String codeDir, String lsstswDir) {
-  def archive = [
-    "${archiveDir}/**/*",
-    "${codeDir}/**/*.log",
-    "${codeDir}/**/*.failed",
-    "${codeDir}/**/pytest-*.xml",
-    "${lsstswDir}/**/*",
-  ]
-
-  def reports = [
-    "${codeDir}/**/pytest-*.xml",
-  ]
-
-  // convert to relative paths
-  // https://gist.github.com/ysb33r/5804364
-  def rootDir = new File(pwd())
-  archive = archive.collect { it ->
-    def fullPath = new File(it)
-    rootDir.toPath().relativize(fullPath.toPath()).toFile().toString()
-  }
-
-  reports = reports.collect { it ->
-    def fullPath = new File(it)
-    rootDir.toPath().relativize(fullPath.toPath()).toFile().toString()
-  }
-
-  archiveArtifacts([
-    artifacts: archive.join(', '),
-    excludes: '**/*.dummy',
-    allowEmptyArchive: true,
-    fingerprint: true
-  ])
-
-  junit([
-    testResults: reports.join(', '),
-    allowEmptyResults: true,
-  ])
-} // record
 
 /**
  * Build validate_drp
