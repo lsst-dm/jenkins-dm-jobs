@@ -62,11 +62,7 @@ notify.wrap {
  * @param ds Map
  */
 def String datasetSlug(Map ds) {
-  def slug = ds.data.name
-  if (ds.data.git_ref != 'master') {
-    slug += "-" + ds.data.git_ref.tr('/', '_')
-  }
-
+  def slug = "${ds.data.name}:${ds.data.git_ref.tr('/', '_')}"
   return slug.toLowerCase()
 }
 
@@ -76,11 +72,7 @@ def String datasetSlug(Map ds) {
  * @param ds Map
  */
 def String codeSlug(Map ds) {
-  def slug = ds.code.name
-  if (ds.code.git_ref != 'master') {
-    slug += "-" + ds.data.git_ref.tr('/', '_')
-  }
-
+  def slug = "${ds.code.name}:${ds.code.git_ref.tr('/', '_')}"
   return slug.toLowerCase()
 }
 
@@ -108,7 +100,8 @@ def void verifyDataset(Map p) {
   def run = {
     // note that pwd() must be run inside of a node {} block
     def jobDir           = pwd()
-    def datasetDir       = "${jobDir}/dataset/${ds.data.name}"
+    def datasetDir       = "${jobDir}/datasets/${ds.data.name}"
+    def ciDir            = "${jobDir}/ci-scripts"
     def baseDir          = "${jobDir}/${p.slug}"
     def codeDir          = "${baseDir}/${ds.code.name}"
     def homeDir          = "${baseDir}/home"
@@ -116,7 +109,6 @@ def void verifyDataset(Map p) {
     def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
     def fakeManifestFile = "${fakeLsstswDir}/build/manifest.txt"
     def fakeReposFile    = "${fakeLsstswDir}/etc/repos.yaml"
-    def ciDir            = "${baseDir}/ci-scripts"
 
     docker.image(p.dockerImage).pull()
     def labels = util.shJson """
