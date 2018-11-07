@@ -1723,5 +1723,36 @@ def void downloadRepos(Map p) {
   )
 }
 
+/**
+ * Collect artifacts
+ *
+ * Example:
+ *
+ *     // note: the whitespace is needed to prevent the example from exiting
+ *     // the comment block -- not needed in real code
+ *     util.record([
+ *       "${runDir}/** /*.log",
+ *       "${runDir}/** /*.json",
+ *     ])
+ *
+ * @param archiveDirs List paths to be collected.
+ */
+def void record(List archiveDirs) {
+  // convert to relative paths
+  // https://gist.github.com/ysb33r/5804364
+  def rootDir = new File(pwd())
+  archiveDirs = archiveDirs.collect { it ->
+    def fullPath = new File(it)
+    rootDir.toPath().relativize(fullPath.toPath()).toFile().toString()
+  }
+
+  archiveArtifacts([
+    artifacts: archiveDirs.join(', '),
+    excludes: '**/*.dummy',
+    allowEmptyArchive: true,
+    fingerprint: true
+  ])
+} // record
+
 
 return this;
