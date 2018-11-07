@@ -317,11 +317,11 @@ def void buildDrp(
  * Run validate_drp driver script.
  *
  * @param p Map
- * @param p.codeDir String path to validate_drp (code)
  * @param p.runDir String runtime cwd for validate_drp
- * @param p.dataset String full name of the validation dataset
+ * @param p.datasetName String full name of the validation dataset
  * @param p.datasetDir String path to validation dataset
  * @param p.datasetArchiveDir String path to persist valildation output products
+ * @param p.codeDir (Optional) String path to validate_drp (code)
  */
 def void runDrp(Map p) {
   util.requireMapKeys(p, [
