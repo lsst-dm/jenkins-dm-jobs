@@ -37,7 +37,9 @@ notify.wrap {
     // apply defaults
     ds = defaults + ds
 
-    def runSlug = "${datasetSlug(ds)}-${codeSlug(ds)}"
+    // note that `:` seems to break python imports and `*` seems to break the
+    // buttler
+    def runSlug = "${datasetSlug(ds)}^${codeSlug(ds)}"
 
     matrix[runSlug] = {
       verifyDataset(
@@ -62,7 +64,7 @@ notify.wrap {
  * @param ds Map
  */
 def String datasetSlug(Map ds) {
-  def slug = "${ds.data.name}:${ds.data.git_ref.tr('/', '_')}"
+  def slug = "${ds.data.name}-${ds.data.git_ref.tr('/', '_')}"
   return slug.toLowerCase()
 }
 
@@ -78,7 +80,7 @@ def String codeSlug(Map ds) {
     name = ds.code.name
     ref  = ds.code.git_ref.tr('/', '_')
   }
-  def slug = "${name}:${ref}"
+  def slug = "${name}-${ref}"
   return slug.toLowerCase()
 }
 
