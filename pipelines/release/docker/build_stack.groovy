@@ -28,7 +28,8 @@ notify.wrap {
   String extraDockerTags = params.DOCKER_TAGS
 
   // optional
-  String manifestId = params.MANIFEST_ID ?: ''
+  String manifestId   = params.MANIFEST_ID ?: ''
+  String lsstCompiler = params.LSST_COMPILER ?: ''
 
   def release        = scipipe.scipipe_release
   def dockerfile     = release.dockerfile
@@ -83,6 +84,7 @@ notify.wrap {
       opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
       opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
       opt << "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\""
+      opt << "--build-arg LSST_COMPILER=\"${lsstCompiler}\""
       opt << '.'
 
       dir(buildDir) {

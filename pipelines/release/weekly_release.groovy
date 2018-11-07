@@ -130,6 +130,7 @@ notify.wrap {
             EUPS_TAG: eupsTag,
             DOCKER_TAGS: extraDockerTags,
             MANIFEST_ID: manifestId,
+            LSST_COMPILER: lsstswConfig.compiler,
           ],
         )
       } // retry
