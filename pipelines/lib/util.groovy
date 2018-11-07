@@ -1774,5 +1774,34 @@ def List relPath(String relativeToDir, List paths) {
   }
 } // relPath
 
+/**
+ * Relativize a list of paths.
+ *
+ * Example:
+ *
+ *     util.xz([
+ *       '** /*.foo',
+ *       '** /*.bar',
+ *     ])
+ *
+ * @param patterns List of file patterns to compress
+ * @return List of compressed files
+ */
+def List xz(List patterns) {
+  def files = patterns.collect { g -> findFiles(glob: g) }.flatten()
+  def targetFile = 'compress_files.txt'
+  writeFile(file: targetFile, text: files.join("\n") + "\n")
+
+  // compressing an example hsc output file
+  // (cmd)       (ratio)  (time)
+  // xz -T0      0.183    0:20
+  // xz -T0 -9   0.180    1:23
+  // xz -T0 -9e  0.179    1:28
+
+  // compress but do not remove original file
+  util.bash "xz -T0 -9ev --keep --files=${targetFile}"
+  return files.collect { f -> "${f}.xz" }
+}
+
 
 return this;
