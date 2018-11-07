@@ -133,99 +133,97 @@ def void verifyDataset(Map p) {
     String manifestId   = labels.VERSIONDB_MANIFEST_ID
     String lsstCompiler = labels.LSST_COMPILER
 
-    dir(baseDir) {
-      // empty ephemeral dirs at start of build
-      util.emptyDirs([
-        "${fakeLsstswDir}/build",
-        "${fakeLsstswDir}/etc",
-        homeDir,
-        runDir,
-      ])
+    // empty ephemeral dirs at start of build
+    util.emptyDirs([
+      "${fakeLsstswDir}/build",
+      "${fakeLsstswDir}/etc",
+      homeDir,
+      runDir,
+    ])
 
-      // stage manifest.txt early so we don't risk a long processing run and
-      // then fail setting up to run dispatch_verify.py
-      util.downloadManifest(
-        destFile: fakeManifestFile,
-        manifestId: manifestId,
-      )
-      util.downloadRepos(destFile: fakeReposFile)
-      util.record([fakeManifestFile, fakeReposFile])
+    // stage manifest.txt early so we don't risk a long processing run and
+    // then fail setting up to run dispatch_verify.py
+    util.downloadManifest(
+      destFile: fakeManifestFile,
+      manifestId: manifestId,
+    )
+    util.downloadRepos(destFile: fakeReposFile)
+    util.record([fakeManifestFile, fakeReposFile])
 
-      dir(ciDir) {
-        util.cloneCiScripts()
-      }
+    dir(ciDir) {
+      util.cloneCiScripts()
+    }
 
-      // clone dataset
-      dir(datasetDir) {
-        timeout(time: ds.data.clone_timelimit, unit: 'MINUTES') {
-          util.checkoutLFS(
-            githubSlug: ds.data.github_repo,
-            gitRef: ds.data.git_ref,
-          )
-        } // timeout
-      } // dir
-
-      // clone code
-      // XXX make this conditional on if we're going to build from source
-      dir(codeDir) {
-        timeout(time: ds.code.clone_timelimit, unit: 'MINUTES') {
-          // the simplier git step doesn't support 'CleanBeforeCheckout'
-          def codeRepoUrl = util.githubSlugToUrl(ds.code.github_repo)
-          def codeRef     = ds.code.git_ref
-
-          checkout(
-            scm: [
-              $class: 'GitSCM',
-              branches: [[name: "*/${codeRef}"]],
-              doGenerateSubmoduleConfigurations: false,
-              extensions: [[$class: 'CleanBeforeCheckout']],
-              submoduleCfg: [],
-              userRemoteConfigs: [[url: codeRepoUrl]]
-            ],
-            changelog: false,
-            poll: false,
-          )
-        } // timeout
-      } // dir
-
-      util.insideDockerWrap(
-        image: p.dockerImage,
-        pull: true,
-        args: "-v ${datasetDir}:${datasetDir}",
-      ) {
-
-        /*
-        // XXX disable build from source for testing
-        // XXX make this conditional on if we're going to build from source
-        // XXX DM-12663 validate_drp must be built from source / be
-        // writable by the jenkins role user -- the version installed in
-        // the container image can not be used.
-        buildDrp(
-          homeDir,
-          codeDir,
-          runSlug,
-          ciDir,
-          lsstCompiler
+    // clone dataset
+    dir(datasetDir) {
+      timeout(time: ds.data.clone_timelimit, unit: 'MINUTES') {
+        util.checkoutLFS(
+          githubSlug: ds.data.github_repo,
+          gitRef: ds.data.git_ref,
         )
-        */
-
-        runDrp(
-          runDir: runDir,
-          //codeDir: codeDir,
-          datasetName: ds.data.name,
-          datasetDir: datasetDir,
-        )
-
-        // push results to squash, verify version
-        runDispatchqa(
-          runDir: runDir,
-          //codeDir: codeDir,
-          lsstswDir: fakeLsstswDir,
-          datasetSlug: ds.display_name,
-          noPush: p.noPush
-        )
-      } // inside
+      } // timeout
     } // dir
+
+    // clone code
+    // XXX make this conditional on if we're going to build from source
+    dir(codeDir) {
+      timeout(time: ds.code.clone_timelimit, unit: 'MINUTES') {
+        // the simplier git step doesn't support 'CleanBeforeCheckout'
+        def codeRepoUrl = util.githubSlugToUrl(ds.code.github_repo)
+        def codeRef     = ds.code.git_ref
+
+        checkout(
+          scm: [
+            $class: 'GitSCM',
+            branches: [[name: "*/${codeRef}"]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [[$class: 'CleanBeforeCheckout']],
+            submoduleCfg: [],
+            userRemoteConfigs: [[url: codeRepoUrl]]
+          ],
+          changelog: false,
+          poll: false,
+        )
+      } // timeout
+    } // dir
+
+    util.insideDockerWrap(
+      image: p.dockerImage,
+      pull: true,
+      args: "-v ${datasetDir}:${datasetDir}",
+    ) {
+
+      /*
+      // XXX disable build from source for testing
+      // XXX make this conditional on if we're going to build from source
+      // XXX DM-12663 validate_drp must be built from source / be
+      // writable by the jenkins role user -- the version installed in
+      // the container image can not be used.
+      buildDrp(
+        homeDir,
+        codeDir,
+        runSlug,
+        ciDir,
+        lsstCompiler
+      )
+      */
+
+      runDrp(
+        runDir: runDir,
+        //codeDir: codeDir,
+        datasetName: ds.data.name,
+        datasetDir: datasetDir,
+      )
+
+      // push results to squash, verify version
+      runDispatchqa(
+        runDir: runDir,
+        //codeDir: codeDir,
+        lsstswDir: fakeLsstswDir,
+        datasetSlug: ds.display_name,
+        noPush: p.noPush
+      )
+    } // inside
   } // run
 
   // retrying is important as there is a good chance that the dataset will
@@ -458,15 +456,16 @@ def void runDrp(Map p) {
     "DATASET=${p.datasetName}",
     "DATASET_DIR=${p.datasetDir}",
   ]) {
-    dir(p.runDir) {
-      try {
+    try {
+      dir(p.runDir) {
         run()
-      } finally {
-        util.record(util.xz([
-          '**/*.log',
-          '**/*_output_*.json',
-        ]))
       }
+    } finally {
+      // archive from root of ws
+      util.record(util.xz([
+        "${p.runDir}/**/*.log",
+        "${p.runDir}/**/*_output_*.json",
+      ]))
     } // dir
   } // withEnv
 } // runDrp
@@ -560,13 +559,14 @@ def void runDispatchqa(Map p) {
       usernameVariable: 'SQUASH_USER',
       passwordVariable: 'SQUASH_PASS',
     ]]) {
-      dir(p.runDir) {
-        try {
+      try {
+        dir(p.runDir) {
           run()
-        } finally {
-          util.record(util.xz(['**/*_char_report.rst']))
         }
-      } // dir
+      } finally {
+        // archive from root of ws
+        util.record(util.xz(["${p.runDir}/**/*_char_report.rst"]))
+      }
     } // withCredentials
   } // withEnv
 } // runDispatchqa

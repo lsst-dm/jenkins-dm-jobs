@@ -1788,6 +1788,7 @@ def List relPath(String relativeToDir, List paths) {
  * @return List of compressed files
  */
 def List xz(List patterns) {
+  patterns = relPath(pwd(), patterns)
   def files = patterns.collect { g -> findFiles(glob: g) }.flatten()
   def targetFile = 'compress_files.txt'
   writeFile(file: targetFile, text: files.join("\n") + "\n")
