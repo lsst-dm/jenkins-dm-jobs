@@ -1738,13 +1738,7 @@ def void downloadRepos(Map p) {
  * @param archiveDirs List paths to be collected.
  */
 def void record(List archiveDirs) {
-  // convert to relative paths
-  // https://gist.github.com/ysb33r/5804364
-  def rootDir = new File(pwd())
-  archiveDirs = archiveDirs.collect { it ->
-    def fullPath = new File(it)
-    rootDir.toPath().relativize(fullPath.toPath()).toFile().toString()
-  }
+  archiveDirs = relPath(pwd(), archiveDirs)
 
   archiveArtifacts([
     artifacts: archiveDirs.join(', '),
@@ -1753,6 +1747,32 @@ def void record(List archiveDirs) {
     fingerprint: true
   ])
 } // record
+
+/**
+ * Relativize a list of paths.
+ *
+ * Example:
+ *
+ *     util.relPath(pwd(), [
+ *       "/foo/bar/baz/bonk",
+ *       "/foo/bar/baz/quix",
+ *     ])
+ *
+ * @param relativeToDir String base path
+ * @param path List paths to be relativized
+ * @return List of relativized paths
+ */
+def List relPath(String relativeToDir, List paths) {
+  // convert to relative paths
+  // https://gist.github.com/ysb33r/5804364
+  def rootDir = new File(relativeToDir)
+  return paths.collect { it ->
+    // skip non-rel paths
+    if (!it.startsWith('/')) { return it }
+    def fullPath = new File(it)
+    rootDir.toPath().relativize(fullPath.toPath()).toFile().toString()
+  }
+} // relPath
 
 
 return this;
