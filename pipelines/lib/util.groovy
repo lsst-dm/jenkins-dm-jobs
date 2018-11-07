@@ -230,6 +230,17 @@ def slurpJson(String data) {
 }
 
 /**
+ * Run a command, that is assumed to return JSON, and parse the stdout.
+ *
+ * @param script String shell script to execute.
+ * @return Object parsed JSON object
+ */
+def shJson(String script) {
+  def stdout = sh(returnStdout: true, script: script).trim()
+  slurpJson(stdout)
+}
+
+/**
  * Create an EUPS distrib tag
  *
  * Example:
