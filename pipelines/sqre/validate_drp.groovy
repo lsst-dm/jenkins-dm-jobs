@@ -94,9 +94,10 @@ def void verifyDataset(Map p) {
 
   def run = {
     // note that pwd() must be run inside of a node {} block
-    def baseDir           = "${pwd()}/${p.slug}"
+    def jobDir            = pwd()
+    def datasetDir        = "${jobDir}/dataset/${ds.name}"
+    def baseDir           = "${jobDir}/${p.slug}"
     def codeDir           = "${baseDir}/validate_drp"
-    def datasetDir        = "${baseDir}/${ds.name}"
     def homeDir           = "${baseDir}/home"
     def runDir            = "${baseDir}/run"
     def archiveDir        = "${baseDir}/archive"
@@ -155,7 +156,7 @@ def void verifyDataset(Map p) {
           } // timeout
         } // dir
 
-        // clone and build from source
+        // clone code
         // XXX make this conditional on if we're going to build from source
         dir(codeDir) {
           timeout(time: ds.code.clone_timelimit, unit: 'MINUTES') {
@@ -181,6 +182,7 @@ def void verifyDataset(Map p) {
         util.insideDockerWrap(
           image: p.dockerImage,
           pull: true,
+          args: "-v ${datasetDir}:${datasetDir}",
         ) {
 
           /*
