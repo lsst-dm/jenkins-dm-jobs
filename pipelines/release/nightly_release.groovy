@@ -166,18 +166,12 @@ notify.wrap {
     }
 
     triggerMe['validate_drp'] = {
-      // XXX use the same compiler as is configured for the canonical build
-      // env.  This is a bit of a kludge.  It would be better to directly
-      // label the compiler used on the docker image.
-
       retry(1) {
         // based on lsstsqre/stack image
         build(
           job: 'sqre/validate_drp',
           parameters: [
-            string(name: 'COMPILER', value: lsstswConfig.compiler),
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            string(name: 'MANIFEST_ID', value: manifestId),
             booleanParam(
               name: 'NO_PUSH',
               value: scipipe.release.step.validate_drp.no_push,

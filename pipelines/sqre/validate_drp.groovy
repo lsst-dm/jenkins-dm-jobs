@@ -21,16 +21,12 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
-    'COMPILER',
     'DOCKER_IMAGE',
-    'MANIFEST_ID',
     'NO_PUSH',
     'WIPEOUT',
   ])
 
-  String compiler    = params.COMPILER
   String dockerImage = params.DOCKER_IMAGE
-  String manifestId  = params.MANIFEST_ID
   Boolean noPush     = params.NO_PUSH
   Boolean wipeout    = params.WIPEOUT
 
@@ -45,10 +41,8 @@ notify.wrap {
 
     matrix[runSlug] = {
       verifyDataset(
-        compiler: compiler,
         dataset: ds,
         dockerImage: dockerImage,
-        manifestId: manifestId,
         // only push if build param & yaml config == true
         noPush: noPush && ds.squash_push,
         slug: runSlug,
@@ -80,10 +74,8 @@ def String datasetSlug(Map ds) {
  * Prepare, execute, and record results of a validation_drp run.
  *
  * @param p Map
- * @param p.compiler String
  * @param p.dataset String
  * @param p.dockerImage String
- * @param p.manifestId String
  * @param p.noPush Boolean
  * @param p.slug String Name of dataset.
  * @param p.wipeout Boolean
@@ -96,13 +88,6 @@ def void verifyDataset(Map p) {
     'noPush',
     'wipeout',
   ])
-
-  // optional if not pushing results to squash
-  if (!p.noPush) {
-    util.requireMapKeys(p, [
-      'manifestId',
-    ])
-  }
 
   def ds         = p.dataset
   def dsRepoName = ds.name
@@ -121,6 +106,21 @@ def void verifyDataset(Map p) {
     def fakeReposFile     = "${fakeLsstswDir}/etc/repos.yaml"
     def ciDir             = "${baseDir}/ci-scripts"
 
+    docker.image(p.dockerImage).pull()
+    def labels = util.shJson """
+      docker inspect --format '{{json .Config.Labels }}' ${p.dockerImage}
+    """
+
+    if (!labels.VERSIONDB_MANIFEST_ID) {
+      missingLabel 'VERSIONDB_MANIFEST_ID'
+    }
+    if (!labels.LSST_COMPILER) {
+      missingLabel 'LSST_COMPILER'
+    }
+
+    String manifestId   = labels.VERSIONDB_MANIFEST_ID
+    String lsstCompiler = labels.LSST_COMPILER
+
     try {
       dir(baseDir) {
         // empty ephemeral dirs at start of build
@@ -137,7 +137,7 @@ def void verifyDataset(Map p) {
         // then fail setting up to run dispatch_verify.py
         util.downloadManifest(
           destFile: fakeManifestFile,
-          manifestId: p.manifestId,
+          manifestId: manifestId,
         )
         util.downloadRepos(destFile: fakeReposFile)
 
@@ -195,7 +195,7 @@ def void verifyDataset(Map p) {
               codeDir,
               runSlug,
               ciDir,
-              p.compiler
+              lsstCompiler
             )
           } // dir
           */
@@ -314,7 +314,7 @@ def void buildDrp(
   String codeDir,
   String runSlug,
   String ciDir,
-  String compiler
+  String lsstCompiler
 ) {
   // keep eups from polluting the jenkins role user dotfiles
   withEnv([
@@ -323,7 +323,7 @@ def void buildDrp(
     "CODE_DIR=${codeDir}",
     "CI_DIR=${ciDir}",
     "LSST_JUNIT_PREFIX=${runSlug}",
-    "LSST_COMPILER=${compiler}",
+    "LSST_COMPILER=${lsstCompiler}",
   ]) {
     util.bash '''
       cd "$CODE_DIR"
@@ -635,4 +635,8 @@ def void runDispatchqa(Map p) {
       run()
     } // withCredentials
   } // withEnv
+}
+
+def void missingLabel(String label) {
+  error "docker ${label} label is missing"
 }
