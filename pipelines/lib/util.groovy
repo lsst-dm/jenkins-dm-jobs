@@ -222,12 +222,11 @@ def dumpJson(String filename, Map data) {
  * Parse a JSON string.
  *
  * @param data String to parse.
- * @return LazyMap parsed JSON object
+ * @return Object parsed JSON object
  */
 @NonCPS
 def slurpJson(String data) {
-  def slurper = new groovy.json.JsonSlurper()
-  slurper.parseText(data)
+  new groovy.json.JsonSlurperClassic().parseText(data)
 }
 
 /**
