@@ -31,6 +31,8 @@ notify.wrap {
   def manifestId   = null
   def stackResults = null
 
+  def lsstswConfig = scipipe.canonical.lsstsw_config
+
   def run = {
     stage('format nightly tag') {
       gitTag  = "d.${year}.${month}.${day}"
@@ -167,7 +169,6 @@ notify.wrap {
       // XXX use the same compiler as is configured for the canonical build
       // env.  This is a bit of a kludge.  It would be better to directly
       // label the compiler used on the dockage image.
-      def lsstswConfig = scipipe.canonical.lsstsw_config
 
       retry(1) {
         // based on lsstsqre/stack image
