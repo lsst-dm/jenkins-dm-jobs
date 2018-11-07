@@ -72,7 +72,13 @@ def String datasetSlug(Map ds) {
  * @param ds Map
  */
 def String codeSlug(Map ds) {
-  def slug = "${ds.code.name}:${ds.code.git_ref.tr('/', '_')}"
+  def name = 'validate_drp'
+  def ref = 'installed'
+  if (ds.code?.github_repo) {
+    name = ds.code.name
+    ref  = ds.code.git_ref.tr('/', '_')
+  }
+  def slug = "${name}:${ref}"
   return slug.toLowerCase()
 }
 
@@ -97,13 +103,15 @@ def void verifyDataset(Map p) {
 
   def ds = p.dataset
 
+  Boolean buildCode = ds.code?.github_repo
+
   def run = {
     // note that pwd() must be run inside of a node {} block
     def jobDir           = pwd()
     def datasetDir       = "${jobDir}/datasets/${ds.data.name}"
     def ciDir            = "${jobDir}/ci-scripts"
     def baseDir          = "${jobDir}/${p.slug}"
-    def codeDir          = "${baseDir}/${ds.code.name}"
+    def codeDir          = ds.code?.name ? "${baseDir}/${ds.code.name}" : ''
     def homeDir          = "${baseDir}/home"
     def runDir           = "${baseDir}/run"
     def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
@@ -157,60 +165,55 @@ def void verifyDataset(Map p) {
     } // dir
 
     // clone code
-    // XXX make this conditional on if we're going to build from source
-    dir(codeDir) {
-      timeout(time: ds.code.clone_timelimit, unit: 'MINUTES') {
-        // the simplier git step doesn't support 'CleanBeforeCheckout'
-        def codeRepoUrl = util.githubSlugToUrl(ds.code.github_repo)
-        def codeRef     = ds.code.git_ref
+    if (buildCode) {
+      dir(codeDir) {
+        timeout(time: ds.code.clone_timelimit, unit: 'MINUTES') {
+          // the simplier git step doesn't support 'CleanBeforeCheckout'
+          def codeRepoUrl = util.githubSlugToUrl(ds.code.github_repo)
+          def codeRef     = ds.code.git_ref
 
-        checkout(
-          scm: [
-            $class: 'GitSCM',
-            branches: [[name: "*/${codeRef}"]],
-            doGenerateSubmoduleConfigurations: false,
-            extensions: [[$class: 'CleanBeforeCheckout']],
-            submoduleCfg: [],
-            userRemoteConfigs: [[url: codeRepoUrl]]
-          ],
-          changelog: false,
-          poll: false,
-        )
-      } // timeout
-    } // dir
+          checkout(
+            scm: [
+              $class: 'GitSCM',
+              branches: [[name: "*/${codeRef}"]],
+              doGenerateSubmoduleConfigurations: false,
+              extensions: [[$class: 'CleanBeforeCheckout']],
+              submoduleCfg: [],
+              userRemoteConfigs: [[url: codeRepoUrl]]
+            ],
+            changelog: false,
+            poll: false,
+          )
+        } // timeout
+      } // dir
+    }
 
     util.insideDockerWrap(
       image: p.dockerImage,
       pull: true,
       args: "-v ${datasetDir}:${datasetDir}",
     ) {
-
-      /*
-      // XXX disable build from source for testing
-      // XXX make this conditional on if we're going to build from source
-      // XXX DM-12663 validate_drp must be built from source / be
-      // writable by the jenkins role user -- the version installed in
-      // the container image can not be used.
-      buildDrp(
-        homeDir,
-        codeDir,
-        runSlug,
-        ciDir,
-        lsstCompiler
-      )
-      */
+      if (buildCode) {
+        buildDrp(
+          homeDir: homeDir,
+          codeDir: codeDir,
+          runSlug: p.slug,
+          ciDir: ciDir,
+          lsstCompiler: lsstCompiler,
+        )
+      }
 
       runDrp(
         runDir: runDir,
-        //codeDir: codeDir,
+        codeDir: codeDir,
         datasetName: ds.data.name,
         datasetDir: datasetDir,
       )
 
-      // push results to squash, verify version
+      // push results to squash
       runDispatchqa(
         runDir: runDir,
-        //codeDir: codeDir,
+        codeDir: codeDir,
         lsstswDir: fakeLsstswDir,
         datasetSlug: ds.display_name,
         noPush: p.noPush
@@ -252,26 +255,20 @@ def void runNodeCleanup() {
  * @param homemDir String path to $HOME -- where to put dotfiles
  * @param codeDir String path to validate_drp (code)
  * @param runSlug String short name to describe this drp run
+ * @param ciDir String
+ * @param lsstCompiler String
  */
-def void buildDrp(
-  String homeDir,
-  String codeDir,
-  String runSlug,
-  String ciDir,
-  String lsstCompiler
-) {
-  // keep eups from polluting the jenkins role user dotfiles
-  withEnv([
-    "HOME=${homeDir}",
-    "EUPS_USERDATA=${homeDir}/.eups_userdata",
-    "CODE_DIR=${codeDir}",
-    "CI_DIR=${ciDir}",
-    "LSST_JUNIT_PREFIX=${runSlug}",
-    "LSST_COMPILER=${lsstCompiler}",
-  ]) {
-    util.bash '''
-      cd "$CODE_DIR"
+def void buildDrp(Map p) {
+  util.requireMapKeys(p, [
+    'homeDir',
+    'codeDir',
+    'runSlug',
+    'ciDir',
+    'lsstCompiler',
+  ])
 
+  def run = {
+    util.bash '''
       set +o xtrace
 
       source "${CI_DIR}/ccutils.sh"
@@ -284,17 +281,30 @@ def void buildDrp(
 
       scons
     '''
-  } // withEnv
+  }
 
-  // junit([
-  //   testResults: "${codeDir}/** /pytest-*.xml",
-  //   allowEmptyResults: true,
-  // ])
-  // util.record([
-  //   "${codeDir}/**/*.log",
-  //   "${codeDir}/**/*.failed",
-  //   "${codeDir}/**/pytest-*.xml",
-  // ])
+  withEnv([
+    "HOME=${p.homeDir}",
+    // keep eups from polluting the jenkins role user dotfiles
+    "EUPS_USERDATA=${p.homeDir}/.eups_userdata",
+    "CODE_DIR=${p.codeDir}",
+    "CI_DIR=${p.ciDir}",
+    "LSST_JUNIT_PREFIX=${p.runSlug}",
+    "LSST_COMPILER=${p.lsstCompiler}",
+  ]) {
+    try {
+      dir(p.codeDir) {
+        run()
+      }
+    } finally {
+      util.record([
+        "${p.codeDir}/**/*.log",
+        "${p.codeDir}/**/*.failed",
+        "${p.codeDir}/**/pytest-*.xml",
+      ])
+      util.junit(["${p.codeDir}/**/pytest-*.xml"])
+    }
+  } // withEnv
 }
 
 /**
