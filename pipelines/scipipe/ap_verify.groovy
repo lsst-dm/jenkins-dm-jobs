@@ -109,7 +109,7 @@ def void verifyDataset(Map p) {
       } // dir
     } finally {
       // collect artifacts
-      record([
+      util.record([
         "${runDir}/**/*.log",
         "${runDir}/**/*.json",
       ])
@@ -144,28 +144,6 @@ def String datasetSlug(Map ds) {
 
   return slug.toLowerCase()
 }
-
-/**
- *  Collect artifacts
- *
- * @param archiveDirs List paths to be collected.
- */
-def void record(List archiveDirs) {
-  // convert to relative paths
-  // https://gist.github.com/ysb33r/5804364
-  def rootDir = new File(pwd())
-  archiveDirs = archiveDirs.collect { it ->
-    def fullPath = new File(it)
-    rootDir.toPath().relativize(fullPath.toPath()).toFile().toString()
-  }
-
-  archiveArtifacts([
-    artifacts: archiveDirs.join(', '),
-    excludes: '**/*.dummy',
-    allowEmptyArchive: true,
-    fingerprint: true
-  ])
-} // record
 
 /**
  * Run ap_verify driver script.
