@@ -4,14 +4,15 @@ validate_drp:
   defaults:
     retries: 3
     code:
+      name: validate_drp
       github_repo: lsst/validate_drp
       git_ref: master
       clone_timelimit: 5
     squash_push: true
   datasets:
     - display_name: cfht
-      name: validation_data_cfht
       data:
+        name: validation_data_cfht
         github_repo: lsst/validation_data_cfht
         git_ref: master
         clone_timelimit: 15
@@ -24,8 +25,8 @@ validate_drp:
         clone_timelimit: 240
       run_timelimit: 720
     #- display_name: decam
-    #  name: validation_data_decam
     #  data:
+    #    name: validation_data_decam
     #    github_repo: lsst/validation_data_decam
     #    git_ref: master
     #    clone_timelimit: 60
