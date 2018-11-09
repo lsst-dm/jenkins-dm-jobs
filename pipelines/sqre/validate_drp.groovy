@@ -50,7 +50,7 @@ notify.wrap {
         config: conf,
         dockerImage: dockerImage,
         // only push if build param & yaml config == true
-        noPush: noPush && conf.squash_push,
+        squashPush: (!noPush) && conf.squash_push,
         slug: runSlug,
         wipeout: wipeout,
       )
@@ -119,7 +119,7 @@ def void verifyDataset(Map p) {
     'config',
     'dockerImage',
     'slug',
-    'noPush',
+    'squashPush',
     'wipeout',
   ])
 
@@ -236,14 +236,21 @@ def void verifyDataset(Map p) {
         datasetDir: datasetDir,
       )
 
-      // push results to squash
-      runDispatchqa(
+      // compute characterization report
+      runReportPerformance(
         runDir: runDir,
         codeDir: codeDir,
-        lsstswDir: fakeLsstswDir,
         squashDatasetSlug: displayName(ds),
-        noPush: p.noPush
       )
+
+      // push results to squash
+      if (p.squashPush) {
+        runDispatchVerify(
+          runDir: runDir,
+          lsstswDir: fakeLsstswDir,
+          squashDatasetSlug: displayName(ds),
+        )
+      }
     } // inside
   } // run
 
@@ -499,22 +506,18 @@ def void runDrp(Map p) {
 } // runDrp
 
 /**
- * push DRP results to squash using dispatch-verify.
+ * Generate characterization report using reportPerformance.py
  *
  * @param p Map
- * @param p.resultPath
- * @param p.lsstswDir String Path to (the fake) lsstsw dir
+ * @param p.runDir String
  * @param p.squashDatasetSlug String The dataset "short" name.  Eg., cfht
  * instead of validation_data_cfht.
- * @param p.noPush Boolean if true, do not attempt to push data to squash.
- * Reguardless of that value, the output of the characterization report is recorded
+ * @param p.codeDir String (Optional)
  */
-def void runDispatchqa(Map p) {
+def void runReportPerformance(Map p) {
   util.requireMapKeys(p, [
     'runDir',
-    'lsstswDir',
     'squashDatasetSlug',
-    'noPush',
   ])
 
   p = [codeDir: ''] + p
@@ -534,29 +537,60 @@ def void runDispatchqa(Map p) {
 
       # compute characterization report
       reportPerformance.py \
-        --output_file="$dataset"_char_report.rst \
+        --output_file="${DATASET}_char_report.rst" \
         *_output_*.json
     '''
+  } // run
 
-    if (!p.noPush) {
-      util.bash '''
-        set +o xtrace
-        source /opt/lsst/software/stack/loadLSST.bash
-        setup verify
-        set -o xtrace
-
-        # submit via dispatch_verify
-        for file in $( ls *_output_*.json ); do
-          dispatch_verify.py \
-            --env jenkins \
-            --lsstsw "$LSSTSW_DIR" \
-            --url "$SQUASH_URL" \
-            --user "$SQUASH_USER" \
-            --password "$SQUASH_PASS" \
-            $file
-        done
-      '''
+  withEnv([
+    "CODE_DIR=${p.codeDir}",
+    "DATASET=${p.squashDatasetSlug}",
+  ]) {
+    try {
+      dir(p.runDir) {
+        run()
+      }
+    } finally {
+      // archive from root of ws
+      util.record(util.xz(["${p.runDir}/**/*_char_report.rst"]))
     }
+  } // withEnv
+} // runReportPerformance
+
+/**
+ * push DRP results to squash using dispatch-verify.
+ *
+ * @param p Map
+ * @param p.runDir String
+ * @param p.lsstswDir String Path to (the fake) lsstsw dir
+ * @param p.squashDatasetSlug String The dataset "short" name.  Eg., cfht
+ * instead of validation_data_cfht.
+ */
+def void runDispatchVerify(Map p) {
+  util.requireMapKeys(p, [
+    'runDir',
+    'lsstswDir',
+    'squashDatasetSlug',
+  ])
+
+  def run = {
+    util.bash '''
+      set +o xtrace
+      source /opt/lsst/software/stack/loadLSST.bash
+      setup verify
+      set -o xtrace
+
+      # submit via dispatch_verify
+      for file in $( ls *_output_*.json ); do
+        dispatch_verify.py \
+          --env jenkins \
+          --lsstsw "$LSSTSW_DIR" \
+          --url "$SQUASH_URL" \
+          --user "$SQUASH_USER" \
+          --password "$SQUASH_PASS" \
+          $file
+      done
+    '''
   } // run
 
   /*
@@ -571,7 +605,6 @@ def void runDispatchqa(Map p) {
   withEnv([
     "LSSTSW_DIR=${p.lsstswDir}",
     "CODE_DIR=${p.codeDir}",
-    "NO_PUSH=${p.noPush}",
     "dataset=${p.squashDatasetSlug}",
     "SQUASH_URL=${sqre.squash.url}",
   ]) {
@@ -581,17 +614,12 @@ def void runDispatchqa(Map p) {
       usernameVariable: 'SQUASH_USER',
       passwordVariable: 'SQUASH_PASS',
     ]]) {
-      try {
-        dir(p.runDir) {
-          run()
-        }
-      } finally {
-        // archive from root of ws
-        util.record(util.xz(["${p.runDir}/**/*_char_report.rst"]))
+      dir(p.runDir) {
+        run()
       }
     } // withCredentials
   } // withEnv
-} // runDispatchqa
+} // runDispatchVerify
 
 def void missingDockerLabel(String label) {
   error "docker ${label} label is missing"
