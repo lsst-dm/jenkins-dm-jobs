@@ -33,20 +33,24 @@ notify.wrap {
   // run multiple datasets, if defined, in parallel
   def matrix = [:]
   def defaults = drp.validate_drp.defaults
-  drp.validate_drp.datasets.each { ds ->
+  drp.validate_drp.configs.each { conf ->
     // apply defaults
-    ds = defaults + ds
+    conf = defaults + conf
+    if (conf.code) {
+      conf.code.display_name = displayName(conf.code)
+    }
+    conf.dataset.display_name = displayName(conf.dataset)
 
     // note that `:` seems to break python imports and `*` seems to break the
     // buttler
-    def runSlug = "${datasetSlug(ds)}^${codeSlug(ds)}"
+    def runSlug = "${datasetSlug(conf)}^${codeSlug(conf)}"
 
     matrix[runSlug] = {
       verifyDataset(
-        dataset: ds,
+        config: conf,
         dockerImage: dockerImage,
         // only push if build param & yaml config == true
-        noPush: noPush && ds.squash_push,
+        noPush: noPush && conf.squash_push,
         slug: runSlug,
         wipeout: wipeout,
       )
@@ -61,34 +65,50 @@ notify.wrap {
 /**
  * Generate a "slug" to describe this dataset including branch name.
  *
- * @param ds Map
+ * @param conf Map
  */
-def String datasetSlug(Map ds) {
-  def slug = "${ds.data.name}-${ds.data.git_ref.tr('/', '_')}"
+def String datasetSlug(Map conf) {
+  def ds = conf.dataset
+  def slug = "${ds.display_name}-${ds.git_ref.tr('/', '_')}"
   return slug.toLowerCase()
 }
 
 /**
  * Generate a "slug" to describe the verification code including branch name.
  *
- * @param ds Map
+ * @param c Map
  */
-def String codeSlug(Map ds) {
+def String codeSlug(Map conf) {
+  def code = conf.code
+
   def name = 'validate_drp'
   def ref = 'installed'
-  if (ds.code?.github_repo) {
-    name = ds.code.name
-    ref  = ds.code.git_ref.tr('/', '_')
+
+  if (code) {
+    name = code.display_name
   }
-  def slug = "${name}-${ref}"
+  if (code?.github_repo) {
+    name = code.name
+    ref  = code.git_ref.tr('/', '_')
+  }
+  def slug = "${name}-${ref}".toLowerCase()
   return slug.toLowerCase()
+}
+
+/**
+ * `name` to use to refer to dataset/code
+ *
+ * @param m Map
+ */
+def String displayName(Map m) {
+  m.display_name ?: m.name
 }
 
 /**
  * Prepare, execute, and record results of a validation_drp run.
  *
  * @param p Map
- * @param p.dataset String
+ * @param p.config String
  * @param p.dockerImage String
  * @param p.noPush Boolean
  * @param p.slug String Name of dataset.
@@ -96,25 +116,28 @@ def String codeSlug(Map ds) {
  */
 def void verifyDataset(Map p) {
   util.requireMapKeys(p, [
-    'dataset',
+    'config',
     'dockerImage',
     'slug',
     'noPush',
     'wipeout',
   ])
 
-  def ds = p.dataset
+  def conf = p.config
+  def ds   = conf.dataset
+  def code = conf.code
 
-  Boolean buildCode = ds.code?.github_repo
+  // code.name is required in order to build code
+  Boolean buildCode = code?.name
 
   def run = {
     // note that pwd() must be run inside of a node {} block
     def jobDir           = pwd()
-    def datasetDir       = "${jobDir}/datasets/${ds.data.name}"
+    def datasetDir       = "${jobDir}/datasets/${ds.name}"
     def ciDir            = "${jobDir}/ci-scripts"
     def baseDir          = "${jobDir}/${p.slug}"
     // the code clone needs to be under the long winded path for archiving
-    def codeDir          = ds.code?.name ? "${baseDir}/${ds.code.name}" : ''
+    def codeDir          = buildCode ? "${baseDir}/${code.name}" : ''
     def homeDir          = "${baseDir}/home"
     def runDir           = "${baseDir}/run"
     def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
@@ -159,10 +182,10 @@ def void verifyDataset(Map p) {
 
     // clone dataset
     dir(datasetDir) {
-      timeout(time: ds.data.clone_timelimit, unit: 'MINUTES') {
+      timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
         util.checkoutLFS(
-          githubSlug: ds.data.github_repo,
-          gitRef: ds.data.git_ref,
+          githubSlug: ds.github_repo,
+          gitRef: ds.git_ref,
         )
       } // timeout
     } // dir
@@ -170,10 +193,10 @@ def void verifyDataset(Map p) {
     // clone code
     if (buildCode) {
       dir(codeDir) {
-        timeout(time: ds.code.clone_timelimit, unit: 'MINUTES') {
+        timeout(time: code.clone_timelimit, unit: 'MINUTES') {
           // the simplier git step doesn't support 'CleanBeforeCheckout'
-          def codeRepoUrl = util.githubSlugToUrl(ds.code.github_repo)
-          def codeRef     = ds.code.git_ref
+          def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
+          def codeRef     = code.git_ref
 
           checkout(
             scm: [
@@ -209,7 +232,7 @@ def void verifyDataset(Map p) {
       runDrp(
         runDir: runDir,
         codeDir: codeDir,
-        datasetName: ds.data.name,
+        datasetName: ds.name,
         datasetDir: datasetDir,
       )
 
@@ -218,7 +241,7 @@ def void verifyDataset(Map p) {
         runDir: runDir,
         codeDir: codeDir,
         lsstswDir: fakeLsstswDir,
-        datasetSlug: ds.display_name,
+        squashDatasetSlug: displayName(ds),
         noPush: p.noPush
       )
     } // inside
@@ -229,7 +252,7 @@ def void verifyDataset(Map p) {
   retry(ds.retries) {
     try {
       node('docker') {
-        timeout(time: ds.run_timelimit, unit: 'MINUTES') {
+        timeout(time: conf.run_timelimit, unit: 'MINUTES') {
           if (p.wipeout) {
             deleteDir()
           }
@@ -481,8 +504,8 @@ def void runDrp(Map p) {
  * @param p Map
  * @param p.resultPath
  * @param p.lsstswDir String Path to (the fake) lsstsw dir
- * @param p.datasetSlug String The dataset "short" name.  Eg., cfht instead of
- * validation_data_cfht.
+ * @param p.squashDatasetSlug String The dataset "short" name.  Eg., cfht
+ * instead of validation_data_cfht.
  * @param p.noPush Boolean if true, do not attempt to push data to squash.
  * Reguardless of that value, the output of the characterization report is recorded
  */
@@ -490,7 +513,7 @@ def void runDispatchqa(Map p) {
   util.requireMapKeys(p, [
     'runDir',
     'lsstswDir',
-    'datasetSlug',
+    'squashDatasetSlug',
     'noPush',
   ])
 
@@ -555,7 +578,7 @@ def void runDispatchqa(Map p) {
     "LSSTSW_DIR=${p.lsstswDir}",
     "CODE_DIR=${p.codeDir}",
     "NO_PUSH=${p.noPush}",
-    "dataset=${p.datasetSlug}",
+    "dataset=${p.squashDatasetSlug}",
     "SQUASH_URL=${sqre.squash.url}",
   ]) {
     withCredentials([[
