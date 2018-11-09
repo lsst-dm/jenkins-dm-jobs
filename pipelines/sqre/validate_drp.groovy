@@ -113,6 +113,7 @@ def void verifyDataset(Map p) {
     def datasetDir       = "${jobDir}/datasets/${ds.data.name}"
     def ciDir            = "${jobDir}/ci-scripts"
     def baseDir          = "${jobDir}/${p.slug}"
+    // the code clone needs to be under the long winded path for archiving
     def codeDir          = ds.code?.name ? "${baseDir}/${ds.code.name}" : ''
     def homeDir          = "${baseDir}/home"
     def runDir           = "${baseDir}/run"
@@ -193,7 +194,7 @@ def void verifyDataset(Map p) {
     util.insideDockerWrap(
       image: p.dockerImage,
       pull: true,
-      args: "-v ${datasetDir}:${datasetDir}",
+      args: "-v ${datasetDir}:${datasetDir} -v ${ciDir}:${ciDir}",
     ) {
       if (buildCode) {
         buildDrp(
