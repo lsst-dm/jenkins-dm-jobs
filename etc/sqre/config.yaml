@@ -54,7 +54,7 @@ wget:
     repo: lsstsqre/wget
     tag: latest
 squash:
-  url: https://squash-restful-api.lsst.codes/
+  url: https://squash-restful-api-demo.lsst.codes/
 layercake:
   packer:
     github_repo: lsst-sqre/packer-layercake
