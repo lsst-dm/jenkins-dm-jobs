@@ -542,13 +542,7 @@ def void runDispatchqa(Map p) {
       util.bash '''
         set +o xtrace
         source /opt/lsst/software/stack/loadLSST.bash
-        # if CODE_DIR is defined, set that up instead of the default validate_drp
-        # product
-        if [[ -n $CODE_DIR ]]; then
-          setup -k -r "$CODE_DIR"
-        else
-          setup validate_drp
-        fi
+        setup verify
         set -o xtrace
 
         # submit via dispatch_verify
