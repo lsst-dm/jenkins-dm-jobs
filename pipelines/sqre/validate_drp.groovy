@@ -240,7 +240,7 @@ def void verifyDataset(Map p) {
       runReportPerformance(
         runDir: runDir,
         codeDir: codeDir,
-        squashDatasetSlug: displayName(ds),
+        datasetName: ds.name,
       )
 
       // push results to squash
@@ -248,7 +248,7 @@ def void verifyDataset(Map p) {
         runDispatchVerify(
           runDir: runDir,
           lsstswDir: fakeLsstswDir,
-          squashDatasetSlug: displayName(ds),
+          datasetName: ds.name,
         )
       }
     } // inside
@@ -510,14 +510,13 @@ def void runDrp(Map p) {
  *
  * @param p Map
  * @param p.runDir String
- * @param p.squashDatasetSlug String The dataset "short" name.  Eg., cfht
- * instead of validation_data_cfht.
+ * @param p.datasetName String The dataset name. Eg., validation_data_cfht
  * @param p.codeDir String (Optional)
  */
 def void runReportPerformance(Map p) {
   util.requireMapKeys(p, [
     'runDir',
-    'squashDatasetSlug',
+    'datasetName',
   ])
 
   p = [codeDir: ''] + p
@@ -544,7 +543,7 @@ def void runReportPerformance(Map p) {
 
   withEnv([
     "CODE_DIR=${p.codeDir}",
-    "DATASET=${p.squashDatasetSlug}",
+    "DATASET=${p.datasetName}",
   ]) {
     try {
       dir(p.runDir) {
@@ -563,14 +562,13 @@ def void runReportPerformance(Map p) {
  * @param p Map
  * @param p.runDir String
  * @param p.lsstswDir String Path to (the fake) lsstsw dir
- * @param p.squashDatasetSlug String The dataset "short" name.  Eg., cfht
- * instead of validation_data_cfht.
+ * @param p.datasetName String The dataset name. Eg., validation_data_cfht
  */
 def void runDispatchVerify(Map p) {
   util.requireMapKeys(p, [
     'runDir',
     'lsstswDir',
-    'squashDatasetSlug',
+    'datasetName',
   ])
 
   def run = {
@@ -605,7 +603,7 @@ def void runDispatchVerify(Map p) {
   withEnv([
     "LSSTSW_DIR=${p.lsstswDir}",
     "CODE_DIR=${p.codeDir}",
-    "dataset=${p.squashDatasetSlug}",
+    "dataset=${p.datasetName}",
     "SQUASH_URL=${sqre.squash.url}",
   ]) {
     withCredentials([[
