@@ -1826,5 +1826,78 @@ def void junit(List testResults) {
   ])
 } // junit
 
+/**
+ * push results to squash using dispatch-verify.
+ *
+ * Example:
+ *
+ *     util.runDispatchVerify(
+ *       runDir: runDir,
+ *       lsstswDir: lsstswDir,
+ *       datasetName: datasetName,
+ *       resultFile: resultFile,
+ *     )
+ *
+ * @param p Map
+ * @param p.runDir String
+ * @param p.lsstswDir String Path to (the fake) lsstsw dir
+ * @param p.datasetName String The dataset name. Eg., validation_data_cfht
+ * @param p.resultFile String [JSON] file to push to squash.
+ */
+def void runDispatchVerify(Map p) {
+  util.requireMapKeys(p, [
+    'runDir',
+    'lsstswDir',
+    'datasetName',
+    'resultFile',
+  ])
+
+  def sqre = sqreConfig()
+
+  def run = {
+    util.bash '''
+      set +o xtrace
+      source /opt/lsst/software/stack/loadLSST.bash
+      setup verify
+      set -o xtrace
+
+      dispatch_verify.py \
+        --env jenkins \
+        --lsstsw "$LSSTSW_DIR" \
+        --url "$SQUASH_URL" \
+        --user "$SQUASH_USER" \
+        --password "$SQUASH_PASS" \
+        "$RESULT_FILE"
+    '''
+  } // run
+
+  /*
+  These are already present under pipeline:
+  - BUILD_ID
+  - BUILD_URL
+
+  This var was defined automagically by matrixJob and now must be manually
+  set:
+  - dataset
+  */
+  withEnv([
+    "LSSTSW_DIR=${p.lsstswDir}",
+    "dataset=${p.datasetName}",
+    "SQUASH_URL=${sqre.squash.url}",
+    "RESULT_FILE=${p.resultFile}",
+  ]) {
+    withCredentials([[
+      $class: 'UsernamePasswordMultiBinding',
+      credentialsId: 'squash-api-user',
+      usernameVariable: 'SQUASH_USER',
+      passwordVariable: 'SQUASH_PASS',
+    ]]) {
+      dir(p.runDir) {
+        run()
+      }
+    } // withCredentials
+  } // withEnv
+} // runDispatchVerify
+
 
 return this;
