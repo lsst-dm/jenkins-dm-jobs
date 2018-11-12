@@ -246,11 +246,19 @@ def void verifyDataset(Map p) {
 
       // push results to squash
       if (p.squashPush) {
-        runDispatchVerify(
-          runDir: runDir,
-          lsstswDir: fakeLsstswDir,
-          datasetName: ds.name,
-        )
+        def files = []
+        dir(runDir) {
+          files = findFiles(glob: '*_output_*.json')
+        }
+
+        files.each { f ->
+          util.runDispatchVerify(
+            runDir: runDir,
+            lsstswDir: fakeLsstswDir,
+            datasetName: ds.name,
+            resultFile: f,
+          )
+        }
       }
     } // inside
   } // run
@@ -342,8 +350,6 @@ def void buildDrp(Map p) {
 }
 
 /**
- * XXX this monster should be moved into an external shell script.
- *
  * Run validate_drp driver script.
  *
  * @param p Map
@@ -440,69 +446,6 @@ def void runReportPerformance(Map p) {
     }
   } // withEnv
 } // runReportPerformance
-
-/**
- * push DRP results to squash using dispatch-verify.
- *
- * @param p Map
- * @param p.runDir String
- * @param p.lsstswDir String Path to (the fake) lsstsw dir
- * @param p.datasetName String The dataset name. Eg., validation_data_cfht
- */
-def void runDispatchVerify(Map p) {
-  util.requireMapKeys(p, [
-    'runDir',
-    'lsstswDir',
-    'datasetName',
-  ])
-
-  def run = {
-    util.bash '''
-      set +o xtrace
-      source /opt/lsst/software/stack/loadLSST.bash
-      setup verify
-      set -o xtrace
-
-      # submit via dispatch_verify
-      for file in $( ls *_output_*.json ); do
-        dispatch_verify.py \
-          --env jenkins \
-          --lsstsw "$LSSTSW_DIR" \
-          --url "$SQUASH_URL" \
-          --user "$SQUASH_USER" \
-          --password "$SQUASH_PASS" \
-          $file
-      done
-    '''
-  } // run
-
-  /*
-  These are already present under pipeline:
-  - BUILD_ID
-  - BUILD_URL
-
-  This var was defined automagically by matrixJob and now must be manually
-  set:
-  - dataset
-  */
-  withEnv([
-    "LSSTSW_DIR=${p.lsstswDir}",
-    "CODE_DIR=${p.codeDir}",
-    "dataset=${p.datasetName}",
-    "SQUASH_URL=${sqre.squash.url}",
-  ]) {
-    withCredentials([[
-      $class: 'UsernamePasswordMultiBinding',
-      credentialsId: 'squash-api-user',
-      usernameVariable: 'SQUASH_USER',
-      passwordVariable: 'SQUASH_PASS',
-    ]]) {
-      dir(p.runDir) {
-        run()
-      }
-    } // withCredentials
-  } // withEnv
-} // runDispatchVerify
 
 def void missingDockerLabel(String label) {
   error "docker ${label} label is missing"
