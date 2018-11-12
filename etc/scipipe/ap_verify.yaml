@@ -1,5 +1,7 @@
 ---
 ap_verify:
+  defaults:
+    squash_push: true
   datasets:
     - name: CI-HiTS2015
       github_repo: lsst/ap_verify_ci_hits2015

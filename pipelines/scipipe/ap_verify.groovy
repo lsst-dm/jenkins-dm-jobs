@@ -33,6 +33,9 @@ notify.wrap {
   // run multiple datasets, if defined, in parallel
   def matrix = [:]
   ap.ap_verify.datasets.each { ds ->
+    // apply defaults
+    conf = defaults + conf
+
     def runSlug = datasetSlug(ds)
 
     matrix[runSlug] = {
