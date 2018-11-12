@@ -1,3 +1,8 @@
+// Consideration has been given to renaming this job to scipipe/validate_drp
+// but there is concern about breakage of links back to previous biulds from
+// squash.  A rename needs to be coordinated with a simultaneous fixing up of
+// the squash database.
+
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
