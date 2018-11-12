@@ -22,10 +22,12 @@ node('jenkins-master') {
 notify.wrap {
   util.requireParams([
     'DOCKER_IMAGE',
+    'NO_PUSH',
     'WIPEOUT',
   ])
 
   String dockerImage = params.DOCKER_IMAGE
+  Boolean noPush     = params.NO_PUSH
   Boolean wipeout    = params.WIPEOUT
 
   // run multiple datasets, if defined, in parallel

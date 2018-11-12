@@ -244,6 +244,11 @@ notify.wrap {
           job: 'scipipe/ap_verify',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
+            booleanParam(
+              name: 'NO_PUSH',
+              value: scipipe.release.step.ap_verify.no_push,
+            ),
+            booleanParam(name: 'WIPEOUT', value: false),
           ],
           wait: false,
         )
