@@ -790,7 +790,7 @@ def String smokeScript(
   MinicondaEnv menv,
   String ciDir
 ) {
-  def baseUrl = util.githubSlugToUrl('lsst/base')
+  def baseUrl = "https://raw.githubusercontent.com/${scipipe.versiondb.github_repo}"
 
   scriptPreamble(
     compiler,
