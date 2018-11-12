@@ -1413,10 +1413,9 @@ def String sanitizeEupsTag(String tag) {
   tag.tr('.-', '_')
   // if the git tag is an official version, starts with a number
   // but eups tag need still to have 'v' in front
-  char c = tag.charAt(0)
-  if ( c.isDigit() ) {
-    tag = "v" + tag
-  } 
+  if ( !tag,startsWith('v') ) {
+    tag = "v${tag}"
+  }
 }
 
 /*
