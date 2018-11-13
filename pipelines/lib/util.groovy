@@ -1899,5 +1899,45 @@ def void runDispatchVerify(Map p) {
   } // withEnv
 } // runDispatchVerify
 
+/**
+ * Create a "fake" lsstsw-ish dir structure as expected by
+ * `dispatch-verify.py`, which includes a `manifest.txt` and a copy of
+ * `repos.yaml`.
+ *
+ * Example:
+ *
+ *     util.createFakeLsstswClone(
+ *       fakeLsstswDir: fakeLsstswDir,
+ *       manifestId: manifestId,
+ *     )
+ *
+ * @param p Map
+ * @param p.fakeLsstswDir String dir path
+ * @param p.manifestId String versiondb manifest id
+ */
+def void createFakeLsstswClone(Map p) {
+  requireMapKeys(p, [
+    'fakeLsstswDir',
+    'manifestId',
+  ])
+
+  def fakeLsstswDir    = p.fakeLsstswDir
+  def fakeManifestDir  = "${fakeLsstswDir}/build"
+  def fakeManifestFile = "${fakeManifestDir}/manifest.txt"
+  def fakeReposDir     = "${fakeLsstswDir}/etc"
+  def fakeReposFile    = "${fakeReposDir}/repos.yaml"
+
+  emptyDirs([
+    fakeManifestDir,
+    fakeReposDir,
+  ])
+
+  downloadManifest(
+    destFile: fakeManifestFile,
+    manifestId: p.manifestId,
+  )
+  downloadRepos(destFile: fakeReposFile)
+} // createFlakeLsstwClone
+
 
 return this;
