@@ -1410,7 +1410,7 @@ def String lsstswConfigSlug(Map lsstswConfig) {
 def String sanitizeEupsTag(String tag) {
   // eups doesn't like dots in tags, convert to underscores
   // by policy, we're not allowing dash either
-  tag.tr('.-', '_')
+  tag = tag.tr('.-', '_')
   // if the git tag is an official version, starts with a number
   // but eups tag need still to have 'v' in front
   char c = tag.charAt(0)
