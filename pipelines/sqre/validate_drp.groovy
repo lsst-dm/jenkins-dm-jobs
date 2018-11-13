@@ -187,7 +187,7 @@ def void verifyDataset(Map p) {
           githubSlug: ds.github_repo,
           gitRef: ds.git_ref,
         )
-      } // timeout
+      }
     } // dir
 
     // clone code
@@ -226,6 +226,7 @@ def void verifyDataset(Map p) {
           homeDir: homeDir,
           runSlug: p.slug,
           lsstCompiler: lsstCompiler,
+          archiveDir: jobDir,
         )
       }
 
@@ -235,6 +236,7 @@ def void verifyDataset(Map p) {
         ciDir: ciDir,
         datasetName: ds.name,
         datasetDir: datasetDir,
+        archiveDir: jobDir,
       )
 
       // compute characterization report
@@ -242,6 +244,7 @@ def void verifyDataset(Map p) {
         runDir: runDir,
         codeDir: codeDir,
         datasetName: ds.name,
+        archiveDir: jobDir,
       )
 
       // push results to squash
@@ -279,7 +282,7 @@ def void verifyDataset(Map p) {
     } catch(e) {
       runNodeCleanup()
       throw e
-    }
+    } // try
   } // retry
 } // verifyDataset
 
@@ -299,6 +302,7 @@ def void runNodeCleanup() {
  * @param runSlug String short name to describe this drp run
  * @param ciDir String
  * @param lsstCompiler String
+ * @param p.archiveDir String path from which to archive artifacts
  */
 def void buildDrp(Map p) {
   util.requireMapKeys(p, [
@@ -307,6 +311,7 @@ def void buildDrp(Map p) {
     'runSlug',
     'ciDir',
     'lsstCompiler',
+    'archiveDir',
   ])
 
   def run = {
@@ -339,13 +344,15 @@ def void buildDrp(Map p) {
         run()
       }
     } finally {
-      util.record([
-        "${p.codeDir}/**/*.log",
-        "${p.codeDir}/**/*.failed",
-        "${p.codeDir}/**/pytest-*.xml",
-      ])
-      util.junit(["${p.codeDir}/**/pytest-*.xml"])
-    }
+      dir(p.archiveDir) {
+        util.record([
+          "${p.codeDir}/**/*.log",
+          "${p.codeDir}/**/*.failed",
+          "${p.codeDir}/**/pytest-*.xml",
+        ])
+        util.junit(["${p.codeDir}/**/pytest-*.xml"])
+      }
+    } // try
   } // withEnv
 }
 
@@ -358,6 +365,7 @@ def void buildDrp(Map p) {
  * @param p.datasetDir String path to validation dataset
  * @param p.ciDir String
  * @param p.codeDir (Optional) String path to validate_drp (code)
+ * @param p.archiveDir String path from which to archive artifacts
  */
 def void runDrp(Map p) {
   util.requireMapKeys(p, [
@@ -365,6 +373,7 @@ def void runDrp(Map p) {
     'datasetName',
     'datasetDir',
     'ciDir',
+    'archiveDir',
   ])
 
   p = [codeDir: ''] + p
@@ -387,12 +396,13 @@ def void runDrp(Map p) {
         '''
       }
     } finally {
-      // archive from root of ws
-      util.record(util.xz([
-        "${p.runDir}/**/*.log",
-        "${p.runDir}/**/*_output_*.json",
-      ]))
-    } // dir
+      dir(p.archiveDir) {
+        util.record(util.xz([
+          "${p.runDir}/**/*.log",
+          "${p.runDir}/**/*_output_*.json",
+        ]))
+      }
+    } // try
   } // withEnv
 } // runDrp
 
@@ -403,11 +413,13 @@ def void runDrp(Map p) {
  * @param p.runDir String
  * @param p.datasetName String The dataset name. Eg., validation_data_cfht
  * @param p.codeDir String (Optional)
+ * @param p.archiveDir String path from which to archive artifacts
  */
 def void runReportPerformance(Map p) {
   util.requireMapKeys(p, [
     'runDir',
     'datasetName',
+    'archiveDir',
   ])
 
   p = [codeDir: ''] + p
@@ -441,9 +453,10 @@ def void runReportPerformance(Map p) {
         run()
       }
     } finally {
-      // archive from root of ws
-      util.record(util.xz(["${p.runDir}/**/*_char_report.rst"]))
-    }
+      dir(p.archiveDir) {
+        util.record(util.xz(["${p.runDir}/**/*_char_report.rst"]))
+      }
+    } // try
   } // withEnv
 } // runReportPerformance
 
@@ -475,5 +488,5 @@ def void stageFakeLsstsw(Map p) {
     dir(p.archiveDir) {
       util.record(["${p.fakeLsstswDir}/**"])
     }
-  }
+  } // try
 } // stageFakeLsstsw
