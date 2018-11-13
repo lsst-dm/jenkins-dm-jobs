@@ -268,7 +268,7 @@ def void verifyDataset(Map p) {
 
   // retrying is important as there is a good chance that the dataset will
   // fill the disk up
-  retry(ds.retries) {
+  retry(conf.retries) {
     try {
       node('docker') {
         timeout(time: conf.run_timelimit, unit: 'MINUTES') {
