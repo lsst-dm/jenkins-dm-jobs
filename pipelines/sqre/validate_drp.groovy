@@ -113,9 +113,9 @@ def String displayName(Map m) {
  * Prepare, execute, and record results of a validation_drp run.
  *
  * @param p Map
- * @param p.config String
+ * @param p.config Map
  * @param p.dockerImage String
- * @param p.noPush Boolean
+ * @param p.squashPush Boolean
  * @param p.slug String Name of dataset.
  * @param p.wipeout Boolean
  */
@@ -146,8 +146,6 @@ def void verifyDataset(Map p) {
     def homeDir          = "${baseDir}/home"
     def runDir           = "${baseDir}/run"
     def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
-    def fakeManifestFile = "${fakeLsstswDir}/build/manifest.txt"
-    def fakeReposFile    = "${fakeLsstswDir}/etc/repos.yaml"
 
     docker.image(p.dockerImage).pull()
     def labels = util.shJson """
@@ -166,20 +164,17 @@ def void verifyDataset(Map p) {
 
     // empty ephemeral dirs at start of build
     util.emptyDirs([
-      "${fakeLsstswDir}/build",
-      "${fakeLsstswDir}/etc",
       homeDir,
       runDir,
     ])
 
     // stage manifest.txt early so we don't risk a long processing run and
     // then fail setting up to run dispatch_verify.py
-    util.downloadManifest(
-      destFile: fakeManifestFile,
+    stageFakeLsstsw(
+      fakeLsstswDir: fakeLsstswDir,
       manifestId: manifestId,
+      archiveDir: jobDir,
     )
-    util.downloadRepos(destFile: fakeReposFile)
-    util.record([fakeManifestFile, fakeReposFile])
 
     dir(ciDir) {
       util.cloneCiScripts()
@@ -455,3 +450,30 @@ def void runReportPerformance(Map p) {
 def void missingDockerLabel(String label) {
   error "docker ${label} label is missing"
 }
+
+/**
+ * bootstrap a fake lsstsw clone and archive it
+ *
+ * @param p Map
+ * @param p.fakeLsstswDir String path to the "clone"
+ * @param p.manifestId String versiondb manifest id
+ * @param p.archiveDir String path from which to archive artifacts
+ */
+def void stageFakeLsstsw(Map p) {
+  util.requireMapKeys(p, [
+    'fakeLsstswDir',
+    'manifestId',
+    'archiveDir',
+  ])
+
+  try {
+    util.createFakeLsstswClone(
+      fakeLsstswDir: p.fakeLsstswDir,
+      manifestId: p.manifestId,
+    )
+  } finally {
+    dir(p.archiveDir) {
+      util.record(["${p.fakeLsstswDir}/**"])
+    }
+  }
+} // stageFakeLsstsw
