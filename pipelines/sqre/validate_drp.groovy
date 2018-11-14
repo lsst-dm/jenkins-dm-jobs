@@ -36,9 +36,11 @@ notify.wrap {
   Boolean wipeout    = params.WIPEOUT
 
   // run multiple datasets, if defined, in parallel
-  def matrix = [:]
-  def defaults = drp.validate_drp.defaults
-  drp.validate_drp.configs.each { conf ->
+  def jobConf     = drp
+  def jobConfName = 'validate_drp'
+  def matrix      = [:]
+  def defaults    = jobConf."$jobConfName".defaults
+  jobConf."$jobConfName".configs.each { conf ->
     // apply defaults
     conf = defaults + conf
     if (conf.code) {
@@ -62,7 +64,7 @@ notify.wrap {
     }
   }
 
-  stage('validate_drp matrix') {
+  stage("${jobConfName} matrix") {
     parallel(matrix)
   }
 } // notify.wrap
