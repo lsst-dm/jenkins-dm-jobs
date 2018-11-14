@@ -297,11 +297,12 @@ def void runNodeCleanup() {
 /**
  * Build validate_drp
  *
- * @param homemDir String path to $HOME -- where to put dotfiles
- * @param codeDir String path to validate_drp (code)
- * @param runSlug String short name to describe this drp run
- * @param ciDir String
- * @param lsstCompiler String
+ * @param p Map
+ * @param p.homemDir String path to $HOME -- where to put dotfiles
+ * @param p.codeDir String path to validate_drp (code)
+ * @param p,runSlug String short name to describe this drp run
+ * @param p.ciDir String
+ * @param p.lsstCompiler String
  * @param p.archiveDir String path from which to archive artifacts
  */
 def void buildDrp(Map p) {
