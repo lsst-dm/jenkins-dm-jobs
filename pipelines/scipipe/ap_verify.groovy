@@ -242,10 +242,12 @@ def void runApVerify(Map p) {
         run()
       }
     } finally {
-      util.record(util.xz([
-        "${p.runDir}/**/*.log",
-        "${p.runDir}/**/*.json",
-      ]))
+      dir(p.archiveDir) {
+        util.record(util.xz([
+          "${p.runDir}/**/*.log",
+          "${p.runDir}/**/*.json",
+        ]))
+      }
     } // try
   } // withEnv
 } // runApVerify
