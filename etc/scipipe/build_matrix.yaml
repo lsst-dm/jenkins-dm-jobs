@@ -104,7 +104,7 @@ release:
     documenteer:
       publish: true
     ap_verify:
-      no_push: false
+      no_push: true
 #
 # low-level build parameters
 #
