@@ -6,6 +6,7 @@ p.pipeline().with {
 
   parameters {
     stringParam('DOCKER_IMAGE', null, 'Explicit name of release docker image including tag.')
+    booleanParam('NO_PUSH', true, 'Do not push results to squash.')
     booleanParam('WIPEOUT', false, 'Completely wipe out workspace(s) before starting build.')
   }
 }

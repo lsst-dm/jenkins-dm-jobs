@@ -222,12 +222,22 @@ def dumpJson(String filename, Map data) {
  * Parse a JSON string.
  *
  * @param data String to parse.
- * @return LazyMap parsed JSON object
+ * @return Object parsed JSON object
  */
 @NonCPS
 def slurpJson(String data) {
-  def slurper = new groovy.json.JsonSlurper()
-  slurper.parseText(data)
+  new groovy.json.JsonSlurperClassic().parseText(data)
+}
+
+/**
+ * Run a command, that is assumed to return JSON, and parse the stdout.
+ *
+ * @param script String shell script to execute.
+ * @return Object parsed JSON object
+ */
+def shJson(String script) {
+  def stdout = sh(returnStdout: true, script: script).trim()
+  slurpJson(stdout)
 }
 
 /**
@@ -1450,6 +1460,15 @@ def Object simsConfig() {
 }
 
 /*
+ * Get validate_drp config
+ *
+ * @return config Object
+ */
+def Object validateDrpConfig() {
+  readYamlFile('etc/scipipe/validate_drp.yaml')
+}
+
+/*
  * Get default awscli docker image string
  *
  * @return awscliImage String
@@ -1597,7 +1616,7 @@ def void withCondaMirrorEnv(Closure run) {
  * @param p.gitRef String git ref to checkout. Defaults to `master`
  */
 def void checkoutLFS(Map p) {
-  util.requireMapKeys(p, [
+  requireMapKeys(p, [
     'githubSlug',
     'gitRef',
   ])
@@ -1605,7 +1624,7 @@ def void checkoutLFS(Map p) {
     gitRef: 'master',
   ] + p
 
-  def gitRepo = util.githubSlugToUrl(p.githubSlug)
+  def gitRepo = githubSlugToUrl(p.githubSlug)
 
   def lfsImage = 'lsstsqre/gitlfs'
 
@@ -1618,16 +1637,307 @@ def void checkoutLFS(Map p) {
   ])
 
   try {
-    util.insideDockerWrap(
+    insideDockerWrap(
       image: lfsImage,
       pull: true,
     ) {
-      util.bash('git lfs pull origin')
+      bash('git lfs pull origin')
     }
   } finally {
     // try not to break jenkins clone mangement
-    util.bash 'rm -f .git/hooks/post-checkout'
+    bash 'rm -f .git/hooks/post-checkout'
   }
 } // checkoutLFS
+
+/**
+ * Download URL resource and write it to disk.
+ *
+ * Example:
+ *
+ *     util.downloadFile(
+ *       url: 'https://example.org/foo/bar.baz',
+ *       destFile: 'foo/bar.baz',
+ *     )
+ *
+ * @param p Map
+ * @param p.url String URL to fetch
+ * @param p.destFile String path to write downloaded file
+ */
+def void downloadFile(Map p) {
+  requireMapKeys(p, [
+    'url',
+    'destFile',
+  ])
+
+  writeFile(file: p.destFile, text: new URL(p.url).getText())
+}
+
+/**
+ * Download `manifest.txt` from `lsst/versiondb`.
+ *
+ * Example:
+ *
+ *     util.downloadManifest(
+ *       destFile: 'foo/manifest.txt',
+ *       manifestId: 'b1234',
+ *     )
+ *
+ * @param p Map
+ * @param p.destFile String path to write downloaded file
+ * @param p.manifestId String manifest build id aka bNNNN
+ */
+def void downloadManifest(Map p) {
+  requireMapKeys(p, [
+    'destFile',
+    'manifestId',
+  ])
+
+  def manifestUrl = versiondbManifestUrl(p.manifestId)
+  downloadFile(
+    url: manifestUrl,
+    destFile: p.destFile,
+  )
+}
+
+/**
+ * Download a copy of `repos.yaml`
+ *
+ * Example:
+ *
+ *     util.downloadRepos(
+ *       destFile: 'foo/repos.yaml',
+ *     )
+ *
+ * @param p Map
+ * @param p.destFile String path to write downloaded file
+ */
+def void downloadRepos(Map p) {
+  requireMapKeys(p, [
+    'destFile',
+  ])
+
+  def reposUrl = reposUrl()
+  downloadFile(
+    url: reposUrl,
+    destFile: p.destFile,
+  )
+}
+
+/**
+ * Collect artifacts
+ *
+ * Example:
+ *
+ *     // note: the whitespace is needed to prevent the example from exiting
+ *     // the comment block -- not needed in real code
+ *     util.record([
+ *       "${runDir}/** /*.log",
+ *       "${runDir}/** /*.json",
+ *     ])
+ *
+ * @param archiveDirs List paths to be collected.
+ */
+def void record(List archiveDirs) {
+  archiveDirs = relPath(pwd(), archiveDirs)
+
+  archiveArtifacts([
+    artifacts: archiveDirs.join(', '),
+    excludes: '**/*.dummy',
+    allowEmptyArchive: true,
+    fingerprint: true
+  ])
+} // record
+
+/**
+ * Relativize a list of paths.
+ *
+ * Example:
+ *
+ *     util.relPath(pwd(), [
+ *       "/foo/bar/baz/bonk",
+ *       "/foo/bar/baz/quix",
+ *     ])
+ *
+ * @param relativeToDir String base path
+ * @param path List paths to be relativized
+ * @return List of relativized paths
+ */
+def List relPath(String relativeToDir, List paths) {
+  // convert to relative paths
+  // https://gist.github.com/ysb33r/5804364
+  def rootDir = new File(relativeToDir)
+  return paths.collect { it ->
+    // skip non-rel paths
+    if (!it.startsWith('/')) { return it }
+    def fullPath = new File(it)
+    rootDir.toPath().relativize(fullPath.toPath()).toFile().toString()
+  }
+} // relPath
+
+/**
+ * Relativize a list of paths.
+ *
+ * Example:
+ *
+ *     util.xz([
+ *       '** /*.foo',
+ *       '** /*.bar',
+ *     ])
+ *
+ * @param patterns List of file patterns to compress
+ * @return List of compressed files
+ */
+def List xz(List patterns) {
+  patterns = relPath(pwd(), patterns)
+  def files = patterns.collect { g -> findFiles(glob: g) }.flatten()
+  def targetFile = 'compress_files.txt'
+  writeFile(file: targetFile, text: files.join("\n") + "\n")
+
+  // compressing an example hsc output file
+  // (cmd)       (ratio)  (time)
+  // xz -T0      0.183    0:20
+  // xz -T0 -9   0.180    1:23
+  // xz -T0 -9e  0.179    1:28
+
+  // compress but do not remove original file
+  util.bash "xz -T0 -9ev --keep --files=${targetFile}"
+  return files.collect { f -> "${f}.xz" }
+}
+
+/**
+ * Collect junit reports
+ *
+ * Example:
+ *
+ *     // note: the whitespace is needed to prevent the example from exiting
+ *     // the comment block -- not needed in real code
+ *     util.junit([
+ *       "${runDir}/** /pytest-*.xml",
+ *     ])
+ *
+ * @param testResults List paths to be collected.
+ */
+def void junit(List testResults) {
+  testResults = relPath(pwd(), testResults)
+
+  junit([
+    testResults: testResults.join(', '),
+    allowEmptyResults: true,
+  ])
+} // junit
+
+/**
+ * push results to squash using dispatch-verify.
+ *
+ * Example:
+ *
+ *     util.runDispatchVerify(
+ *       runDir: runDir,
+ *       lsstswDir: lsstswDir,
+ *       datasetName: datasetName,
+ *       resultFile: resultFile,
+ *     )
+ *
+ * @param p Map
+ * @param p.runDir String
+ * @param p.lsstswDir String Path to (the fake) lsstsw dir
+ * @param p.datasetName String The dataset name. Eg., validation_data_cfht
+ * @param p.resultFile String [JSON] file to push to squash.
+ */
+def void runDispatchVerify(Map p) {
+  util.requireMapKeys(p, [
+    'runDir',
+    'lsstswDir',
+    'datasetName',
+    'resultFile',
+  ])
+
+  def sqre = sqreConfig()
+
+  def run = {
+    util.bash '''
+      set +o xtrace
+      source /opt/lsst/software/stack/loadLSST.bash
+      setup verify
+      set -o xtrace
+
+      dispatch_verify.py \
+        --env jenkins \
+        --lsstsw "$LSSTSW_DIR" \
+        --url "$SQUASH_URL" \
+        --user "$SQUASH_USER" \
+        --password "$SQUASH_PASS" \
+        "$RESULT_FILE"
+    '''
+  } // run
+
+  /*
+  These are already present under pipeline:
+  - BUILD_ID
+  - BUILD_URL
+
+  This var was defined automagically by matrixJob and now must be manually
+  set:
+  - dataset
+  */
+  withEnv([
+    "LSSTSW_DIR=${p.lsstswDir}",
+    "dataset=${p.datasetName}",
+    "SQUASH_URL=${sqre.squash.url}",
+    "RESULT_FILE=${p.resultFile}",
+  ]) {
+    withCredentials([[
+      $class: 'UsernamePasswordMultiBinding',
+      credentialsId: 'squash-api-user',
+      usernameVariable: 'SQUASH_USER',
+      passwordVariable: 'SQUASH_PASS',
+    ]]) {
+      dir(p.runDir) {
+        run()
+      }
+    } // withCredentials
+  } // withEnv
+} // runDispatchVerify
+
+/**
+ * Create a "fake" lsstsw-ish dir structure as expected by
+ * `dispatch-verify.py`, which includes a `manifest.txt` and a copy of
+ * `repos.yaml`.
+ *
+ * Example:
+ *
+ *     util.createFakeLsstswClone(
+ *       fakeLsstswDir: fakeLsstswDir,
+ *       manifestId: manifestId,
+ *     )
+ *
+ * @param p Map
+ * @param p.fakeLsstswDir String dir path
+ * @param p.manifestId String versiondb manifest id
+ */
+def void createFakeLsstswClone(Map p) {
+  requireMapKeys(p, [
+    'fakeLsstswDir',
+    'manifestId',
+  ])
+
+  def fakeLsstswDir    = p.fakeLsstswDir
+  def fakeManifestDir  = "${fakeLsstswDir}/build"
+  def fakeManifestFile = "${fakeManifestDir}/manifest.txt"
+  def fakeReposDir     = "${fakeLsstswDir}/etc"
+  def fakeReposFile    = "${fakeReposDir}/repos.yaml"
+
+  emptyDirs([
+    fakeManifestDir,
+    fakeReposDir,
+  ])
+
+  downloadManifest(
+    destFile: fakeManifestFile,
+    manifestId: p.manifestId,
+  )
+  downloadRepos(destFile: fakeReposFile)
+} // createFlakeLsstwClone
+
 
 return this;

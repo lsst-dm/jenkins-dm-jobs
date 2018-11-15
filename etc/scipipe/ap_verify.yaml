@@ -1,9 +1,23 @@
 ---
-ap_verify:
+#
+# *_timelimit is in minutes
+#
+# The template dict/map/hash MUST NOT be used directly -- it exists ONLY to
+# provide yaml anchors internal to this file.
+#
+template:
   datasets:
-    - name: CI-HiTS2015
+    hits2015: &dataset_hits2015
+      display_name: hits2015
+      name: CI-HiTS2015
       github_repo: lsst/ap_verify_ci_hits2015
       git_ref: master
       clone_timelimit: 15
-      retries: 3
+ap_verify:
+  defaults:
+    squash_push: true
+    retries: 3
+  configs:
+    - dataset:
+        <<: *dataset_hits2015
       run_timelimit: 60

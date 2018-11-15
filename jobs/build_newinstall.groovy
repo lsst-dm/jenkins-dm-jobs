@@ -8,10 +8,4 @@ p.pipeline().with {
     booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
     booleanParam('LATEST', true, 'Also push to docker registry with "latest" tag.')
   }
-
-  // it would be slick if we could trigger based on dockerhub lsstsqre/centos
-  // notifications but AFAIK, this can't be restricted by tag
-  triggers {
-    upstream('sqre/infra/build-layercake', 'SUCCESS')
-  }
 }
