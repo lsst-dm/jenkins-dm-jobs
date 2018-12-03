@@ -13,6 +13,12 @@ template:
       github_repo: lsst/ap_verify_ci_hits2015
       git_ref: master
       clone_timelimit: 15
+  codes:
+    ap_verify: &code_ap
+      name: ap_verify
+      github_repo: lsst/ap_verify
+      git_ref: tickets/DM-16333
+      clone_timelimit: 5
 ap_verify:
   defaults:
     squash_push: true

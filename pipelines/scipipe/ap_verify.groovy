@@ -150,12 +150,47 @@ def void verifyDataset(Map p) {
       } // timeout
     } // dir
 
+    // clone code
+    if (buildCode) {
+      dir(codeDir) {
+        timeout(time: code.clone_timelimit, unit: 'MINUTES') {
+          // the simplier git step doesn't support 'CleanBeforeCheckout'
+          def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
+          def codeRef     = code.git_ref
+
+          checkout(
+            scm: [
+              $class: 'GitSCM',
+              branches: [[name: "*/${codeRef}"]],
+              doGenerateSubmoduleConfigurations: false,
+              extensions: [[$class: 'CleanBeforeCheckout']],
+              submoduleCfg: [],
+              userRemoteConfigs: [[url: codeRepoUrl]]
+            ],
+            changelog: false,
+            poll: false,
+          )
+        } // timeout
+      } // dir
+    }
+
     // process dataset
     util.insideDockerWrap(
       image: p.dockerImage,
       pull: true,
       args: "-v ${datasetDir}:${datasetDir}",
     ) {
+      if (buildCode) {
+        buildAp(
+          codeDir: codeDir,
+          ciDir: ciDir,
+          homeDir: homeDir,
+          runSlug: p.slug,
+          lsstCompiler: lsstCompiler,
+          archiveDir: jobDir,
+        )
+      }
+
       runApVerify(
         runDir: runDir,
         dataset: ds,
@@ -197,6 +232,69 @@ def void verifyDataset(Map p) {
     } // node
   } // retry
 } // verifyDataset
+
+/**
+ * Build ap_verify 
+ *
+ * @param p Map
+ * @param p.homemDir String path to $HOME -- where to put dotfiles
+ * @param p.codeDir String path to validate_drp (code)
+ * @param p,runSlug String short name to describe this drp run
+ * @param p.ciDir String
+ * @param p.lsstCompiler String
+ * @param p.archiveDir String path from which to archive artifacts
+ */
+def void buildAp(Map p) {
+  util.requireMapKeys(p, [
+    'homeDir',
+    'codeDir',
+    'runSlug',
+    'ciDir',
+    'lsstCompiler',
+    'archiveDir',
+  ])
+
+  def run = {
+    util.bash '''
+      set +o xtrace
+
+      source "${CI_DIR}/ccutils.sh"
+      cc::setup_first "$LSST_COMPILER"
+
+      source /opt/lsst/software/stack/loadLSST.bash
+      setup -k -r .
+
+      set -o xtrace
+
+      scons
+    '''
+  }
+
+  withEnv([
+    "HOME=${p.homeDir}",
+    // keep eups from polluting the jenkins role user dotfiles
+    "EUPS_USERDATA=${p.homeDir}/.eups_userdata",
+    "CODE_DIR=${p.codeDir}",
+    "CI_DIR=${p.ciDir}",
+    "LSST_JUNIT_PREFIX=${p.runSlug}",
+    "LSST_COMPILER=${p.lsstCompiler}",
+  ]) {
+    try {
+      dir(p.codeDir) {
+        run()
+      }
+    } finally {
+      dir(p.archiveDir) {
+        util.record([
+          "${p.codeDir}/**/*.log",
+          "${p.codeDir}/**/*.failed",
+          "${p.codeDir}/**/pytest-*.xml",
+        ])
+        util.junit(["${p.codeDir}/**/pytest-*.xml"])
+      }
+    } // try
+  } // withEnv
+}
 
 /**
  * Run ap_verify driver script.
