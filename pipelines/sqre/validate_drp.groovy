@@ -49,7 +49,7 @@ notify.wrap {
     conf.dataset.display_name = displayName(conf.dataset)
 
     // note that `:` seems to break python imports and `*` seems to break the
-    // buttler
+    // butler
     def runSlug = "${datasetSlug(conf)}^${codeSlug(conf)}"
 
     matrix[runSlug] = {
