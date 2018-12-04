@@ -100,6 +100,10 @@ def void verifyDataset(Map p) {
 
   def conf = p.config
   def ds   = conf.dataset
+  def code = conf.code
+
+  // code.name is required in order to build code
+  Boolean buildCode = code?.name
 
   // Eg.: lsst/ap_verify_ci_hits2015 -> ap_verify_ci_hits2015
   def gitRepoName = ds.github_repo.split('/')[1]
@@ -109,6 +113,7 @@ def void verifyDataset(Map p) {
     def jobDir           = pwd()
     def datasetDir       = "${jobDir}/datasets/${ds.name}"
     def baseDir          = "${jobDir}/${p.slug}"
+    def codeDir          = buildCode ? "${baseDir}/${code.name}" : ''
     def homeDir          = "${baseDir}/home"
     def runDir           = "${baseDir}/run"
     def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
