@@ -355,7 +355,13 @@ def void runApVerify(Map p) {
   def run = {
     util.bash '''
       source /opt/lsst/software/stack/loadLSST.bash
-      setup ap_verify
+      # if CODE_DIR is defined, set that up instead of the default ap_verify
+      # product
+      if [[ -n $CODE_DIR ]]; then
+        setup -k -r "$CODE_DIR"
+      else
+        setup ap_verify
+      fi
 
       cd ${DATASET_DIR}
       setup -k -r .
