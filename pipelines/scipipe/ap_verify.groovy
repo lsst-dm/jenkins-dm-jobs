@@ -234,6 +234,7 @@ def void verifyDataset(Map p) {
         datasetDir: datasetDir,
         homeDir: homeDir,
         archiveDir: jobDir,
+        codeDir: codeDir,
       )
 
       // push results to squash
