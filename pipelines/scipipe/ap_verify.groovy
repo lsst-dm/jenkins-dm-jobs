@@ -350,6 +350,7 @@ def void runApVerify(Map p) {
     'datasetDir',
     'homeDir',
     'archiveDir',
+    'codeDir',
   ])
 
   def run = {
@@ -357,6 +358,7 @@ def void runApVerify(Map p) {
       source /opt/lsst/software/stack/loadLSST.bash
       # if CODE_DIR is defined, set that up instead of the default ap_verify
       # product
+      echo "This is CODE_DIR ${CODE_DIR}"
       if [[ -n $CODE_DIR ]]; then
         setup -k -r "$CODE_DIR"
       else
@@ -377,6 +379,7 @@ def void runApVerify(Map p) {
     "DATASET_NAME=${p.dataset.name}",
     "DATASET_DIR=${p.datasetDir}",
     "HOME=${p.homeDir}",
+    "CODE_DIR=${p.codeDir}",
   ]) {
     try {
       dir(p.runDir) {
