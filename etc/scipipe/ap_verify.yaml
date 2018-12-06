@@ -20,4 +20,5 @@ ap_verify:
   configs:
     - dataset:
         <<: *dataset_hits2015
-      run_timelimit: 60
+      # squash may take 10+ mins per metric upload (x6)
+      run_timelimit: 90
