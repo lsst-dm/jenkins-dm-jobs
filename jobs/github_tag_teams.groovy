@@ -18,12 +18,12 @@ p.pipeline().with {
         --token "$GITHUB_TOKEN" \
         --user 'sqreadmin' \
         --email 'sqre-admin@lists.lsst.org' \
-        --tag 'w.2018.18'
+        --tag 'w.9999.52'
   '''
   description(text.replaceFirst("\n","").stripIndent())
 
   parameters {
-    stringParam('GIT_TAG', null, 'git tag string. Eg. w.2016.08')
+    stringParam('GIT_TAG', null, 'git tag string. Eg. w.9999.52')
     booleanParam('DRY_RUN', true, 'Dry run')
   }
 }
