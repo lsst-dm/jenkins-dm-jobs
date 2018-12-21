@@ -83,7 +83,7 @@ def String datasetSlug(Map conf) {
 def String codeSlug(Map conf) {
   def code = conf.code
 
-  def name = 'validate_drp'
+  def name = 'ap_verify'
   def ref = 'installed'
 
   if (code) {
