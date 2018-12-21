@@ -17,7 +17,7 @@ template:
     ap_verify: &code_ap
       name: ap_verify
       github_repo: lsst/ap_verify
-      git_ref: tickets/DM-16333
+      git_ref: master
       clone_timelimit: 5
 ap_verify:
   defaults:
