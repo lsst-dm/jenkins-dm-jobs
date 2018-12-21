@@ -33,14 +33,19 @@ notify.wrap {
   // run multiple datasets, if defined, in parallel
   def jobConf     = ap
   def jobConfName = 'ap_verify'
-  def defaults    = jobConf."$jobConfName".defaults
   def matrix      = [:]
+  def defaults    = jobConf."$jobConfName".defaults
   jobConf."$jobConfName".configs.each { conf ->
     // apply defaults
     conf = defaults + conf
+    if (conf.code) {
+      conf.code.display_name = displayName(conf.code)
+    }
     conf.dataset.display_name = displayName(conf.dataset)
 
-    def runSlug = datasetSlug(conf)
+    // note that `:` seems to break python imports and `*` seems to break the
+    // butler
+    def runSlug = "${datasetSlug(conf)}^${codeSlug(conf)}"
 
     matrix[runSlug] = {
       verifyDataset(
@@ -67,6 +72,28 @@ notify.wrap {
 def String datasetSlug(Map conf) {
   def ds = conf.dataset
   def slug = "${ds.display_name}-${ds.git_ref.tr('/', '_')}"
+  return slug.toLowerCase()
+}
+
+/**
+ * Generate a "slug" to describe the verification code including branch name.
+ *
+ * @param c Map
+ */
+def String codeSlug(Map conf) {
+  def code = conf.code
+
+  def name = 'validate_drp'
+  def ref = 'installed'
+
+  if (code) {
+    name = code.display_name
+  }
+  if (code?.github_repo) {
+    name = code.name
+    ref  = code.git_ref.tr('/', '_')
+  }
+  def slug = "${name}-${ref}".toLowerCase()
   return slug.toLowerCase()
 }
 
@@ -100,20 +127,22 @@ def void verifyDataset(Map p) {
 
   def conf = p.config
   def ds   = conf.dataset
+  def code = conf.code
 
-  // Eg.: lsst/ap_verify_ci_hits2015 -> ap_verify_ci_hits2015
-  def gitRepoName = ds.github_repo.split('/')[1]
+  // code.name is required in order to build code
+  Boolean buildCode = code?.name
 
   def run = {
     // note that pwd() must be run inside of a node {} block
     def jobDir           = pwd()
     def datasetDir       = "${jobDir}/datasets/${ds.name}"
+    def ciDir            = "${jobDir}/ci-scripts"
     def baseDir          = "${jobDir}/${p.slug}"
+    // the code clone needs to be under the long winded path for archiving
+    def codeDir          = buildCode ? "${baseDir}/${code.name}" : ''
     def homeDir          = "${baseDir}/home"
     def runDir           = "${baseDir}/run"
     def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
-    def fakeManifestFile = "${fakeLsstswDir}/build/manifest.txt"
-    def fakeReposFile    = "${fakeLsstswDir}/etc/repos.yaml"
 
     docker.image(p.dockerImage).pull()
     def labels = util.shJson """
@@ -123,8 +152,12 @@ def void verifyDataset(Map p) {
     if (!labels.VERSIONDB_MANIFEST_ID) {
       missingDockerLabel 'VERSIONDB_MANIFEST_ID'
     }
+    if (!labels.LSST_COMPILER) {
+      missingDockerLabel 'LSST_COMPILER'
+    }
 
     String manifestId = labels.VERSIONDB_MANIFEST_ID
+    String lsstCompiler = labels.LSST_COMPILER
 
     // empty ephemeral dirs at start of build
     util.emptyDirs([
@@ -140,6 +173,10 @@ def void verifyDataset(Map p) {
       archiveDir: jobDir,
     )
 
+    dir(ciDir) {
+      util.cloneCiScripts()
+    }
+
     // clone dataset
     dir(datasetDir) {
       timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
@@ -150,18 +187,54 @@ def void verifyDataset(Map p) {
       } // timeout
     } // dir
 
+    // clone code
+    if (buildCode) {
+      dir(codeDir) {
+        timeout(time: code.clone_timelimit, unit: 'MINUTES') {
+          // the simplier git step doesn't support 'CleanBeforeCheckout'
+          def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
+          def codeRef     = code.git_ref
+
+          checkout(
+            scm: [
+              $class: 'GitSCM',
+              branches: [[name: "*/${codeRef}"]],
+              doGenerateSubmoduleConfigurations: false,
+              extensions: [[$class: 'CleanBeforeCheckout']],
+              submoduleCfg: [],
+              userRemoteConfigs: [[url: codeRepoUrl]]
+            ],
+            changelog: false,
+            poll: false,
+          )
+        } // timeout
+      } // dir
+    }
+
     // process dataset
     util.insideDockerWrap(
       image: p.dockerImage,
       pull: true,
       args: "-v ${datasetDir}:${datasetDir}",
     ) {
+      if (buildCode) {
+        buildAp(
+          codeDir: codeDir,
+          ciDir: ciDir,
+          homeDir: homeDir,
+          runSlug: p.slug,
+          lsstCompiler: lsstCompiler,
+          archiveDir: jobDir,
+        )
+      }
+
       runApVerify(
         runDir: runDir,
         dataset: ds,
         datasetDir: datasetDir,
         homeDir: homeDir,
         archiveDir: jobDir,
+        codeDir: codeDir,
       )
 
       // push results to squash
@@ -199,6 +272,69 @@ def void verifyDataset(Map p) {
 } // verifyDataset
 
 /**
+ * Build ap_verify
+ *
+ * @param p Map
+ * @param p.homemDir String path to $HOME -- where to put dotfiles
+ * @param p.codeDir String path to validate_drp (code)
+ * @param p,runSlug String short name to describe this drp run
+ * @param p.ciDir String
+ * @param p.lsstCompiler String
+ * @param p.archiveDir String path from which to archive artifacts
+ */
+def void buildAp(Map p) {
+  util.requireMapKeys(p, [
+    'homeDir',
+    'codeDir',
+    'runSlug',
+    'ciDir',
+    'lsstCompiler',
+    'archiveDir',
+  ])
+
+  def run = {
+    util.bash '''
+      set +o xtrace
+
+      source "${CI_DIR}/ccutils.sh"
+      cc::setup_first "$LSST_COMPILER"
+
+      source /opt/lsst/software/stack/loadLSST.bash
+      setup -k -r .
+
+      set -o xtrace
+
+      scons
+    '''
+  }
+
+  withEnv([
+    "HOME=${p.homeDir}",
+    // keep eups from polluting the jenkins role user dotfiles
+    "EUPS_USERDATA=${p.homeDir}/.eups_userdata",
+    "CODE_DIR=${p.codeDir}",
+    "CI_DIR=${p.ciDir}",
+    "LSST_JUNIT_PREFIX=${p.runSlug}",
+    "LSST_COMPILER=${p.lsstCompiler}",
+  ]) {
+    try {
+      dir(p.codeDir) {
+        run()
+      }
+    } finally {
+      dir(p.archiveDir) {
+        util.record([
+          "${p.codeDir}/**/*.log",
+          "${p.codeDir}/**/*.failed",
+          "${p.codeDir}/**/pytest-*.xml",
+        ])
+        util.junit(["${p.codeDir}/**/pytest-*.xml"])
+      }
+    } // try
+  } // withEnv
+}
+
+/**
  * Run ap_verify driver script.
  *
  * @param p Map
@@ -215,12 +351,20 @@ def void runApVerify(Map p) {
     'datasetDir',
     'homeDir',
     'archiveDir',
+    'codeDir',
   ])
 
   def run = {
     util.bash '''
       source /opt/lsst/software/stack/loadLSST.bash
-      setup ap_verify
+      # if CODE_DIR is defined, set that up instead of the default ap_verify
+      # product
+      echo "This is CODE_DIR ${CODE_DIR}"
+      if [[ -n $CODE_DIR ]]; then
+        setup -k -r "$CODE_DIR"
+      else
+        setup ap_verify
+      fi
 
       cd ${DATASET_DIR}
       setup -k -r .
@@ -236,6 +380,7 @@ def void runApVerify(Map p) {
     "DATASET_NAME=${p.dataset.name}",
     "DATASET_DIR=${p.datasetDir}",
     "HOME=${p.homeDir}",
+    "CODE_DIR=${p.codeDir}",
   ]) {
     try {
       dir(p.runDir) {
