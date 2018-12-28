@@ -26,3 +26,5 @@ obs_lsst:
     - dataset:
         <<: *test_obs_lsst
       run_timelimit: 150
+    - code:
+        <<: *code_obs_lsst
