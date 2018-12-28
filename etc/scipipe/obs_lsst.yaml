@@ -27,4 +27,4 @@ obs_lsst:
         <<: *test_obs_lsst
       run_timelimit: 150
     - code:
-        <<: *code_obs_lsst
+        <<: *obs_lsst
