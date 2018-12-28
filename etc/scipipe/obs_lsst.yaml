@@ -14,7 +14,7 @@ template:
       git_ref: master
       clone_timelimit: 15
   codes:
-    obs_lsst: &code_obs_lsst
+    obs_lsst: &obs_lsst
       name: obs_lsst
       github_repo: lsst/obs_lsst
       git_ref: master
