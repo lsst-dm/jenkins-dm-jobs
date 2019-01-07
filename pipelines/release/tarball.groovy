@@ -24,7 +24,7 @@ notify.wrap {
     'EUPS_TAG',
     'IMAGE',
     'LABEL',
-    'LSSTSW_REF',
+    'SPLENV_REF',
     'MINIVER',
     'OSFAMILY',
     'PLATFORM',
@@ -40,7 +40,7 @@ notify.wrap {
   String eupsTag        = params.EUPS_TAG
   String image          = util.emptyToNull(params.IMAGE) // '' means null
   String label          = params.LABEL
-  String lsstswRef      = params.LSSTSW_REF
+  String splenvRef      = params.SPLENV_REF
   String miniver        = params.MINIVER
   String products       = params.PRODUCTS
   String osfamily       = params.OSFAMILY
@@ -52,7 +52,7 @@ notify.wrap {
   Integer timeout       = params.TIMEOUT
   Boolean wipeout       = params.WIPEOUT
 
-  def py = new MinicondaEnv(pythonVersion,miniver, lsstswRef)
+  def py = new MinicondaEnv(pythonVersion,miniver, splenvRef)
 
   def buildTarget = [
     products: products,
@@ -898,7 +898,7 @@ def String scriptPreamble(
 
     export LSST_PYTHON_VERSION="${menv.pythonVersion}"
     export LSST_MINICONDA_VERSION="${menv.minicondaVersion}"
-    export LSST_LSSTSW_REF="${menv.lsstswRef}"
+    export LSST_SPLENV_REF="${menv.splenvRef}"
     export LSST_EUPS_USE_TARBALLS="${useTarballs}"
 
     source "${ciDir}/ccutils.sh"
@@ -913,7 +913,7 @@ def String scriptPreamble(
 class MinicondaEnv implements Serializable {
   String pythonVersion
   String minicondaVersion
-  String lsstswRef
+  String splenvRef
 
   /**
    * Constructor.
@@ -928,14 +928,14 @@ class MinicondaEnv implements Serializable {
   MinicondaEnv(String p, String m, String l) {
     this.pythonVersion = p
     this.minicondaVersion = m
-    this.lsstswRef = l
+    this.splenvRef = l
   }
 
   /**
    * Generate a single string description of miniconda env.
    */
   String slug() {
-    "miniconda${pythonVersion}-${minicondaVersion}-${lsstswRef}"
+    "miniconda${pythonVersion}-${minicondaVersion}-${splenvRef}"
   }
 }
 
