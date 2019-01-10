@@ -608,7 +608,13 @@ def trynotify(Closure run) {
   } else {
     try {
       run()
+    } catch (org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException e) {
+      // fail on groovy sandbox exceptions. ie., methods that need to be
+      // whitelisted
+      throw e
     } catch (e) {
+      // ignore other exception so problems with slack messaging will not cause
+      // the build to be marked as a failure.
       echo "error sending slack notification: ${e.toString()}"
     }
   }
