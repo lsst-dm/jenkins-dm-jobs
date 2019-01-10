@@ -116,7 +116,7 @@ versiondb:
 release_tag_org: provingground-larry
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: master
+  git_ref: tickets/DM-16839
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: master
@@ -144,4 +144,4 @@ newinstall:
     repo: provinggroundlarry/newinstall
     tag: latest
   github_repo: lsst/lsst
-  git_ref: master
+  git_ref: tickets/DM-16839
