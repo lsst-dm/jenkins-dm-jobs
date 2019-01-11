@@ -33,7 +33,7 @@ def void doTravissync() {
 
     withCredentials([[
       $class: 'StringBinding',
-      credentialsId: 'github-api-token-sqrbot',
+      credentialsId: 'github-api-token-sqreadmin',
       variable: 'GITHUB_TOKEN'
     ]]) {
       image.inside {
