@@ -660,6 +660,10 @@ def void githubTagRelease(Map p) {
     '--manifest',
   ])
 
+  // compute versiondb url
+  def scipipe = scipipeConfig()
+  def vdbUrl = "https://raw.githubusercontent.com/${scipipe.versiondb.github_repo}/master/manifests"
+
   def prog = 'github-tag-release'
   def defaultOptions = [
     '--debug': true,
@@ -667,6 +671,7 @@ def void githubTagRelease(Map p) {
     '--token': '$GITHUB_TOKEN',
     '--user': 'sqreadmin',
     '--email': 'sqre-admin@lists.lsst.org',
+    '--versiondb-base-url': vdbUrl,
     '--allow-team': ['Data Management', 'DM Externals'],
     '--external-team': 'DM Externals',
     '--deny-team': 'DM Auxilliaries',
