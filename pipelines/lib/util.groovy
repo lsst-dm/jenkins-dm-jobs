@@ -1016,7 +1016,7 @@ def void buildTarballMatrix(Map p) {
     def displayCompiler = item.display_compiler ?: item.compiler
 
     def slug = "miniconda${item.python}"
-    slug += "-${item.miniver}-${item.lsstsw_ref}"
+    slug += "-${item.miniver}-${item.splenv_ref}"
 
     def tarballBuild = {
       retry(p.retries) {
@@ -1037,7 +1037,7 @@ def void buildTarballMatrix(Map p) {
             string(name: 'COMPILER', value: item.compiler),
             string(name: 'PYTHON_VERSION', value: item.python),
             string(name: 'MINIVER', value: item.miniver),
-            string(name: 'LSSTSW_REF', value: item.lsstsw_ref),
+            string(name: 'SPLENV_REF', value: item.splenv_ref),
             string(name: 'OSFAMILY', value: item.osfamily),
             string(name: 'PLATFORM', value: item.platform),
           ]
