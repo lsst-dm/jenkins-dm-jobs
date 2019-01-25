@@ -97,7 +97,7 @@ release:
   # minutes
   s3_wait_time: 15
   step:
-    build_jupyterlabdemo:
+    build_sciplatlab:
       image_name: lsstsqre/sciplat-lab
     validate_drp:
       no_push: false

@@ -46,7 +46,7 @@ notify.wrap {
     }
 
     stage('build+push') {
-      dir('jupyterlab') {
+      dir('sciplatlab') {
         if (pushDocker) {
           docker.withRegistry(
             'https://index.docker.io/v1/',

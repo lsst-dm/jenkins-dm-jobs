@@ -140,17 +140,17 @@ notify.wrap {
 
     def triggerMe = [:]
 
-    triggerMe['build jupyterlabdemo image'] = {
+    triggerMe['build Science Platform Notebook Aspect Lab image'] = {
       retry(retries) {
         // based on lsstsqre/stack image
         build(
-          job: 'sqre/infra/build-jupyterlabdemo',
+          job: 'sqre/infra/build-sciplatlab',
           parameters: [
             string(name: 'TAG', value: eupsTag),
             booleanParam(name: 'NO_PUSH', value: false),
             string(
               name: 'IMAGE_NAME',
-              value: scipipe.release.step.build_jupyterlabdemo.image_name,
+              value: scipipe.release.step.build_sciplatlab.image_name,
             ),
             // BASE_IMAGE is the registry repo name *only* without a tag
             string(
