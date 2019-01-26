@@ -1,7 +1,7 @@
 import util.Plumber
 
 def p = new Plumber(
-  name: 'sqre/infra/build-sciplatlab,
+  name: 'sqre/infra/build-sciplatlab',
   dsl: this
 )
 p.pipeline().with {
