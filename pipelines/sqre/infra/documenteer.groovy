@@ -98,7 +98,7 @@ notify.wrap {
           util.ltdPush(
             ltdProduct: "pipelines",
             repoSlug: "lsst/pipelines_lsst_io",
-            eupsTag: ltdSlug,
+            ltdSlug: ltdSlug,
           )
         } // if
       } // stage

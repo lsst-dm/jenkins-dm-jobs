@@ -1196,9 +1196,9 @@ def runDocumenteer(Map p) {
  */
 def ltdPush(Map p) {
   requireMapKeys(p, [
-    'eupsTag',
-    'repoSlug',
+    'ltdSlug',
     'product',
+    'repoSlug',
   ])
   p = [
     masonImage: 'lsstsqre/ltd-mason',
@@ -1212,7 +1212,7 @@ def ltdPush(Map p) {
     "LTD_KEEPER_USER=travis",
     "TRAVIS_PULL_REQUEST=false",
     "TRAVIS_REPO_SLUG=${p.repoSlug}",
-    "TRAVIS_BRANCH=${p.eupsTag}",
+    "TRAVIS_BRANCH=${p.ltdSlug}",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
