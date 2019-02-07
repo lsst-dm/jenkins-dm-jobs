@@ -1138,38 +1138,41 @@ def void librarianPuppet(String cmd='install', String tag='2.2.3') {
 /**
  * run documenteer doc build
  *
- * @param args.docTemplateDir String path to sphinx template clone (required)
- * @param args.eupsPath String path to EUPS installed productions (optional)
- * @param args.eupsTag String tag to setup. defaults to 'current'
- * @param args.docImage String defaults to: 'lsstsqre/documenteer-base'
- * @param args.docPull Boolean defaults to: `false`
+ * @param p Map
+ * @param p.docTemplateDir String path to sphinx template clone (required)
+ * @param p.eupsTag String tag to setup (required)
+ * @param p.eupsPath String path to EUPS installed productions (optional)
+ * @param p.docImage String defaults to: 'lsstsqre/documenteer-base'
+ * @param p.docPull Boolean defaults to: `false`
  */
-def runDocumenteer(Map args) {
-  def argDefaults = [
+def runDocumenteer(Map p) {
+  requireMapKeys(p, [
+    'docTemplateDir',
+    'eupsTag',
+  ])
+  p = [
     docImage: 'lsstsqre/documenteer-base',
     docPull: false,
-    eupsTag: 'current',
-  ]
-  args = argDefaults + args
+  ] + p
 
   def homeDir = "${pwd()}/home"
   emptyDirs([homeDir])
 
   def docEnv = [
     "HOME=${homeDir}",
-    "EUPS_TAG=${args.eupsTag}",
+    "EUPS_TAG=${p.eupsTag}",
   ]
 
-  if (args.eupsPath) {
-    docEnv += "EUPS_PATH=${args.eupsPath}"
+  if (p.eupsPath) {
+    docEnv += "EUPS_PATH=${p.eupsPath}"
   }
 
   withEnv(docEnv) {
     insideDockerWrap(
-      image: args.docImage,
-      pull: args.docPull,
+      image: p.docImage,
+      pull: p.docPull,
     ) {
-      dir(args.docTemplateDir) {
+      dir(p.docTemplateDir) {
         bash '''
           source /opt/lsst/software/stack/loadLSST.bash
           export PATH="${HOME}/.local/bin:${PATH}"
