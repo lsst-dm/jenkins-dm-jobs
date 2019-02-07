@@ -1188,21 +1188,28 @@ def runDocumenteer(Map p) {
 /**
  * run ltd-mason-travis to push a doc build
  *
- * @param args.eupsTag String tag to setup. Eg.: 'current', 'b1234'
- * @param args.repoSlug String github repo slug. Eg.: 'lsst/pipelines_lsst_io'
- * @param args.product String LTD product name., Eg.: 'pipelines'
+ * @param p Map
+ * @param p.eupsTag String tag to setup (required). Eg.: 'current', 'b1234'
+ * @param p.repoSlug String github repo slug (required). Eg.: 'lsst/pipelines_lsst_io'
+ * @param p.product String LTD product name (required)., Eg.: 'pipelines'
  */
-def ltdPush(Map args) {
+def ltdPush(Map p) {
+  requireMapKeys(p, [
+    'eupsTag',
+    'repoSlug',
+    'product',
+  ])
+
   def masonImage = 'lsstsqre/ltd-mason'
 
   withEnv([
     "LTD_MASON_BUILD=true",
-    "LTD_MASON_PRODUCT=${args.ltdProduct}",
+    "LTD_MASON_PRODUCT=${p.ltdProduct}",
     "LTD_KEEPER_URL=https://keeper.lsst.codes",
     "LTD_KEEPER_USER=travis",
     "TRAVIS_PULL_REQUEST=false",
-    "TRAVIS_REPO_SLUG=${args.repoSlug}",
-    "TRAVIS_BRANCH=${args.eupsTag}",
+    "TRAVIS_REPO_SLUG=${p.repoSlug}",
+    "TRAVIS_BRANCH=${p.eupsTag}",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
