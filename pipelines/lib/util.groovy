@@ -1192,6 +1192,7 @@ def runDocumenteer(Map p) {
  * @param p.eupsTag String tag to setup (required). Eg.: 'current', 'b1234'
  * @param p.repoSlug String github repo slug (required). Eg.: 'lsst/pipelines_lsst_io'
  * @param p.product String LTD product name (required)., Eg.: 'pipelines'
+ * @param p.masonImage String docker image (optional). Defaults to: 'lsstsqre/ltd-mason'
  */
 def ltdPush(Map p) {
   requireMapKeys(p, [
@@ -1199,8 +1200,10 @@ def ltdPush(Map p) {
     'repoSlug',
     'product',
   ])
+  p = [
+    masonImage: 'lsstsqre/ltd-mason',
+  ] + p
 
-  def masonImage = 'lsstsqre/ltd-mason'
 
   withEnv([
     "LTD_MASON_BUILD=true",
@@ -1223,7 +1226,7 @@ def ltdPush(Map p) {
       usernameVariable: 'LTD_KEEPER_USER',
       passwordVariable: 'LTD_KEEPER_PASSWORD',
     ]]) {
-      docker.image(masonImage).inside {
+      docker.image(p.masonImage).inside {
         // expect that the service will return an HTTP 502, which causes
         // ltd-mason-travis to exit 1
         sh '''
