@@ -1138,38 +1138,41 @@ def void librarianPuppet(String cmd='install', String tag='2.2.3') {
 /**
  * run documenteer doc build
  *
- * @param args.docTemplateDir String path to sphinx template clone (required)
- * @param args.eupsPath String path to EUPS installed productions (optional)
- * @param args.eupsTag String tag to setup. defaults to 'current'
- * @param args.docImage String defaults to: 'lsstsqre/documenteer-base'
- * @param args.docPull Boolean defaults to: `false`
+ * @param p Map
+ * @param p.docTemplateDir String path to sphinx template clone (required)
+ * @param p.eupsTag String tag to setup (required)
+ * @param p.eupsPath String path to EUPS installed productions (optional)
+ * @param p.docImage String defaults to: 'lsstsqre/documenteer-base'
+ * @param p.docPull Boolean defaults to: `false`
  */
-def runDocumenteer(Map args) {
-  def argDefaults = [
+def runDocumenteer(Map p) {
+  requireMapKeys(p, [
+    'docTemplateDir',
+    'eupsTag',
+  ])
+  p = [
     docImage: 'lsstsqre/documenteer-base',
     docPull: false,
-    eupsTag: 'current',
-  ]
-  args = argDefaults + args
+  ] + p
 
   def homeDir = "${pwd()}/home"
   emptyDirs([homeDir])
 
   def docEnv = [
     "HOME=${homeDir}",
-    "EUPS_TAG=${args.eupsTag}",
+    "EUPS_TAG=${p.eupsTag}",
   ]
 
-  if (args.eupsPath) {
-    docEnv += "EUPS_PATH=${args.eupsPath}"
+  if (p.eupsPath) {
+    docEnv += "EUPS_PATH=${p.eupsPath}"
   }
 
   withEnv(docEnv) {
     insideDockerWrap(
-      image: args.docImage,
-      pull: args.docPull,
+      image: p.docImage,
+      pull: p.docPull,
     ) {
-      dir(args.docTemplateDir) {
+      dir(p.docTemplateDir) {
         bash '''
           source /opt/lsst/software/stack/loadLSST.bash
           export PATH="${HOME}/.local/bin:${PATH}"
@@ -1185,21 +1188,31 @@ def runDocumenteer(Map args) {
 /**
  * run ltd-mason-travis to push a doc build
  *
- * @param args.eupsTag String tag to setup. Eg.: 'current', 'b1234'
- * @param args.repoSlug String github repo slug. Eg.: 'lsst/pipelines_lsst_io'
- * @param args.product String LTD product name., Eg.: 'pipelines'
+ * @param p Map
+ * @param p.eupsTag String tag to setup (required). Eg.: 'current', 'b1234'
+ * @param p.repoSlug String github repo slug (required). Eg.: 'lsst/pipelines_lsst_io'
+ * @param p.product String LTD product name (required)., Eg.: 'pipelines'
+ * @param p.masonImage String docker image (optional). Defaults to: 'lsstsqre/ltd-mason'
  */
-def ltdPush(Map args) {
-  def masonImage = 'lsstsqre/ltd-mason'
+def ltdPush(Map p) {
+  requireMapKeys(p, [
+    'ltdSlug',
+    'product',
+    'repoSlug',
+  ])
+  p = [
+    masonImage: 'lsstsqre/ltd-mason',
+  ] + p
+
 
   withEnv([
     "LTD_MASON_BUILD=true",
-    "LTD_MASON_PRODUCT=${args.ltdProduct}",
+    "LTD_MASON_PRODUCT=${p.ltdProduct}",
     "LTD_KEEPER_URL=https://keeper.lsst.codes",
     "LTD_KEEPER_USER=travis",
     "TRAVIS_PULL_REQUEST=false",
-    "TRAVIS_REPO_SLUG=${args.repoSlug}",
-    "TRAVIS_BRANCH=${args.eupsTag}",
+    "TRAVIS_REPO_SLUG=${p.repoSlug}",
+    "TRAVIS_BRANCH=${p.ltdSlug}",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
@@ -1213,7 +1226,7 @@ def ltdPush(Map args) {
       usernameVariable: 'LTD_KEEPER_USER',
       passwordVariable: 'LTD_KEEPER_PASSWORD',
     ]]) {
-      docker.image(masonImage).inside {
+      docker.image(p.masonImage).inside {
         // expect that the service will return an HTTP 502, which causes
         // ltd-mason-travis to exit 1
         sh '''

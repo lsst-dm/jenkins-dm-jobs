@@ -73,6 +73,7 @@ notify.wrap {
           docImage: meerImage,
           docTemplateDir: docTemplateDir,
           docPull: false,
+          eupsTag: eupsTag,
         )
       } // stage
 
@@ -97,7 +98,7 @@ notify.wrap {
           util.ltdPush(
             ltdProduct: "pipelines",
             repoSlug: "lsst/pipelines_lsst_io",
-            eupsTag: ltdSlug,
+            ltdSlug: ltdSlug,
           )
         } // if
       } // stage
