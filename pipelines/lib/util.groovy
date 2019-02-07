@@ -1191,13 +1191,13 @@ def runDocumenteer(Map p) {
  * @param p Map
  * @param p.eupsTag String tag to setup (required). Eg.: 'current', 'b1234'
  * @param p.repoSlug String github repo slug (required). Eg.: 'lsst/pipelines_lsst_io'
- * @param p.product String LTD product name (required)., Eg.: 'pipelines'
+ * @param p.ltdProduct String LTD product name (required)., Eg.: 'pipelines'
  * @param p.masonImage String docker image (optional). Defaults to: 'lsstsqre/ltd-mason'
  */
 def ltdPush(Map p) {
   requireMapKeys(p, [
     'ltdSlug',
-    'product',
+    'ltdProduct',
     'repoSlug',
   ])
   p = [
