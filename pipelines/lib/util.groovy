@@ -1982,5 +1982,24 @@ def void createFakeLsstswClone(Map p) {
   downloadRepos(destFile: fakeReposFile)
 } // createFlakeLsstwClone
 
+/**
+ * Validate that a map has the minimum required set of keys for an lsstsw
+ * build env configuration.
+ *
+ * Example:
+ *
+ *     util.validateLsstswConfig(lsstswConfig)
+ *
+ * @param p Map
+ */
+def void validateLsstswConfig(Map conf) {
+  requireMapKeys(conf, [
+    'compiler',
+    'image',
+    'label',
+    'python',
+    'splenv_ref',
+  ])
+}
 
 return this;
