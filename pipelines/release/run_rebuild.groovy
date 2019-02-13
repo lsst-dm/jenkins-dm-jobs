@@ -58,6 +58,7 @@ notify.wrap {
         LSST_PREP_ONLY:      prepOnly,
         LSST_PRODUCTS:       products,
         LSST_PYTHON_VERSION: lsstswConfig.python,
+        LSST_SPLENV_REF:     lsstswConfig.splenv_ref,
         LSST_REFS:           refs,
         VERSIONDB_PUSH:      versiondbPush,
         VERSIONDB_REPO:      versiondbRepo,

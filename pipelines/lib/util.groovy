@@ -295,34 +295,32 @@ def void runPublish(Map p) {
 /**
  * Run a lsstsw build.
  *
- * @param image String
- * @param label Node label to run on
- * @param compiler String compiler to require and setup, if nessicary.
- * @param python Python major revsion to build with. Eg., '2' or '3'
- * @param wipteout Delete all existing state before starting build
+ * @param lsstswConfig Map
+ * @param buildParams Map
+ * @param wipeout Delete all existing state before starting build
  */
 def lsstswBuild(
+  Map lsstswConfig,
   Map buildParams,
-  String image,
-  String label,
-  String compiler,
-  String python,
-  String slug,
   Boolean wipeout=false
 ) {
-  def run = {
-    buildParams += [
-      LSST_COMPILER:       compiler,
-      LSST_JUNIT_PREFIX:   slug,
-      LSST_PYTHON_VERSION: python,
-    ]
+  validateLsstswConfig(lsstswConfig)
+  def slug = lsstswConfigSlug(lsstswConfig)
 
+  buildParams = [
+    LSST_COMPILER:       lsstswConfig.compiler,
+    LSST_JUNIT_PREFIX:   slug,
+    LSST_PYTHON_VERSION: lsstswConfig.python,
+    LSST_SPLENV_REF:     lsstswConfig.splenv_ref
+  ] + buildParams
+
+  def run = {
     jenkinsWrapper(buildParams)
   } // run
 
   def runDocker = {
     insideDockerWrap(
-      image: image,
+      image: lsstswConfig.image,
       pull: true,
     ) {
       run()
@@ -351,11 +349,11 @@ def lsstswBuild(
 
   def agent = null
   def task = null
-  if (image) {
+  if (lsstswConfig.image) {
     agent = 'docker'
     task = { runEnv(runDocker) }
   } else {
-    agent = label
+    agent = lsstswConfig.label
     task = { runEnv(run) }
   }
 
@@ -920,18 +918,14 @@ def lsstswBuildMatrix(
 ) {
   def matrix = [:]
 
-  // XXX validate config
   matrixConfig.each { lsstswConfig ->
+    validateLsstswConfig(lsstswConfig)
     def slug = lsstswConfigSlug(lsstswConfig)
 
     matrix[slug] = {
       lsstswBuild(
+        lsstswConfig,
         buildParams,
-        lsstswConfig.image,
-        lsstswConfig.label,
-        lsstswConfig.compiler,
-        lsstswConfig.python,
-        slug,
         wipeout
       )
     }
