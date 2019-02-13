@@ -369,8 +369,11 @@ def lsstswBuild(
  *
  * Required keys are listed below. Any additional keys will also be set as env
  * vars.
- * @param buildParams.LSST_REFS String
+ * @param buildParams map
+ * @param buildParams.LSST_COMPILER String
  * @param buildParams.LSST_PRODUCTS String
+ * @param buildParams.LSST_REFS String
+ * @param buildParams.LSST_SPLENV_REF String
  */
 def void jenkinsWrapper(Map buildParams) {
   // minimum set of required keys -- additional are allowed
@@ -378,6 +381,7 @@ def void jenkinsWrapper(Map buildParams) {
     'LSST_COMPILER',
     'LSST_PRODUCTS',
     'LSST_REFS',
+    'LSST_SPLENV_REF',
   ])
   def scipipe = scipipeConfig()
 
