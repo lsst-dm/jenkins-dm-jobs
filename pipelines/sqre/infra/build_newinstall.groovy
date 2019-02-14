@@ -36,6 +36,7 @@ notify.wrap {
   def baseDockerRepo = sqre.layercake.docker_registry.repo
   def baseDockerTag  = '7-stackbase-devtoolset-6'
   def baseImage      = "${baseDockerRepo}:${baseDockerTag}"
+  def splenvRef      = scipipe.canonical.lsstsw_config.splenv_ref
 
   def image = null
 
@@ -58,6 +59,7 @@ notify.wrap {
       opt << '--no-cache'
       opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
       opt << "--build-arg NEWINSTALL_URL=\"${newinstallUrl}\""
+      opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
       withCredentials([[
         $class: 'StringBinding',
         credentialsId: 'eups-url',
