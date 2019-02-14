@@ -81,9 +81,10 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(util.sanitizeDockerTag(gitRef))
+          image.push(splenvRef)
+          image.push("${splenvRef}-${util.sanitizeDockerTag(gitRef)}")
           if (gitRef == 'master') {
-            image.push("g${abbrHash}")
+            image.push("${splenvRef}-g${abbrHash}")
           }
           if (pushLatest) {
             image.push('latest')
