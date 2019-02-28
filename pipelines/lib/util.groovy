@@ -664,6 +664,19 @@ def void githubTagRelease(Map p) {
   def scipipe = scipipeConfig()
   def vdbUrl = "https://raw.githubusercontent.com/${scipipe.versiondb.github_repo}/master/manifests"
 
+  // --eupstag-base-url is needed [when running under a "test" env] if git tags
+  // are being generated from an existing eups tag.  If all workflows are
+  // changed to git tag from a versiondb manifest prior to the build, it may be
+  // removed.
+  def etbUrl
+  withCredentials([[
+    $class: 'StringBinding',
+    credentialsId: 'eups-url',
+    variable: 'EUPS_URL'
+  ]]) {
+    etbUrl = "${EUPS_URL}/stack/src/tags"
+  }
+
   def prog = 'github-tag-release'
   def defaultOptions = [
     '--debug': true,
@@ -672,6 +685,7 @@ def void githubTagRelease(Map p) {
     '--user': 'sqreadmin',
     '--email': 'sqre-admin@lists.lsst.org',
     '--versiondb-base-url': vdbUrl,
+    '--eupstag-base-url': etbUrl,
     '--allow-team': ['Data Management', 'DM Externals'],
     '--external-team': 'DM Externals',
     '--deny-team': 'DM Auxilliaries',
