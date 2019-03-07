@@ -45,7 +45,8 @@ notify.wrap {
   def shebangtronUrl = util.shebangtronUrl()
 
   def newinstallImage = newinstall.docker_registry.repo
-  def baseImage       = "${newinstallImage}:${newinstall.docker_registry.tag}"
+  def splenvRef       = scipipe.canonical.lsstsw_config.splenv_ref
+  def baseImage       = "${newinstallImage}:${splenvRef}"
 
   def image = null
   def repo  = null
@@ -85,6 +86,7 @@ notify.wrap {
       opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
       opt << "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\""
       opt << "--build-arg LSST_COMPILER=\"${lsstCompiler}\""
+      opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
       opt << '.'
 
       dir(buildDir) {

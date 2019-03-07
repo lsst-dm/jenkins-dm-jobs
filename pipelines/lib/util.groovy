@@ -295,34 +295,32 @@ def void runPublish(Map p) {
 /**
  * Run a lsstsw build.
  *
- * @param image String
- * @param label Node label to run on
- * @param compiler String compiler to require and setup, if nessicary.
- * @param python Python major revsion to build with. Eg., '2' or '3'
- * @param wipteout Delete all existing state before starting build
+ * @param lsstswConfig Map
+ * @param buildParams Map
+ * @param wipeout Delete all existing state before starting build
  */
 def lsstswBuild(
+  Map lsstswConfig,
   Map buildParams,
-  String image,
-  String label,
-  String compiler,
-  String python,
-  String slug,
   Boolean wipeout=false
 ) {
-  def run = {
-    buildParams += [
-      LSST_COMPILER:       compiler,
-      LSST_JUNIT_PREFIX:   slug,
-      LSST_PYTHON_VERSION: python,
-    ]
+  validateLsstswConfig(lsstswConfig)
+  def slug = lsstswConfigSlug(lsstswConfig)
 
+  buildParams = [
+    LSST_COMPILER:       lsstswConfig.compiler,
+    LSST_JUNIT_PREFIX:   slug,
+    LSST_PYTHON_VERSION: lsstswConfig.python,
+    LSST_SPLENV_REF:     lsstswConfig.splenv_ref
+  ] + buildParams
+
+  def run = {
     jenkinsWrapper(buildParams)
   } // run
 
   def runDocker = {
     insideDockerWrap(
-      image: image,
+      image: lsstswConfig.image,
       pull: true,
     ) {
       run()
@@ -351,11 +349,11 @@ def lsstswBuild(
 
   def agent = null
   def task = null
-  if (image) {
+  if (lsstswConfig.image) {
     agent = 'docker'
     task = { runEnv(runDocker) }
   } else {
-    agent = label
+    agent = lsstswConfig.label
     task = { runEnv(run) }
   }
 
@@ -369,8 +367,11 @@ def lsstswBuild(
  *
  * Required keys are listed below. Any additional keys will also be set as env
  * vars.
- * @param buildParams.LSST_REFS String
+ * @param buildParams map
+ * @param buildParams.LSST_COMPILER String
  * @param buildParams.LSST_PRODUCTS String
+ * @param buildParams.LSST_REFS String
+ * @param buildParams.LSST_SPLENV_REF String
  */
 def void jenkinsWrapper(Map buildParams) {
   // minimum set of required keys -- additional are allowed
@@ -378,6 +379,7 @@ def void jenkinsWrapper(Map buildParams) {
     'LSST_COMPILER',
     'LSST_PRODUCTS',
     'LSST_REFS',
+    'LSST_SPLENV_REF',
   ])
   def scipipe = scipipeConfig()
 
@@ -916,18 +918,14 @@ def lsstswBuildMatrix(
 ) {
   def matrix = [:]
 
-  // XXX validate config
   matrixConfig.each { lsstswConfig ->
+    validateLsstswConfig(lsstswConfig)
     def slug = lsstswConfigSlug(lsstswConfig)
 
     matrix[slug] = {
       lsstswBuild(
+        lsstswConfig,
         buildParams,
-        lsstswConfig.image,
-        lsstswConfig.label,
-        lsstswConfig.compiler,
-        lsstswConfig.python,
-        slug,
         wipeout
       )
     }
@@ -1978,5 +1976,24 @@ def void createFakeLsstswClone(Map p) {
   downloadRepos(destFile: fakeReposFile)
 } // createFlakeLsstwClone
 
+/**
+ * Validate that a map has the minimum required set of keys for an lsstsw
+ * build env configuration.
+ *
+ * Example:
+ *
+ *     util.validateLsstswConfig(lsstswConfig)
+ *
+ * @param p Map
+ */
+def void validateLsstswConfig(Map conf) {
+  requireMapKeys(conf, [
+    'compiler',
+    'image',
+    'label',
+    'python',
+    'splenv_ref',
+  ])
+}
 
 return this;
