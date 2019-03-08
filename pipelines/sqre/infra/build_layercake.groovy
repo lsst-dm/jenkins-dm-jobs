@@ -77,6 +77,8 @@ notify.wrap {
         [(mkBaseName(7)): 'devtoolset-6'],
         [(mkBaseName(6)): 'devtoolset-7'],
         [(mkBaseName(7)): 'devtoolset-7'],
+        // as of 2019-03-08, devtoolset-8 is el7 only
+        [(mkBaseName(7)): 'devtoolset-8'],
         [(mkBaseName(7)): 'llvm-toolset-7'],
       ].each { conf ->
         conf.each { baseName, scl ->
