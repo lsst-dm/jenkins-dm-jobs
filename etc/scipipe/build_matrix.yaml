@@ -64,6 +64,7 @@ scipipe-lsstsw-ci_hsc:
   - <<: *el7-py3
 dax-lsstsw-matrix:
   - <<: *el7-py3
+  - <<: *el7-dts8-py3
   - <<: *el7-py3-llvm
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
