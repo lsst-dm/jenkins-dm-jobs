@@ -31,6 +31,12 @@ template:
       label: centos-7
       compiler: devtoolset-7
       python: '3'
+    - &el7-dts8-py3
+      <<: *platform_defaults
+      image: docker.io/lsstsqre/centos:7-stackbase-devtoolset-8
+      label: centos-7
+      compiler: devtoolset-8
+      python: '3'
     - &el7-py3-llvm
       <<: *platform_defaults
       image: docker.io/lsstsqre/centos:7-stackbase-llvm-toolset-7
