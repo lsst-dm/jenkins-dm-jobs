@@ -122,7 +122,7 @@ versiondb:
   github_repo: provingground-larry/versiondb
 release_tag_org: provingground-larry
 lsstsw:
-  github_repo: provingground-larry/lsstsw
+  github_repo: lsst/lsstsw
   git_ref: tickets/DM-17684
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
@@ -150,5 +150,5 @@ newinstall:
   docker_registry:
     repo: provinggroundlarry/newinstall
     tag: latest
-  github_repo: provingground-larry/lsst
+  github_repo: lsst/lsst
   git_ref: tickets/DM-17684
