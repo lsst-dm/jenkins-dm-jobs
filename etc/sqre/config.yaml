@@ -14,7 +14,7 @@ awscli:
     tag: *awscli_ver
 codekit:
   pypi:
-    version: &codekit_ver '7.4.0'
+    version: &codekit_ver '7.4.1'
   dockerfile:
     github_repo: lsst-sqre/sqre-codekit
     git_ref: master
