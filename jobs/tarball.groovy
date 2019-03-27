@@ -20,7 +20,7 @@ p.pipeline().with {
     choiceParam('LABEL', ['centos-7', 'centos-6', 'osx-10.11', 'osx-10.12'], 'Jenkins build agent label')
     stringParam('COMPILER', null, 'compiler version string')
     choiceParam('PYTHON_VERSION', ['3', '2'], 'Python major version')
-    choiceParam('MINIVER', ['4.5.4', '4.3.21', '4.2.12'], 'Miniconda installer version')
+    choiceParam('MINIVER', ['4.5.12', '4.5.4', '4.3.21', '4.2.12'], 'Miniconda installer version')
     choiceParam('SPLENV_REF', ['fcd27eb', '10a4fa6', '7c8e67'], 'LSST conda package set ref')
     choiceParam('OSFAMILY', ['redhat', 'osx'], 'Published osfamily name')
     stringParam('PLATFORM', null, 'Published platform name')
