@@ -106,7 +106,7 @@ tarball:
     # - <<: *tarball_defaults
     #  <<: *el7-dts7-py3
     - <<: *tarball_defaults
-      <<: *sierra-py3
+      <<: *mojave-py3
       platform: '10.9'
       osfamily: osx
       timelimit: 8
