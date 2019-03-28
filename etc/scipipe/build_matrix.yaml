@@ -43,7 +43,7 @@ template:
       label: centos-7
       compiler: llvm-toolset-7
       python: '3'
-    - &osx-py3
+    - &sierra-py3
       <<: *platform_defaults
       image: null
       label: osx-10.12
@@ -55,7 +55,7 @@ template:
 scipipe-lsstsw-matrix:
   - <<: *el6-py3
   - <<: *el7-py3
-  #- <<: *osx-py3
+  #- <<: *sierra-py3
   #  # allow builds on sierra and mojave
   #  label: osx-10.12||osx-10.14
   #  display_name: osx
@@ -100,7 +100,7 @@ tarball:
     # - <<: *tarball_defaults
     #  <<: *el7-dts7-py3
     - <<: *tarball_defaults
-      <<: *osx-py3
+      <<: *sierra-py3
       platform: '10.9'
       osfamily: osx
       timelimit: 8
