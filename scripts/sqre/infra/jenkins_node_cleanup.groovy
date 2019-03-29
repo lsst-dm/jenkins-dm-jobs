@@ -53,6 +53,13 @@ class Offline extends Node {}
 @InheritConstructors
 class Skipped extends Node {}
 
+// Retrieve parameters of the current build
+def resolver = build.buildVariableResolver
+println '### PARAMETERS'
+Boolean forceCleanup = resolver.resolve('FORCE_CLEANUP').toBoolean()
+println "FORCE_CLEANUP=$forceCleanup"
+println ''
+
 // threshold is in GB and comes from a job parameter
 def threshold = 100
 def skippedLabels = [
@@ -97,6 +104,8 @@ ArrayList allJobs() {
 def nodeStatus = [:].withDefault {[]}
 def prevOffline = false
 
+println '### NODES'
+
 for (node in Jenkins.instance.nodes) {
   try {
     println "found ${node.displayName}"
@@ -135,7 +144,7 @@ for (node in Jenkins.instance.nodes) {
     }
 
     // skip nodes with sufficent disk space
-    if (roundedSize >= threshold) {
+    if (!forceCleanup && (roundedSize >= threshold)) {
       throw new Skipped(node, "disk threshhold")
     }
 
@@ -174,6 +183,7 @@ for (node in Jenkins.instance.nodes) {
       }
     } else {
       // node has at least one active job
+      println(". looking for idle job workspaces on ${node.getDisplayName()}")
 
       // find all jobs that are *not* building
       def idleJobs = allJobs().findAll { item -> !item.isBuilding() }
@@ -185,16 +195,16 @@ for (node in Jenkins.instance.nodes) {
 
         workspacePath = node.getWorkspaceFor(item)
         if (!workspacePath) {
-          println(".... could not get workspace path for ${jobName}")
+          println("... could not get workspace path for ${jobName}")
           return
         }
 
-        println(".... workspace = " + workspacePath)
+        println("... workspace = " + workspacePath)
 
         def customWorkspace = item.getCustomWorkspace()
         if (customWorkspace) {
           workspacePath = node.getRootPath().child(customWorkspace)
-          println(".... custom workspace = " + workspacePath)
+          println("... custom workspace = " + workspacePath)
         }
 
         if (!deleteRemote(workspacePath, false)) {

@@ -2,6 +2,10 @@ import util.Common
 Common.makeFolders(this)
 
 job('sqre/infra/jenkins-node-cleanup') {
+  parameters {
+    booleanParam('FORCE_CLEANUP', false, 'Force cleanup of node workspace(s) regardless of free space remaining.')
+  }
+
   // don't tie up a beefy build slave
   label('jenkins-master')
   concurrentBuild(false)
@@ -24,6 +28,9 @@ job('sqre/infra/jenkins-node-cleanup') {
   steps {
     systemGroovyCommand(readFileFromWorkspace(
       'scripts/sqre/infra/jenkins_node_cleanup.groovy'
-    ))
+    )) {
+      binding('FORCE_CLEANUP', 'FORCE_CLEANUP')
+      sandbox(false)
+    }
   }
 }
