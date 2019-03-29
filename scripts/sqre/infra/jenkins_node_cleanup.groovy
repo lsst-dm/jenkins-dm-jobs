@@ -92,13 +92,42 @@ def deleteRemote(def path, boolean deleteContentsOnly) {
 }
 
 /*
- * find all jobs which are not folders or pipelines
+ * find all jobs which are not folders
  *
 */
 ArrayList allJobs() {
   Jenkins.instance.getAllItems(TopLevelItem).findAll{ item ->
-    item instanceof Job && !("${item.class}".contains('WorkflowJob'))
+    item instanceof Job && !isFolder(item)
   }
+}
+
+/*
+ * find all jobs which have a custom workspace
+ *
+ * Note that will miss jobs which have been deleted but still have a workspace
+ * on disk.
+ *
+*/
+ArrayList customWorkspaceJobs() {
+  allJobs().findAll { item ->
+    hasCustomWorkspace(item)
+  }
+}
+
+/*
+ * test if Job has a custom workspace
+*/
+Boolean hasCustomWorkspace(Job item) {
+  // pipelines do not have #getCustomWorkspace()
+  !isWorkflowJob(item) && item.getCustomWorkspace()
+}
+
+Boolean isFolder(Job item) {
+  "${item.class}".contains('Folder')
+}
+
+Boolean isWorkflowJob(Job item) {
+  "${item.class}".contains('WorkflowJob')
 }
 
 def nodeStatus = [:].withDefault {[]}
@@ -168,8 +197,7 @@ for (node in Jenkins.instance.nodes) {
       // have run on this node in the past
 
       // select all jobs with a custom workspace
-      def custom = allJobs().findAll { item -> item.getCustomWorkspace() }
-      custom.each { item ->
+      customWorkspaceJobs().each { item ->
         // note that #child claims to deal with abs and rel paths
         if (!deleteRemote(node.getRootPath().child(item.customWorkspace()), false)) {
           throw new Failed(node, "delete failed")
@@ -201,9 +229,8 @@ for (node in Jenkins.instance.nodes) {
 
         println("... workspace = " + workspacePath)
 
-        def customWorkspace = item.getCustomWorkspace()
-        if (customWorkspace) {
-          workspacePath = node.getRootPath().child(customWorkspace)
+        if (hasCustomWorkspace(item)) {
+          workspacePath = node.getRootPath().child(item.getCustomWorkspace())
           println("... custom workspace = " + workspacePath)
         }
 
