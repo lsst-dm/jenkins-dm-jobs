@@ -53,6 +53,9 @@ class Failed extends Node {}
 class Offline extends Node {}
 @InheritConstructors
 class Skipped extends Node {}
+// note that this "exception" is being [ab]used to signal success
+@InheritConstructors
+class Cleaned extends Node {}
 
 // Retrieve parameters of the current build
 def resolver = build.buildVariableResolver
@@ -247,8 +250,14 @@ for (node in Jenkins.instance.nodes) {
         }
       }
     }
+
+    // signal success
+    throw new Cleaned(node, "OK")
   } catch (Node t) {
     switch (t) {
+      case Cleaned:
+        nodeStatus['cleanedNodes'] << t
+        break
       case Offline:
         nodeStatus['offlineNodes'] << t
         break
