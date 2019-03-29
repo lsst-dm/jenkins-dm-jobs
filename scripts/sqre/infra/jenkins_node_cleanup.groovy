@@ -16,13 +16,14 @@ directories for jobs that aren't running.  Either way, remove custom workspaces
 also if they aren't in use.
 **/
 
+import groovy.transform.Field
+import groovy.transform.InheritConstructors
+import hudson.FilePath.FileCallable
 import hudson.model.*
+import hudson.node_monitors.*
+import hudson.slaves.OfflineCause
 import hudson.util.*
 import jenkins.model.*
-import hudson.FilePath.FileCallable
-import hudson.slaves.OfflineCause
-import hudson.node_monitors.*
-import groovy.transform.InheritConstructors
 
 @InheritConstructors
 class CleanupException extends Exception {}
@@ -65,13 +66,13 @@ println "FORCE_CLEANUP=$forceCleanup"
 println ''
 
 // threshold is in GB and comes from a job parameter
-def threshold = 100
-def skippedLabels = [
+@Field Integer threshold = 100
+@Field List skippedLabels = [
   'lsst-dev',
 //  'snowflake',
 ]
 // additional paths under slave's root path that should be removed if found
-def extraDirectoriesToDelete = [
+@Field List extraDirectoriesToDelete = [
   'snowflake',
 ]
 
@@ -107,10 +108,6 @@ ArrayList allJobs() {
 
 /*
  * find all jobs which have a custom workspace
- *
- * Note that will miss jobs which have been deleted but still have a workspace
- * on disk.
- *
 */
 ArrayList customWorkspaceJobs() {
   allJobs().findAll { item ->
@@ -132,6 +129,74 @@ Boolean isFolder(Job item) {
 
 Boolean isWorkflowJob(Job item) {
   "${item.class}".contains('WorkflowJob')
+}
+
+/*
+ * cleanup a node that does not have any active builds.
+*/
+void cleanupIdleNode(hudson.model.Slave node) {
+  // it's idle so delete everything under workspace
+  def workspaceDir = node.getWorkspaceRoot()
+  if (!deleteRemote(workspaceDir, true)) {
+    throw new Failed(node, "delete failed")
+  }
+
+  // delete custom workspaces on the naive assumption that any job could
+  // have run on this node in the past
+
+  // select all jobs with a custom workspace
+  customWorkspaceJobs().each { item ->
+    // note that #child claims to deal with abs and rel paths
+    if (!deleteRemote(
+          node.getRootPath().child(item.customWorkspace()),
+          false
+    )) {
+      throw new Failed(node, "delete failed")
+    }
+  }
+
+  extraDirectoriesToDelete.each {
+    if (!deleteRemote(node.getRootPath().child(it), false)) {
+      throw new Failed(node, "delete failed")
+    }
+  }
+}
+
+/*
+ * cleanup a node that has atleast one active builds.
+*/
+void cleanupBusyNode(hudson.model.Slave node) {
+  // node has at least one active job
+  println(". looking for idle job workspaces on ${node.getDisplayName()}")
+
+  // find all jobs that are *not* building
+  //
+  // Note that will miss jobs which have been deleted but still have a
+  // workspace on disk.
+  def idleJobs = allJobs().findAll { item -> !item.isBuilding() }
+
+  idleJobs.each { item ->
+    def jobName = item.getFullDisplayName()
+
+    println(".. checking workspaces of job " + jobName)
+
+    workspacePath = node.getWorkspaceFor(item)
+    if (!workspacePath) {
+      println("... could not get workspace path for ${jobName}")
+      return
+    }
+
+    println("... workspace = " + workspacePath)
+
+    if (hasCustomWorkspace(item)) {
+      workspacePath = node.getRootPath().child(item.getCustomWorkspace())
+      println("... custom workspace = " + workspacePath)
+    }
+
+    if (!deleteRemote(workspacePath, false)) {
+      throw new Failed(node, "delete failed")
+    }
+  }
 }
 
 def nodeStatus = [:].withDefault {[]}
@@ -195,60 +260,9 @@ for (node in Jenkins.instance.nodes) {
 
     // see if any builds are active
     if (computer.isIdle()) {
-      // it's idle so delete everything under workspace
-      def workspaceDir = node.getWorkspaceRoot()
-      if (!deleteRemote(workspaceDir, true)) {
-        throw new Failed(node, "delete failed")
-      }
-
-      // delete custom workspaces on the naive assumption that any job could
-      // have run on this node in the past
-
-      // select all jobs with a custom workspace
-      customWorkspaceJobs().each { item ->
-        // note that #child claims to deal with abs and rel paths
-        if (!deleteRemote(
-              node.getRootPath().child(item.customWorkspace()),
-              false
-        )) {
-          throw new Failed(node, "delete failed")
-        }
-      }
-
-      extraDirectoriesToDelete.each {
-        if (!deleteRemote(node.getRootPath().child(it), false)) {
-          throw new Failed(node, "delete failed")
-        }
-      }
+      cleanupIdleNode(node)
     } else {
-      // node has at least one active job
-      println(". looking for idle job workspaces on ${node.getDisplayName()}")
-
-      // find all jobs that are *not* building
-      def idleJobs = allJobs().findAll { item -> !item.isBuilding() }
-
-      idleJobs.each { item ->
-        def jobName = item.getFullDisplayName()
-
-        println(".. checking workspaces of job " + jobName)
-
-        workspacePath = node.getWorkspaceFor(item)
-        if (!workspacePath) {
-          println("... could not get workspace path for ${jobName}")
-          return
-        }
-
-        println("... workspace = " + workspacePath)
-
-        if (hasCustomWorkspace(item)) {
-          workspacePath = node.getRootPath().child(item.getCustomWorkspace())
-          println("... custom workspace = " + workspacePath)
-        }
-
-        if (!deleteRemote(workspacePath, false)) {
-          throw new Failed(node, "delete failed")
-        }
-      }
+      cleanupBusyNode(node)
     }
 
     // signal success
