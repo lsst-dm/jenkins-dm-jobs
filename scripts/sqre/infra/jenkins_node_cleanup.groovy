@@ -9,10 +9,11 @@ which is itself a fork of:
 /**
 Jenkins System Groovy script to clean up workspaces on all slaves.
 
-Check if a slave has < X GB of free space, perform cleanup if it's less.
-If slave is idle, wipe out everything in the workspace directory as well any extra configured directories.
-If slave is busy, wipe out individual job workspace directories for jobs that aren't running.
-Either way, remove custom workspaces also if they aren't in use.
+Check if a slave has < X GB of free space, perform cleanup if it's less.  If
+slave is idle, wipe out everything in the workspace directory as well any extra
+configured directories.  If slave is busy, wipe out individual job workspace
+directories for jobs that aren't running.  Either way, remove custom workspaces
+also if they aren't in use.
 **/
 
 import hudson.model.*
@@ -167,7 +168,8 @@ for (node in Jenkins.instance.nodes) {
             + "GB. Idle: ${computer.isIdle()}")
 
     prevOffline = computer.isOffline()
-    if (prevOffline && computer.getOfflineCauseReason().startsWith('disk cleanup from job')) {
+    if (prevOffline &&
+        computer.getOfflineCauseReason().startsWith('disk cleanup from job')) {
       // previous run screwed up, ignore it and clear it at the end
       prevOffline = false
     }
@@ -179,9 +181,12 @@ for (node in Jenkins.instance.nodes) {
 
     // mark node as offline
     if (!prevOffline) {
-      //don't override any previosly set temporarily offline causes (set by humans possibly)
-      computer.setTemporarilyOffline(true,
-        new hudson.slaves.OfflineCause.ByCLI("disk cleanup from job ${build.displayName}")
+      // don't override any previosly set temporarily offline causes (set by
+      // humans possibly)
+      def cleanupMsg = "disk cleanup from job ${build.displayName}"
+      computer.setTemporarilyOffline(
+        true,
+        new hudson.slaves.OfflineCause.ByCLI(cleanupMsg)
       )
     }
 
@@ -199,7 +204,10 @@ for (node in Jenkins.instance.nodes) {
       // select all jobs with a custom workspace
       customWorkspaceJobs().each { item ->
         // note that #child claims to deal with abs and rel paths
-        if (!deleteRemote(node.getRootPath().child(item.customWorkspace()), false)) {
+        if (!deleteRemote(
+              node.getRootPath().child(item.customWorkspace()),
+              false
+        )) {
           throw new Failed(node, "delete failed")
         }
       }
