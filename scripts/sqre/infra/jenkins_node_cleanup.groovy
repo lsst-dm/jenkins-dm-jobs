@@ -174,14 +174,14 @@ for (node in Jenkins.instance.nodes) {
       prevOffline = false
     }
 
-    // skip nodes with sufficent disk space
+    // skip nodes with sufficient disk space
     if (!forceCleanup && (roundedSize >= threshold)) {
-      throw new Skipped(node, "disk threshhold")
+      throw new Skipped(node, "disk threshold")
     }
 
     // mark node as offline
     if (!prevOffline) {
-      // don't override any previosly set temporarily offline causes (set by
+      // don't override any previously set temporarily offline causes (set by
       // humans possibly)
       def cleanupMsg = "disk cleanup from job ${build.displayName}"
       computer.setTemporarilyOffline(
@@ -198,7 +198,7 @@ for (node in Jenkins.instance.nodes) {
         throw new Failed(node, "delete failed")
       }
 
-      // delete custom workspaces on the navie assumption that any job could
+      // delete custom workspaces on the naive assumption that any job could
       // have run on this node in the past
 
       // select all jobs with a custom workspace
