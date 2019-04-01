@@ -215,7 +215,7 @@ def void osxTarballs(
 
           stage('publish') {
             if (publish) {
-              s3PushVenv(envId)
+              s3PushDocker(envId)
             }
           }
         } // dir
@@ -596,38 +596,6 @@ def void writeScript(Map p) {
 
   writeFile(file: p.file, text: p.text)
   util.bash "chmod a+x ${p.file}"
-}
-
-/**
- * Push {@code ./distrib} dir to an s3 bucket under the "path" formed by
- * joining the {@code parts} parameters.
- */
-def void s3PushVenv(String ... parts) {
-  def objectPrefix = "stack/" + util.joinPath(parts)
-  def cwd = pwd()
-
-  util.bash """
-    # do not assume virtualenv is present
-    pip install virtualenv
-    virtualenv venv
-    . venv/bin/activate
-    pip install --upgrade pip
-    pip install --upgrade awscli==${sqre.awscli.pypi.version}
-  """
-
-  def env = [
-    "EUPS_PKGROOT=${cwd}/distrib",
-    "EUPS_S3_OBJECT_PREFIX=${objectPrefix}",
-  ]
-
-  withEnv(env) {
-    withEupsBucketEnv {
-      util.bash """
-        . venv/bin/activate
-        ${s3PushCmd()}
-      """
-    } // withEupsBucketEnv
-  } // withEnv
 }
 
 /**
