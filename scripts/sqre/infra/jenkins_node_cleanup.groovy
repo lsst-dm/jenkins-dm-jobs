@@ -62,7 +62,6 @@ class Cleaned extends Node {}
 @Field Integer threshold = 100
 // skip node if it has any of these labels
 @Field List skippedLabels = [
-  'lsst-dev',
 //  'snowflake',
 ]
 // additional paths under slave's root path that should be removed if found
