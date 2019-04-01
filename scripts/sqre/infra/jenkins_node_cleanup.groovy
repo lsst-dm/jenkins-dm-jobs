@@ -205,7 +205,9 @@ void parseParams() {
   def resolver = build.buildVariableResolver
 
   forceCleanup = resolver.resolve('FORCE_CLEANUP').toBoolean()
+  threshold = resolver.resolve('CLEANUP_THRESHOLD').toInteger()
   println '### PARAMETERS'
+  println "CLEANUP_THRESHOLD=$threshold"
   println "FORCE_CLEANUP=$forceCleanup"
   println ''
 }
