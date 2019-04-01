@@ -58,15 +58,9 @@ class Skipped extends Node {}
 @InheritConstructors
 class Cleaned extends Node {}
 
-// Retrieve parameters of the current build
-def resolver = build.buildVariableResolver
-println '### PARAMETERS'
-Boolean forceCleanup = resolver.resolve('FORCE_CLEANUP').toBoolean()
-println "FORCE_CLEANUP=$forceCleanup"
-println ''
-
 // threshold is in GB and comes from a job parameter
 @Field Integer threshold = 100
+// skip node if it has any of these labels
 @Field List skippedLabels = [
   'lsst-dev',
 //  'snowflake',
@@ -75,6 +69,10 @@ println ''
 @Field List extraDirectoriesToDelete = [
   'snowflake',
 ]
+// if a cleanup should be run (ignoring threshold)
+@Field Boolean forceCleanup = false
+// accounting of node status (Cleaned, Failed, etc.)
+@Field Map nodeStatus = [:].withDefault {[]}
 
 def deleteRemote(def path, boolean deleteContentsOnly) {
   boolean result = true
@@ -199,107 +197,139 @@ void cleanupBusyNode(hudson.model.Slave node) {
   }
 }
 
-def nodeStatus = [:].withDefault {[]}
-def prevOffline = false
+/*
+ * parse jenkins job parameters being passed in
+*/
+void parseParams() {
+  // Retrieve parameters of the current build
+  def resolver = build.buildVariableResolver
 
-println '### NODES'
+  forceCleanup = resolver.resolve('FORCE_CLEANUP').toBoolean()
+  println '### PARAMETERS'
+  println "FORCE_CLEANUP=$forceCleanup"
+  println ''
+}
 
-for (node in Jenkins.instance.nodes) {
-  try {
-    println "found ${node.displayName}"
+/*
+ * iterate over nodes and cleanup
+*/
+void processNodes() {
+  def prevOffline = false
 
-    def computer = node.toComputer()
-    // a null channel indicates that the node is offline
-    if (computer.getChannel() == null) {
-      throw new Offline(node)
-    }
+  println '### NODES'
+  for (node in Jenkins.instance.nodes) {
+    try {
+      println "found ${node.displayName}"
 
-    if (node.assignedLabels.find{ it.expression in skippedLabels }) {
-      throw new Skipped(node, "based on label(s)")
-    }
+      def computer = node.toComputer()
+      // a null channel indicates that the node is offline
+      if (computer.getChannel() == null) {
+        throw new Offline(node)
+      }
 
-    def dsm = DiskSpaceMonitor.DESCRIPTOR.get(computer)
-    def roundedSize = null
-    if (dsm) {
-      def size = dsm.size
-      roundedSize = size / (1024 * 1024 * 1024) as int
-    } else {
-      println "unable to determine disk usage (this is bad)"
+      if (node.assignedLabels.find{ it.expression in skippedLabels }) {
+        throw new Skipped(node, "based on label(s)")
+      }
 
-      // force disk cleanup
-      roundedSize = 0
-      println "assuming free disk space == 0 to force cleanup"
-    }
+      def dsm = DiskSpaceMonitor.DESCRIPTOR.get(computer)
+      def roundedSize = null
+      if (dsm) {
+        def size = dsm.size
+        roundedSize = size / (1024 * 1024 * 1024) as int
+      } else {
+        println "unable to determine disk usage (this is bad)"
 
-    println("node: " + node.getDisplayName()
-            + ", free space: " + roundedSize
-            + "GB. Idle: ${computer.isIdle()}")
+        // force disk cleanup
+        roundedSize = 0
+        println "assuming free disk space == 0 to force cleanup"
+      }
 
-    prevOffline = computer.isOffline()
-    if (prevOffline &&
-        computer.getOfflineCauseReason().startsWith('disk cleanup from job')) {
-      // previous run screwed up, ignore it and clear it at the end
-      prevOffline = false
-    }
+      println("node: " + node.getDisplayName()
+              + ", free space: " + roundedSize
+              + "GB. Idle: ${computer.isIdle()}")
 
-    // skip nodes with sufficient disk space
-    if (!forceCleanup && (roundedSize >= threshold)) {
-      throw new Skipped(node, "disk threshold")
-    }
+      prevOffline = computer.isOffline()
+      if (prevOffline &&
+          computer.getOfflineCauseReason().startsWith('disk cleanup from job')) {
+        // previous run screwed up, ignore it and clear it at the end
+        prevOffline = false
+      }
 
-    // mark node as offline
-    if (!prevOffline) {
-      // don't override any previously set temporarily offline causes (set by
-      // humans possibly)
-      def cleanupMsg = "disk cleanup from job ${build.displayName}"
-      computer.setTemporarilyOffline(
-        true,
-        new hudson.slaves.OfflineCause.ByCLI(cleanupMsg)
-      )
-    }
+      // skip nodes with sufficient disk space
+      if (!forceCleanup && (roundedSize >= threshold)) {
+        throw new Skipped(node, "disk threshold")
+      }
 
-    // see if any builds are active
-    if (computer.isIdle()) {
-      cleanupIdleNode(node)
-    } else {
-      cleanupBusyNode(node)
-    }
+      // mark node as offline
+      if (!prevOffline) {
+        // don't override any previously set temporarily offline causes (set by
+        // humans possibly)
+        def cleanupMsg = "disk cleanup from job ${build.displayName}"
+        computer.setTemporarilyOffline(
+          true,
+          new hudson.slaves.OfflineCause.ByCLI(cleanupMsg)
+        )
+      }
 
-    // signal success
-    throw new Cleaned(node, "OK")
-  } catch (Node t) {
-    switch (t) {
-      case Cleaned:
-        nodeStatus['cleanedNodes'] << t
-        break
-      case Offline:
-        nodeStatus['offlineNodes'] << t
-        break
-      case Skipped:
-        nodeStatus['skippedNodes'] << t
-        break
-      default:
-        // includes Failed
-        nodeStatus['failedNodes'] << t
-    }
-  } finally {
-    if (!prevOffline) {
-      node.toComputer().setTemporarilyOffline(false, null)
+      // see if any builds are active
+      if (computer.isIdle()) {
+        cleanupIdleNode(node)
+      } else {
+        cleanupBusyNode(node)
+      }
+
+      // signal success
+      throw new Cleaned(node, "OK")
+    } catch (Node t) {
+      switch (t) {
+        case Cleaned:
+          nodeStatus['cleanedNodes'] << t
+          break
+        case Offline:
+          nodeStatus['offlineNodes'] << t
+          break
+        case Skipped:
+          nodeStatus['skippedNodes'] << t
+          break
+        default:
+          // includes Failed
+          nodeStatus['failedNodes'] << t
+      }
+    } finally {
+      if (!prevOffline) {
+        node.toComputer().setTemporarilyOffline(false, null)
+      }
+
+      println ''
     }
   }
 }
 
-println ''
-println '### SUMMARY'
+/*
+ * print a status summary
+*/
+void printSummary() {
+  println '### SUMMARY'
 
-nodeStatus.each { status ->
-  println "  * ${status.key}:"
+  nodeStatus.each { status ->
+    println "  * ${status.key}:"
 
-  status.value.each { e ->
-    println "    - ${e.node.displayName} ${e}"
+    status.value.each { e ->
+      println "    - ${e.node.displayName} ${e}"
+    }
   }
+
+  def borked = nodeStatus['failedNodes']?.size()
+  assert borked == 0 : "\nFailed: ${borked}"
 }
 
-def borked = nodeStatus['failedNodes']?.size()
+/*
+ * main entry point
+*/
+void go() {
+  parseParams()
+  processNodes()
+  printSummary()
+}
 
-assert borked == 0 : "\nFailed: ${borked}"
+go()
