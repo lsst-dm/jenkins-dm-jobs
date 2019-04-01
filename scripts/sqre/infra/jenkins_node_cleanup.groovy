@@ -231,7 +231,7 @@ void processNodes() {
       def computer = node.toComputer()
 
       // a null channel indicates that the node is offline
-      if (computer == null || computer.getChannel() == null) {
+      if (computer == null || computer.isOffline()) {
         throw new Offline(node)
       }
 
