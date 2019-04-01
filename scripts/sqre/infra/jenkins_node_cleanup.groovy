@@ -153,6 +153,8 @@ void cleanupIdleNode(hudson.model.Slave node) {
     }
   }
 
+  // do not cleanup extra paths unless the entire node is idle as it is
+  // possible that a running build on an active node could decide to use it.
   extraDirectoriesToDelete.each {
     if (!deleteRemote(node.getRootPath().child(it), false)) {
       throw new Failed(node, "delete failed")
