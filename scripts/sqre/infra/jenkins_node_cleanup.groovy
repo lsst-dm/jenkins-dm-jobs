@@ -129,7 +129,8 @@ Boolean isWorkflowJob(Job item) {
 }
 
 /*
- * cleanup a node that does not have any active builds.
+ * cleanup a node that does not have any active builds. The workspace root and
+ * any "extra" paths will be removed.
 */
 void cleanupIdleNode(hudson.model.Slave node) {
   // it's idle so delete everything under workspace
@@ -224,9 +225,13 @@ void processNodes() {
     try {
       println "found ${node.displayName}"
 
+      // toComputer() can return `null` if the node has no executors but
+      // Jenkins.instance.nodes() does not seem to return nodes with no
+      // executors.
       def computer = node.toComputer()
+
       // a null channel indicates that the node is offline
-      if (computer.getChannel() == null) {
+      if (computer == null || computer.getChannel() == null) {
         throw new Offline(node)
       }
 
