@@ -105,12 +105,12 @@ tarball:
     # need newinstall.sh support for devtoolset-7
     # - <<: *tarball_defaults
     #  <<: *el7-dts7-py3
-    #- <<: *tarball_defaults
-    #  <<: *mojave-py3
-    #  platform: '10.9'
-    #  osfamily: osx
-    #  timelimit: 8
-    #  allow_fail: true
+    - <<: *tarball_defaults
+      <<: *mojave-py3
+      platform: '10.9'
+      osfamily: osx
+      timelimit: 8
+      allow_fail: true
 #
 # X-release pattern pipelines
 #
