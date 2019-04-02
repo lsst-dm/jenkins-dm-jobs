@@ -1,12 +1,5 @@
 /*
-derived from:
-  https://gist.github.com/akomakom/481507c0dd79ec52a395
 
-which is itself a fork of:
-  https://gist.github.com/rb2k/8372402
-*/
-
-/**
 Jenkins System Groovy script to clean up workspaces on all slaves.
 
 Check if a slave has < X GB of free space, perform cleanup if it's less.  If
@@ -14,7 +7,14 @@ slave is idle, wipe out everything in the workspace directory as well any extra
 configured directories.  If slave is busy, wipe out individual job workspace
 directories for jobs that aren't running.  Either way, remove custom workspaces
 also if they aren't in use.
-**/
+
+derived from:
+  https://gist.github.com/akomakom/481507c0dd79ec52a395
+
+which is itself a fork of:
+  https://gist.github.com/rb2k/8372402
+
+*/
 
 import groovy.transform.Field
 import groovy.transform.InheritConstructors
@@ -26,55 +26,119 @@ import hudson.slaves.OfflineCause
 import hudson.util.*
 import jenkins.model.*
 
+/**
+ * Cleanup base class. Not intended to be used directly.
+ */
 @InheritConstructors
 class CleanupException extends Exception {}
 
+/**
+ * Cleanup status exception with {@link hudson.model.Slave} information. Not
+ * intended to be used directly.
+ */
 @InheritConstructors
 class Node extends CleanupException {
   Slave node
 
+  /**
+   * Constructor.
+   *
+   * @param Slave node Signal cleanup status for this node.
+   */
   Node(Slave node) {
     super()
     this.node = node
   }
 
+  /**
+   * Constructor.
+   *
+   * @param Slave node Signal cleanup status for this node.
+   * @param String m Exception error message
+   */
   Node(Slave node, String m) {
     super(m)
     this.node = node
   }
 
+  /**
+   * Constructor.
+   *
+   * @param Slave node Signal cleanup status for this node.
+   * @param String m Exception error message
+   * @param Throwable t Chained exception
+   */
   Node(Slave node, String m, Throwable t) {
     super(m, t)
     this.node = node
   }
 }
 
+/**
+ * Cleanup of node failed.
+ */
 @InheritConstructors
 class Failed extends Node {}
+
+/**
+ * Node is offline (and can not be cleaned up).
+ */
 @InheritConstructors
 class Offline extends Node {}
+
+/**
+ * Node was skipped (was not cleaned up)
+ */
 @InheritConstructors
 class Skipped extends Node {}
-// note that this "exception" is being [ab]used to signal success
+
+/**
+ * Node was successfully cleaned up.
+ *
+ * Note that this "exception" is being [ab]used to signal success.
+ */
 @InheritConstructors
 class Cleaned extends Node {}
 
+/**
+ * Enable/Disable printing of debug messages.
+ */
 @Field debug = true
-// threshold is in GB and comes from a job parameter
+
+/**
+ * Threshold is in GB and comes from a job parameter.
+ */
 @Field Integer threshold = 100
-// skip node if it has any of these labels
-@Field List skippedLabels = [
-//  'snowflake',
-]
-// additional paths under slave's root path that should be removed if found
+
+/**
+ * Skip node if it has any of these labels.
+ */
+@Field List skippedLabels = []
+
+/**
+ * Additional paths under slave's root path that should be removed if found.
+ */
 @Field List extraDirectoriesToDelete = [
   'snowflake',
 ]
-// if a cleanup should be run (ignoring threshold)
+
+/**
+ * Force a cleanup to run (ignoring {@code threshold}).
+ */
 @Field boolean forceCleanup = false
-// accounting of node status (Cleaned, Failed, etc.)
+
+/**
+ * Accounting of node status (Cleaned, Failed, etc.).
+ */
 @Field Map nodeStatus = [:].withDefault {[]}
 
+/**
+ * Delete a remote file path ignoring any exceptions.
+ *
+ * @param FilePath Path remote path to be deleted.
+ * @param boolean deleteContentsOnly rm directories in addition to files.
+ * @return boolean Success or failure of delete.
+ */
 boolean deleteRemote(FilePath path, boolean deleteContentsOnly) {
   boolean result = true
   String rPath = path.getRemote()
@@ -96,49 +160,72 @@ boolean deleteRemote(FilePath path, boolean deleteContentsOnly) {
   return result
 }
 
-/*
- * println debug message
-*/
+/**
+ * {@code println} analog for debug messages.
+ *
+ * @param Object value string-ified debug message.
+ */
 void debugln(Object value) {
  debug && println(value)
 }
 
-/*
- * find all jobs which are not folders
+/**
+ * Find all jobs which are not folders.
  *
-*/
+ * @return ArrayList of {@link Job}s.
+ */
 ArrayList allJobs() {
   Jenkins.instance.getAllItems(TopLevelItem).findAll {
     it instanceof Job && !isFolder(it)
   }
 }
 
-/*
- * find all jobs which have a custom workspace
-*/
+/**
+ * Find all jobs which have a custom workspace
+ *
+ * @return ArrayList of {@code Job}s.
+ */
 ArrayList customWorkspaceJobs() {
   allJobs().findAll { hasCustomWorkspace(it) }
 }
 
-/*
- * test if Job has a custom workspace
-*/
-boolean hasCustomWorkspace(Job item) {
+/**
+ * Test if {@link Job} has a custom workspace.
+ *
+ * @param Job job to test
+ * @return boolean if haz/not
+ */
+boolean hasCustomWorkspace(Job job) {
   // pipelines do not have #getCustomWorkspace()
-  !isWorkflowJob(item) && item.getCustomWorkspace()
+  !isWorkflowJob(job) && job.getCustomWorkspace()
 }
 
-boolean isFolder(Job item) {
-  "${item.class}".contains('Folder')
+/**
+ * Test if {@link Job} is a {@link Folder}.
+ *
+ * @param Job job to test
+ * @return boolean if iz/iz not
+ */
+boolean isFolder(Job job) {
+  "${job.class}".contains('Folder')
 }
 
-boolean isWorkflowJob(Job item) {
-  "${item.class}".contains('WorkflowJob')
+/**
+ * Test if {@link Job} is a {@link WorkflowJob} (pipeline).
+ *
+ * @param Job job to test
+ * @return boolean if iz/iz not
+ */
+boolean isWorkflowJob(Job job) {
+  "${job.class}".contains('WorkflowJob')
 }
 
-/*
- * find all jobs that *are* building on node
-*/
+/**
+ * Find all jobs that *are* building on node.
+ *
+ * @param Slave node List builds for {@code node}.
+ * @return ArrayList of {@link Job}s.
+ */
 ArrayList findBusyJobsByNode(Slave node) {
   def computer = node.toComputer()
 
@@ -151,9 +238,12 @@ ArrayList findBusyJobsByNode(Slave node) {
   busyExecs.collect { it.getCurrentExecutable().getProject() }
 }
 
-/*
- * find all jobs that *are not* building on node
-*/
+/**
+ * Find all jobs that *are not* building on node.
+ *
+ * @param Slave node List builds for {@code node}.
+ * @return ArrayList of {@link Job}s.
+ */
 ArrayList findIdleJobsByNode(Slave node) {
   def busyJobs = findBusyJobsByNode(node)
 
@@ -165,9 +255,13 @@ ArrayList findIdleJobsByNode(Slave node) {
   }
 }
 
-/*
- * If job has a custom workspace defined, remove it
-*/
+/**
+ * If job has a custom workspace defined, remove it.
+ *
+ * @param Job job with custom workspace.
+ * @param Slave node to operate on.
+ * @throws Failed Upon error.
+ */
 void deleteCustomWorkspace(Job job, Slave node) {
   if (!hasCustomWorkspace(job)) {
     return
@@ -182,10 +276,14 @@ void deleteCustomWorkspace(Job job, Slave node) {
   }
 }
 
-/*
- * cleanup a node that does not have any active builds. The workspace root and
- * any "extra" paths will be removed.
-*/
+/**
+ * Cleanup a node that does not have any active builds.
+ *
+ * The workspace root and any "extra" paths will be removed.
+ *
+ * @param Slave node to operate on.
+ * @throws Failed Upon error.
+ */
 void cleanupIdleNode(Slave node) {
   debugln(". cleaning up node: ${node.getDisplayName()}")
   // it's idle so delete everything under workspace
@@ -217,12 +315,15 @@ void cleanupIdleNode(Slave node) {
   }
 }
 
-/*
- * cleanup a node that has atleast one active builds.
+/**
+ * Cleanup a node that has at least one active builds.
  *
  * Note that this will miss jobs which have been deleted but still have a
  * workspace on disk.
-*/
+ *
+ * @param Slave node to operate on.
+ * @throws Failed Upon error.
+ */
 void cleanupBusyNode(Slave node) {
   debugln(". cleaning up node: ${node.getDisplayName()}")
 
@@ -248,9 +349,10 @@ void cleanupBusyNode(Slave node) {
   }
 }
 
-/*
- * parse jenkins job parameters being passed in
-*/
+/**
+ * Parse jenkins job parameters being passed in via {@code
+ * systemGroovyCommand}.
+ */
 void parseParams() {
   // Retrieve parameters of the current build
   def resolver = build.buildVariableResolver
@@ -263,14 +365,14 @@ void parseParams() {
   println ''
 }
 
-/*
- * iterate over nodes and cleanup
-*/
+/**
+ * Iterate over nodes and cleanup.
+ */
 void processNodes() {
   def prevOffline = false
 
   println '### NODES'
-  for (node in Jenkins.instance.nodes) {
+  Jenkins.instance.nodes.each { node ->
     try {
       println "found ${node.displayName}"
 
@@ -363,9 +465,9 @@ void processNodes() {
   }
 }
 
-/*
- * print a status summary
-*/
+/**
+ * Print a status summary.
+ */
 void printSummary() {
   println '### SUMMARY'
 
@@ -381,9 +483,9 @@ void printSummary() {
   assert borked == 0 : "\nFailed: ${borked}"
 }
 
-/*
- * main entry point
-*/
+/**
+ * Main entry point.
+ */
 void go() {
   parseParams()
   processNodes()
