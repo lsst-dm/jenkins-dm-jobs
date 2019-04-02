@@ -71,7 +71,7 @@ class Cleaned extends Node {}
   'snowflake',
 ]
 // if a cleanup should be run (ignoring threshold)
-@Field Boolean forceCleanup = false
+@Field boolean forceCleanup = false
 // accounting of node status (Cleaned, Failed, etc.)
 @Field Map nodeStatus = [:].withDefault {[]}
 
@@ -123,16 +123,16 @@ ArrayList customWorkspaceJobs() {
 /*
  * test if Job has a custom workspace
 */
-Boolean hasCustomWorkspace(Job item) {
+boolean hasCustomWorkspace(Job item) {
   // pipelines do not have #getCustomWorkspace()
   !isWorkflowJob(item) && item.getCustomWorkspace()
 }
 
-Boolean isFolder(Job item) {
+boolean isFolder(Job item) {
   "${item.class}".contains('Folder')
 }
 
-Boolean isWorkflowJob(Job item) {
+boolean isWorkflowJob(Job item) {
   "${item.class}".contains('WorkflowJob')
 }
 
