@@ -235,7 +235,7 @@ ArrayList findBusyJobsByNode(Slave node) {
   // find jobs with a build active on one of this node's executors
   // is it a race condition if the build finishes before getCurrentExecutable()
   // is called?
-  busyExecs.collect { it.getCurrentExecutable().getProject() }
+  busyExecs.collect { it.getCurrentExecutable().getParent().getOwnerTask() }
 }
 
 /**
