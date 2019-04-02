@@ -168,6 +168,8 @@ ArrayList findIdleJobsByNode(hudson.model.Slave node) {
 void cleanupIdleNode(hudson.model.Slave node) {
   // it's idle so delete everything under workspace
   def workspaceDir = node.getWorkspaceRoot()
+  println ". root workspace = ${workspaceDir}"
+
   if (!deleteRemote(workspaceDir, true)) {
     throw new Failed(node, "delete failed")
   }
@@ -202,9 +204,11 @@ void cleanupIdleNode(hudson.model.Slave node) {
  * workspace on disk.
 */
 void cleanupBusyNode(hudson.model.Slave node) {
-  // node has at least one active job
-  println(". looking for idle job workspaces on ${node.getDisplayName()}")
+  findBusyJobsByNode(node).each { item ->
+    println ".. active build of job = ${item.getFullName()}"
+  }
 
+  println(". looking for idle job workspaces on ${node.getDisplayName()}")
   findIdleJobsByNode(node).each { item ->
     def jobName = item.getFullDisplayName()
 
@@ -313,6 +317,7 @@ void processNodes() {
       if (computer.isIdle()) {
         cleanupIdleNode(node)
       } else {
+        // node has at least one active build
         cleanupBusyNode(node)
       }
 
