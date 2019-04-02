@@ -30,19 +30,19 @@ class CleanupException extends Exception {}
 
 @InheritConstructors
 class Node extends CleanupException {
-  hudson.model.Slave node
+  Slave node
 
-  Node(hudson.model.Slave node) {
+  Node(Slave node) {
     super()
     this.node = node
   }
 
-  Node(hudson.model.Slave node, String m) {
+  Node(Slave node, String m) {
     super(m)
     this.node = node
   }
 
-  Node(hudson.model.Slave node, String m, Throwable t) {
+  Node(Slave node, String m, Throwable t) {
     super(m, t)
     this.node = node
   }
@@ -137,7 +137,7 @@ Boolean isWorkflowJob(Job item) {
 /*
  * find all jobs that *are* building on node
 */
-ArrayList findBusyJobsByNode(hudson.model.Slave node) {
+ArrayList findBusyJobsByNode(Slave node) {
   def computer = node.toComputer()
 
   // find currently busy executors
@@ -152,7 +152,7 @@ ArrayList findBusyJobsByNode(hudson.model.Slave node) {
 /*
  * find all jobs that *are not* building on node
 */
-ArrayList findIdleJobsByNode(hudson.model.Slave node) {
+ArrayList findIdleJobsByNode(Slave node) {
   def busyJobs = findBusyJobsByNode(node)
 
   // filter out active jobs
@@ -166,7 +166,7 @@ ArrayList findIdleJobsByNode(hudson.model.Slave node) {
 /*
  * If job has a custom workspace defined, remove it
 */
-void deleteCustomWorkspace(Job job, hudson.model.Slave node) {
+void deleteCustomWorkspace(Job job, Slave node) {
   if (!hasCustomWorkspace(job)) {
     return
   }
@@ -184,7 +184,7 @@ void deleteCustomWorkspace(Job job, hudson.model.Slave node) {
  * cleanup a node that does not have any active builds. The workspace root and
  * any "extra" paths will be removed.
 */
-void cleanupIdleNode(hudson.model.Slave node) {
+void cleanupIdleNode(Slave node) {
   debugln(". cleaning up node: ${node.getDisplayName()}")
   // it's idle so delete everything under workspace
   def workspaceDir = node.getWorkspaceRoot()
@@ -221,7 +221,7 @@ void cleanupIdleNode(hudson.model.Slave node) {
  * Note that this will miss jobs which have been deleted but still have a
  * workspace on disk.
 */
-void cleanupBusyNode(hudson.model.Slave node) {
+void cleanupBusyNode(Slave node) {
   debugln(". cleaning up node: ${node.getDisplayName()}")
 
   println('.. active builds:')
