@@ -106,8 +106,8 @@ void debugln(Object value) {
  *
 */
 ArrayList allJobs() {
-  Jenkins.instance.getAllItems(TopLevelItem).findAll{ item ->
-    item instanceof Job && !isFolder(item)
+  Jenkins.instance.getAllItems(TopLevelItem).findAll {
+    it instanceof Job && !isFolder(it)
   }
 }
 
@@ -115,9 +115,7 @@ ArrayList allJobs() {
  * find all jobs which have a custom workspace
 */
 ArrayList customWorkspaceJobs() {
-  allJobs().findAll { item ->
-    hasCustomWorkspace(item)
-  }
+  allJobs().findAll { hasCustomWorkspace(it) }
 }
 
 /*
@@ -143,16 +141,12 @@ ArrayList findBusyJobsByNode(hudson.model.Slave node) {
   def computer = node.toComputer()
 
   // find currently busy executors
-  def busyExecs = computer.getExecutors().findAll { exec ->
-    exec.isBusy()
-  }
+  def busyExecs = computer.getExecutors().findAll { it.isBusy() }
 
   // find jobs with a build active on one of this node's executors
   // is it a race condition if the build finishes before getCurrentExecutable()
   // is called?
-  busyExecs.collect { exec ->
-    exec.getCurrentExecutable().getProject()
-  }
+  busyExecs.collect { it.getCurrentExecutable().getProject() }
 }
 
 /*
@@ -231,8 +225,8 @@ void cleanupBusyNode(hudson.model.Slave node) {
   debugln(". cleaning up node: ${node.getDisplayName()}")
 
   println('.. active builds:')
-  findBusyJobsByNode(node).each { item ->
-    println "... build of job = ${item.getFullName()}"
+  findBusyJobsByNode(node).each {
+    println "... build of = ${it.getFullName()}"
   }
 
   debugln('.. idle job workspaces:')
