@@ -58,6 +58,7 @@ class Skipped extends Node {}
 @InheritConstructors
 class Cleaned extends Node {}
 
+@Field debug = true
 // threshold is in GB and comes from a job parameter
 @Field Integer threshold = 100
 // skip node if it has any of these labels
@@ -91,6 +92,13 @@ def deleteRemote(def path, boolean deleteContentsOnly) {
     }
   }
   return result
+}
+
+/*
+ * println debug message
+*/
+void debugln(Object value) {
+ debug && println(value)
 }
 
 /*
