@@ -180,7 +180,7 @@ void cleanupIdleNode(hudson.model.Slave node) {
   debugln ".. root workspace = ${workspaceDir}"
 
   if (!deleteRemote(workspaceDir, true)) {
-    throw new Failed(node, "delete failed")
+    throw new Failed(node, 'delete failed')
   }
 
   // delete custom workspaces on the naive assumption that any job could
@@ -195,7 +195,7 @@ void cleanupIdleNode(hudson.model.Slave node) {
 
     // note that #child claims to deal with abs and rel paths
     if (!deleteRemote(wsPath, false)) {
-      throw new Failed(node, "delete failed")
+      throw new Failed(node, 'delete failed')
     }
   }
 
@@ -207,7 +207,7 @@ void cleanupIdleNode(hudson.model.Slave node) {
     debugln("... extra dir = ${extra}")
 
     if (!deleteRemote(extra, false)) {
-      throw new Failed(node, "delete failed")
+      throw new Failed(node, 'delete failed')
     }
   }
 }
@@ -245,7 +245,7 @@ void cleanupBusyNode(hudson.model.Slave node) {
     }
 
     if (!deleteRemote(wsPath, false)) {
-      throw new Failed(node, "delete failed")
+      throw new Failed(node, 'delete failed')
     }
   }
 }
@@ -260,8 +260,8 @@ void parseParams() {
   forceCleanup = resolver.resolve('FORCE_CLEANUP').toBoolean()
   threshold = resolver.resolve('CLEANUP_THRESHOLD').toInteger()
   println '### PARAMETERS'
-  println "CLEANUP_THRESHOLD=$threshold"
-  println "FORCE_CLEANUP=$forceCleanup"
+  println "CLEANUP_THRESHOLD=${threshold}"
+  println "FORCE_CLEANUP=${forceCleanup}"
   println ''
 }
 
@@ -287,7 +287,7 @@ void processNodes() {
       }
 
       if (node.assignedLabels.find{ it.expression in skippedLabels }) {
-        throw new Skipped(node, "based on label(s)")
+        throw new Skipped(node, 'based on label(s)')
       }
 
       def dsm = DiskSpaceMonitor.DESCRIPTOR.get(computer)
@@ -296,16 +296,16 @@ void processNodes() {
         def size = dsm.size
         roundedSize = size / (1024 * 1024 * 1024) as int
       } else {
-        println "unable to determine disk usage (this is bad)"
+        println 'unable to determine disk usage (this is bad)'
 
         // force disk cleanup
         roundedSize = 0
-        println "assuming free disk space == 0 to force cleanup"
+        println 'assuming free disk space == 0 to force cleanup'
       }
 
-      println("node: " + node.getDisplayName()
-              + ", free space: " + roundedSize
-              + "GB. Idle: ${computer.isIdle()}")
+      println("node: ${node.getDisplayName()}"
+              + ", free space: ${roundedSize} GiB"
+              + ", idle: ${computer.isIdle()}")
 
       prevOffline = computer.isOffline()
       if (prevOffline &&
@@ -316,7 +316,7 @@ void processNodes() {
 
       // skip nodes with sufficient disk space
       if (!forceCleanup && (roundedSize >= threshold)) {
-        throw new Skipped(node, "disk threshold")
+        throw new Skipped(node, 'disk threshold')
       }
 
       // mark node as offline
@@ -339,7 +339,7 @@ void processNodes() {
       }
 
       // signal success
-      throw new Cleaned(node, "OK")
+      throw new Cleaned(node, 'OK')
     } catch (Node t) {
       switch (t) {
         case Cleaned:
