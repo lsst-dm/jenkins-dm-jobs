@@ -174,9 +174,10 @@ ArrayList findIdleJobsByNode(hudson.model.Slave node) {
  * any "extra" paths will be removed.
 */
 void cleanupIdleNode(hudson.model.Slave node) {
+  debugln(". cleaning up node: ${node.getDisplayName()}")
   // it's idle so delete everything under workspace
   def workspaceDir = node.getWorkspaceRoot()
-  println ". root workspace = ${workspaceDir}"
+  debugln ".. root workspace = ${workspaceDir}"
 
   if (!deleteRemote(workspaceDir, true)) {
     throw new Failed(node, "delete failed")
@@ -186,20 +187,26 @@ void cleanupIdleNode(hudson.model.Slave node) {
   // have run on this node in the past
 
   // select all jobs with a custom workspace
+  debugln('.. looking for custom workspaces')
   customWorkspaceJobs().each { item ->
+    def wsPath = node.getRootPath().child(item.customWorkspace())
+    debugln("... job ${item.getFullName()}")
+    debugln("... custom workspace = ${wsPath}")
+
     // note that #child claims to deal with abs and rel paths
-    if (!deleteRemote(
-          node.getRootPath().child(item.customWorkspace()),
-          false
-    )) {
+    if (!deleteRemote(wsPath, false)) {
       throw new Failed(node, "delete failed")
     }
   }
 
   // do not cleanup extra paths unless the entire node is idle as it is
   // possible that a running build on an active node could decide to use it.
+  debugln('.. looking for "extra" directories')
   extraDirectoriesToDelete.each {
-    if (!deleteRemote(node.getRootPath().child(it), false)) {
+    def extra = node.getRootPath().child(it)
+    debugln("... extra dir = ${extra}")
+
+    if (!deleteRemote(extra, false)) {
       throw new Failed(node, "delete failed")
     }
   }
@@ -212,30 +219,32 @@ void cleanupIdleNode(hudson.model.Slave node) {
  * workspace on disk.
 */
 void cleanupBusyNode(hudson.model.Slave node) {
+  debugln(". cleaning up node: ${node.getDisplayName()}")
+
+  println('.. active builds:')
   findBusyJobsByNode(node).each { item ->
-    println ".. active build of job = ${item.getFullName()}"
+    println "... build of job = ${item.getFullName()}"
   }
 
-  println(". looking for idle job workspaces on ${node.getDisplayName()}")
+  debugln('.. idle job workspaces:')
   findIdleJobsByNode(node).each { item ->
     def jobName = item.getFullDisplayName()
 
-    println(".. checking workspaces of job " + jobName)
-
-    workspacePath = node.getWorkspaceFor(item)
-    if (!workspacePath) {
-      println("... could not get workspace path for ${jobName}")
+    debugln("... checking workspaces of job ${jobName}")
+    def wsPath = node.getWorkspaceFor(item)
+    if (!wsPath) {
+      debugln("... could not get workspace path for ${jobName}")
       return
     }
 
-    println("... workspace = " + workspacePath)
+    debugln("... workspace = ${wsPath}")
 
     if (hasCustomWorkspace(item)) {
-      workspacePath = node.getRootPath().child(item.getCustomWorkspace())
-      println("... custom workspace = " + workspacePath)
+      wsPath = node.getRootPath().child(item.getCustomWorkspace())
+      debugln("... custom workspace = ${wsPath}")
     }
 
-    if (!deleteRemote(workspacePath, false)) {
+    if (!deleteRemote(wsPath, false)) {
       throw new Failed(node, "delete failed")
     }
   }
