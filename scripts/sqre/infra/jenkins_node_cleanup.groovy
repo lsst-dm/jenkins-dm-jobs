@@ -129,6 +129,39 @@ Boolean isWorkflowJob(Job item) {
 }
 
 /*
+ * find all jobs that *are* building on node
+*/
+ArrayList findBusyJobsbyNode(hudson.model.Slave node) {
+  def computer = node.toComputer()
+
+  // find currently busy executors
+  def busyExecs = computer.getExecutors().findAll { exec ->
+    println exec.isBusy()
+  }
+
+  // find jobs with a build active on one of this node's executors
+  // is it a race condition if the build finishes before getCurrentExecutable()
+  // is called?
+  busyExecs.each { exec ->
+    exec.getCurrentExecutable().getProject()
+  }
+}
+
+/*
+ * find all jobs that *are not* building on node
+*/
+ArrayList findIdleJobsByNode(hudson.model.Slave node) {
+  def busyJobs = findBusyJobsByNode(node)
+
+  // filter out active jobs
+  allJobs().findAll { job ->
+    !busyJobs.find { busy ->
+      busy.getFullName() == job.getFullName()
+    }
+  }
+}
+
+/*
  * cleanup a node that does not have any active builds. The workspace root and
  * any "extra" paths will be removed.
 */
