@@ -170,6 +170,23 @@ ArrayList findIdleJobsByNode(hudson.model.Slave node) {
 }
 
 /*
+ * If job has a custom workspace defined, remove it
+*/
+void deleteCustomWorkspace(Job job, hudson.model.Slave node) {
+  if (!hasCustomWorkspace(job)) {
+    return
+  }
+
+  // note that #child claims to deal with abs and rel paths
+  def wsPath = node.getRootPath().child(job.getCustomWorkspace())
+  debugln("... custom workspace = ${wsPath}")
+
+  if (!deleteRemote(wsPath, false)) {
+    throw new Failed(node, 'delete failed')
+  }
+}
+
+/*
  * cleanup a node that does not have any active builds. The workspace root and
  * any "extra" paths will be removed.
 */
@@ -185,28 +202,20 @@ void cleanupIdleNode(hudson.model.Slave node) {
 
   // delete custom workspaces on the naive assumption that any job could
   // have run on this node in the past
-
-  // select all jobs with a custom workspace
   debugln('.. looking for custom workspaces')
-  customWorkspaceJobs().each { item ->
-    def wsPath = node.getRootPath().child(item.customWorkspace())
-    debugln("... job ${item.getFullName()}")
-    debugln("... custom workspace = ${wsPath}")
-
-    // note that #child claims to deal with abs and rel paths
-    if (!deleteRemote(wsPath, false)) {
-      throw new Failed(node, 'delete failed')
-    }
+  customWorkspaceJobs().each { job ->
+    debugln("... job ${job.getFullName()}")
+    deleteCustomWorkspace(job, node)
   }
 
   // do not cleanup extra paths unless the entire node is idle as it is
   // possible that a running build on an active node could decide to use it.
   debugln('.. looking for "extra" directories')
-  extraDirectoriesToDelete.each {
-    def extra = node.getRootPath().child(it)
-    debugln("... extra dir = ${extra}")
+  extraDirectoriesToDelete.each { extra ->
+    def path = node.getRootPath().child(extra)
+    debugln("... extra dir = ${path}")
 
-    if (!deleteRemote(extra, false)) {
+    if (!deleteRemote(path, false)) {
       throw new Failed(node, 'delete failed')
     }
   }
@@ -227,26 +236,19 @@ void cleanupBusyNode(hudson.model.Slave node) {
   }
 
   debugln('.. idle job workspaces:')
-  findIdleJobsByNode(node).each { item ->
-    def jobName = item.getFullDisplayName()
+  findIdleJobsByNode(node).each { job ->
+    def jobName = job.getFullDisplayName()
 
     debugln("... checking workspaces of job ${jobName}")
-    def wsPath = node.getWorkspaceFor(item)
-    if (!wsPath) {
-      debugln("... could not get workspace path for ${jobName}")
-      return
-    }
-
+    // is it possible for a job to have both a "regular" and "custom"
+    // workspace???
+    def wsPath = node.getWorkspaceFor(job)
     debugln("... workspace = ${wsPath}")
-
-    if (hasCustomWorkspace(item)) {
-      wsPath = node.getRootPath().child(item.getCustomWorkspace())
-      debugln("... custom workspace = ${wsPath}")
-    }
-
     if (!deleteRemote(wsPath, false)) {
       throw new Failed(node, 'delete failed')
     }
+
+    deleteCustomWorkspace(job, node)
   }
 }
 
