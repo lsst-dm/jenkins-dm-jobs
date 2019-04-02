@@ -18,6 +18,7 @@ also if they aren't in use.
 
 import groovy.transform.Field
 import groovy.transform.InheritConstructors
+import hudson.FilePath
 import hudson.FilePath.FileCallable
 import hudson.model.*
 import hudson.node_monitors.*
@@ -74,20 +75,21 @@ class Cleaned extends Node {}
 // accounting of node status (Cleaned, Failed, etc.)
 @Field Map nodeStatus = [:].withDefault {[]}
 
-def deleteRemote(def path, boolean deleteContentsOnly) {
+boolean deleteRemote(FilePath path, boolean deleteContentsOnly) {
   boolean result = true
-  def pathAsString = path.getRemote()
+  String rPath = path.getRemote()
+
   if (path.exists()) {
     try {
       if (deleteContentsOnly) {
         path.deleteContents()
-        println ".... deleted ALL contents of ${pathAsString}"
+        println ".... deleted ALL contents of ${rPath}"
       } else {
         path.deleteRecursive()
-        println ".... deleted directory ${pathAsString}"
+        println ".... deleted directory ${rPath}"
       }
     } catch (Throwable t) {
-      println "Failed to delete ${pathAsString}: ${t}"
+      println "Failed to delete ${rPath}: ${t}"
       result = false
     }
   }
