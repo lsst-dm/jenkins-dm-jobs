@@ -341,7 +341,7 @@ void cleanupBusyNode(Slave node) {
     // workspace???
     def wsPath = node.getWorkspaceFor(job)
     debugln("... workspace = ${wsPath}")
-    if (!deleteRemote(wsPath, false)) {
+    if (!deleteRemote(wsPath, true)) {
       throw new Failed(node, 'delete failed')
     }
 
