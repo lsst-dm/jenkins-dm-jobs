@@ -25,6 +25,7 @@ import hudson.node_monitors.*
 import hudson.slaves.OfflineCause
 import hudson.util.*
 import jenkins.model.*
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
 /**
  * Cleanup base class. Not intended to be used directly.
@@ -138,6 +139,7 @@ class Cleaned extends Node {}
  * @param FilePath Path remote path to be deleted.
  * @param boolean deleteContentsOnly rm directories in addition to files.
  * @return boolean Success or failure of delete.
+ * @throws InterruptedException if build is canceled
  */
 boolean deleteRemote(FilePath path, boolean deleteContentsOnly) {
   boolean result = true
@@ -145,6 +147,7 @@ boolean deleteRemote(FilePath path, boolean deleteContentsOnly) {
 
   if (path.exists()) {
     try {
+      println ".... trying to delete: ${rPath}"
       if (deleteContentsOnly) {
         path.deleteContents()
         println ".... deleted ALL contents of ${rPath}"
@@ -152,9 +155,16 @@ boolean deleteRemote(FilePath path, boolean deleteContentsOnly) {
         path.deleteRecursive()
         println ".... deleted directory ${rPath}"
       }
-    } catch (Throwable t) {
-      println "Failed to delete ${rPath}: ${t}"
+    } catch (IOException e) {
+      // exceptions expected from #deleteRecursive() && #deleteConents()
+      println "Failed to delete ${rPath}: ${e}"
       result = false
+    } catch (InterruptedException e) {
+      println "Build canceled: ${e}"
+      throw e
+    } catch (Throwable t) {
+      println "Caught unexpected exception type during delete: ${t}"
+      throw t
     }
   }
   return result
