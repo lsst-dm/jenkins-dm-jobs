@@ -67,12 +67,11 @@ template:
 scipipe-lsstsw-matrix:
   - <<: *el6-py3
   - <<: *el7-py3
-  #- <<: *sierra-py3
-  #  # allow builds on sierra and mojave
-  #  label: osx-10.12||osx-10.14
-  #  display_name: osx
-  #  compiler: ^clang-802.0.42$ ^clang-1000.10.44.4$
-  #  display_compiler: clang
+  - <<: *high_sierra-py3
+    # allow builds on sierra and mojave
+    label: osx-10.13||osx-10.14
+    display_name: osx
+    display_compiler: clang
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-py3
 dax-lsstsw-matrix:
