@@ -49,6 +49,12 @@ template:
       label: osx-10.12
       compiler: clang-802.0.42
       python: '3'
+    - &high_sierra-py3
+      <<: *platform_defaults
+      image: null
+      label: osx-10.13
+      compiler: clang-1000.10.44.4
+      python: '3'
     - &mojave-py3
       <<: *platform_defaults
       image: null
