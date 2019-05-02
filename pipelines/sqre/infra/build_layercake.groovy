@@ -123,7 +123,7 @@ notify.wrap {
   } // timeout
 } // notify.wrap
 
-def String packIt(String templateFile, List options, String tag = '1.4.0') {
+def String packIt(String templateFile, List options, String tag = '1.1.1') {
   def dockerSetup = "-e HOME=${pwd()} --network host -e DOCKER_HOST=$DOCKER_HOST"
   def docImage    = "lsstsqre/cakepacker:${tag}"
   def args        = options.join(' ')
