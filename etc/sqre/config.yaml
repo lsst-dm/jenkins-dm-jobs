@@ -22,6 +22,14 @@ codekit:
   docker_registry:
     repo: lsstsqre/codekit
     tag: *codekit_ver
+dind:
+  dockerfile:
+    github_repo: lsst-sqre/docker-dind
+    git_ref: master
+    dir: ''
+  docker_registry:
+    repo: lsstsqre/dind
+    tag: '18.09.5'
 s3sync:
   dockerfile:
     github_repo: lsst-sqre/deploy-publish-release
