@@ -124,7 +124,7 @@ notify.wrap {
 } // notify.wrap
 
 def String packIt(String templateFile, List options, String tag = '1.4.0') {
-  def dockerSetup = "-e HOME=${pwd()} -e DOCKER_HOST=$DOCKER_HOST"
+  def dockerSetup = "-e HOME=${pwd()} --network host -e DOCKER_HOST=$DOCKER_HOST"
   def docImage    = "lsstsqre/cakepacker:${tag}"
   def args        = options.join(' ')
 
