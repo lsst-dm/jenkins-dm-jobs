@@ -63,3 +63,11 @@ layercake:
     dir: ''
   docker_registry:
     repo: lsstsqre/centos
+jenkins_swarm_client:
+  dockerfile:
+    github_repo: lsst-sqre/docker-jenkins-swarm-client
+    git_ref: master
+    dir: ''
+  docker_registry:
+    repo: lsstsqre/jenkins-swarm-client
+    tag: '3.15'
