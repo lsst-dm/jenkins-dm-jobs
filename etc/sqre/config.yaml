@@ -30,6 +30,13 @@ dind:
   docker_registry:
     repo: lsstsqre/dind
     tag: '18.09.5'
+docker_gc:
+  dockerfile:
+    github_repo: lsst-sqre/docker-docker-gc
+    git_ref: master
+    dir: ''
+  docker_registry:
+    repo: lsstsqre/docker-gc
 s3sync:
   dockerfile:
     github_repo: lsst-sqre/deploy-publish-release
