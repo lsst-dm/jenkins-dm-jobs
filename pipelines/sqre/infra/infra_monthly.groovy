@@ -125,6 +125,27 @@ notify.wrap {
     triggerJob trigger: tasks,
       name: 'sqre/backup/build-mysqldump-to-s3'
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infra/build-dind',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
+    triggerJob trigger: tasks,
+      name: 'sqre/infra/build-jenkins-swarm-client',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
+    triggerJob trigger: tasks,
+      name: 'sqre/infra/build-docker-gc',
+      parameters: [
+        booleanParam(name: 'NO_PUSH', value: false),
+        booleanParam(name: 'LATEST', value: true),
+      ]
+
     parallel tasks
   } // run
 
