@@ -20,9 +20,9 @@ import util.CleanBuild
     seedJob: SEED_JOB,
   ],
   [
-    name: 'dax/dax_webserv',
-    products: 'dax_webserv',
-    buildConfig: 'dax-lsstsw-matrix',
+    name: 'dax/webserv',
+    products: ['dax_imgserv', 'dax_metaserv'],
+    buildConfig: 'webserv-lsstsw-matrix',
     seedJob: SEED_JOB,
   ],
   [
