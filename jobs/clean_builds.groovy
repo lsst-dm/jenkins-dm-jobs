@@ -21,7 +21,7 @@ import util.CleanBuild
   ],
   [
     name: 'dax/webserv',
-    products: ['dax_imgserv', 'dax_metaserv'],
+    products: 'dax_imgserv dax_metaserv',
     buildConfig: 'webserv-lsstsw-matrix',
     seedJob: SEED_JOB,
   ],
