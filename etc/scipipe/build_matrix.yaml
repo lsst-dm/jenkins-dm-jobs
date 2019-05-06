@@ -62,7 +62,7 @@ template:
       compiler: clang-1000.10.44.4
       python: '3'
 #
-# build environemnt/matrix configs
+# build environment/matrix configs
 #
 scipipe-lsstsw-matrix:
   - <<: *el6-py3
@@ -78,6 +78,8 @@ dax-lsstsw-matrix:
   - <<: *el7-py3
   - <<: *el7-dts8-py3
   - <<: *el7-py3-llvm
+webserv-lsstsw-matrix:
+  - <<: *el7-py3
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
