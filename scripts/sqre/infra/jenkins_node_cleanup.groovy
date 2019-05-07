@@ -379,7 +379,7 @@ void parseParams() {
  * Iterate over nodes and cleanup.
  */
 void processNodes() {
-  def prevOffline = false
+  def manualOffline = false
 
   println '### NODES'
   Jenkins.instance.nodes.each { node ->
@@ -393,7 +393,15 @@ void processNodes() {
 
       // a null channel indicates that the node is offline
       if (computer == null || computer.isOffline()) {
-        throw new Offline(node)
+        // check if previous run screwed up
+        if (computer.getOfflineCauseReason().startsWith('disk cleanup from job')) {
+          // ignore it and clear it at the end
+          manualOffline = false
+        } else {
+          // skip nodes manually marked as offline
+          manualOffline = computer.isOffline()
+          throw new Offline(node)
+        }
       }
 
       if (node.assignedLabels.find{ it.expression in skippedLabels }) {
@@ -417,12 +425,6 @@ void processNodes() {
               + ", free space: ${roundedSize} GiB"
               + ", idle: ${computer.isIdle()}")
 
-      prevOffline = computer.isOffline()
-      if (prevOffline &&
-          computer.getOfflineCauseReason().startsWith('disk cleanup from job')) {
-        // previous run screwed up, ignore it and clear it at the end
-        prevOffline = false
-      }
 
       // skip nodes with sufficient disk space
       if (!forceCleanup && (roundedSize >= threshold)) {
@@ -430,7 +432,7 @@ void processNodes() {
       }
 
       // mark node as offline
-      if (!prevOffline) {
+      if (!manualOffline) {
         // don't override any previously set temporarily offline causes (set by
         // humans possibly)
         def cleanupMsg = "disk cleanup from job ${build.displayName}"
@@ -466,7 +468,7 @@ void processNodes() {
           nodeStatus['failedNodes'] << t
       }
     } finally {
-      if (!prevOffline) {
+      if (!manualOffline) {
         node.toComputer().setTemporarilyOffline(false, null)
       }
 
