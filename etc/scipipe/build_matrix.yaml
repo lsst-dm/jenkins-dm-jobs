@@ -72,6 +72,11 @@ scipipe-lsstsw-matrix:
     label: osx-10.13||osx-10.14
     display_name: osx
     display_compiler: clang
+scipipe-lsstsw-lsst_distrib:
+  - <<: *el6-py3
+  - <<: *el7-py3
+  - <<: *high_sierra-py3
+  - <<: *mojave-py3
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-py3
 dax-lsstsw-matrix:

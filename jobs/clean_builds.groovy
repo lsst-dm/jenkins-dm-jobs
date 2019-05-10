@@ -11,6 +11,7 @@ import util.CleanBuild
     name: 'scipipe/lsst_distrib',
     products: scipipe.canonical.products,
     buildDocs: true,
+    buildConfig: 'scipipe-lsstsw-lsst_distrib',
     seedJob: SEED_JOB,
   ],
   [
