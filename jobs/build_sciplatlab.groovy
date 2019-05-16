@@ -14,7 +14,7 @@ p.pipeline().with {
     stringParam('BASE_IMAGE', 'lsstsqre/centos', 'Base Docker image')
     stringParam('IMAGE_NAME', 'lsstsqre/sciplat-lab', 'Output image name')
     stringParam('TAG_PREFIX', '7-stack-lsst_distrib-', 'Tag prefix')
-    stringParam('TIMEOUT', '2', 'build timeout in hours')
+    stringParam('TIMEOUT', '3', 'build timeout in hours')
   }
 
   concurrentBuild(true)
