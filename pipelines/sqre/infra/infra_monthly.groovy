@@ -69,13 +69,6 @@ notify.wrap {
       name: 'sqre/infra/build-cmirror'
 
     triggerJob trigger: tasks,
-      name: 'sqre/infra/build-eupsredirector',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
       name: 'sqre/backup/build-sqre-github-snapshot',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
