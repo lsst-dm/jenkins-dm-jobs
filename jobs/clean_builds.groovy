@@ -21,12 +21,6 @@ import util.CleanBuild
     seedJob: SEED_JOB,
   ],
   [
-    name: 'dax/webserv',
-    products: 'dax_imgserv dax_metaserv',
-    buildConfig: 'webserv-lsstsw-matrix',
-    seedJob: SEED_JOB,
-  ],
-  [
     name: 'dax/qserv_distrib',
     products: 'qserv_distrib',
     buildConfig: 'dax-lsstsw-matrix',
