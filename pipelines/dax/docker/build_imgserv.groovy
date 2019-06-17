@@ -27,7 +27,7 @@ notify.wrap {
 
         stage('test') {
             retry(retries) {
-                docker.image(repo:tag).inside {
+                docker.image("${repo}:${tag}").inside {
                     util.bash "./run_tests.sh"
                 }
             }
@@ -47,13 +47,8 @@ notify.wrap {
           branch: 'master'
         ])
       }
-      try {
-        run()
-      } catch (e) {
-        currentBuild.result = 'FAILURE'
-      } finally {
-        currentBuild.result = 'SUCCESS'
-      }
+      run()
+      currentBuild.result = 'SUCCESS'
     } // timeout
   } // node
 } // notify.wrap
