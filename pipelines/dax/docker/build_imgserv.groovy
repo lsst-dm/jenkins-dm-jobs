@@ -48,7 +48,6 @@ notify.wrap {
         ])
       }
       run()
-      currentBuild.result = 'SUCCESS'
     } // timeout
   } // node
 } // notify.wrap
