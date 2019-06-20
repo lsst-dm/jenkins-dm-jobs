@@ -109,9 +109,6 @@ notify.wrap {
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/backup/build-mysqldump-to-s3'
-
-    triggerJob trigger: tasks,
       name: 'sqre/infra/build-dind',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
