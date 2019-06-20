@@ -46,13 +46,6 @@ notify.wrap {
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/backup/build-ec2-snapshot',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
       name: 'sqre/backup/build-s3backup'
 
     triggerJob trigger: tasks,
