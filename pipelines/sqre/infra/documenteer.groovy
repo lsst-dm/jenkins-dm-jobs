@@ -1,6 +1,6 @@
 import groovy.transform.Field
 
-node('jenkins-master') {
+node {
   if (params.WIPEOUT) {
     deleteDir()
   }

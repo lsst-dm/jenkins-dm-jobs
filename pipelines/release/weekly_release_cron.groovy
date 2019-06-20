@@ -2,7 +2,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-node('jenkins-master') {
+node {
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',
