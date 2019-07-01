@@ -24,6 +24,7 @@ notify.wrap {
   ])
 
   String tag         = params.TAG
+  Boolean jlbleed    = params.JLBLEED
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
   String pyver       = params.PYVER // use as opaque string
   String baseImage   = params.BASE_IMAGE
@@ -33,9 +34,13 @@ notify.wrap {
 
   def run = {
     stage('checkout') {
+      branch = 'prod'
+      if (jlbleed) {
+          branch = 'master'
+      }
       git([
         url: 'https://github.com/lsst-sqre/jupyterlabdemo',
-        branch: 'prod'
+        branch: branch
       ])
     }
 
@@ -46,6 +51,10 @@ notify.wrap {
     }
 
     stage('build+push') {
+      def opts = ""
+      if jlbleed {
+              opts = "-e -s jlbleed"
+          }
       dir('jupyterlab') {
         if (pushDocker) {
           docker.withRegistry(
@@ -58,6 +67,7 @@ notify.wrap {
                -b '${baseImage}' \
                -n '${imageName}' \
                -t '${tagPrefix}' \
+               '${opts}' \
                '${tag}'
             """
           }
@@ -69,6 +79,7 @@ notify.wrap {
                -b '${baseImage}' \
                -n '${imageName}' \
                -t '${tagPrefix}' \
+               '${opts}' \
                '${tag}'
               docker build .
           """

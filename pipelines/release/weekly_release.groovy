@@ -148,6 +148,7 @@ notify.wrap {
           parameters: [
             string(name: 'TAG', value: eupsTag),
             booleanParam(name: 'NO_PUSH', value: false),
+            booleanParam(name: 'JLBLEED', value: false),
             string(
               name: 'IMAGE_NAME',
               value: scipipe.release.step.build_sciplatlab.image_name,
@@ -163,14 +164,14 @@ notify.wrap {
       } // retry
     }
 
-    triggerMe['build Science Platform Notebook Aspect Lab image (JL bleed)'] = {
+    triggerMe['build Science Platform Notebook Aspect Lab image (bleed)'] = {
       retry(retries) {
         // based on lsstsqre/stack image
         build(
-          job: 'sqre/infra/build-sciplatlab_jlbleed',
+          job: 'sqre/infra/build-sciplatlab',
           parameters: [
             string(name: 'TAG', value: eupsTag),
-            booleanParam(name: 'NO_PUSH', value: false),
+            booleanParam(name: 'JLBLEED', value: true),
             string(
               name: 'IMAGE_NAME',
               value: scipipe.release.step.build_sciplatlab.image_name,
