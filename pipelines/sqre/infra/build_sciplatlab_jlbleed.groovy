@@ -35,7 +35,7 @@ notify.wrap {
     stage('checkout') {
       git([
         url: 'https://github.com/lsst-sqre/jupyterlabdemo',
-        branch: 'prod'
+        branch: 'master'
       ])
     }
 
@@ -54,6 +54,8 @@ notify.wrap {
           ) {
             util.bash """
               ./bld \
+               -e \
+               -s jlbleed \
                -p '${pyver}' \
                -b '${baseImage}' \
                -n '${imageName}' \
