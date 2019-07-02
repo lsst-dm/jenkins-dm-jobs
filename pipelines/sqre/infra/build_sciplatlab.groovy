@@ -36,7 +36,7 @@ notify.wrap {
     stage('checkout') {
       branch = 'prod'
       if (jlbleed) {
-          branch = 'master'
+        branch = 'master'
       }
       git([
         url: 'https://github.com/lsst-sqre/jupyterlabdemo',
@@ -52,9 +52,9 @@ notify.wrap {
 
     stage('build+push') {
       def opts = ""
-      if jlbleed {
-              opts = "-e -s jlbleed"
-          }
+      if (jlbleed) {
+        opts = '-e -s jlbleed'
+      }
       dir('jupyterlab') {
         if (pushDocker) {
           docker.withRegistry(
