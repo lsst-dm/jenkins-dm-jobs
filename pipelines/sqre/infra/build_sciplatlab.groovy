@@ -67,7 +67,7 @@ notify.wrap {
                -b '${baseImage}' \
                -n '${imageName}' \
                -t '${tagPrefix}' \
-               '${opts}' \
+               ${opts} \
                '${tag}'
             """
           }
@@ -79,7 +79,7 @@ notify.wrap {
                -b '${baseImage}' \
                -n '${imageName}' \
                -t '${tagPrefix}' \
-               '${opts}' \
+               ${opts} \
                '${tag}'
               docker build .
           """
