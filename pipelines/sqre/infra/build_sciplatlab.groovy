@@ -34,7 +34,7 @@ notify.wrap {
 
   def run = {
     stage('checkout') {
-      branch = 'prod'
+      def branch = 'prod'
       if (jlbleed) {
         branch = 'master'
       }
@@ -51,7 +51,7 @@ notify.wrap {
     }
 
     stage('build+push') {
-      def opts = ""
+      def opts = ''
       if (jlbleed) {
         opts = '-e -s jlbleed'
       }
