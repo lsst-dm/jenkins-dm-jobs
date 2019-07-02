@@ -62,11 +62,13 @@ notify.wrap {
         def baseTag = "${buildRepo}:${baseName}"
 
         stage(baseTag) {
-          def baseBuild = packIt('centos_stackbase.json', [
-            "-var base_image=${baseImage}",
-            "-var build_repository=${buildRepo}",
-            "-var build_name=${baseName}",
-          ])
+          retry(retries) {
+            def baseBuild = packIt('centos_stackbase.json', [
+              "-var base_image=${baseImage}",
+              "-var build_repository=${buildRepo}",
+              "-var build_name=${baseName}",
+            ])
+          } // retry
           images << [(baseTag): baseBuild]
         } // stage
       } // majrelease
