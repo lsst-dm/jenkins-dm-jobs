@@ -68,8 +68,8 @@ notify.wrap {
               "-var build_repository=${buildRepo}",
               "-var build_name=${baseName}",
             ])
+            images << [(baseTag): baseBuild]
           } // retry
-          images << [(baseTag): baseBuild]
         } // stage
       } // majrelease
 
