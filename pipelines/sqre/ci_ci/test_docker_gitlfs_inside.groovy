@@ -13,7 +13,7 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  node('docker') {
+  util.nodeWrap('docker') {
     def hubRepo = 'lsstsqre/gitlfs'
     def local = "${hubRepo}-local"
 
@@ -55,5 +55,5 @@ notify.wrap {
     } // inside
 
     util.bash('ls -la')
-  } // node
+  } // util.nodeWrap
 } // notify.wrap

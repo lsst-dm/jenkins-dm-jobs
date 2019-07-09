@@ -117,11 +117,11 @@ notify.wrap {
   } // run
 
   timeout(time: 23, unit: 'HOURS') {
-    node('docker') {
+    util.nodeWrap('docker') {
       timeout(time: 30, unit: 'MINUTES') {
         run()
       }
-    } // node
+    } // util.nodeWrap
   } // timeout
 } // notify.wrap
 

@@ -13,7 +13,7 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  node('docker') {
+  util.nodeWrap('docker') {
     timeout(time: 4, unit: 'HOURS') {
       dir('qserv') {
         git([
@@ -24,7 +24,7 @@ notify.wrap {
 
       build('dev_images.sh')
     } // timeout
-  } // node
+  } // util.nodeWrap
 } // notify.wrap
 
 def build(String script) {

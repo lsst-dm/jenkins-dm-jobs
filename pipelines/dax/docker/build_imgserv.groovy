@@ -39,7 +39,7 @@ notify.wrap {
     } // dir
   } // run
 
-  node('docker') {
+  util.nodeWrap('docker') {
     timeout(time: 2, unit: 'HOURS') {
       dir('imgserv') {
         git([
@@ -49,7 +49,7 @@ notify.wrap {
       }
       run()
     } // timeout
-  } // node
+  } // util.nodeWrap
 } // notify.wrap
 
 def build(String repo) {
