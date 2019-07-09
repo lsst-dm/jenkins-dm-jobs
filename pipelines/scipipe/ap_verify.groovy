@@ -257,7 +257,7 @@ def void verifyDataset(Map p) {
   } // run
 
   retry(conf.retries) {
-    node('docker') {
+    util.nodeWrap('docker') {
       // total allowed runtime for this "try" including cloning a test data /
       // git-lfs repo
       timeout(time: conf.run_timelimit, unit: 'MINUTES') {
@@ -267,7 +267,7 @@ def void verifyDataset(Map p) {
 
         run()
       } // timeout
-    } // node
+    } // util.nodeWrap
   } // retry
 } // verifyDataset
 

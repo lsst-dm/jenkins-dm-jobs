@@ -134,7 +134,7 @@ notify.wrap {
     } // ws
   } // run
 
-  node(lsstswConfig.label) {
+  util.nodeWrap(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }

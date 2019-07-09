@@ -14,7 +14,7 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  node('docker') {
+  util.nodeWrap('docker') {
     writeFile(file: 'Dockerfile', text: dockerfile)
 
     // testing that jenkins docker support doesn't blow up with an ARG used in

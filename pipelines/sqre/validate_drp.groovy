@@ -272,7 +272,7 @@ def void verifyDataset(Map p) {
   // fill the disk up
   retry(conf.retries) {
     try {
-      node('docker') {
+      util.nodeWrap('docker') {
         timeout(time: conf.run_timelimit, unit: 'MINUTES') {
           if (p.wipeout) {
             deleteDir()
@@ -280,7 +280,7 @@ def void verifyDataset(Map p) {
 
           run()
         } // timeout
-      } // node
+      } // util.nodeWrap
     } catch(e) {
       runNodeCleanup()
       throw e

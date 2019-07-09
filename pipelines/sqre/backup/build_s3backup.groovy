@@ -36,7 +36,7 @@ notify.wrap {
     }
   } // run
 
-  node('docker') {
+  util.nodeWrap('docker') {
     timeout(time: 3, unit: 'HOURS') {
       run()
     }

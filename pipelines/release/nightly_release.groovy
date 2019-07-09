@@ -78,7 +78,7 @@ notify.wrap {
     // NOOP / DRY_RUN
     stage('git tag eups products') {
       retry(retries) {
-        node('docker') {
+        util.nodeWrap('docker') {
           // needs eups distrib tag to be sync'd from s3 -> k8s volume
           util.githubTagRelease(
             options: [
@@ -89,7 +89,7 @@ notify.wrap {
             ],
             args: [gitTag],
           )
-        } // node
+        } // util.nodeWrap
       } // retry
     } // stage
 
@@ -98,7 +98,7 @@ notify.wrap {
     // first being removed from the aux team).
     stage('git tag auxilliaries') {
       retry(retries) {
-        node('docker') {
+        util.nodeWrap('docker') {
           util.githubTagTeams(
             options: [
               '--dry-run': true,
@@ -106,7 +106,7 @@ notify.wrap {
               '--tag': gitTag,
             ],
           )
-        } // node
+        } // util.nodeWrap
       } // retry
     } // stage
 

@@ -88,11 +88,11 @@ notify.wrap {
 
   lfsVer.split().each { tag ->
     matrix[tag] = {
-      node('docker') {
+      util.nodeWrap('docker') {
         timeout(time: 48, unit: 'HOURS') {
           run(tag)
         }
-      } // node
+      } // util.nodeWrap
     } // matrix
   } // each
 

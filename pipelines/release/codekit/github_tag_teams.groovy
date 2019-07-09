@@ -20,7 +20,7 @@ notify.wrap {
   Boolean dryRun = params.DRY_RUN
   String gitTag  = params.GIT_TAG
 
-  node('docker') {
+  util.nodeWrap('docker') {
     util.githubTagTeams(
       options: [
         '--dry-run': dryRun,
@@ -28,5 +28,5 @@ notify.wrap {
         '--tag': gitTag,
       ],
     )
-  } // node
+  } // util.nodeWrap
 } // notify.wrap

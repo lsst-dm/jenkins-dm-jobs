@@ -77,7 +77,7 @@ notify.wrap {
 
     stage('git tag eups products') {
       retry(retries) {
-        node('docker') {
+        util.nodeWrap('docker') {
           util.githubTagRelease(
             options: [
               '--dry-run': false,
@@ -89,7 +89,7 @@ notify.wrap {
             ],
             args: [gitTag],
           )
-        } // node
+        } // util.nodeWrap
       } // retry
     } // stage
 
@@ -98,7 +98,7 @@ notify.wrap {
     // first being removed from the aux team).
     stage('git tag auxilliaries') {
       retry(retries) {
-        node('docker') {
+        util.nodeWrap('docker') {
           util.githubTagTeams(
             options: [
               '--dry-run': false,
@@ -106,7 +106,7 @@ notify.wrap {
               '--tag': gitTag,
             ],
           )
-        } // node
+        } // util.nodeWrap
       } // retry
     } // stage
 

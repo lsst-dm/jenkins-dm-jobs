@@ -13,7 +13,7 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  node('docker') {
+  util.nodeWrap('docker') {
     deleteDir()
 
     def hubRepo = 'lsstsqre/gitlfs'
@@ -44,5 +44,5 @@ notify.wrap {
     }
 
     util.bash('ls -la')
-  } // node
+  } // util.nodeWrap
 } // notify.wrap
