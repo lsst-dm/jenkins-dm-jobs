@@ -16,7 +16,7 @@ notify.wrap {
   def repo = 'webserv/imgserv'
   def tag = 'dax_latest'
 
-  node('docker') {
+  util.nodeWrap('docker') {
     timeout(time: 1, unit: 'HOURS') {
         git([
           url: util.githubSlugToUrl('lsst/dax_imgserv'),
@@ -30,7 +30,7 @@ notify.wrap {
         } // build
 
         stage('test') {
-            docker.image("${repo}:${tag}").inside {
+            docker.image("${repo}:${tag}").withRun('-u lsst') {
                 util.bash '/app/lsst-dm-ci/run_tests.sh'
             }
         } // test
@@ -43,5 +43,5 @@ notify.wrap {
         } // publish
 
     } // timeout
-  } // node
+  } // util.nodeWrap
 } // notify.wrap

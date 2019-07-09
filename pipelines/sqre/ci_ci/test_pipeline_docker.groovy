@@ -14,7 +14,7 @@ node('jenkins-master') {
 
 notify.wrap {
   def image = null
-  node('docker') {
+  util.nodeWrap('docker') {
     stage('pull centos:7') {
       docker.image('centos:7').pull()
     }

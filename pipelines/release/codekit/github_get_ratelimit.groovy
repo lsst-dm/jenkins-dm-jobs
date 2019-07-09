@@ -13,7 +13,7 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  node('docker') {
+  util.nodeWrap('docker') {
     util.githubGetRatelimit()
-  } // node
+  } // util.nodeWrap
 } // notify.wrap

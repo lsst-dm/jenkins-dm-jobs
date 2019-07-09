@@ -57,10 +57,10 @@ notify.wrap {
     options.'--manifest-only' = true
   }
 
-  node('docker') {
+  util.nodeWrap('docker') {
     util.githubTagRelease(
       options: options,
       args: [gitTag],
     )
-  } // node
+  } // util.nodeWrap
 } // notify.wrap

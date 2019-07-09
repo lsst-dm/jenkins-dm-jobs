@@ -88,9 +88,9 @@ notify.wrap {
     }
   } // run
 
-  node('docker') {
+  util.nodeWrap('docker') {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }
-  } // node
+  } // util.nodeWrap
 } // notify.wrap

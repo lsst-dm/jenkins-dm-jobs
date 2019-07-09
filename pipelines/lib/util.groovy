@@ -357,9 +357,9 @@ def lsstswBuild(
     task = { runEnv(run) }
   }
 
-  node(agent) {
+  nodeWrap(agent) {
     task()
-  } // node
+  } // nodeWrap
 } // lsstswBuild
 
 /**
@@ -897,7 +897,7 @@ def void withGithubAdminCredentials(Closure run) {
  * @param run Closure Invoked inside of node step
  */
 def void nodeTiny(Closure run) {
-  node('jenkins-master') {
+  nodeWrap('jenkins-master') {
     timeout(time: 5, unit: 'MINUTES') {
       run()
     }
