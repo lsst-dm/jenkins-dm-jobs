@@ -40,11 +40,19 @@ notify.wrap {
   // final (non-rc) release
   String eupspkgSource = finalRelease ? 'package' : 'git'
 
+  // A final release git tag for a "regular" package does not start with a `v`.
+  // However, the release git tag for an external packages is always prefixed
+  // with a `v`.  Thus, in the case of a final release, we need to use both
+  // v<tag> and <tag> as the source git refs to produce the eups source
+  // packages.
+  def buildGitTags = finalRelease ? "v${gitTag} ${gitTag}" : gitTag
+
   def lsstswConfig = scipipe.canonical.lsstsw_config
 
   echo "final release (non-rc): ${finalRelease}"
   echo "EUPSPKG_SOURCE: ${eupspkgSource}"
   echo "input git refs: ${sourceGitRefs}"
+  echo "build git refs: ${buildGitTags}"
   echo "publish [git] tag: ${gitTag}"
   echo "publish [eups] tag: ${eupsTag}"
 
@@ -114,7 +122,7 @@ notify.wrap {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
-            REFS: gitTag,
+            REFS: buildGitTags,
             PRODUCTS: products,
             BUILD_DOCS: true,
           ],
@@ -294,9 +302,13 @@ notify.wrap {
 
       util.nodeTiny {
         util.dumpJson(resultsFile, [
-          manifest_id: manifestId ?: null,
-          git_tag: gitTag ?: null,
-          eups_tag: eupsTag ?: null,
+          build_git_tags:   buildGitTags ?: null,
+          eups_tag:         eupsTag ?: null,
+          final_release:    finalRelease :? null,
+          git_tag:          gitTag ?: null,
+          manifest_id:      manifestId ?: null,
+          products:         products ?: null,
+          tarball_products: tarballProducts :? null,
         ])
 
         archiveArtifacts([
