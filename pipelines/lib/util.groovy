@@ -2078,4 +2078,34 @@ def void nodeWrap(String label, Closure run) {
   }
 }
 
+/**
+ * Run generic block
+ *
+ * Example:
+ *
+ *     util.nodeWrap { ... }
+ *
+ * @param run Closure Invoked inside of node step
+ */
+def void nodeWrap(Closure run) {
+  nodeWrap(null) { run() }
+}
+
+/**
+ * Run generic block
+ *
+ * Example:
+ *
+ *     util.nodeWrap('docker') { ... }
+ *
+ * @param label String Label expression
+ * @param run Closure Invoked inside of node step
+ */
+def void nodeWrap(String label, Closure run) {
+  node(label) {
+    printK8sVars()
+    run()
+  }
+}
+
 return this;
