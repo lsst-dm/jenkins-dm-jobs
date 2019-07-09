@@ -1996,4 +1996,26 @@ def void validateLsstswConfig(Map conf) {
   ])
 }
 
+/**
+ * If running on kubernetes, report basic information about the k8s pod.
+ *
+ * Example:
+ *
+ *     util.printK8sVars()
+ *
+ */
+def void printK8sVars() {
+  // env.getEnvronment() returns vars groovy will set but not the current node env
+  // System.getenv() returns the master's env
+  // env.<foo> works as this uses magic to check the actual env
+
+  // test to see if the agent has k8s env vars
+  if (env.K8S_NODE_NAME) {
+    echo 'agent appears to be running on kubernetes...'
+    // if so, list them using a shell as there is currently no other practical
+    // way to iterate over the complete set of env vars.
+    bash 'printenv | grep ^K8S_ | sort'
+  }
+}
+
 return this;
