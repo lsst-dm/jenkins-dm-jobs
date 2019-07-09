@@ -302,9 +302,13 @@ notify.wrap {
 
       util.nodeTiny {
         util.dumpJson(resultsFile, [
-          manifest_id: manifestId ?: null,
-          git_tag: gitTag ?: null,
-          eups_tag: eupsTag ?: null,
+          build_git_tags:   buildGitTags ?: null,
+          eups_tag:         eupsTag ?: null,
+          final_release:    finalRelease :? null,
+          git_tag:          gitTag ?: null,
+          manifest_id:      manifestId ?: null,
+          products:         products ?: null,
+          tarball_products: tarballProducts :? null,
         ])
 
         archiveArtifacts([
