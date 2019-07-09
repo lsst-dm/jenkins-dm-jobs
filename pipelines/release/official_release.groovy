@@ -304,11 +304,11 @@ notify.wrap {
         util.dumpJson(resultsFile, [
           build_git_tags:   buildGitTags ?: null,
           eups_tag:         eupsTag ?: null,
-          final_release:    finalRelease :? null,
+          final_release:    finalRelease ?: null,
           git_tag:          gitTag ?: null,
           manifest_id:      manifestId ?: null,
           products:         products ?: null,
-          tarball_products: tarballProducts :? null,
+          tarball_products: tarballProducts ?: null,
         ])
 
         archiveArtifacts([
