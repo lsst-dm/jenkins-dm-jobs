@@ -108,7 +108,7 @@ notify.wrap {
     } // push
   } // run
 
-  node('docker') {
+  util.nodeWrap('docker') {
     try {
       timeout(time: timelimit, unit: 'HOURS') {
         run()
@@ -132,5 +132,5 @@ notify.wrap {
         ])
       } // stage
     } // try
-  } // node
+  } // util.nodeWrap
 } // notify.wrap

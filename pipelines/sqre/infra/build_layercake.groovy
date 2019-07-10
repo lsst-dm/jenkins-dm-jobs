@@ -62,12 +62,14 @@ notify.wrap {
         def baseTag = "${buildRepo}:${baseName}"
 
         stage(baseTag) {
-          def baseBuild = packIt('centos_stackbase.json', [
-            "-var base_image=${baseImage}",
-            "-var build_repository=${buildRepo}",
-            "-var build_name=${baseName}",
-          ])
-          images << [(baseTag): baseBuild]
+          retry(retries) {
+            def baseBuild = packIt('centos_stackbase.json', [
+              "-var base_image=${baseImage}",
+              "-var build_repository=${buildRepo}",
+              "-var build_name=${baseName}",
+            ])
+            images << [(baseTag): baseBuild]
+          } // retry
         } // stage
       } // majrelease
 
@@ -115,11 +117,11 @@ notify.wrap {
   } // run
 
   timeout(time: 23, unit: 'HOURS') {
-    node('docker') {
+    util.nodeWrap('docker') {
       timeout(time: 30, unit: 'MINUTES') {
         run()
       }
-    } // node
+    } // util.nodeWrap
   } // timeout
 } // notify.wrap
 

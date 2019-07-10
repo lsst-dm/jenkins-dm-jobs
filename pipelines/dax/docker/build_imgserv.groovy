@@ -41,7 +41,6 @@ notify.wrap {
                 util.bash './lsst-dm-ci/pub_image.sh'
             }
         } // publish
-
     } // timeout
-  } // node
+  } // util.nodeWrap
 } // notify.wrap

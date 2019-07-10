@@ -145,7 +145,7 @@ def void linuxTarballs(
     } // util.withCondaMirrorEnv
   } // run()
 
-  node('docker') {
+  util.nodeWrap('docker') {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }
@@ -223,7 +223,7 @@ def void osxTarballs(
     } // util.withCondaMirrorEnv
   } // run
 
-  node(label) {
+  util.nodeWrap(label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }

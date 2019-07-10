@@ -357,9 +357,9 @@ def lsstswBuild(
     task = { runEnv(run) }
   }
 
-  node(agent) {
+  nodeWrap(agent) {
     task()
-  } // node
+  } // nodeWrap
 } // lsstswBuild
 
 /**
@@ -897,7 +897,7 @@ def void withGithubAdminCredentials(Closure run) {
  * @param run Closure Invoked inside of node step
  */
 def void nodeTiny(Closure run) {
-  node('jenkins-master') {
+  nodeWrap('jenkins-master') {
     timeout(time: 5, unit: 'MINUTES') {
       run()
     }
@@ -1994,6 +1994,58 @@ def void validateLsstswConfig(Map conf) {
     'python',
     'splenv_ref',
   ])
+}
+
+/**
+ * If running on kubernetes, report basic information about the k8s pod.
+ *
+ * Example:
+ *
+ *     util.printK8sVars()
+ *
+ */
+def void printK8sVars() {
+  // env.getEnvronment() returns vars groovy will set but not the current node env
+  // System.getenv() returns the master's env
+  // env.<foo> works as this uses magic to check the actual env
+
+  // test to see if the agent has k8s env vars
+  if (env.K8S_NODE_NAME) {
+    echo 'agent appears to be running on kubernetes...'
+    // if so, list them using a shell as there is currently no other practical
+    // way to iterate over the complete set of env vars.
+    bash 'printenv | grep ^K8S_ | sort'
+  }
+}
+
+/**
+ * Run generic block
+ *
+ * Example:
+ *
+ *     util.nodeWrap { ... }
+ *
+ * @param run Closure Invoked inside of node step
+ */
+def void nodeWrap(Closure run) {
+  nodeWrap(null) { run() }
+}
+
+/**
+ * Run generic block
+ *
+ * Example:
+ *
+ *     util.nodeWrap('docker') { ... }
+ *
+ * @param label String Label expression
+ * @param run Closure Invoked inside of node step
+ */
+def void nodeWrap(String label, Closure run) {
+  node(label) {
+    printK8sVars()
+    run()
+  }
 }
 
 return this;

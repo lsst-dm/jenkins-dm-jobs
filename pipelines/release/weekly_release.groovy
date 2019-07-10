@@ -76,7 +76,7 @@ notify.wrap {
 
     stage('git tag eups products') {
       retry(retries) {
-        node('docker') {
+        util.nodeWrap('docker') {
           // needs eups distrib tag to be sync'd from s3 -> k8s volume
           util.githubTagRelease(
             options: [
@@ -87,7 +87,7 @@ notify.wrap {
             ],
             args: [gitTag],
           )
-        } // node
+        } // util.nodeWrap
       } // retry
     } // stage
 
@@ -96,7 +96,7 @@ notify.wrap {
     // first being removed from the aux team).
     stage('git tag auxilliaries') {
       retry(retries) {
-        node('docker') {
+        util.nodeWrap('docker') {
           util.githubTagTeams(
             options: [
               '--dry-run': false,
@@ -104,7 +104,7 @@ notify.wrap {
               '--tag': gitTag,
             ],
           )
-        } // node
+        } // util.nodeWrap
       } // retry
     } // stage
 
@@ -148,6 +148,30 @@ notify.wrap {
           parameters: [
             string(name: 'TAG', value: eupsTag),
             booleanParam(name: 'NO_PUSH', value: false),
+            booleanParam(name: 'JLBLEED', value: false),
+            string(
+              name: 'IMAGE_NAME',
+              value: scipipe.release.step.build_sciplatlab.image_name,
+            ),
+            // BASE_IMAGE is the registry repo name *only* without a tag
+            string(
+              name: 'BASE_IMAGE',
+              value: stackResults.docker_registry.repo,
+            ),
+          ],
+          wait: false,
+        )
+      } // retry
+    }
+
+    triggerMe['build Science Platform Notebook Aspect Lab image (bleed)'] = {
+      retry(retries) {
+        // based on lsstsqre/stack image
+        build(
+          job: 'sqre/infra/build-sciplatlab',
+          parameters: [
+            string(name: 'TAG', value: eupsTag),
+            booleanParam(name: 'JLBLEED', value: true),
             string(
               name: 'IMAGE_NAME',
               value: scipipe.release.step.build_sciplatlab.image_name,

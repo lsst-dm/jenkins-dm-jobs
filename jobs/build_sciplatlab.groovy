@@ -15,6 +15,7 @@ p.pipeline().with {
     stringParam('IMAGE_NAME', 'lsstsqre/sciplat-lab', 'Output image name')
     stringParam('TAG_PREFIX', '7-stack-lsst_distrib-', 'Tag prefix')
     stringParam('TIMEOUT', '3', 'build timeout in hours')
+    stringParam('JLBLEED', 'false', 'Build bleeding-edge JupyterLab')
   }
 
   concurrentBuild(true)

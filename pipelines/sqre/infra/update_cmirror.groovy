@@ -38,7 +38,7 @@ notify.wrap {
     channels.each { c ->
       platforms.each { p ->
         mirrorConfig["${c}/${p}"] = {
-          node('docker') {
+          util.nodeWrap('docker') {
             timeout(time: 3, unit: 'HOURS') {
               mirrorCondaChannel(
                 channel: c,
@@ -46,17 +46,17 @@ notify.wrap {
                 retries: retries,
               )
             }
-          } // node
+          } // util.nodeWrap
         } // mirrorConfig
       } // platforms
     } // channels
 
     mirrorConfig['miniconda installers'] = {
-      node('docker') {
+      util.nodeWrap('docker') {
         timeout(time: 1, unit: 'HOURS') {
           mirrorMinicondaInstallers(retries: retries)
         }
-      } // node
+      } // util.nodeWrap
     } // mirrorConfig
 
     stage('mirror') {
