@@ -13,49 +13,36 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  def retries = 3
   def repo = 'webserv/imgserv'
   def tag = 'dax_latest'
 
-  def run = {
-    dir('imgserv/lsst-dm-ci') {
-        stage('build') {
-            retry(retries) {
-                build(repo)
-            }
-        } // build
-
-        stage('test') {
-            retry(retries) {
-                docker.image("${repo}:${tag}").inside {
-                    util.bash "./run_tests.sh"
-                }
-            }
-        } // test
-
-        stage('publish') {
-            util.bash "./pub_image.sh"
-        } // publish
-    } // dir
-  } // run
-
   util.nodeWrap('docker') {
-    timeout(time: 2, unit: 'HOURS') {
-      dir('imgserv') {
-        git([
+    timeout(time: 1, unit: 'HOURS') {
+      git([
           url: util.githubSlugToUrl('lsst/dax_imgserv'),
           branch: 'master'
         ])
-      }
-      run()
+
+        stage('build') {
+          withEnv(["DOCKER_REPO=$repo"]) {
+            util.bash './lsst-dm-ci/prod_image.sh'
+          }
+        } // build
+
+        stage('test') {
+          docker.image("${repo}:${tag}").inside {
+            util.bash '/app/lsst-dm-ci/run_tests.sh'
+          }
+        } // test
+
+        stage('publish') {
+          docker.withRegistry(
+            'https://index.docker.io/v1/',
+            'dockerhub-sqreadmin'
+            ) {
+              util.bash './lsst-dm-ci/pub_image.sh'
+            }
+        } // publish
     } // timeout
   } // util.nodeWrap
 } // notify.wrap
-
-def build(String repo) {
-    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-sqreadmin') {
-        withEnv(['DOCKER_REPO=$repo']) {
-            util.bash "./prod_image.sh"
-        }
-    }
-}
