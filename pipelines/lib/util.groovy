@@ -1453,7 +1453,7 @@ def String sanitizeEupsTag(String tag) {
   char c = tag.charAt(0)
   if ( c.isDigit() ) {
     tag = "v" + tag
-  } 
+  }
 
   // eups doesn't like dots in tags, convert to underscores
   // by policy, we're not allowing dash either
