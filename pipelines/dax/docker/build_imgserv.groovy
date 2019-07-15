@@ -30,7 +30,7 @@ notify.wrap {
         } // build
 
         stage('test') {
-          docker.image("${repo}:${tag}").withRun('-u lsst') {
+          docker.image("${repo}:${tag}").inside('-u lsst') {
             util.bash '/app/lsst-dm-ci/run_tests.sh'
           }
         } // test
