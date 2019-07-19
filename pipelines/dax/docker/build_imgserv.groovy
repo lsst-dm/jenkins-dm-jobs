@@ -19,30 +19,32 @@ notify.wrap {
   util.nodeWrap('docker') {
     timeout(time: 1, unit: 'HOURS') {
       git([
-          url: util.githubSlugToUrl('lsst/dax_imgserv'),
-          branch: 'master'
-        ])
+        url: util.githubSlugToUrl('lsst/dax_imgserv'),
+        branch: 'master'
+      ])
 
-        stage('build') {
-          withEnv(["DOCKER_REPO=$repo"]) {
-            util.bash './lsst-dm-ci/prod_image.sh'
-          }
-        } // build
+      stage('build') {
+        withEnv(["DOCKER_REPO=$repo"]) {
+          util.bash './lsst-dm-ci/prod_image.sh'
+        }
+      } // build
 
-        stage('test') {
+      stage('test') {
+        dir('build-imgserv_tmp') {
           docker.image("${repo}:${tag}").inside('-u lsst') {
             util.bash '/app/lsst-dm-ci/run_tests.sh'
           }
-        } // test
+        } // dir
+      } // test
 
-        stage('publish') {
-          docker.withRegistry(
-            'https://index.docker.io/v1/',
-            'dockerhub-sqreadmin'
-            ) {
-              util.bash './lsst-dm-ci/pub_image.sh'
-            }
-        } // publish
+      stage('publish') {
+        docker.withRegistry(
+          'https://index.docker.io/v1/',
+          'dockerhub-sqreadmin'
+          ) {
+            util.bash './lsst-dm-ci/pub_image.sh'
+          }
+      } // publish
     } // timeout
   } // util.nodeWrap
 } // notify.wrap
