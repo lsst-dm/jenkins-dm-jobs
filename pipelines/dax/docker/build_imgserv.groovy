@@ -30,11 +30,9 @@ notify.wrap {
       } // build
 
       stage('test') {
-        dir('build-imgserv_tmp') {
-          docker.image("${repo}:${tag}").inside('-u lsst') {
-            util.bash '/app/lsst-dm-ci/run_tests.sh'
-          }
-        } // dir
+        docker.image("${repo}:${tag}").inside {
+          util.bash '/app/lsst-dm-ci/run_tests.sh'
+        }
       } // test
 
       stage('publish') {
