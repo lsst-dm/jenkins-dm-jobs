@@ -2,6 +2,7 @@ import util.Plumber
 
 def p = new Plumber(name: 'release/weekly-release-cron', dsl: this)
 p.pipeline().with {
+  disabled()
   description('Periodically trigger the DM pipelines/dax "weekly".')
 
   triggers {
