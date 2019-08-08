@@ -420,7 +420,7 @@ String jobChannelPrefix() {
 }
 
 String jobChannel() {
-  def maxChannelChars = 21
+  def maxChannelChars = 80
   def parts = []
 
   parts << jobChannelPrefix()
