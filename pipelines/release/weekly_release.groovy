@@ -141,50 +141,99 @@ notify.wrap {
     def triggerMe = [:]
 
     triggerMe['build Science Platform Notebook Aspect Lab image'] = {
-      retry(retries) {
-        // based on lsstsqre/stack image
-        build(
-          job: 'sqre/infra/build-sciplatlab',
-          parameters: [
-            string(name: 'TAG', value: eupsTag),
-            booleanParam(name: 'NO_PUSH', value: false),
-            booleanParam(name: 'JLBLEED', value: false),
-            string(
-              name: 'IMAGE_NAME',
-              value: scipipe.release.step.build_sciplatlab.image_name,
-            ),
-            // BASE_IMAGE is the registry repo name *only* without a tag
-            string(
-              name: 'BASE_IMAGE',
-              value: stackResults.docker_registry.repo,
-            ),
-          ],
-          wait: false,
-        )
-      } // retry
+      stages {
+        stage('build sciplat-lab') {
+          retry(retries) {
+            // based on lsstsqre/stack image
+            build(
+              job: 'sqre/infra/build-sciplatlab',
+              parameters: [
+                string(name: 'TAG', value: eupsTag),
+                booleanParam(name: 'NO_PUSH', value: false),
+                booleanParam(name: 'JLBLEED', value: false),
+                string(
+                  name: 'IMAGE_NAME',
+                  value: scipipe.release.step.build_sciplatlab.image_name,
+                ),
+                // BASE_IMAGE is the registry repo name *only* without a tag
+                string(
+                  name: 'BASE_IMAGE',
+                  value: stackResults.docker_registry.repo,
+                ),
+              ],
+              wait: false,
+            )
+          } // retry
+        } // stage 'build sciplat-lab'
+        stage('build sal-sciplat-lab') {
+          build(
+            job: 'sqre/infra/build-salsciplatlab',
+            parameters: [
+              string(name: 'TAG', value: eupsTag),
+              booleanParam(name: 'NO_PUSH', value: false),
+              booleanParam(name: 'JLBLEED', value: false),
+              string(
+                name: 'IMAGE_NAME',
+                value: scipipe.release.step.build_salsciplatlab.image_name,
+              ),
+              // BASE_IMAGE is the sciplatlab image
+              string(
+                name: 'BASE_IMAGE',
+                value: scipipe.release.step.build_sciplatlab.image_name,
+              ),
+            ],
+            wait: false,
+          )
+        } // stage 'build-salsciplatlab'
+      } // stages
     }
 
     triggerMe['build Science Platform Notebook Aspect Lab image (bleed)'] = {
-      retry(retries) {
-        // based on lsstsqre/stack image
-        build(
-          job: 'sqre/infra/build-sciplatlab',
-          parameters: [
-            string(name: 'TAG', value: eupsTag),
-            booleanParam(name: 'JLBLEED', value: true),
-            string(
-              name: 'IMAGE_NAME',
-              value: scipipe.release.step.build_sciplatlab.image_name,
-            ),
-            // BASE_IMAGE is the registry repo name *only* without a tag
-            string(
-              name: 'BASE_IMAGE',
-              value: stackResults.docker_registry.repo,
-            ),
-          ],
-          wait: false,
-        )
-      } // retry
+      stages {
+        stage('build sciplat-lab') {
+          retry(retries) {
+            // based on lsstsqre/stack image
+            build(
+              job: 'sqre/infra/build-sciplatlab',
+              parameters: [
+                string(name: 'TAG', value: eupsTag),
+                booleanParam(name: 'NO_PUSH', value: false),
+                booleanParam(name: 'JLBLEED', value: true),
+                string(
+                  name: 'IMAGE_NAME',
+                  value: scipipe.release.step.build_sciplatlab.image_name,
+                ),
+                // BASE_IMAGE is the registry repo name *only* without a tag
+                string(
+                  name: 'BASE_IMAGE',
+                  value: stackResults.docker_registry.repo,
+                ),
+              ],
+              wait: false,
+            )
+          } // retry
+        } // stage 'build sciplat-lab'
+        stage('build sal-sciplat-lab') {
+          build(
+            job: 'sqre/infra/build-salsciplatlab',
+            parameters: [
+              string(name: 'TAG', value: eupsTag),
+              booleanParam(name: 'NO_PUSH', value: false),
+              booleanParam(name: 'JLBLEED', value: true),
+              string(
+                name: 'IMAGE_NAME',
+                value: scipipe.release.step.build_salsciplatlab.image_name,
+              ),
+              // BASE_IMAGE is the sciplatlab image
+              string(
+                name: 'BASE_IMAGE',
+                value: scipipe.release.step.build_sciplatlab.image_name,
+              ),
+            ],
+            wait: false,
+          )
+        } // stage 'build-salsciplatlab'
+      } // stages
     }
 
     triggerMe['validate_drp'] = {
