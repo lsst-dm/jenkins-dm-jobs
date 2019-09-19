@@ -40,6 +40,20 @@ notify.wrap {
   def buildRepo = layercake.docker_registry.repo
   def retries   = 3
 
+  // centos major release version(s)
+  def elVers = [6, 7]
+
+  // <centos base image>: <scl compiler package string>
+  def toolsets = [
+    [(mkBaseName(6)): 'devtoolset-6'],
+    [(mkBaseName(7)): 'devtoolset-6'],
+    [(mkBaseName(6)): 'devtoolset-7'],
+    [(mkBaseName(7)): 'devtoolset-7'],
+    // as of 2019-03-08, devtoolset-8 is el7 only
+    [(mkBaseName(7)): 'devtoolset-8'],
+    [(mkBaseName(7)): 'llvm-toolset-7'],
+  ]
+
   def run = {
     git([
       url: gitRepo,
@@ -56,7 +70,7 @@ notify.wrap {
 
     dir(buildDir) {
       // centos major release version(s)
-      [6, 7].each { majrelease ->
+      elVers.each { majrelease ->
         def baseImage = "${baseRepo}:${majrelease}"
         def baseName = mkBaseName(majrelease)
         def baseTag = "${buildRepo}:${baseName}"
@@ -74,15 +88,7 @@ notify.wrap {
       } // majrelease
 
       // scl compiler string(s)
-      [
-        [(mkBaseName(6)): 'devtoolset-6'],
-        [(mkBaseName(7)): 'devtoolset-6'],
-        [(mkBaseName(6)): 'devtoolset-7'],
-        [(mkBaseName(7)): 'devtoolset-7'],
-        // as of 2019-03-08, devtoolset-8 is el7 only
-        [(mkBaseName(7)): 'devtoolset-8'],
-        [(mkBaseName(7)): 'llvm-toolset-7'],
-      ].each { conf ->
+      toolsets.each { conf ->
         conf.each { baseName, scl ->
           def baseTag = "${buildRepo}:${baseName}"
           def tsName = "${baseName}-${scl}"
