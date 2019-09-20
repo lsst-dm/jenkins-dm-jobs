@@ -337,7 +337,15 @@ def lsstswBuild(
             deleteDir()
           }
 
-          doRun()
+          try {
+            doRun()
+          } catch (e) {
+            if (!lsstswConfig.allow_fail) {
+              throw e
+            }
+            echo "giving up on build but suppressing error"
+            echo e.toString()
+          } // try
         } // dir
       } finally {
         // needs to be called in the parent dir of jenkinsWrapper() in order to
