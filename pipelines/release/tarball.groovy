@@ -868,9 +868,10 @@ def String scriptPreamble(
     export LSST_MINICONDA_VERSION="${menv.minicondaVersion}"
     export LSST_SPLENV_REF="${menv.splenvRef}"
     export LSST_EUPS_USE_TARBALLS="${useTarballs}"
+    export LSST_COMPILER="${compiler}"
 
     source "${ciDir}/ccutils.sh"
-    cc::setup_first "${compiler}"
+    cc::setup_first "$LSST_COMPILER"
     """
   )
 }
