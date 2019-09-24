@@ -1618,7 +1618,7 @@ def void waitForS3() {
 } // waitForS3
 
 /**
- * Invoke block conda mirror env vars.
+ * Invoke block with conda mirror env vars.
  *
  * Example:
  *
@@ -1629,21 +1629,18 @@ def void waitForS3() {
  * @param run Closure Invoked inside of wrapper container
  */
 def void withCondaMirrorEnv(Closure run) {
-  // these "credentials" aren't secrets -- just a convient way of setting
-  // globals for the instance. Thus, they don't need to be tightly scoped to a
-  // single sh step
-  withCredentials([[
-    $class: 'StringBinding',
-    credentialsId: 'cmirror-s3-bucket',
-    variable: 'CMIRROR_S3_BUCKET'
-  ]]) {
-    withEnv([
-      "LSST_CONDA_CHANNELS=http://${CMIRROR_S3_BUCKET}/pkgs/main http://${CMIRROR_S3_BUCKET}/pkgs/free",
-      "LSST_MINICONDA_BASE_URL=http://${CMIRROR_S3_BUCKET}/miniconda",
-    ]) {
-      run()
-    }
-  } // withCredentials
+  def sqre = sqreConfig()
+
+  def baseUrl = sqre.cmirror.base_url
+  def s3Bucket = sqre.cmirror.s3_bucket
+  withEnv([
+    "CMIRROR_S3_BUCKET=${s3Bucket}",
+    "CMIRROR_BASE_URL=${baseUrl}",
+    "LSST_CONDA_CHANNELS=${baseUrl}/pkgs/main ${baseUrl}/pkgs/free",
+    "LSST_MINICONDA_BASE_URL=${baseUrl}/miniconda",
+  ]) {
+    run()
+  }
 } // withCondaMirrorEnv
 
 /**
