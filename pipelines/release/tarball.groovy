@@ -871,7 +871,7 @@ def String scriptPreamble(
     export LSST_COMPILER="${compiler}"
 
     source "${ciDir}/ccutils.sh"
-    cc::setup_first "$LSST_COMPILER"
+    cc::setup_first "\$LSST_COMPILER"
     """
   )
 }
