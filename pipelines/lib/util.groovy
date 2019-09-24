@@ -1644,6 +1644,30 @@ def void withCondaMirrorEnv(Closure run) {
 } // withCondaMirrorEnv
 
 /**
+ * Invoke block with eups related env vars.
+ *
+ * Example:
+ *
+ *     util.withEupsEnv {
+ *       util.bash './dostuff.sh'
+ *     }
+ *
+ * @param run Closure Invoked inside of wrapper container
+ */
+def void withEupsEnv(Closure run) {
+  def scipipe = scipipeConfig()
+
+  def baseUrl = scipipe.eups.base_url
+  def s3Bucket = scipipe.eups.s3_bucket
+  withEnv([
+    "EUPS_S3_BUCKET=${s3Bucket}",
+    "EUPS_BASE_URL=${baseUrl}",
+  ]) {
+    run()
+  }
+} // withEupsEnv
+
+/**
  * Create/update a clone of an lfs enabled git repo.
  *
  * Example:
