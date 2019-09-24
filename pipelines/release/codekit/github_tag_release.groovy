@@ -1,4 +1,4 @@
-node('jenkins-master') {
+node {
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',

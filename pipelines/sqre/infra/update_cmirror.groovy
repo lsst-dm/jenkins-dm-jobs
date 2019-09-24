@@ -2,7 +2,7 @@ import groovy.transform.Field
 
 @Field String mirrorBaseUrl = 'https://repo.continuum.io/pkgs'
 
-node('jenkins-master') {
+node {
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',

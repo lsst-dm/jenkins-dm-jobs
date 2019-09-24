@@ -905,7 +905,7 @@ def void withGithubAdminCredentials(Closure run) {
  * @param run Closure Invoked inside of node step
  */
 def void nodeTiny(Closure run) {
-  nodeWrap('jenkins-master') {
+  nodeWrap {
     timeout(time: 5, unit: 'MINUTES') {
       run()
     }

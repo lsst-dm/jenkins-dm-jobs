@@ -3,7 +3,7 @@
 // squash.  A rename needs to be coordinated with a simultaneous fixing up of
 // the squash database.
 
-node('jenkins-master') {
+node {
   if (params.WIPEOUT) {
     deleteDir()
   }

@@ -1,4 +1,4 @@
-node('jenkins-master') {
+node {
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',
@@ -40,13 +40,6 @@ notify.wrap {
 
     triggerJob trigger: tasks,
       name: 'sqre/infra/build-s3cmd',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
-      name: 'sqre/backup/build-ec2-snapshot',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
         booleanParam(name: 'LATEST', value: true),
@@ -114,9 +107,6 @@ notify.wrap {
         booleanParam(name: 'PUBLISH', value: true),
         booleanParam(name: 'LATEST', value: true),
       ]
-
-    triggerJob trigger: tasks,
-      name: 'sqre/backup/build-mysqldump-to-s3'
 
     triggerJob trigger: tasks,
       name: 'sqre/infra/build-dind',
