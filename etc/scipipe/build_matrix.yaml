@@ -85,6 +85,8 @@ scipipe-lsstsw-matrix:
 scipipe-lsstsw-lsst_distrib:
   - <<: *el6-py3
   - <<: *el7-py3
+  - <<: *el7-dts8-py3
+  - <<: *el6-dts8-py3
   - <<: *high_sierra-py3
   - <<: *mojave-py3
 scipipe-lsstsw-ci_hsc:
