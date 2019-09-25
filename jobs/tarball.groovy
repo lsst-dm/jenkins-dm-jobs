@@ -8,7 +8,10 @@ p.pipeline().with {
   description('build and publish EUPS distrib "tarball" packages')
 
   parameters {
-    stringParam('PRODUCTS', scipipe.canonical.products,
+    // XXX This is a kludge around lsst_ci requiring git-lfs backed products
+    // stringParam('PRODUCTS', scipipe.canonical.products,
+    //  'Whitespace delimited list of EUPS products to build.')
+    stringParam('PRODUCTS', scipipe.tarball.products,
       'Whitespace delimited list of EUPS products to build.')
     stringParam('EUPS_TAG', null, 'published EUPS tag')
     booleanParam('SMOKE', false, 'Run a post-build installation test of generated EUPS distrib traballs.')

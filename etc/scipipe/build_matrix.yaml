@@ -71,12 +71,12 @@ template:
 # build environment/matrix configs
 #
 scipipe-lsstsw-matrix:
-  - <<: *el6-py3
+#  - <<: *el6-py3
   - <<: *el7-py3
   - <<: *el7-dts8-py3
     allow_fail: true
-  - <<: *el6-dts8-py3
-    allow_fail: true
+#  - <<: *el6-dts8-py3
+#    allow_fail: true
   - <<: *high_sierra-py3
     # allow builds on sierra and mojave
     label: osx-10.13||osx-10.14
@@ -196,3 +196,6 @@ newinstall:
     tag: latest
   github_repo: lsst/lsst
   git_ref: master
+eups:
+  base_url: https://eups.lsst.codes/stack
+  s3_bucket: eups.lsst.codes

@@ -119,11 +119,7 @@ def void linuxTarballs(
     // globals for the instance. Thus, they don't need to be tightly scoped to a
     // single sh step
     util.withCondaMirrorEnv {
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'eups-push-bucket',
-        variable: 'EUPS_S3_BUCKET',
-      ]]) {
+      util.withEupsEnv {
         dir(envId) {
           stage("build ${envId}") {
             docker.image(imageName).pull()
@@ -141,7 +137,7 @@ def void linuxTarballs(
             }
           }
         }
-      } // withCredentials
+      } // util.withEupsEnv
     } // util.withCondaMirrorEnv
   } // run()
 
@@ -191,11 +187,7 @@ def void osxTarballs(
     // globals for the instance. Thus, they don't need to be tightly scoped to a
     // single sh step
     util.withCondaMirrorEnv {
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'eups-push-bucket',
-        variable: 'EUPS_S3_BUCKET',
-      ]]) {
+      util.withEupsEnv {
         dir(envId) {
           stage('build') {
             osxBuild(macosx_deployment_target, compiler, menv, buildTarget)
@@ -219,7 +211,7 @@ def void osxTarballs(
             }
           }
         } // dir
-      } // withCredentials
+      } // util.withEupsEnv
     } // util.withCondaMirrorEnv
   } // run
 
@@ -650,14 +642,11 @@ def void withEupsBucketEnv(Closure run) {
     credentialsId: 'aws-eups-push',
     usernameVariable: 'AWS_ACCESS_KEY_ID',
     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-  ],
-  [
-    $class: 'StringBinding',
-    credentialsId: 'eups-push-bucket',
-    variable: 'EUPS_S3_BUCKET'
   ]]) {
-    run()
-  }
+    util.withEupsEnv {
+      run()
+    }
+  } // withCredentials
 }
 
 /**
@@ -868,9 +857,10 @@ def String scriptPreamble(
     export LSST_MINICONDA_VERSION="${menv.minicondaVersion}"
     export LSST_SPLENV_REF="${menv.splenvRef}"
     export LSST_EUPS_USE_TARBALLS="${useTarballs}"
+    export LSST_COMPILER="${compiler}"
 
     source "${ciDir}/ccutils.sh"
-    cc::setup_first "${compiler}"
+    cc::setup_first "\$LSST_COMPILER"
     """
   )
 }
