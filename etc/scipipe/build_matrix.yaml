@@ -13,24 +13,6 @@ template:
   platform_defaults: &platform_defaults
     splenv_ref: *splenv_ref
   platforms:
-    - &el6-py3
-      <<: *platform_defaults
-      image: docker.io/lsstsqre/centos:6-stackbase-devtoolset-6
-      label: centos-6
-      compiler: *linux_compiler
-      python: '3'
-    - &el7-py3
-      <<: *platform_defaults
-      image: docker.io/lsstsqre/centos:7-stackbase-devtoolset-6
-      label: centos-7
-      compiler: *linux_compiler
-      python: '3'
-    - &el7-dts7-py3
-      <<: *platform_defaults
-      image: docker.io/lsstsqre/centos:7-stackbase-devtoolset-7
-      label: centos-7
-      compiler: devtoolset-7
-      python: '3'
     - &el7-dts8-py3
       <<: *platform_defaults
       image: docker.io/lsstsqre/centos:7-stackbase-devtoolset-8
@@ -71,11 +53,9 @@ template:
 # build environment/matrix configs
 #
 scipipe-lsstsw-matrix:
-#  - <<: *el6-py3
-  - <<: *el7-py3
   - <<: *el7-dts8-py3
-    allow_fail: true
-#  - <<: *el6-dts8-py3
+#    allow_fail: true
+  - <<: *el6-dts8-py3
 #    allow_fail: true
   - <<: *high_sierra-py3
     # allow builds on sierra and mojave
@@ -83,16 +63,13 @@ scipipe-lsstsw-matrix:
     display_name: osx
     display_compiler: clang
 scipipe-lsstsw-lsst_distrib:
-  - <<: *el6-py3
-  - <<: *el7-py3
   - <<: *el7-dts8-py3
   - <<: *el6-dts8-py3
   - <<: *high_sierra-py3
   - <<: *mojave-py3
 scipipe-lsstsw-ci_hsc:
-  - <<: *el7-py3
+  - <<: *el7-dts8-py3
 dax-lsstsw-matrix:
-  - <<: *el7-py3
   - <<: *el7-dts8-py3
   - <<: *el7-py3-llvm
 #
@@ -101,7 +78,7 @@ dax-lsstsw-matrix:
 canonical:
   products: &canonical_products lsst_distrib lsst_ci
   lsstsw_config:
-    <<: *el7-py3
+    <<: *el7-dts8-py3
     label: snowflake-0
     display_name: centos-7
   workspace: snowflake/release
@@ -116,14 +93,6 @@ tarball:
   # products: *canonical_products
   products: lsst_distrib lsst_dm_stack_demo
   build_config:
-    - <<: *tarball_defaults
-      <<: *el6-py3
-      platform: el6
-      osfamily: redhat
-    - <<: *tarball_defaults
-      <<: *el7-py3
-      platform: el7
-      osfamily: redhat
     - <<: *tarball_defaults
       <<: *el6-dts8-py3
       platform: el6
