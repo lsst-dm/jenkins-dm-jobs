@@ -2,7 +2,6 @@ import util.Plumber
 
 def p = new Plumber(name: 'release/weekly-release', dsl: this)
 p.pipeline().with {
-  disabled()
   description('Tag and release the science-pipelines "weekly".')
 
   parameters {
