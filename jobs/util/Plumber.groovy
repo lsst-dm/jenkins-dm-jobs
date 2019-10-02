@@ -26,6 +26,11 @@ class Plumber {
       def repo = dsl.SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
       def ref  = dsl.SEED_JOB.scm.getBranches().get(0).getName()
 
+      logRotator {
+        artifactDaysToKeep(365)
+        daysToKeep(730)
+      }
+
       definition {
         cpsScm {
           scm {
