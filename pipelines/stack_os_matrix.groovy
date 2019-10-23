@@ -32,6 +32,11 @@ notify.wrap {
     LSST_BUILD_DOCS: BUILD_DOCS,
   ]
 
+  // override conda env ref from build_matrix.yaml
+  if (SPLENV_REF) {
+    buildParams['LSST_SPLENV_REF'] = SPLENV_REF
+  }
+
   def lsstswConfigs = scipipe[BUILD_CONFIG]
   if (lsstswConfigs == null) {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
