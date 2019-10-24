@@ -34,7 +34,7 @@ notify.wrap {
 
   // override conda env ref from build_matrix.yaml
   if (SPLENV_REF) {
-    buildParams['LSST_SPLENV_REF'] = SPLENV_REF
+    buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
   }
 
   def lsstswConfigs = scipipe[BUILD_CONFIG]
