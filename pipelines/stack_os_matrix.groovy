@@ -33,7 +33,7 @@ notify.wrap {
   ]
 
   // override conda env ref from build_matrix.yaml
-  if (SPLENV_REF) {
+  if (params.SPLENV_REF) {
     buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
   }
 
