@@ -20,10 +20,5 @@ matrix:
       services:
         - docker
       script: ./tests/shellcheck.sh
-branches:
-  only:
-    - master
-    # also matched against tag pushes
-    - /^\d+\.\d+\.\d+$/
 notifications:
   email: false
