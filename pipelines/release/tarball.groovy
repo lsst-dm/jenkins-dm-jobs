@@ -1,3 +1,5 @@
+import java.security.MessageDigest
+
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -109,6 +111,9 @@ def void linuxTarballs(
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('redhat', platform, compiler, slug)
+  MessageDigest digest = MessageDigest.getInstance('SHA-1')
+  digest.update(envId.bytes)
+  def buildDirHash = digest.digest().encodeHex().toString()
 
   def run = {
     if (wipeout) {
@@ -120,7 +125,7 @@ def void linuxTarballs(
     // single sh step
     util.withCondaMirrorEnv {
       util.withEupsEnv {
-        dir(envId) {
+        dir(buildDirHash.take(10)) {
           stage("build ${envId}") {
             docker.image(imageName).pull()
             linuxBuild(imageName, compiler, menv, buildTarget)
@@ -177,6 +182,9 @@ def void osxTarballs(
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('osx', macosx_deployment_target, compiler, slug)
+  MessageDigest digest = MessageDigest.getInstance('SHA-1')
+  digest.update(envId.bytes)
+  def buildDirHash = digest.digest().encodeHex().toString()
 
   def run = {
     if (wipeout) {
@@ -188,7 +196,7 @@ def void osxTarballs(
     // single sh step
     util.withCondaMirrorEnv {
       util.withEupsEnv {
-        dir(envId) {
+        dir(buildDirHash.take(10)) {
           stage('build') {
             osxBuild(macosx_deployment_target, compiler, menv, buildTarget)
           }
