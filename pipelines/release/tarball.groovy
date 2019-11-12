@@ -1,5 +1,3 @@
-import java.security.MessageDigest
-
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -111,9 +109,7 @@ def void linuxTarballs(
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('redhat', platform, compiler, slug)
-  def digest = MessageDigest.getInstance('SHA-1')
-  digest.update(envId.bytes)
-  def buildDirHash = digest.digest().encodeHex().toString()
+  def buildDirHash = util.hashpath(envId)
 
   def run = {
     if (wipeout) {
@@ -182,9 +178,7 @@ def void osxTarballs(
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('osx', macosx_deployment_target, compiler, slug)
-  def digest = MessageDigest.getInstance('SHA-1')
-  digest.update(envId.bytes)
-  def buildDirHash = digest.digest().encodeHex().toString()
+  def buildDirHash = util.hashpath(envId)
 
   def run = {
     if (wipeout) {

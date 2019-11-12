@@ -2,6 +2,7 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.ZoneId
 import groovy.transform.Field
+import java.security.MessageDigest
 
 /**
  * Remove leading whitespace from a multi-line String (probably a shellscript).
@@ -44,6 +45,22 @@ def String shebangerize(String script, String prog = '/bin/sh -xe') {
 
   script
 }
+
+/**
+ * Hash a String using the SHA1 algorithm.
+ *
+ * @param path String representing the path to be hashed
+ * @return hashed path String
+ */
+@NonCPS
+def String hashpath(String path) {
+  def digest = MessageDigest.getInstance('SHA-1')
+  digest.update(path.bytes)
+  def hashpathstr = digest.digest().encodeHex().toString()
+
+  return hashpathstr
+}
+
 /**
  * Build a docker image, constructing the `Dockerfile` from `config`.
  *
