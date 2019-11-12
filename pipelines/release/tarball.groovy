@@ -111,7 +111,7 @@ def void linuxTarballs(
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('redhat', platform, compiler, slug)
-  MessageDigest digest = MessageDigest.getInstance('SHA-1')
+  def digest = MessageDigest.getInstance('SHA-1')
   digest.update(envId.bytes)
   def buildDirHash = digest.digest().encodeHex().toString()
 
@@ -182,7 +182,7 @@ def void osxTarballs(
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('osx', macosx_deployment_target, compiler, slug)
-  MessageDigest digest = MessageDigest.getInstance('SHA-1')
+  def digest = MessageDigest.getInstance('SHA-1')
   digest.update(envId.bytes)
   def buildDirHash = digest.digest().encodeHex().toString()
 
