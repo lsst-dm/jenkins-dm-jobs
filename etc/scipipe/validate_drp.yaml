@@ -45,7 +45,7 @@ validate_drp:
       run_timelimit: 30
     - dataset:
         <<: *dataset_hsc
-      run_timelimit: 720
+      run_timelimit: 1080
     # - dataset:
     #     <<: *dataset_decam
     #   run_timelimit: 60
