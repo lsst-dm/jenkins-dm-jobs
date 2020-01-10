@@ -110,7 +110,7 @@ Object slackApiGet(Map args) {
     // assuming that slack always returns valid json upon http 200
     if (conn.responseCode.equals(200)) {
       data = new groovy.json.JsonSlurperClassic().parseText(text)
-      if (args?.diehard && !data.ok) {
+      if (args?.dieHard && !data.ok) {
         throw new Error("Failed - status: ${conn.responseCode}, text: ${text}")
       }
     } else if (args?.dieHard) {
