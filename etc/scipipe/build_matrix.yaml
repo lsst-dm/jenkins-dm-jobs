@@ -57,16 +57,16 @@ scipipe-lsstsw-matrix:
 #    allow_fail: true
   - <<: *el6-dts8-py3
 #    allow_fail: true
-  - <<: *high_sierra-py3
-    # allow builds on sierra and mojave
-    label: osx-10.13||osx-10.14
-    display_name: osx
-    display_compiler: clang
+#  - <<: *high_sierra-py3
+#    # allow builds on sierra and mojave
+#    label: osx-10.13||osx-10.14
+#    display_name: osx
+#    display_compiler: clang
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-dts8-py3
   - <<: *el6-dts8-py3
-  - <<: *high_sierra-py3
-  - <<: *mojave-py3
+#  - <<: *high_sierra-py3
+#  - <<: *mojave-py3
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-dts8-py3
 dax-lsstsw-matrix:
@@ -101,12 +101,12 @@ tarball:
       <<: *el7-dts8-py3
       platform: el7
       osfamily: redhat
-    - <<: *tarball_defaults
-      <<: *mojave-py3
-      platform: '10.9'
-      osfamily: osx
-      timelimit: 8
-      allow_fail: true
+  #  - <<: *tarball_defaults
+  #    <<: *mojave-py3
+  #    platform: '10.9'
+  #    osfamily: osx
+  #    timelimit: 8
+  #    allow_fail: true
 #
 # X-release pattern pipelines
 #
