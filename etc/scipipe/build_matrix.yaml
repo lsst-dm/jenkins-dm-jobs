@@ -101,12 +101,12 @@ tarball:
       <<: *el7-dts8-py3
       platform: el7
       osfamily: redhat
-    - <<: *tarball_defaults
-      <<: *mojave-py3
-      platform: '10.9'
-      osfamily: osx
-      timelimit: 8
-      allow_fail: true
+  #  - <<: *tarball_defaults
+  #    <<: *mojave-py3
+  #    platform: '10.9'
+  #    osfamily: osx
+  #    timelimit: 8
+  #    allow_fail: true
 #
 # X-release pattern pipelines
 #
