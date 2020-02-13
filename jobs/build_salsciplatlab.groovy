@@ -13,7 +13,7 @@ p.pipeline().with {
     booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
     stringParam('BASE_IMAGE', 'lsstsqre/sciplat-lab', 'Base Docker image')
     stringParam('IMAGE_NAME', 'lsstsqre/sal-sciplat-lab', 'Output image name')
-    stringParam('TIMEOUT', '3', 'build timeout in hours')
+    stringParam('TIMEOUT', '4', 'build timeout in hours')
   }
 
   concurrentBuild(true)
