@@ -391,6 +391,7 @@ def void runApVerify(Map p) {
         util.record(util.xz([
           "${p.runDir}/**/*.log",
           "${p.runDir}/**/*.json",
+          "${p.runDir}/**/*.db",
         ]))
       }
     } // try
