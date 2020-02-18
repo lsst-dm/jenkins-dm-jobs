@@ -83,8 +83,10 @@ notify.wrap {
 
               export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
 
-              # setup.sh will unset $PRODUCTS
-              source ./lsstsw/bin/setup.sh
+              # setting up the same environment used in the previous build step
+              #   this can be retrived using the -b option.
+              # (note: bin/setup.sh is now deprecated)
+              source ./lsstsw/bin/envconfig -b "$MANIFEST_ID"
 
               publish "${ARGS[@]}"
             '''
