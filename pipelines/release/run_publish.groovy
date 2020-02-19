@@ -61,6 +61,7 @@ notify.wrap {
           "EUPS_PKGROOT=${pkgroot}",
           "EUPS_USERDATA=${cwd}/home/.eups_userdata",
           "EUPSPKG_SOURCE=${eupspkgSource}",
+          "LSST_SPLENV_REF=${lsstswConfig.splenv_ref}",
           "MANIFEST_ID=${manifestId}",
           "EUPS_TAG=${eupsTag}",
           "PRODUCTS=${products}",
@@ -86,7 +87,7 @@ notify.wrap {
               # setting up the same environment used in the previous build step
               #   this can be retrived using the -b option.
               # (note: bin/setup.sh is now deprecated)
-              source ./lsstsw/bin/envconfig -b "$MANIFEST_ID"
+              source ./lsstsw/bin/envconfig -n "lsst-scipipe-$LSST_SPLENV_REF"
 
               publish "${ARGS[@]}"
             '''
