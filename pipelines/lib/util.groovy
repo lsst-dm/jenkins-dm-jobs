@@ -348,8 +348,9 @@ def lsstswBuild(
     timeout(time: 8, unit: 'HOURS') {
       // use different workspace dirs for python 2/3 to avoid residual state
       // conflicts
+      def buildDirHash = hashpath(slug).take(10)
       try {
-        dir(slug) {
+        dir(buildDirHash) {
           if (wipeout) {
             deleteDir()
           }
@@ -367,7 +368,7 @@ def lsstswBuild(
       } finally {
         // needs to be called in the parent dir of jenkinsWrapper() in order to
         // add the slug as a prefix to the archived files.
-        jenkinsWrapperPost(slug)
+        jenkinsWrapperPost(buildDirHash)
       }
     } // timeout
   } // runEnv
