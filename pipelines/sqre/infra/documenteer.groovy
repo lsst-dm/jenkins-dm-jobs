@@ -74,7 +74,7 @@ notify.wrap {
           docImage: meerImage,
           docTemplateDir: docTemplateDir,
           docPull: false,
-          eupsTag: eupsTag,
+          eupsTag: 'current',
         )
       } // stage
 
