@@ -278,6 +278,7 @@ def shJson(String script) {
  * @param p.parameters.EUPS_TAG String
  * @param p.parameters.PRODUCTS String
  * @param p.parameters.TIMEOUT String Defaults to `'1'`.
+ * @param p.parameters.SPLENV_REF String Optional
  */
 def void runPublish(Map p) {
   requireMapKeys(p, [
@@ -297,15 +298,22 @@ def void runPublish(Map p) {
     TIMEOUT: '1' // should be string
   ] + p.parameters
 
+  def jobParameters = [
+          string(name: 'EUPSPKG_SOURCE', value: useP.parameters.EUPSPKG_SOURCE),
+          string(name: 'MANIFEST_ID', value: useP.parameters.MANIFEST_ID),
+          string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
+          string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
+          string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT.toString()),
+  ]
+
+  // Optional parameter. Set 'em if you got 'em
+  if (useP.parameters.SPLENV_REF) {
+    jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
+  }
+
   build(
     job: useP.job,
-    parameters: [
-      string(name: 'EUPSPKG_SOURCE', value: useP.parameters.EUPSPKG_SOURCE),
-      string(name: 'MANIFEST_ID', value: useP.parameters.MANIFEST_ID),
-      string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
-      string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
-      string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT.toString()),
-    ],
+    parameters: jobParameters,
   )
 } // runPublish
 
@@ -1295,6 +1303,7 @@ def ltdPush(Map p) {
  * @param p.parameters.BUILD_DOCS Boolean Defaults to `false`.
  * @param p.parameters.TIMEOUT String Defaults to `'8'`.
  * @param p.parameters.PREP_ONLY Boolean Defaults to `false`.
+ * @param p.parameters.SPLENV_REF String Optional
  * @return manifestId String
  */
 def String runRebuild(Map p) {
@@ -1310,15 +1319,22 @@ def String runRebuild(Map p) {
     PREP_ONLY: false,
   ] + p.parameters
 
+  def jobParameters = [
+          string(name: 'REFS', value: useP.parameters.REFS),
+          string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
+          booleanParam(name: 'BUILD_DOCS', value: useP.parameters.BUILD_DOCS),
+          string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
+          booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),
+  ]
+
+  // Optional parameter. Set 'em if you got 'em
+  if (useP.parameters.SPLENV_REF) {
+    jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
+  }
+
   def result = build(
     job: useP.job,
-    parameters: [
-      string(name: 'REFS', value: useP.parameters.REFS),
-      string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
-      booleanParam(name: 'BUILD_DOCS', value: useP.parameters.BUILD_DOCS),
-      string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
-      booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),
-    ],
+    parameters: jobParameters,
     wait: true,
   )
 

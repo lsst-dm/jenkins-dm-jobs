@@ -27,10 +27,16 @@ notify.wrap {
   String products   = params.PRODUCTS
   Boolean buildDocs = params.BUILD_DOCS
 
+  def splenvRef = lsstswConfig.splenv_ref
+  if (params.SPLENV_REF) {
+    splenvRef = params.SPLENV_REF
+  }
+
   echo "refs: ${refs}"
   echo "[eups] tag: ${eupsTag}"
   echo "products: ${products}"
   echo "build docs: ${buildDocs}"
+  echo "scipipe_conda_env ref: ${splenvRef}"
 
   def retries = 3
 
@@ -44,6 +50,7 @@ notify.wrap {
             REFS: refs,
             PRODUCTS: products,
             BUILD_DOCS: buildDocs,
+            SPLENV_REF: splenvRef,
           ],
         )
       } // retry
@@ -57,6 +64,7 @@ notify.wrap {
             MANIFEST_ID: manifestId,
             EUPS_TAG: eupsTag,
             PRODUCTS: products,
+            SPLENV_REF: splenvRef,
           ],
         )
       }
