@@ -1,4 +1,7 @@
 import util.Plumber
+import org.yaml.snakeyaml.Yaml
+
+def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrix.yaml'))
 
 def p = new Plumber(name: 'release/run-rebuild', dsl: this)
 p.pipeline().with {
@@ -10,6 +13,7 @@ p.pipeline().with {
     booleanParam('BUILD_DOCS', false, 'Build and publish documentation.')
     booleanParam('PREP_ONLY', false, 'Pass -p flag to lsstsw/bin/rebuild -- prepare git clones/a manifest but do not build products.')
     stringParam('TIMEOUT', '8', 'build timeout in hours')
+    stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
     // enable for debugging only
     // booleanParam('NO_VERSIONDB_PUSH', true, 'Skip push to remote versiondb repo.')
   }

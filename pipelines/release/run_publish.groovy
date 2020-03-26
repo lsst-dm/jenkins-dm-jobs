@@ -35,6 +35,11 @@ notify.wrap {
   def canonical    = scipipe.canonical
   def lsstswConfig = canonical.lsstsw_config
 
+  def splenvRef = lsstswConfig.splenv_ref
+  if (params.SPLENV_REF) {
+    splenvRef = params.SPLENV_REF
+  }
+
   def slug = util.lsstswConfigSlug(lsstswConfig)
 
   def run = {
@@ -61,7 +66,7 @@ notify.wrap {
           "EUPS_PKGROOT=${pkgroot}",
           "EUPS_USERDATA=${cwd}/home/.eups_userdata",
           "EUPSPKG_SOURCE=${eupspkgSource}",
-          "LSST_SPLENV_REF=${lsstswConfig.splenv_ref}",
+          "LSST_SPLENV_REF=${splenvRef}",
           "MANIFEST_ID=${manifestId}",
           "EUPS_TAG=${eupsTag}",
           "PRODUCTS=${products}",
