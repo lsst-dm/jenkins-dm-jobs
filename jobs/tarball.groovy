@@ -24,7 +24,7 @@ p.pipeline().with {
     stringParam('COMPILER', null, 'compiler version string')
     choiceParam('PYTHON_VERSION', ['3', '2'], 'Python major version')
     choiceParam('MINIVER', ['4.7.10', '4.5.12', '4.5.4', '4.3.21', '4.2.12'], 'Miniconda installer version')
-    choiceParam('SPLENV_REF', ['fcd27eb', '10a4fa6', '7c8e67', '1172c30'], 'LSST conda package set ref')
+    choiceParam('SPLENV_REF', ['fcd27eb', '10a4fa6', '7c8e67', '1172c30', '14ba34c'], 'LSST conda package set ref')
     choiceParam('OSFAMILY', ['redhat', 'osx'], 'Published osfamily name')
     stringParam('PLATFORM', null, 'Published platform name')
   }

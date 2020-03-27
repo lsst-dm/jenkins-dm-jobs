@@ -43,6 +43,11 @@ notify.wrap {
   def canonical    = scipipe.canonical
   def lsstswConfig = canonical.lsstsw_config
 
+  def splenvRef = lsstswConfig.splenv_ref
+  if (params.SPLENV_REF) {
+    splenvRef = params.SPLENV_REF
+  }
+
   def slug = util.lsstswConfigSlug(lsstswConfig)
 
   def run = {
@@ -58,7 +63,7 @@ notify.wrap {
         LSST_PREP_ONLY:      prepOnly,
         LSST_PRODUCTS:       products,
         LSST_PYTHON_VERSION: lsstswConfig.python,
-        LSST_SPLENV_REF:     lsstswConfig.splenv_ref,
+        LSST_SPLENV_REF:     splenvRef,
         LSST_REFS:           refs,
         VERSIONDB_PUSH:      versiondbPush,
         VERSIONDB_REPO:      versiondbRepo,
