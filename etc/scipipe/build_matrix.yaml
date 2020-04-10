@@ -31,6 +31,18 @@ template:
       label: centos-7
       compiler: llvm-toolset-7
       python: '3'
+    - &el7-conda
+      <<: *platform_defaults
+      image: docker.io/lsstdm/scipipe-base:7
+      label: centos-7-conda
+      compiler: conda-system
+      python: '3'
+    - &el8-conda
+      <<: *platform_defaults
+      image: docker.io/lsstdm/scipipe-base:8
+      label: centos-8-conda
+      compiler: conda-system
+      python: '3'
     - &sierra-py3
       <<: *platform_defaults
       image: null
@@ -49,36 +61,48 @@ template:
       label: osx-10.14
       compiler: clang-1000.10.44.4
       python: '3'
+    - &high_sierra-conda
+      <<: *platform_defaults
+      image: null
+      label: osx-10.13
+      compiler: conda-system
+      python: '3'
+    - &mojave-conda
+      <<: *platform_defaults
+      image: null
+      label: osx-10.14
+      compiler: conda-system
+      python: '3'
 #
 # build environment/matrix configs
 #
 scipipe-lsstsw-matrix:
-  - <<: *el7-dts8-py3
+  - <<: *el7-conda
 #    allow_fail: true
-  - <<: *el6-dts8-py3
+  - <<: *el8-conda
 #    allow_fail: true
-  - <<: *high_sierra-py3
+  - <<: *high_sierra-conda
     # allow builds on sierra and mojave
     label: osx-10.13||osx-10.14
     display_name: osx
     display_compiler: clang
 scipipe-lsstsw-lsst_distrib:
-  - <<: *el7-dts8-py3
-  - <<: *el6-dts8-py3
-  - <<: *high_sierra-py3
-  - <<: *mojave-py3
+  - <<: *el7-conda
+  - <<: *el8-conda
+  - <<: *high_sierra-conda
+  - <<: *mojave-conda
 scipipe-lsstsw-ci_hsc:
-  - <<: *el7-dts8-py3
+  - <<: *el7-conda
 dax-lsstsw-matrix:
-  - <<: *el7-dts8-py3
-  - <<: *el7-py3-llvm
+  - <<: *el7-conda
+#  - <<: *el7-py3-llvm # compiler is overridden when using conda
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
 canonical:
   products: &canonical_products lsst_distrib lsst_ci
   lsstsw_config:
-    <<: *el7-dts8-py3
+    <<: *el7-conda
     label: snowflake-0
     display_name: centos-7
   workspace: snowflake/release
@@ -94,15 +118,15 @@ tarball:
   products: lsst_distrib lsst_dm_stack_demo
   build_config:
     - <<: *tarball_defaults
-      <<: *el6-dts8-py3
-      platform: el6
+      <<: *el8-conda
+      platform: el8
       osfamily: redhat
     - <<: *tarball_defaults
-      <<: *el7-dts8-py3
+      <<: *el7-conda
       platform: el7
       osfamily: redhat
     - <<: *tarball_defaults
-      <<: *mojave-py3
+      <<: *mojave-conda
       platform: '10.9'
       osfamily: osx
       timelimit: 8
