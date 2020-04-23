@@ -1061,8 +1061,13 @@ def void buildTarballMatrix(Map p) {
     def displayName = item.display_name ?: item.label
     def displayCompiler = item.display_compiler ?: item.compiler
 
+    def splenvRef = item.splenv_ref
+    if (parameters.SPLENV_REF) {
+      splenvRef = p.parameters.SPLENV_REF
+    }
+
     def slug = "miniconda${item.python}"
-    slug += "-${item.miniver}-${item.splenv_ref}"
+    slug += "-${item.miniver}-${splenvRef}"
 
     def tarballBuild = {
       retry(p.retries) {
@@ -1083,7 +1088,7 @@ def void buildTarballMatrix(Map p) {
             string(name: 'COMPILER', value: item.compiler),
             string(name: 'PYTHON_VERSION', value: item.python),
             string(name: 'MINIVER', value: item.miniver),
-            string(name: 'SPLENV_REF', value: item.splenv_ref),
+            string(name: 'SPLENV_REF', value: splenvRef),
             string(name: 'OSFAMILY', value: item.osfamily),
             string(name: 'PLATFORM', value: item.platform),
           ]
@@ -1578,6 +1583,7 @@ def String defaultCodekitImage() {
  * @param p.parameters.LSST_COMPILER String. Required.
  * @param p.parameters.NO_PUSH Boolean. Defaults to `false`.
  * @param p.parameters.TIMEOUT String. Defaults to `1'`.
+ * @param p.parameters.SPLENV_REF String Optional
  * @return json Object
  */
 def Object runBuildStack(Map p) {
@@ -1603,9 +1609,7 @@ def Object runBuildStack(Map p) {
     DOCKER_TAGS: '',  // null is not a valid value for a string param
   ] + p.parameters
 
-  def result = build(
-    job: p.job,
-    parameters: [
+  def jobParameters = [
       string(name: 'PRODUCTS', value: p.parameters.PRODUCTS),
       string(name: 'EUPS_TAG', value: p.parameters.EUPS_TAG),
       booleanParam(name: 'NO_PUSH', value: p.parameters.NO_PUSH),
@@ -1613,7 +1617,16 @@ def Object runBuildStack(Map p) {
       string(name: 'DOCKER_TAGS', value: p.parameters.DOCKER_TAGS),
       string(name: 'MANIFEST_ID', value: p.parameters.MANIFEST_ID),
       string(name: 'LSST_COMPILER', value: p.parameters.LSST_COMPILER),
-    ],
+  ]
+
+  // Optional parameter. Set 'em if you got 'em
+  if (p.parameters.SPLENV_REF) {
+    jobParameters += string(name: 'SPLENV_REF', value: p.parameters.SPLENV_REF)
+  }
+
+  def result = build(
+    job: p.job,
+    parameters: jobParameters,
     wait: true
   )
 
