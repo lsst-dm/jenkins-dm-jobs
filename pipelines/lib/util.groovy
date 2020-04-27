@@ -1610,13 +1610,13 @@ def Object runBuildStack(Map p) {
   ] + p.parameters
 
   def jobParameters = [
-      string(name: 'PRODUCTS', value: p.parameters.PRODUCTS),
-      string(name: 'EUPS_TAG', value: p.parameters.EUPS_TAG),
-      booleanParam(name: 'NO_PUSH', value: p.parameters.NO_PUSH),
-      string(name: 'TIMEOUT', value: p.parameters.TIMEOUT),
-      string(name: 'DOCKER_TAGS', value: p.parameters.DOCKER_TAGS),
-      string(name: 'MANIFEST_ID', value: p.parameters.MANIFEST_ID),
-      string(name: 'LSST_COMPILER', value: p.parameters.LSST_COMPILER),
+    string(name: 'PRODUCTS', value: p.parameters.PRODUCTS),
+    string(name: 'EUPS_TAG', value: p.parameters.EUPS_TAG),
+    booleanParam(name: 'NO_PUSH', value: p.parameters.NO_PUSH),
+    string(name: 'TIMEOUT', value: p.parameters.TIMEOUT),
+    string(name: 'DOCKER_TAGS', value: p.parameters.DOCKER_TAGS),
+    string(name: 'MANIFEST_ID', value: p.parameters.MANIFEST_ID),
+    string(name: 'LSST_COMPILER', value: p.parameters.LSST_COMPILER),
   ]
 
   // Optional parameter. Set 'em if you got 'em
