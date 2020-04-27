@@ -20,14 +20,12 @@ notify.wrap {
     'RELEASE_GIT_TAG',
     'SPLENV_REF',
     'O_LATEST',
-    'NO_TRIGGERED_JOBS',
   ])
 
   String sourceGitRefs = params.SOURCE_GIT_REFS
   String gitTag        = params.RELEASE_GIT_TAG
   String splenvRef     = params.SPLENV_REF
   Boolean dockerLatest = params.O_LATEST
-  Boolean dontTrigger  = params.NO_TRIGGERED_JOBS
 
   // generate eups tag from git tag
   String eupsTag = util.sanitizeEupsTag(gitTag)
@@ -296,11 +294,9 @@ notify.wrap {
       } // retry
     }
 
-    if (!dontTrigger) {
-      stage('triggered jobs') {
-        parallel triggerMe
-      } // stage
-    } // if
+    stage('triggered jobs') {
+      parallel triggerMe
+    } // stage
   } // run
 
   try {

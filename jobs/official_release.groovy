@@ -24,7 +24,5 @@ p.pipeline().with {
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
     booleanParam('O_LATEST', false,
       'update the eups "O_LATEST" tag -- should only be done for a final (non-rc) release')
-    booleanParam('NO_TRIGGERED_JOBS', false,
-      'Do not trigger parallel jobs at the end of the pipeline.')
   }
 }
