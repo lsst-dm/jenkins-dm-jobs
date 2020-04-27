@@ -33,8 +33,8 @@ notify.wrap {
   def dockerRepo    = dockerRegistry.repo
   def newinstallUrl = util.newinstallUrl()
 
-  def baseDockerRepo = sqre.layercake.docker_registry.repo
-  def baseDockerTag  = '7-stackbase-devtoolset-8'
+  def baseDockerRepo = sqre.scipipe_base.docker_registry.repo
+  def baseDockerTag  = '7'
   def baseImage      = "${baseDockerRepo}:${baseDockerTag}"
   def splenvRef      = scipipe.canonical.lsstsw_config.splenv_ref
 
