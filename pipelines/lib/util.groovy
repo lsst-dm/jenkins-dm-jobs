@@ -1062,7 +1062,7 @@ def void buildTarballMatrix(Map p) {
     def displayCompiler = item.display_compiler ?: item.compiler
 
     def splenvRef = item.splenv_ref
-    if (parameters.SPLENV_REF) {
+    if (p.parameters.SPLENV_REF) {
       splenvRef = p.parameters.SPLENV_REF
     }
 
