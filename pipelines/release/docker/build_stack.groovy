@@ -47,6 +47,10 @@ notify.wrap {
 
   def newinstallImage = newinstall.docker_registry.repo
   def splenvRef       = scipipe.canonical.lsstsw_config.splenv_ref
+  if (params.SPLENV_REF) {
+    splenvRef = params.SPLENV_REF
+  }
+
   def baseImage       = "${newinstallImage}:${splenvRef}"
 
   def image = null

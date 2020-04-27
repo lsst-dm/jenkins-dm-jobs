@@ -18,11 +18,13 @@ notify.wrap {
   util.requireParams([
     'SOURCE_GIT_REFS',
     'RELEASE_GIT_TAG',
+    'SPLENV_REF',
     'O_LATEST',
   ])
 
   String sourceGitRefs = params.SOURCE_GIT_REFS
   String gitTag        = params.RELEASE_GIT_TAG
+  String splenvRef     = params.SPLENV_REF
   Boolean dockerLatest = params.O_LATEST
 
   // generate eups tag from git tag
@@ -76,6 +78,7 @@ notify.wrap {
           parameters: [
             PRODUCTS: products,
             REFS: sourceGitRefs,
+            SPLENV_REF: splenvRef,
             BUILD_DOCS: false,
             PREP_ONLY: true,
           ],
@@ -124,6 +127,7 @@ notify.wrap {
           parameters: [
             REFS: buildGitTags,
             PRODUCTS: products,
+            SPLENV_REF: splenvRef,
             BUILD_DOCS: true,
           ],
         )
@@ -142,6 +146,7 @@ notify.wrap {
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
                 PRODUCTS: products,
+                SPLENV_REF: splenvRef,
               ],
             )
           } // retry
@@ -159,6 +164,7 @@ notify.wrap {
         parameters: [
           PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
+          SPLENV_REF: splenvRef,
           SMOKE: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
@@ -178,6 +184,7 @@ notify.wrap {
             DOCKER_TAGS: extraDockerTags,
             MANIFEST_ID: manifestId,
             LSST_COMPILER: lsstswConfig.compiler,
+            SPLENV_REF:splenvRef,
           ],
         )
       } // retry
