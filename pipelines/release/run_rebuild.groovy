@@ -72,7 +72,7 @@ notify.wrap {
       def runJW = {
         if (prepOnly) {
           // need to ensure that no build/ststus.yaml exists
-          statusfile = "${cwd}/build/status.yaml"
+          statusfile = "${cwd}/lsstsw/build/status.yaml"
           boolean statusFileDeleted = new File(statusfile).delete()
         }
         // note that util.jenkinsWrapper() clones the ci-scripts repo, which is
