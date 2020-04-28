@@ -5,7 +5,7 @@
 # provide yaml anchors internal to this file.
 #
 template:
-  splenv_ref: &splenv_ref '984c9f7'
+  splenv_ref: &splenv_ref 'ed862f4'
   tarball_defaults: &tarball_defaults
     miniver: &miniver '4.7.12'
     timelimit: 6
