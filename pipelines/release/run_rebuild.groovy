@@ -72,8 +72,16 @@ notify.wrap {
       def runJW = {
         if (prepOnly) {
           // need to ensure that no build/ststus.yaml exists
-          statusfile = "${cwd}/lsstsw/build/status.yaml"
-          boolean statusFileDeleted = new File(statusfile).delete()
+          statusFileName = "${cwd}/lsstsw/build/status.yaml"
+          def statusFile = new File(statusFileName)
+          println "PrepOnly: check if status.yaml exists"
+          println "${statusFileName}"
+          if (statusFile.exists()) {
+            statusFile.delete()
+            println " > status.yaml removed."
+          } else {
+            println " > status.yaml not present."
+          }
         }
         // note that util.jenkinsWrapper() clones the ci-scripts repo, which is
         // used by the push docs stage
