@@ -484,7 +484,7 @@ def void jenkinsWrapper(Map buildParams) {
   } // try
 } // jenkinsWrapper
 
-def jenkinsWrapperPost(String baseDir = null) {
+def jenkinsWrapperPost(String baseDir = null, boolean prepOnly = false) {
   def lsstsw = 'lsstsw'
 
   if (baseDir) {
@@ -505,35 +505,38 @@ def jenkinsWrapperPost(String baseDir = null) {
   ]
 
   try {
-    if (fileExists(statusPath)) {
-      def status = readYaml(file: statusPath)
+    if (!prepOnly) {
+      // if only prepare, skip junit
+      if (fileExists(statusPath)) {
+        def status = readYaml(file: statusPath)
 
-      def products = status['built']
-      // if there is a "failed_at" product, check it for a junit file too
-      if (status['failed_at']) {
-        products << status['failed_at']
-      }
-
-      def reports = []
-      products.each { item ->
-        def name = item['name']
-        def xml = "${lsstsw_build_dir}/${name}/tests/.tests/pytest-${name}.xml"
-        reports << xml
-
-        record.each { pattern ->
-          archive += "${lsstsw_build_dir}/${name}/**/${pattern}"
+        def products = status['built']
+        // if there is a "failed_at" product, check it for a junit file too
+        if (status['failed_at']) {
+          products << status['failed_at']
         }
-      }
 
-      if (reports) {
-        // note that junit will ignore files with timestamps before the start
-        // of the build
-        junit([
-          testResults: reports.join(', '),
-          allowEmptyResults: true,
-        ])
+        def reports = []
+        products.each { item ->
+          def name = item['name']
+          def xml = "${lsstsw_build_dir}/${name}/tests/.tests/pytest-${name}.xml"
+          reports << xml
 
-        archive += reports
+          record.each { pattern ->
+            archive += "${lsstsw_build_dir}/${name}/**/${pattern}"
+          }
+        }
+
+        if (reports) {
+          // note that junit will ignore files with timestamps before the start
+          // of the build
+          junit([
+            testResults: reports.join(', '),
+            allowEmptyResults: true,
+          ])
+
+          archive += reports
+        }
       }
     }
   } catch (e) {
