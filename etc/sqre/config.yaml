@@ -58,13 +58,9 @@ wget:
     tag: latest
 squash:
   url: https://squash-restful-api.lsst.codes/
-layercake:
-  packer:
-    github_repo: lsst-sqre/packer-layercake
-    git_ref: master
-    dir: ''
+scipipe_base:
   docker_registry:
-    repo: lsstsqre/centos
+    repo: lsstdm/scipipe-base
 jenkins_swarm_client:
   dockerfile:
     github_repo: lsst-sqre/docker-jenkins-swarm-client
