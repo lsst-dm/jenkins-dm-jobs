@@ -94,7 +94,7 @@ scipipe-lsstsw-lsst_distrib:
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
 dax-lsstsw-matrix:
-  - <<: *el7-conda
+  - <<: *el7-dts8-py3
 #  - <<: *el7-py3-llvm # compiler is overridden when using conda
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
