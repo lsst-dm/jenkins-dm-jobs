@@ -11,6 +11,7 @@ p.pipeline().with {
   parameters {
     stringParam('REFS', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" is implicitly appended to the right side of the list, if not specified.')
     stringParam('PRODUCTS', 'qserv_distrib', 'Whitespace delimited list of EUPS products to build.')
+    stringParam('SPLENV_REF', '9aa7f31', 'conda env ref (from scipipe_conda_env repo)')
   }
 
   concurrentBuild(true)
