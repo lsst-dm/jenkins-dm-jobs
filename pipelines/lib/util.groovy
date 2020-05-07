@@ -1073,7 +1073,7 @@ def void buildTarballMatrix(Map p) {
     }
 
     def oldMatrix = false
-    id (p.parameters.OLD_MATRIX) {
+    if (p.parameters.OLD_MATRIX) {
       oldMatrix = p.parameters.OLD_MATRIX
     }
  
@@ -1527,8 +1527,12 @@ def String sanitizeEupsTag(String tag) {
  *
  * @return config Object
  */
-def Object scipipeConfig(String file = 'build_matrix.yaml') {
-  readYamlFile('etc/scipipe/' + file)
+def Object scipipeConfig(Boolean oldMatrix = false) {
+  if (oldMatrix) {
+    readYamlFile('etc/scipipe/build_matrix_old.yaml')
+  } else {
+    readYamlFile('etc/scipipe/build_matrix.yaml')
+  }
 }
 
 /*
