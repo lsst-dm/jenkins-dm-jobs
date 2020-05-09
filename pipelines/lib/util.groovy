@@ -310,9 +310,6 @@ def void runPublish(Map p) {
   if (useP.parameters.SPLENV_REF) {
     jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
   }
-  if (useP.parameters.OLD_MATRIX) {
-    jobParameters += boolean(name: 'OLD_MATRIX', value: useP.parameters.OLD_MATRIX)
-  }
 
   build(
     job: useP.job,
@@ -1072,11 +1069,6 @@ def void buildTarballMatrix(Map p) {
       splenvRef = p.parameters.SPLENV_REF
     }
 
-    def oldMatrix = false
-    if (p.parameters.OLD_MATRIX) {
-      oldMatrix = p.parameters.OLD_MATRIX
-    }
- 
     def slug = "miniconda${item.python}"
     slug += "-${item.miniver}-${splenvRef}"
 
@@ -1093,7 +1085,6 @@ def void buildTarballMatrix(Map p) {
             ),
             booleanParam(name: 'PUBLISH', value: p.parameters.PUBLISH),
             booleanParam(name: 'WIPEOUT', value: false),
-            booleanParam(name: 'OLD_MATRIX', value: oldMatrix),
             string(name: 'TIMEOUT', value: item.timelimit.toString()), // hours
             string(name: 'IMAGE', value: nullToEmpty(item.image)),
             string(name: 'LABEL', value: item.label),
@@ -1348,9 +1339,6 @@ def String runRebuild(Map p) {
   if (useP.parameters.SPLENV_REF) {
     jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
   }
-  if (useP.parameters.OLD_MATRIX) {
-    jobParameters += boolean(name: 'OLD_MATRIX', value: useP.parameters.OLD_MATRIX)
-  }
 
   def result = build(
     job: useP.job,
@@ -1527,12 +1515,8 @@ def String sanitizeEupsTag(String tag) {
  *
  * @return config Object
  */
-def Object scipipeConfig(Boolean oldMatrix = false) {
-  if (oldMatrix) {
-    readYamlFile('etc/scipipe/build_matrix_old.yaml')
-  } else {
-    readYamlFile('etc/scipipe/build_matrix.yaml')
-  }
+def Object scipipeConfig() {
+  readYamlFile('etc/scipipe/build_matrix.yaml')
 }
 
 /*
@@ -1641,9 +1625,6 @@ def Object runBuildStack(Map p) {
   // Optional parameter. Set 'em if you got 'em
   if (p.parameters.SPLENV_REF) {
     jobParameters += string(name: 'SPLENV_REF', value: p.parameters.SPLENV_REF)
-  }
-  if (p.parameters.OLD_MATRIX) {
-    jobParameters += boolean(name: 'OLD_MATRIX', value: p.parameters.OLD_MATRIX)
   }
 
   def result = build(

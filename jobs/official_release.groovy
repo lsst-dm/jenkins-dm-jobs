@@ -22,8 +22,6 @@ p.pipeline().with {
     stringParam('RELEASE_GIT_TAG', null,
       'git tag for the new release. Eg. "v888.0.0.rc1"')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
-    booleanParam('OLD_MATRIX', false,
-      'only for builds requiring the previous version of build_matrix.yaml')
     booleanParam('O_LATEST', false,
       'update the eups "O_LATEST" tag -- should only be done for a final (non-rc) release')
   }

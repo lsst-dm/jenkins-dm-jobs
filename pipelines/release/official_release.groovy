@@ -19,14 +19,12 @@ notify.wrap {
     'SOURCE_GIT_REFS',
     'RELEASE_GIT_TAG',
     'SPLENV_REF',
-    'OLD_MATRIX',
     'O_LATEST',
   ])
 
   String sourceGitRefs = params.SOURCE_GIT_REFS
   String gitTag        = params.RELEASE_GIT_TAG
   String splenvRef     = params.SPLENV_REF
-  Boolean oldMatrix    = params.OLD_MATRIX
   Boolean dockerLatest = params.O_LATEST
 
   // generate eups tag from git tag
@@ -81,7 +79,6 @@ notify.wrap {
             PRODUCTS: products,
             REFS: sourceGitRefs,
             SPLENV_REF: splenvRef,
-            OLD_MATRIX: oldMatrix,
             BUILD_DOCS: false,
             PREP_ONLY: true,
           ],
@@ -131,7 +128,6 @@ notify.wrap {
             REFS: buildGitTags,
             PRODUCTS: products,
             SPLENV_REF: splenvRef,
-            OLD_MATRIX: oldMatrix,
             BUILD_DOCS: true,
           ],
         )
@@ -151,7 +147,6 @@ notify.wrap {
                 EUPS_TAG: tagName,
                 PRODUCTS: products,
                 SPLENV_REF: splenvRef,
-                OLD_MATRIX: oldMatrix,
               ],
             )
           } // retry
@@ -173,7 +168,6 @@ notify.wrap {
           SMOKE: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
-          OLD_MATRIX: oldMatrix,
         ],
         retries: retries,
       )
@@ -191,7 +185,6 @@ notify.wrap {
             MANIFEST_ID: manifestId,
             LSST_COMPILER: lsstswConfig.compiler,
             SPLENV_REF:splenvRef,
-            OLD_MATRIX: oldMatrix,
           ],
         )
       } // retry
