@@ -311,7 +311,7 @@ def void runPublish(Map p) {
     jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
   }
   if (useP.parameters.OLD_MATRIX) {
-    jobParameters += booleanParam(name: 'OLD_MATRIX', value: useP.parameters.OLD_MATRIX)
+    jobParameters += boolean(name: 'OLD_MATRIX', value: useP.parameters.OLD_MATRIX)
   }
 
   build(
@@ -1349,7 +1349,7 @@ def String runRebuild(Map p) {
     jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
   }
   if (useP.parameters.OLD_MATRIX) {
-    jobParameters += booleanParam(name: 'OLD_MATRIX', value: useP.parameters.OLD_MATRIX)
+    jobParameters += boolean(name: 'OLD_MATRIX', value: useP.parameters.OLD_MATRIX)
   }
 
   def result = build(
@@ -1643,7 +1643,7 @@ def Object runBuildStack(Map p) {
     jobParameters += string(name: 'SPLENV_REF', value: p.parameters.SPLENV_REF)
   }
   if (p.parameters.OLD_MATRIX) {
-    jobParameters += booleanParam(name: 'OLD_MATRIX', value: p.parameters.OLD_MATRIX)
+    jobParameters += boolean(name: 'OLD_MATRIX', value: p.parameters.OLD_MATRIX)
   }
 
   def result = build(
