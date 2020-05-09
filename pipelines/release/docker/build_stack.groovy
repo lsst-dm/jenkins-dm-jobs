@@ -9,7 +9,7 @@ node('jenkins-master') {
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
-    scipipe = util.scipipeConfig() // needed for side effects
+    scipipe = util.scipipeConfig(params.OLD_MATRIX) // needed for side effects
     sqre = util.sqreConfig() // needed for side effects
   }
 }
