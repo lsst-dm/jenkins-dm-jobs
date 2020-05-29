@@ -21,6 +21,7 @@ notify.wrap {
   def eupsTag         = 'qserv-dev'
 
   def manifestId = null
+  def splenvRef = scipipe['dax-lsst-matrix'].splenv_ref
 
   def run = {
     stage('build') {
@@ -29,6 +30,7 @@ notify.wrap {
           parameters: [
             PRODUCTS: products,
             BUILD_DOCS: false,
+            SPLENV_REF: splenvRef,
           ],
         )
       } // retry
