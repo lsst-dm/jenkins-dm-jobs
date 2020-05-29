@@ -21,7 +21,7 @@ notify.wrap {
   def eupsTag         = 'qserv-dev'
 
   def manifestId = null
-  def splenvRef = scipipe['dax-lsstsw-matrix'].splenv_ref
+  def splenvRef = scipipe['dax-lsstsw-matrix'][0].splenv_ref
 
   def run = {
     stage('build') {
