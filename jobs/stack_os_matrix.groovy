@@ -8,7 +8,7 @@ p.pipeline().with {
   description('Execute a build of EUPS products using `lsstsw`.')
 
   parameters {
-    stringParam('REFS', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" is implicitly appended to the right side of the list, if not specified.')
+    stringParam('REFS', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" or branch from repos.yaml is implicitly appended to the right side of the list, if not specified; do not specify "master" explicitly.')
     stringParam('PRODUCTS', scipipe.canonical.products,
       'Whitespace delimited list of EUPS products to build.')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
