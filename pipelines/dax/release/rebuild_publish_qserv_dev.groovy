@@ -44,6 +44,7 @@ notify.wrap {
             MANIFEST_ID: manifestId,
             EUPS_TAG: eupsTag,
             PRODUCTS: products,
+            SPLENV_REF: splenvRef,
           ],
         )
       } // retry
