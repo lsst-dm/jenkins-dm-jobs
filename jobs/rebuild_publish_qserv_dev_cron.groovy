@@ -3,7 +3,7 @@ Common.makeFolders(this)
 
 def j = job('dax/release/rebuild_publish_qserv-dev-cron') {
   triggers {
-    cron('0 0 * * 6')
+    cron('0 12 * * 6')
   }
 
   steps {
