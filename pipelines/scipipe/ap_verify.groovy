@@ -21,11 +21,13 @@ node('jenkins-master') {
 
 notify.wrap {
   util.requireParams([
+    'REF',
     'DOCKER_IMAGE',
     'NO_PUSH',
     'WIPEOUT',
   ])
 
+  String ref         = params.REF
   String dockerImage = params.DOCKER_IMAGE
   Boolean noPush     = params.NO_PUSH
   Boolean wipeout    = params.WIPEOUT
@@ -38,6 +40,11 @@ notify.wrap {
   jobConf."$jobConfName".configs.each { conf ->
     // apply defaults
     conf = defaults + conf
+    if (ref) {
+      conf.code.git_ref = ref
+    } else {
+      conf.remove(code)
+    }
     if (conf.code) {
       conf.code.display_name = displayName(conf.code)
     }
@@ -244,13 +251,18 @@ def void verifyDataset(Map p) {
           files = findFiles(glob: '**/ap_verify.*.verify.json')
         }
 
-        files.each { f ->
-          util.runDispatchVerify(
-            runDir: runDir,
-            lsstswDir: fakeLsstswDir,
-            datasetName: ds.name,
-            resultFile: f,
-          )
+        def codeRef = buildCode ? code.git_ref : "master"
+        withEnv([
+          "refs=${codeRef}",
+        ]) {
+          files.each { f ->
+            util.runDispatchVerify(
+              runDir: runDir,
+              lsstswDir: fakeLsstswDir,
+              datasetName: ds.name,
+              resultFile: f,
+            )
+          }
         }
       }
     } // insideDockerWrap
