@@ -43,7 +43,9 @@ notify.wrap {
     if (ref) {
       conf.code.git_ref = ref
     } else {
-      conf.remove(code)
+      if (conf.code) {
+         conf.code = null
+      }
     }
     if (conf.code) {
       conf.code.display_name = displayName(conf.code)
