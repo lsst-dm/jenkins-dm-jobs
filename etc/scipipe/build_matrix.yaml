@@ -5,7 +5,7 @@
 # provide yaml anchors internal to this file.
 #
 template:
-  splenv_ref: &splenv_ref '448abc6'
+  splenv_ref: &splenv_ref '41fdbc2'
   tarball_defaults: &tarball_defaults
     miniver: &miniver '4.7.12'
     timelimit: 6
@@ -95,7 +95,7 @@ scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
 dax-lsstsw-matrix:
   - <<: *el7-conda
-    splenv_ref: '91cab1a'
+    splenv_ref: 'b82da1f'
 #  - <<: *el7-py3-llvm # compiler is overridden when using conda
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
