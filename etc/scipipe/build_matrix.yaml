@@ -95,7 +95,7 @@ scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
 dax-lsstsw-matrix:
   - <<: *el7-conda
-    splenv_ref: 'b82da1f'
+    splenv_ref: 'ceb6bb6'
 #  - <<: *el7-py3-llvm # compiler is overridden when using conda
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
