@@ -23,7 +23,7 @@ p.pipeline().with {
     choiceParam('LABEL', ['centos-7', 'centos-6', 'osx-10.11', 'osx-10.12', 'osx-10.14'], 'Jenkins build agent label')
     stringParam('COMPILER', 'conda-system', 'compiler version string')
     choiceParam('PYTHON_VERSION', ['3'], 'Python major version')
-    stringParam('MINIVER', scipipe.tarball_defaults.miniver, 'Miniconda installer version')
+    stringParam('MINIVER', scipipe.template.tarball_defaults.miniver, 'Miniconda installer version')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'LSST conda package set ref')
     choiceParam('OSFAMILY', ['redhat', 'osx'], 'Published osfamily name')
     stringParam('PLATFORM', null, 'Published platform name (el7, 10.9)')
