@@ -1,6 +1,6 @@
 import groovy.transform.Field
 
-@Field String mirrorBaseUrl = 'https://repo.continuum.io/pkgs'
+@Field String mirrorBaseUrl = 'https://repo.anaconda.com/pkgs'
 
 node('jenkins-master') {
   dir('jenkins-dm-jobs') {
@@ -203,7 +203,7 @@ def void mirrorMinicondaInstallers(Map p) {
           -R "*ppc64le.sh" \
           -R "*armv7l.sh" \
           -R "*x86.sh" \
-          https://repo.continuum.io/miniconda/
+          https://repo.anaconda.com/miniconda/
       '''
     }
   } // retrey
