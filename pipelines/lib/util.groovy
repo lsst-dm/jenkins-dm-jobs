@@ -461,10 +461,8 @@ def void jenkinsWrapper(Map buildParams) {
     }
 
     // setup env vars to use a conda mirror
-    withCondaMirrorEnv {
-      withEnv(buildEnv) {
-        bash './ci-scripts/jenkins_wrapper.sh'
-      }
+    withEnv(buildEnv) {
+      bash './ci-scripts/jenkins_wrapper.sh'
     }
   } finally {
     withEnv(["WORKSPACE=${cwd}"]) {
