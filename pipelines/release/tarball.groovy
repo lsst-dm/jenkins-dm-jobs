@@ -119,27 +119,25 @@ def void linuxTarballs(
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
     // single sh step
-    util.withCondaMirrorEnv {
-      util.withEupsEnv {
-        dir(buildDirHash.take(10)) {
-          stage("build ${envId}") {
-            docker.image(imageName).pull()
-            linuxBuild(imageName, compiler, menv, buildTarget)
-          }
-          stage('smoke') {
-            if (smokeConfig) {
-              linuxSmoke(imageName, compiler, menv, buildTarget, smokeConfig)
-            }
-          }
-
-          stage('publish') {
-            if (publish) {
-              s3PushDocker(envId)
-            }
+    util.withEupsEnv {
+      dir(buildDirHash.take(10)) {
+        stage("build ${envId}") {
+          docker.image(imageName).pull()
+          linuxBuild(imageName, compiler, menv, buildTarget)
+        }
+        stage('smoke') {
+          if (smokeConfig) {
+            linuxSmoke(imageName, compiler, menv, buildTarget, smokeConfig)
           }
         }
-      } // util.withEupsEnv
-    } // util.withCondaMirrorEnv
+
+        stage('publish') {
+          if (publish) {
+            s3PushDocker(envId)
+          }
+        }
+      }
+    } // util.withEupsEnv
   } // run()
 
   util.nodeWrap('docker') {
