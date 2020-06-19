@@ -68,9 +68,6 @@ notify.wrap {
       name: 'sqre/infra/build-wget'
 
     triggerJob trigger: tasks,
-      name: 'sqre/infra/build-cmirror'
-
-    triggerJob trigger: tasks,
       name: 'sqre/backup/build-sqre-github-snapshot',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),

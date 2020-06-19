@@ -20,9 +20,6 @@ notify.wrap {
   def run = {
     def tasks = [:]
 
-    triggerJob trigger: tasks,
-      name: 'sqre/infra/update-cmirror'
-
     parallel tasks
   } // run
 

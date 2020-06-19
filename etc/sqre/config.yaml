@@ -45,13 +45,6 @@ s3sync:
   docker_registry:
     repo: lsstsqre/s3sync
     tag: latest
-cmirror:
-  # http only
-  base_url: http://conda-mirror.lsst.codes
-  s3_bucket: conda-mirror.lsst.codes
-  docker_registry:
-    repo: lsstsqre/cmirror
-    tag: latest
 wget:
   docker_registry:
     repo: lsstsqre/wget
