@@ -186,33 +186,31 @@ def void osxTarballs(
     // these "credentials" aren't secrets -- just a convient way of setting
     // globals for the instance. Thus, they don't need to be tightly scoped to a
     // single sh step
-    util.withCondaMirrorEnv {
-      util.withEupsEnv {
-        dir(buildDirHash.take(10)) {
-          stage('build') {
-            osxBuild(macosx_deployment_target, compiler, menv, buildTarget)
-          }
+    util.withEupsEnv {
+      dir(buildDirHash.take(10)) {
+        stage('build') {
+          osxBuild(macosx_deployment_target, compiler, menv, buildTarget)
+        }
 
-          stage('smoke') {
-            if (smokeConfig) {
-              osxSmoke(
-                macosx_deployment_target,
-                compiler,
-                menv,
-                buildTarget,
-                smokeConfig
-              )
-            }
-          } //stage
-
-          stage('publish') {
-            if (publish) {
-              s3PushDocker(envId)
-            }
+        stage('smoke') {
+          if (smokeConfig) {
+            osxSmoke(
+              macosx_deployment_target,
+              compiler,
+              menv,
+              buildTarget,
+              smokeConfig
+            )
           }
-        } // dir
-      } // util.withEupsEnv
-    } // util.withCondaMirrorEnv
+        } //stage
+
+        stage('publish') {
+          if (publish) {
+            s3PushDocker(envId)
+          }
+        }
+      } // dir
+    } // util.withEupsEnv
   } // run
 
   util.nodeWrap(label) {
@@ -301,7 +299,6 @@ def void linuxBuild(
           -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
           -v "${CIDIR}:${CIDIR_CONTAINER}" \
           -w /build \
-          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
           -u "$(id -u -n)" \
           "$IMAGE" \
@@ -450,7 +447,6 @@ def void linuxSmoke(
           -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
           -v "${CIDIR}:${CIDIR_CONTAINER}" \
           -w /smoke \
-          -e CMIRROR_S3_BUCKET="$CMIRROR_S3_BUCKET" \
           -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
           -e RUN_SCONS_CHECK="$RUN_SCONS_CHECK" \
           -e FIX_SHEBANGS=true \
@@ -833,11 +829,6 @@ def String scriptPreamble(
 
     set -xe
     set -o pipefail
-
-    if [[ -n \$CMIRROR_S3_BUCKET ]]; then
-        export LSST_CONDA_CHANNELS="http://\${CMIRROR_S3_BUCKET}/pkgs/main http://\${CMIRROR_S3_BUCKET}/pkgs/free"
-        export LSST_MINICONDA_BASE_URL="http://\${CMIRROR_S3_BUCKET}/miniconda"
-    fi
 
     if [[ -n \$EUPS_S3_BUCKET ]]; then
         export LSST_EUPS_PKGROOT_BASE_URL="https://\${EUPS_S3_BUCKET}/stack"
