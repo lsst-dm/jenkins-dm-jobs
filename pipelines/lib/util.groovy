@@ -460,7 +460,6 @@ def void jenkinsWrapper(Map buildParams) {
       buildEnv += pair.toString()
     }
 
-    // setup env vars to use a conda mirror
     withEnv(buildEnv) {
       bash './ci-scripts/jenkins_wrapper.sh'
     }
@@ -1664,32 +1663,6 @@ def void waitForS3() {
     sleep(time: scipipe.release.s3_wait_time, unit: 'MINUTES')
   }
 } // waitForS3
-
-/**
- * Invoke block with conda mirror env vars.
- *
- * Example:
- *
- *     util.withCondaMirrorEnv {
- *       util.bash './dostuff.sh'
- *     }
- *
- * @param run Closure Invoked inside of wrapper container
- */
-def void withCondaMirrorEnv(Closure run) {
-  def sqre = sqreConfig()
-
-  def baseUrl = sqre.cmirror.base_url
-  def s3Bucket = sqre.cmirror.s3_bucket
-  withEnv([
-    "CMIRROR_S3_BUCKET=${s3Bucket}",
-    "CMIRROR_BASE_URL=${baseUrl}",
-    "LSST_CONDA_CHANNELS=${baseUrl}/pkgs/main ${baseUrl}/pkgs/free",
-    "LSST_MINICONDA_BASE_URL=${baseUrl}/miniconda",
-  ]) {
-    run()
-  }
-} // withCondaMirrorEnv
 
 /**
  * Invoke block with eups related env vars.
