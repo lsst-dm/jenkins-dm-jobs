@@ -257,6 +257,21 @@ notify.wrap {
     stage('triggered jobs') {
       parallel triggerMe
     } // stage
+
+    // stage('SAL builds') {
+    //   // Must run after build-sciplatlab non-bleed has succeeded.
+    //   // The each could run in parallel
+    //   ['', 'nts', 'tts', 'base', 'summit'].each {
+    //     build(
+    //       job: 'sqre/infra/build-sal-sciplatlab',
+    //       parameters: [
+    //         string(name: 'TAG', value: eupsTag),
+    //         string(name: 'ENVIRONMENT', value: ${it}),
+    //       ],
+    //       wait: false,
+    //     )
+    //   } // each
+    // } // stage
   } // run
 
   try {
