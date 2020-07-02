@@ -41,7 +41,7 @@ notify.wrap {
         branch = 'master'
       }
       git([
-        url: 'https://github.com/lsst-sqre/jupyterlabdemo',
+        url: 'https://github.com/lsst-sqre/nublado',
         branch: branch
       ])
     }
