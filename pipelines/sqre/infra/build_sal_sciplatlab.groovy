@@ -28,7 +28,7 @@ notify.wrap {
   def run = {
     stage('checkout') {
       def branch = 'master'
-      def baseImage = 'sciplat-lab'
+      def baseImage = 'lsstsqre/sciplat-lab'
       git([
         url: 'https://github.com/lsst-sqre/sal-sciplat-lab',
         branch: branch
