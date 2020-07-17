@@ -18,17 +18,17 @@ notify.wrap {
   util.requireParams([
     'TAG',
     'TIMEOUT',
-    'ENVIRONMENT'
+    'ENVIRONMENTS'
   ])
 
   String tag         = params.TAG
   Integer timelimit  = params.TIMEOUT
-  String environment = params.ENVIRONMENT
+  String environments = params.ENVIRONMENTS
 
   def run = {
     stage('checkout') {
       def branch = 'master'
-      def baseImage = 'sciplat-lab'
+      def baseImage = 'lsstsqre/sciplat-lab'
       git([
         url: 'https://github.com/lsst-sqre/sal-sciplat-lab',
         branch: branch
@@ -42,18 +42,15 @@ notify.wrap {
     }
 
     stage('build+push') {
-      def opts = ''
-      if (environment) {
-          opts = "-e ${environment}"
-      }
+      def opts = "-t ${tag}"
       docker.withRegistry(
         'https://index.docker.io/v1/',
         'dockerhub-sqreadmin'
         ) {
             util.bash """
-              ./bld \
+              ./aggregator \
                ${opts} \
-               '${tag}'
+               ${environments}
             """
           }
     }      
