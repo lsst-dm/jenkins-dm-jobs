@@ -157,17 +157,16 @@ notify.wrap {
 
     triggerMeToo['SAL-sciplat-lab "summit" image'] = {
       retry(retries) {
-        // This is an independent image
         build(
-          job: 'sqre/infra/build-sal-sciplatlab',
+          job: 'sqre/infra/aggregate-sal',
           parameters: [
             string(name: 'TAG', value: eupsTag),
-            string(name: 'ENVIRONMENT', value: 'summit'),
-          ],
-          wait: false,
-        )
+            string(name: 'ENVIRONMENTS', value: 'summit'),
+            ],
+            wait: false,
+          )
+        } //each
       } //retry
-    }
 
     triggerMe['build Science Platform Notebook Aspect Lab image'] = {
       retry(retries) {
