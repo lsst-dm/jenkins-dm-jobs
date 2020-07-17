@@ -195,7 +195,7 @@ notify.wrap {
       //  that depend on it.
 
       // The idea here is that all the ones that are links should be built
-      //  sequentially, although I probably need an aggregator script to
+      //  sequentially, with an aggregator script used to
       //  ensure they all run on the same host so they take advantage of
       //  having a build that just needs a tag-and-push.  Those which are
       //  not all the same underlying versions can be built in parallel.
