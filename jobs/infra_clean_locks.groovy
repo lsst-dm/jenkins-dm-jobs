@@ -1,3 +1,6 @@
+import util.Common
+Common.makeFolders(this)
+
 job('sqre/infra/clean_locks') {
   description('Clean up leftover eups lockfiles')
   
