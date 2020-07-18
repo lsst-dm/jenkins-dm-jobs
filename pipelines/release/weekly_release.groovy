@@ -148,10 +148,9 @@ notify.wrap {
           parameters: [
             string(name: 'TAG', value: eupsTag),
             string(name: 'ENVIRONMENTS', value: 'nts tts base'),
-            ],
-            wait: false,
-          )
-        } //each
+          ],
+          wait: false,
+        )
       } //retry
     }
 
@@ -162,11 +161,11 @@ notify.wrap {
           parameters: [
             string(name: 'TAG', value: eupsTag),
             string(name: 'ENVIRONMENTS', value: 'summit'),
-            ],
-            wait: false,
-          )
-        } //each
+          ],
+          wait: false,
+        )
       } //retry
+    }
 
     triggerMe['build Science Platform Notebook Aspect Lab image'] = {
       retry(retries) {
