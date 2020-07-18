@@ -9,8 +9,8 @@ job('sqre/infra/clean_locks') {
   }
 
   steps {
-    node('agent-ldfc-${params.AGENT_NUM}') {
-      dir('/j/ws/stack-os-matrix/${params.PLATFORM_HASH}/lsstsw/stack/${params.ENV_HASH}/.lockDir') {
+    node("agent-ldfc-${params.AGENT_NUM}") {
+      dir("/j/ws/stack-os-matrix/${params.PLATFORM_HASH}/lsstsw/stack/${params.ENV_HASH}/.lockDir") {
          deleteDir()
       }
     }
