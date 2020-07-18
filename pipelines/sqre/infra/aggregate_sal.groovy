@@ -28,15 +28,15 @@ notify.wrap {
   def run = {
     stage('checkout') {
       def branch = 'master'
-      def baseImage = 'lsstsqre/sciplat-lab'
       git([
         url: 'https://github.com/lsst-sqre/sal-sciplat-lab',
         branch: branch
       ])
     }
 
-    // ensure the current image is used
+    // ensure the correct input image is used
     stage('docker pull') {
+      def baseImage = 'lsstsqre/sciplat-lab'
       docImage = "${baseImage}:${tag}"
       docker.image(docImage).pull()
     }
