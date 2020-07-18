@@ -2,8 +2,6 @@ import util.Common
 Common.makeFolders(this)
 
 job('sqre/infra/clean_locks') {
-  description('Clean up leftover eups lockfiles')
-  
   parameters {
     stringParam('AGENT_NUM', '', 'Agent number to run on')
     stringParam('PLATFORM_HASH', '', 'Platform hash (10 characters)')
