@@ -1,18 +1,15 @@
-import util.Common
-Common.makeFolders(this)
+import util.Plumber
 
-job('sqre/infra/clean_locks') {
+def p = new Plumber(
+  name: 'sqre/infra/clean-locks',
+  dsl: this
+)
+p.pipeline().with {
+  description('Cleans up leftover eups locks.')
+
   parameters {
     stringParam('AGENT_NUM', '', 'Agent number to run on')
     stringParam('PLATFORM_HASH', '', 'Platform hash (10 characters)')
     stringParam('ENV_HASH', '', 'Environment hash (7 characters)')
-  }
-
-  steps {
-    node("agent-ldfc-${params.AGENT_NUM}") {
-      dir("/j/ws/stack-os-matrix/${params.PLATFORM_HASH}/lsstsw/stack/${params.ENV_HASH}/.lockDir") {
-         deleteDir()
-      }
-    }
   }
 }
