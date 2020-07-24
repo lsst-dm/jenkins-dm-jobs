@@ -123,6 +123,7 @@ notify.wrap {
                 // alpine does not include bash by default
                 util.posixSh '''
                   aws s3 cp \
+                    --only-show-errors \
                     --recursive \
                     "${EUPS_PKGROOT}/" \
                     "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
