@@ -258,23 +258,33 @@ def void verifyDataset(Map p) {
 
       // push results to squash
       if (p.squashPush) {
-        def files = []
-        dir(runDir) {
-          files = findFiles(glob: '**/ap_verify.*.verify.json')
-        }
+        switch (conf.gen) {
+          case 2:
+            def files = []
+            dir(runDir) {
+              files = findFiles(glob: '**/ap_verify.*.verify.json')
+            }
 
-        def codeRef = buildCode ? code.git_ref : "master"
-        withEnv([
-          "refs=${codeRef}",
-        ]) {
-          files.each { f ->
-            util.runDispatchVerify(
-              runDir: runDir,
-              lsstswDir: fakeLsstswDir,
-              datasetName: ds.name,
-              resultFile: f,
-            )
-          }
+            def codeRef = buildCode ? code.git_ref : "master"
+            withEnv([
+              "refs=${codeRef}",
+            ]) {
+              files.each { f ->
+                util.runDispatchVerify(
+                  runDir: runDir,
+                  lsstswDir: fakeLsstswDir,
+                  datasetName: ds.name,
+                  resultFile: f,
+                )
+              }
+            }
+            break
+          case 3:
+            // TODO: implement after DM-21916
+            break
+          default:
+            currentBuild.result = 'UNSTABLE'
+            echo "SQuaSH upload not supported for Gen ${conf.gen} pipeline framework; skipping"
         }
       }
     } // insideDockerWrap
