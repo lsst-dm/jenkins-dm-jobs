@@ -23,10 +23,10 @@ ap_verify:
   defaults:
     squash_push: true
     retries: 3
+    # squash may take 10+ mins per metric upload (x7-12)
+    run_timelimit: 150
   configs:
     - dataset:
         <<: *dataset_hits2015
-      # squash may take 10+ mins per metric upload (x7-12)
-      run_timelimit: 150
       code:
         <<: *code_ap
