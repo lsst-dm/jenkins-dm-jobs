@@ -27,5 +27,6 @@ ap_verify:
   configs:
     - dataset:
         <<: *dataset_hits2015
+      gen: 2
       code:
         <<: *code_ap
