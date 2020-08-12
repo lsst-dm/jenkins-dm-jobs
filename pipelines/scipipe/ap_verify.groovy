@@ -56,6 +56,16 @@ notify.wrap {
     // butler
     def runSlug = "${datasetSlug(conf)}^${codeSlug(conf)}"
 
+    // these configs are used to construct a shell command line; guard against code injection
+    if (!(conf.dataset.name ==~ /[\w-.:]+/)) {
+      error "Ill-formed dataset name ${conf.dataset.name}"
+    }
+    if (conf.gen) {
+      conf.gen = conf.gen as int
+    } else {
+      error "Missing gen keyword in ${runSlug}"
+    }
+
     matrix[runSlug] = {
       verifyDataset(
         config: conf,
