@@ -126,7 +126,7 @@ def String displayName(Map m) {
 }
 
 /**
- * Prepare, execute, and record results of a validation_drp run.
+ * Prepare, execute, and record results of an ap_verify run.
  *
  * @param p Map
  * @param p.config Map Dataset configuration.
@@ -311,8 +311,8 @@ def void verifyDataset(Map p) {
  *
  * @param p Map
  * @param p.homemDir String path to $HOME -- where to put dotfiles
- * @param p.codeDir String path to validate_drp (code)
- * @param p,runSlug String short name to describe this drp run
+ * @param p.codeDir String path to ap_verify (code)
+ * @param p,runSlug String short name to describe this ap_verify run
  * @param p.ciDir String
  * @param p.lsstCompiler String
  * @param p.archiveDir String path from which to archive artifacts
@@ -411,7 +411,7 @@ def void runApVerify(Map p) {
     '''
   }
 
-  // run drp driver script
+  // run ap driver script
   withEnv([
     "RUN_DIR=${p.runDir}",
     "DATASET_NAME=${p.dataset.name}",
