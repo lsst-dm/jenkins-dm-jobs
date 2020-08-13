@@ -250,6 +250,7 @@ def void verifyDataset(Map p) {
       runApVerify(
         runDir: runDir,
         dataset: ds,
+        gen: conf.gen,
         datasetDir: datasetDir,
         homeDir: homeDir,
         archiveDir: jobDir,
@@ -374,6 +375,7 @@ def void buildAp(Map p) {
  * @param p Map
  * @param p.runDir String runtime cwd
  * @param p.dataset String full name of the validation dataset
+ * @param p.gen Integer pipeline generation to run
  * @param p.datasetDir String path to validation dataset
  * @param p.homemDir String path to $HOME -- where to put dotfiles
  * @param p.archiveDir String path from which to archive artifacts
@@ -382,6 +384,7 @@ def void runApVerify(Map p) {
   util.requireMapKeys(p, [
     'runDir',
     'dataset',
+    'gen',
     'datasetDir',
     'homeDir',
     'archiveDir',
@@ -404,7 +407,7 @@ def void runApVerify(Map p) {
       setup -k -r .
 
       cd ${RUN_DIR}
-      run_ci_dataset.sh -d ${DATASET_NAME}
+      run_ci_dataset.sh -d ${DATASET_NAME} -g ${DATASET_GEN}
     '''
   }
 
@@ -412,6 +415,7 @@ def void runApVerify(Map p) {
   withEnv([
     "RUN_DIR=${p.runDir}",
     "DATASET_NAME=${p.dataset.name}",
+    "DATASET_GEN=${p.gen}",
     "DATASET_DIR=${p.datasetDir}",
     "HOME=${p.homeDir}",
     "CODE_DIR=${p.codeDir}",
