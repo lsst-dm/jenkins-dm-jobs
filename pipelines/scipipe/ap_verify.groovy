@@ -56,6 +56,16 @@ notify.wrap {
     // butler
     def runSlug = "${datasetSlug(conf)}^${codeSlug(conf)}"
 
+    // these configs are used to construct a shell command line; guard against code injection
+    if (!(conf.dataset.name ==~ /[\w-.:]+/)) {
+      error "Ill-formed dataset name ${conf.dataset.name}"
+    }
+    if (conf.gen) {
+      conf.gen = conf.gen as int
+    } else {
+      error "Missing gen keyword in ${runSlug}"
+    }
+
     matrix[runSlug] = {
       verifyDataset(
         config: conf,
@@ -116,7 +126,7 @@ def String displayName(Map m) {
 }
 
 /**
- * Prepare, execute, and record results of a validation_drp run.
+ * Prepare, execute, and record results of an ap_verify run.
  *
  * @param p Map
  * @param p.config Map Dataset configuration.
@@ -240,6 +250,7 @@ def void verifyDataset(Map p) {
       runApVerify(
         runDir: runDir,
         dataset: ds,
+        gen: conf.gen,
         datasetDir: datasetDir,
         homeDir: homeDir,
         archiveDir: jobDir,
@@ -248,23 +259,33 @@ def void verifyDataset(Map p) {
 
       // push results to squash
       if (p.squashPush) {
-        def files = []
-        dir(runDir) {
-          files = findFiles(glob: '**/ap_verify.*.verify.json')
-        }
+        switch (conf.gen) {
+          case 2:
+            def files = []
+            dir(runDir) {
+              files = findFiles(glob: '**/ap_verify.*.verify.json')
+            }
 
-        def codeRef = buildCode ? code.git_ref : "master"
-        withEnv([
-          "refs=${codeRef}",
-        ]) {
-          files.each { f ->
-            util.runDispatchVerify(
-              runDir: runDir,
-              lsstswDir: fakeLsstswDir,
-              datasetName: ds.name,
-              resultFile: f,
-            )
-          }
+            def codeRef = buildCode ? code.git_ref : "master"
+            withEnv([
+              "refs=${codeRef}",
+            ]) {
+              files.each { f ->
+                util.runDispatchVerify(
+                  runDir: runDir,
+                  lsstswDir: fakeLsstswDir,
+                  datasetName: ds.name,
+                  resultFile: f,
+                )
+              }
+            }
+            break
+          case 3:
+            // TODO: implement after DM-21916
+            break
+          default:
+            currentBuild.result = 'UNSTABLE'
+            echo "SQuaSH upload not supported for Gen ${conf.gen} pipeline framework; skipping"
         }
       }
     } // insideDockerWrap
@@ -290,8 +311,8 @@ def void verifyDataset(Map p) {
  *
  * @param p Map
  * @param p.homemDir String path to $HOME -- where to put dotfiles
- * @param p.codeDir String path to validate_drp (code)
- * @param p,runSlug String short name to describe this drp run
+ * @param p.codeDir String path to ap_verify (code)
+ * @param p,runSlug String short name to describe this ap_verify run
  * @param p.ciDir String
  * @param p.lsstCompiler String
  * @param p.archiveDir String path from which to archive artifacts
@@ -354,6 +375,7 @@ def void buildAp(Map p) {
  * @param p Map
  * @param p.runDir String runtime cwd
  * @param p.dataset String full name of the validation dataset
+ * @param p.gen Integer pipeline generation to run
  * @param p.datasetDir String path to validation dataset
  * @param p.homemDir String path to $HOME -- where to put dotfiles
  * @param p.archiveDir String path from which to archive artifacts
@@ -362,6 +384,7 @@ def void runApVerify(Map p) {
   util.requireMapKeys(p, [
     'runDir',
     'dataset',
+    'gen',
     'datasetDir',
     'homeDir',
     'archiveDir',
@@ -384,14 +407,15 @@ def void runApVerify(Map p) {
       setup -k -r .
 
       cd ${RUN_DIR}
-      run_ci_dataset.sh -d ${DATASET_NAME}
+      run_ci_dataset.sh -d ${DATASET_NAME} -g ${DATASET_GEN}
     '''
   }
 
-  // run drp driver script
+  // run ap driver script
   withEnv([
     "RUN_DIR=${p.runDir}",
     "DATASET_NAME=${p.dataset.name}",
+    "DATASET_GEN=${p.gen}",
     "DATASET_DIR=${p.datasetDir}",
     "HOME=${p.homeDir}",
     "CODE_DIR=${p.codeDir}",
@@ -404,7 +428,8 @@ def void runApVerify(Map p) {
       dir(p.archiveDir) {
         util.record(util.xz([
           "${p.runDir}/**/*.log",
-          "${p.runDir}/**/*.json",
+          "${p.runDir}/**/*.json",  # Gen 2
+          "${p.runDir}/**/metricvalue_*/**/*.yaml",  # Gen 3
           "${p.runDir}/**/*.db",
         ]))
       }
