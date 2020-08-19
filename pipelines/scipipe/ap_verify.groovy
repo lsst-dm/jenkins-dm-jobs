@@ -54,7 +54,7 @@ notify.wrap {
 
     // note that `:` seems to break python imports and `*` seems to break the
     // butler
-    def runSlug = "${datasetSlug(conf)}^${codeSlug(conf)}"
+    def runSlug = "${datasetSlug(conf)}^${genSlug(conf)}^${codeSlug(conf)}"
 
     // these configs are used to construct a shell command line; guard against code injection
     if (!(conf.dataset.name ==~ /[\w-.:]+/)) {
@@ -91,6 +91,16 @@ notify.wrap {
 def String datasetSlug(Map conf) {
   def ds = conf.dataset
   def slug = "${ds.display_name}-${ds.git_ref.tr('/', '_')}"
+  return slug.toLowerCase()
+}
+
+/**
+ * Generate a "slug" to describe the Middleware generation.
+ *
+ * @param c Map
+ */
+def String genSlug(Map conf) {
+  def slug = "gen${conf.gen}"
   return slug.toLowerCase()
 }
 
