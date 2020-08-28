@@ -139,56 +139,31 @@ notify.wrap {
     } // stage
 
     def triggerMe = [:]
-    def triggerMeToo = [:]
 
-    triggerMeToo['SAL-sciplat-lab linked image set'] = {
-      retry(retries) {
-        build(
-          job: 'sqre/infra/aggregate-sal',
-          parameters: [
-            string(name: 'TAG', value: eupsTag),
-            string(name: 'ENVIRONMENTS', value: 'nts tts base'),
-          ],
-          wait: false,
-        )
-      } //retry
-    }
-
-    triggerMeToo['SAL-sciplat-lab "summit" image'] = {
-      retry(retries) {
-        build(
-          job: 'sqre/infra/aggregate-sal',
-          parameters: [
-            string(name: 'TAG', value: eupsTag),
-            string(name: 'ENVIRONMENTS', value: 'summit'),
-          ],
-          wait: false,
-        )
-      } //retry
-    }
-
-    triggerMe['build Science Platform Notebook Aspect Lab image'] = {
-      retry(retries) {
-        // based on lsstsqre/stack image
-        build(
-          job: 'sqre/infra/build-sciplatlab',
-          parameters: [
-            string(name: 'TAG', value: eupsTag),
-            booleanParam(name: 'NO_PUSH', value: false),
-            booleanParam(name: 'JLBLEED', value: false),
-            string(
-              name: 'IMAGE_NAME',
-              value: scipipe.release.step.build_sciplatlab.image_name,
-            ),
-            // BASE_IMAGE is the registry repo name *only* without a tag
-            string(
-              name: 'BASE_IMAGE',
-              value: stackResults.docker_registry.repo,
-            ),
-          ],
-          wait: false,
-        )
-      } // retry
+    triggerMe['build Science Platform Notebook Aspect Lab images'] = {
+      stage('build normal Lab images') {
+        retry(retries) {
+          // based on lsstsqre/stack image
+          build(
+            job: 'sqre/infra/build-sciplatlab',
+            parameters: [
+              string(name: 'TAG', value: eupsTag),
+              booleanParam(name: 'NO_PUSH', value: false),
+              booleanParam(name: 'JLBLEED', value: false),
+              string(
+                name: 'IMAGE_NAME',
+                value: scipipe.release.step.build_sciplatlab.image_name,
+              ),
+              // BASE_IMAGE is the registry repo name *only* without a tag
+              string(
+                name: 'BASE_IMAGE',
+                value: stackResults.docker_registry.repo,
+              ),
+            ],
+            wait: false,
+          )
+        } // retry
+      } // stage
 
       // After building the weekly, we fire off the sal-sciplat-lab jobs
       //  that depend on it.
@@ -198,8 +173,35 @@ notify.wrap {
       //  ensure they all run on the same host so they take advantage of
       //  having a build that just needs a tag-and-push.  Those which are
       //  not all the same underlying versions can be built in parallel.
+      // Unfortunately, Jenkins Groovy does not allow nesting of parallel
+      //  stages within other parallel stages, so we do these all
+      //  sequentially in order not to have them held up by validate_drp.
 
-      parallel triggerMeToo
+      stage('SAL-sciplat-lab linked image set') {
+        retry(retries) {
+          build(
+            job: 'sqre/infra/aggregate-sal',
+            parameters: [
+              string(name: 'TAG', value: eupsTag),
+              string(name: 'ENVIRONMENTS', value: 'nts tts base'),
+            ],
+            wait: false,
+          )
+        } // retry
+      } // stage
+
+      stage('SAL-sciplat-lab "summit" image') {
+        retry(retries) {
+          build(
+            job: 'sqre/infra/aggregate-sal',
+            parameters: [
+              string(name: 'TAG', value: eupsTag),
+              string(name: 'ENVIRONMENTS', value: 'summit'),
+            ],
+            wait: false,
+          )
+        } //retry
+      } // stage
     }
 
     triggerMe['build Science Platform Notebook Aspect Lab image (bleed)'] = {
