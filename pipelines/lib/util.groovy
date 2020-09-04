@@ -1534,6 +1534,7 @@ def Object apVerifyConfig() {
   readYamlFile('etc/scipipe/ap_verify.yaml')
 }
 
+
 /*
  * Get sims config
  *
@@ -1550,6 +1551,15 @@ def Object simsConfig() {
  */
 def Object validateDrpConfig() {
   readYamlFile('etc/scipipe/validate_drp.yaml')
+}
+
+/*
+ * Get validate_drp_gen3 config
+ *
+ * @return config Object
+ */
+def Object validateDrpGen3Config() {
+  readYamlFile('etc/scipipe/validate_drp_gen3.yaml')
 }
 
 /*
