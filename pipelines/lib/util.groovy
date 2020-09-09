@@ -1534,7 +1534,6 @@ def Object apVerifyConfig() {
   readYamlFile('etc/scipipe/ap_verify.yaml')
 }
 
-
 /*
  * Get sims config
  *

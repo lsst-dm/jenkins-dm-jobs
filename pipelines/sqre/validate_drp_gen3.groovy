@@ -402,7 +402,7 @@ def void runDrpGen3(Map p) {
       dir(p.archiveDir) {
         util.record(util.xz([
           "${p.runDir}/**/*.log",
-          "${p.runDir}/**/validaet_drp_*.json",
+          "${p.runDir}/**/validate_drp_*.json",
         ]))
       }
     } // try
