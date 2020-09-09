@@ -1553,6 +1553,15 @@ def Object validateDrpConfig() {
 }
 
 /*
+ * Get validate_drp_gen3 config
+ *
+ * @return config Object
+ */
+def Object validateDrpGen3Config() {
+  readYamlFile('etc/scipipe/validate_drp_gen3.yaml')
+}
+
+/*
  * Get default awscli docker image string
  *
  * @return awscliImage String

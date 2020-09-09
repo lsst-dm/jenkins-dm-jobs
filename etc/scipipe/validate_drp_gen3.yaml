@@ -1,0 +1,51 @@
+---
+#
+# *_timelimit is in minutes
+#
+# The template dict/map/hash MUST NOT be used directly -- it exists ONLY to
+# provide yaml anchors internal to this file.
+#
+template:
+  datasets:
+    cfht: &dataset_cfht
+      display_name: cfht
+      name: validation_data_cfht
+      github_repo: lsst/validation_data_cfht
+      git_ref: master
+      clone_timelimit: 15
+    hsc: &dataset_hsc
+      display_name: hsc
+      name: validation_data_hsc
+      github_repo: lsst/validation_data_hsc
+      git_ref: master
+      clone_timelimit: 240
+    decam: &dataset_decam
+      display_name: decam
+      name: validation_data_decam
+      github_repo: lsst/validation_data_decam
+      git_ref: master
+      clone_timelimit: 60
+  codes:
+    validate_drp_gen3: &code_drp_gen3
+      name: validate_drp_gen3
+      github_repo: lsst-dmsst/metric_pipeline_tasks
+      git_ref: master
+      clone_timelimit: 5
+validate_drp_gen3:
+  # defaults are used in all configs which do not explicitly set a value for
+  # key(s) of the same name.
+  defaults:
+    retries: 3
+    squash_push: true
+  # all configs must include a dataset and run_timelimit.
+  # if no code map is defined, the version present in the container is used.
+  configs:
+    # - dataset:
+    #     <<: *dataset_cfht
+    #   run_timelimit: 30
+    - dataset:
+        <<: *dataset_hsc
+      run_timelimit: 1080
+    # - dataset:
+    #     <<: *dataset_decam
+    #   run_timelimit: 60
