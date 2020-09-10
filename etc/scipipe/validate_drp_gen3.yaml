@@ -27,7 +27,6 @@ template:
       clone_timelimit: 60
   codes:
     validate_drp_gen3: &code_drp_gen3
-      display_name: validate_drp_gen3
       name: metric_pipeline_tasks
       github_repo: lsst-dmsst/metric_pipeline_tasks
       git_ref: master
@@ -47,6 +46,8 @@ validate_drp_gen3:
     - dataset:
         <<: *dataset_hsc
       run_timelimit: 1080
+      code:
+        <<: *code_drp_gen3
     # - dataset:
     #     <<: *dataset_decam
     #   run_timelimit: 60
