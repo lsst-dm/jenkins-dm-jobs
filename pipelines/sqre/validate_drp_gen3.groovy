@@ -135,7 +135,6 @@ def void verifyDataset(Map p) {
   def code = conf.code
 
   // code.name is required in order to build code
-  Boolean buildCode = code?.name
 
   def run = {
     // note that pwd() must be run inside of a node {} block
@@ -144,7 +143,7 @@ def void verifyDataset(Map p) {
     def ciDir            = "${jobDir}/ci-scripts"
     def baseDir          = "${jobDir}/${p.slug}"
     // the code clone needs to be under the long winded path for archiving
-    def codeDir          = buildCode ? "${baseDir}/${code.name}" : ''
+    def codeDir          = "${baseDir}/${code.name}"
     def homeDir          = "${baseDir}/home"
     def runDir           = "${baseDir}/run"
     def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
@@ -193,44 +192,40 @@ def void verifyDataset(Map p) {
     } // dir
 
     // clone code
-    if (buildCode) {
-      dir(codeDir) {
-        timeout(time: code.clone_timelimit, unit: 'MINUTES') {
-          // the simplier git step doesn't support 'CleanBeforeCheckout'
-          def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
-          def codeRef     = code.git_ref
+    dir(codeDir) {
+      timeout(time: code.clone_timelimit, unit: 'MINUTES') {
+        // the simplier git step doesn't support 'CleanBeforeCheckout'
+        def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
+        def codeRef     = code.git_ref
 
-          checkout(
-            scm: [
-              $class: 'GitSCM',
-              branches: [[name: "*/${codeRef}"]],
-              doGenerateSubmoduleConfigurations: false,
-              extensions: [[$class: 'CleanBeforeCheckout']],
-              submoduleCfg: [],
-              userRemoteConfigs: [[url: codeRepoUrl]]
-            ],
-            changelog: false,
-            poll: false,
-          )
-        } // timeout
-      } // dir
-    }
+        checkout(
+          scm: [
+            $class: 'GitSCM',
+            branches: [[name: "*/${codeRef}"]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [[$class: 'CleanBeforeCheckout']],
+            submoduleCfg: [],
+            userRemoteConfigs: [[url: codeRepoUrl]]
+          ],
+          changelog: false,
+          poll: false,
+        )
+      } // timeout
+    } // dir
 
     util.insideDockerWrap(
       image: p.dockerImage,
       pull: true,
       args: "-v ${datasetDir}:${datasetDir} -v ${ciDir}:${ciDir}",
     ) {
-      if (buildCode) {
-        buildDrpGen3(
-          codeDir: codeDir,
-          ciDir: ciDir,
-          homeDir: homeDir,
-          runSlug: p.slug,
-          lsstCompiler: lsstCompiler,
-          archiveDir: jobDir,
-        )
-      }
+      buildDrpGen3(
+        codeDir: codeDir,
+        ciDir: ciDir,
+        homeDir: homeDir,
+        runSlug: p.slug,
+        lsstCompiler: lsstCompiler,
+        archiveDir: jobDir,
+      )
 
       runDrpGen3(
         runDir: runDir,
@@ -373,13 +368,13 @@ def void buildDrpGen3(Map p) {
 def void runDrpGen3(Map p) {
   util.requireMapKeys(p, [
     'runDir',
+    'codeDir',
     'datasetName',
     'datasetDir',
     'ciDir',
     'archiveDir',
   ])
 
-  p = [codeDir: ''] + p
 
   withEnv([
     "LSST_VALIDATE_DRP_GEN3_CODE_DIR=${p.codeDir}",
@@ -415,17 +410,16 @@ def void runDrpGen3(Map p) {
  * @param p Map
  * @param p.runDir String
  * @param p.datasetName String The dataset name. Eg., validation_data_cfht
- * @param p.codeDir String (Optional)
+ * @param p.codeDir String
  * @param p.archiveDir String path from which to archive artifacts
  */
 def void runReportPerformanceGen3(Map p) {
   util.requireMapKeys(p, [
     'runDir',
+    'codeDir',
     'datasetName',
     'archiveDir',
   ])
-
-  p = [codeDir: ''] + p
 
   def run = {
     util.bash '''
