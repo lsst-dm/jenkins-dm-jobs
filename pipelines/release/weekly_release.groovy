@@ -160,7 +160,6 @@ notify.wrap {
                 value: stackResults.docker_registry.repo,
               ),
             ],
-            wait: false,
           )
         } // retry
       } // stage
