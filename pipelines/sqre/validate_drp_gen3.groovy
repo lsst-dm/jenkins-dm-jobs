@@ -236,14 +236,6 @@ def void verifyDataset(Map p) {
         archiveDir: jobDir,
       )
 
-      // compute characterization report
-      runReportPerformanceGen3(
-        runDir: runDir,
-        codeDir: codeDir,
-        datasetName: ds.name,
-        archiveDir: jobDir,
-      )
-
       // push results to squash
       if (p.squashPush) {
         def files = []
@@ -403,59 +395,6 @@ def void runDrpGen3(Map p) {
     } // try
   } // withEnv
 } // runDrpGen3
-
-/**
- * Generate characterization report using reportPerformance.py
- *
- * @param p Map
- * @param p.runDir String
- * @param p.datasetName String The dataset name. Eg., validation_data_cfht
- * @param p.codeDir String
- * @param p.archiveDir String path from which to archive artifacts
- */
-def void runReportPerformanceGen3(Map p) {
-  util.requireMapKeys(p, [
-    'runDir',
-    'codeDir',
-    'datasetName',
-    'archiveDir',
-  ])
-
-  def run = {
-    util.bash '''
-      set +o xtrace
-      source /opt/lsst/software/stack/loadLSST.bash
-      # if CODE_DIR is defined, set that up instead of the default metric_pipeline_tasks
-      # product
-      if [[ -n $CODE_DIR ]]; then
-        setup -k -r "$CODE_DIR"
-      else
-        setup metric_pipeline_tasks
-      fi
-      set -o xtrace
-
-      # compute characterization report
-      reportPerformanceGen3.py \
-        --output_file="${DATASET}_char_report.rst" \
-        validate_drp_*.json
-    '''
-  } // run
-
-  withEnv([
-    "CODE_DIR=${p.codeDir}",
-    "DATASET=${p.datasetName}",
-  ]) {
-    try {
-      dir(p.runDir) {
-        run()
-      }
-    } finally {
-      dir(p.archiveDir) {
-        util.record(util.xz(["${p.runDir}/**/*_char_report.rst"]))
-      }
-    } // try
-  } // withEnv
-} // runReportPerformance
 
 def void missingDockerLabel(String label) {
   error "docker ${label} label is missing"
