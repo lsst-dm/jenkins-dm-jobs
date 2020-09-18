@@ -1946,9 +1946,8 @@ def void runDispatchVerify(Map p) {
     'lsstswDir',
     'datasetName',
     'resultFile',
+    'squashUrl',
   ])
-
-  def sqre = sqreConfig()
 
   def run = {
     util.bash '''
@@ -1979,7 +1978,7 @@ def void runDispatchVerify(Map p) {
   withEnv([
     "LSSTSW_DIR=${p.lsstswDir}",
     "dataset=${p.datasetName}",
-    "SQUASH_URL=${sqre.squash.url}",
+    "SQUASH_URL=${p.squashUrl}",
     "RESULT_FILE=${p.resultFile}",
   ]) {
     withCredentials([[

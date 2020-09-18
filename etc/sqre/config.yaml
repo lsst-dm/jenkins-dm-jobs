@@ -51,6 +51,7 @@ wget:
     tag: latest
 squash:
   url: https://squash-restful-api.lsst.codes/
+  sandbox_url: https://squash-restful-api-sandbox.lsst.codes
 scipipe_base:
   docker_registry:
     repo: lsstdm/scipipe-base
