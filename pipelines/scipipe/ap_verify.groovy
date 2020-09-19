@@ -286,6 +286,7 @@ def void verifyDataset(Map p) {
                   lsstswDir: fakeLsstswDir,
                   datasetName: ds.name,
                   resultFile: f,
+                  squashUrl: sqre.squash.url,
                 )
               }
             }
