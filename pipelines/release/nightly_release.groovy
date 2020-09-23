@@ -208,6 +208,24 @@ notify.wrap {
       } // retry
     }
 
+    triggerMe['validate_drp_gen3'] = {
+      retry(1) {
+        // based on lsstsqre/stack image
+        build(
+          job: 'sqre/validate_drp_gen3',
+          parameters: [
+            string(name: 'DOCKER_IMAGE', value: stackResults.image),
+            booleanParam(
+              name: 'NO_PUSH',
+              value: scipipe.release.step.validate_drp_gen3.no_push,
+            ),
+            booleanParam(name: 'WIPEOUT', value: false),
+          ],
+          wait: false,
+        )
+      } // retry
+    }
+    
     triggerMe['doc build'] = {
       retry(retries) {
         build(

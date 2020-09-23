@@ -143,6 +143,8 @@ release:
       image_name: lsstsqre/sciplat-lab
     validate_drp:
       no_push: false
+    validate_drp_gen3:
+      no_push: false
     documenteer:
       publish: true
     ap_verify:
