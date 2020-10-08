@@ -93,6 +93,8 @@ scipipe-lsstsw-lsst_distrib:
   - <<: *mojave-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
+  - <<: *el8-conda
+  - <<: *mojave-conda
 dax-lsstsw-matrix:
   - <<: *el7-conda
     splenv_ref: 'ceb6bb6'
