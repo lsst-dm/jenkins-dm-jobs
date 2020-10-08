@@ -10,7 +10,7 @@ p.pipeline().with {
   parameters {
     stringParam('TAG', null, 'sciplat-lab tag')
     stringParam('TIMEOUT', '4', 'build timeout in hours')
-    stringParam('ENVIRONMENTS', '', 'space-separated environment list, e.g "nts tts base"')
+    stringParam('ENVIRONMENTS', '', 'space-separated environment list, e.g "nts tts"')
   }
 
   concurrentBuild(true)

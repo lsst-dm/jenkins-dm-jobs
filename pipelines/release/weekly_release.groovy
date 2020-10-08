@@ -182,11 +182,24 @@ notify.wrap {
             job: 'sqre/infra/aggregate-sal',
             parameters: [
               string(name: 'TAG', value: eupsTag),
-              string(name: 'ENVIRONMENTS', value: 'nts tts base'),
+              string(name: 'ENVIRONMENTS', value: 'nts tts'),
             ],
             wait: false,
           )
         } // retry
+      } // stage
+
+      stage('SAL-sciplat-lab "base" image') {
+        retry(retries) {
+          build(
+            job: 'sqre/infra/aggregate-sal',
+            parameters: [
+              string(name: 'TAG', value: eupsTag),
+              string(name: 'ENVIRONMENTS', value: 'base'),
+            ],
+            wait: false,
+          )
+        } //retry
       } // stage
 
       stage('SAL-sciplat-lab "summit" image') {
