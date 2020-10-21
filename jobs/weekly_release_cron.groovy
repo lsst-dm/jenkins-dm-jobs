@@ -5,6 +5,6 @@ p.pipeline().with {
   description('Periodically trigger the DM pipelines/dax "weekly".')
 
   triggers {
-    cron('0 0 * * 6')
+    cron('0 0 * * 4')
   }
 }
