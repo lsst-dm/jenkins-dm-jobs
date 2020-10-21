@@ -6,6 +6,6 @@ p.pipeline().with {
 
   triggers {
     // run every day EXCEPT on the day of the weekly
-    cron('0 0 * * 0-5,7')
+    cron('0 0 * * 0-3,5-7')
   }
 }
