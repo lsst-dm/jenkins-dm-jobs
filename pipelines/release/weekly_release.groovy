@@ -189,13 +189,13 @@ notify.wrap {
         } // retry
       } // stage
 
-      stage('SAL-sciplat-lab "base" image') {
+      stage('SAL-sciplat-lab "base" and "kueyen" image') {
         retry(retries) {
           build(
             job: 'sqre/infra/aggregate-sal',
             parameters: [
               string(name: 'TAG', value: eupsTag),
-              string(name: 'ENVIRONMENTS', value: 'base'),
+              string(name: 'ENVIRONMENTS', value: 'base kueyen'),
             ],
             wait: false,
           )
