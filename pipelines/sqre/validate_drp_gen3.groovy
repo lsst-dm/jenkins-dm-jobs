@@ -308,14 +308,15 @@ def void buildDrpGen3(Map p) {
   def run = {
     util.bash '''
       set +o xtrace
-      pip install --user dustmaps
-      python -c "import dustmaps.sfd;dustmaps.sfd.fetch()"
 
       source "${CI_DIR}/ccutils.sh"
       cc::setup_first "$LSST_COMPILER"
 
       source /opt/lsst/software/stack/loadLSST.bash
       setup -k -r .
+      
+      pip install --user dustmaps
+      python -c "import dustmaps.sfd;dustmaps.sfd.fetch()"
 
       set -o xtrace
 
