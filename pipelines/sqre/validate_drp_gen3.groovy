@@ -315,7 +315,7 @@ def void buildDrpGen3(Map p) {
       source /opt/lsst/software/stack/loadLSST.bash
       setup -k -r .
       
-      pip install --user dustmaps
+      conda install dustmaps
       python -c "import dustmaps.sfd;dustmaps.sfd.fetch()"
 
       set -o xtrace
