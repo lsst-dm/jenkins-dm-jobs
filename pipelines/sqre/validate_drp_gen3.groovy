@@ -314,9 +314,12 @@ def void buildDrpGen3(Map p) {
 
       source /opt/lsst/software/stack/loadLSST.bash
       setup -k -r .
+      
+      pip install --user dustmaps
+      python -c "import dustmaps.sfd;dustmaps.sfd.fetch()"
 
       set -o xtrace
-
+      export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python3.7/site-packages/
       scons
     '''
   }

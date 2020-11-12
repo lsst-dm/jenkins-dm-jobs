@@ -118,7 +118,7 @@ tarball:
   # can not be `eups distrib install`ed. It should be aliased to
   # `canonical.products` once lsst_ci is distrib installable.
   # products: *canonical_products
-  products: lsst_distrib lsst_dm_stack_demo
+  products: lsst_distrib pipelines_check
   build_config:
     - <<: *tarball_defaults
       <<: *el8-conda
