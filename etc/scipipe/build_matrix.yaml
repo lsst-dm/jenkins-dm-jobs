@@ -97,20 +97,20 @@ scipipe-lsstsw-matrix:
 #    allow_fail: true
   - <<: *el8-conda
 #    allow_fail: true
-#  - <<: *catalina-conda
+  - <<: *catalina-conda
     # allow builds on catalina and big sur
-#    label: osx-10.13||osx-10.14
-#    display_name: macos
-#    display_compiler: clang
+    label: osx-10.13||osx-10.14
+    display_name: macos
+    display_compiler: clang
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
   - <<: *el8-conda
-#  - <<: *catalina-conda
-#  - <<: *bigsur-conda
+  - <<: *catalina-conda
+  - <<: *bigsur-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
   - <<: *el8-conda
-#  - <<: *bigsur-conda
+  - <<: *bigsur-conda
 dax-lsstsw-matrix:
   - <<: *el7-conda
     splenv_ref: 'ceb6bb6'
@@ -144,12 +144,12 @@ tarball:
       <<: *el7-conda
       platform: el7
       osfamily: redhat
-#    - <<: *tarball_defaults
-#      <<: *bigsur-conda
-#      platform: '10.9'
-#      osfamily: osx
-#      timelimit: 8
-#      allow_fail: true
+    - <<: *tarball_defaults
+      <<: *bigsur-conda
+      platform: '10.9'
+      osfamily: osx
+      timelimit: 8
+      allow_fail: true
 #
 # X-release pattern pipelines
 #
