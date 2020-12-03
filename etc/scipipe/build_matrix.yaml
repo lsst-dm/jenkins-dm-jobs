@@ -5,7 +5,7 @@
 # provide yaml anchors internal to this file.
 #
 template:
-  splenv_ref: &splenv_ref 'cb4e2dc'
+  splenv_ref: &splenv_ref '0.1.4'
   tarball_defaults: &tarball_defaults
     miniver: &miniver 'py37_4.8.2'
     timelimit: 6
