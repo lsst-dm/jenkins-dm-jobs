@@ -33,19 +33,12 @@ notify.wrap {
     LSST_SPLENV_REF: SPLENV_REF
   ]
 
-  // override conda env ref from build_matrix.yaml
-  //if (params.SPLENV_REF) {
-  //  buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
-  //}
-  // To remove (since SPLENV_REF is set by default)
-  //  and added in the def buildParams just above
-
   // if provided fork parameters, add them to the build params
   if (params.RUBINENV_ORG_FORK != null) {
-    buildParams['RUBINENV_ORG_FORK']=params.RUBINENV_ORG_FORK
+    buildParams['RUBINENV_ORG_FORK'] = params.RUBINENV_ORG_FORK
   }
   if (params.RUBINENV_BRANCHi != null) {
-    buildParams['RUBINENV_BRANCH']=params.RUBINENV_BRANCH
+    buildParams['RUBINENV_BRANCH'] = params.RUBINENV_BRANCH
   }
 
   def lsstswConfigs = scipipe[BUILD_CONFIG]
