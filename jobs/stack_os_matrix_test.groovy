@@ -5,7 +5,7 @@ def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrix_te
 
 def p = new Plumber(name: 'stack-os-matrix-test', dsl: this)
 p.pipeline().with {
-  description('Execute a build of EUPS products using `lsstsw` (test).')
+  description('Execute a build of EUPS products using `lsstsw` (TEST).')
 
   parameters {
     stringParam('REFS', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" or branch from repos.yaml is implicitly appended to the right side of the list, if not specified; do not specify "master" explicitly.')

@@ -206,7 +206,7 @@ newinstall:
     repo: lsstsqre/newinstall
     tag: latest
   github_repo: lsst/lsst
-  git_ref: master
+  git_ref: tickets/DM-27005
 eups:
   base_url: https://eups.lsst.codes/stack
   s3_bucket: eups.lsst.codes
