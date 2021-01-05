@@ -57,7 +57,8 @@ while [ -h "$PRG" ] ; do
     fi
 done
 SAVED="$(pwd)"
-cd "$(dirname \""$PRG"\")/" >&- || exit
+# shellcheck disable=SC2006
+cd "`dirname \"$PRG\"`/" >&- || exit
 APP_HOME="$(pwd -P)"
 cd "$SAVED" >&- || exit
 
