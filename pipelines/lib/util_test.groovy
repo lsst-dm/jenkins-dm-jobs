@@ -285,7 +285,7 @@ def void runPublish(Map p) {
     'parameters',
   ])
   def useP = [
-    job: 'release/run-publish',
+    job: 'release/run-publish-test',
   ] + p
 
   requireMapKeys(p.parameters, [
@@ -1071,7 +1071,7 @@ def void buildTarballMatrix(Map p) {
 
     def tarballBuild = {
       retry(p.retries) {
-        build job: 'release/tarball',
+        build job: 'release/tarball-test',
           parameters: [
             string(name: 'PRODUCTS', value: p.parameters.PRODUCTS),
             string(name: 'EUPS_TAG', value: p.parameters.EUPS_TAG),
@@ -1313,7 +1313,7 @@ def ltdPush(Map p) {
  */
 def String runRebuild(Map p) {
   def useP = [
-    job: 'release/run-rebuild',
+    job: 'release/run-rebuild-test',
   ] + p
 
   useP.parameters = [
