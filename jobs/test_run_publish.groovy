@@ -1,7 +1,7 @@
 import util.Plumber
 import org.yaml.snakeyaml.Yaml
 
-def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrixi_test.yaml'))
+def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrix_test.yaml'))
 
 // note that this job *will not work* unless run-rebuild has been executed at
 // least once in order to initialize the env.

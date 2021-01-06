@@ -1,7 +1,7 @@
 import util.Plumber
 import org.yaml.snakeyaml.Yaml
 
-def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrixi_test.yaml'))
+def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrix_test.yaml'))
 
 def p = new Plumber(name: 'release/test-run-rebuild', dsl: this)
 p.pipeline().with {
