@@ -3,7 +3,7 @@ import org.yaml.snakeyaml.Yaml
 
 def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrix_test.yaml'))
 
-def p = new Plumber(name: 'stack-os-matrix-test', dsl: this)
+def p = new Plumber(name: 'test-stack-os-matrix', dsl: this)
 p.pipeline().with {
   description('Execute a build of EUPS products using `lsstsw` (TEST).')
 

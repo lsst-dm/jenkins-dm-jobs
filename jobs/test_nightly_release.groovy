@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'release/nightly-release-test', dsl: this)
+def p = new Plumber(name: 'release/test-nightly-release', dsl: this)
 p.pipeline().with {
   description('Tag and release the DM pipelines/dax "nightly" (TEST).')
 

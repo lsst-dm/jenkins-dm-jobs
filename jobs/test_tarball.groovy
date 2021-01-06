@@ -3,9 +3,9 @@ import org.yaml.snakeyaml.Yaml
 
 def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrix_test.yaml'))
 
-def p = new Plumber(name: 'release/tarball-test', dsl: this)
+def p = new Plumber(name: 'release/test-tarball', dsl: this)
 p.pipeline().with {
-  description('build and publish EUPS distrib "tarball" packages')
+  description('build and publish EUPS distrib "tarball" packages (TEST).')
 
   parameters {
     // XXX This is a kludge around lsst_ci requiring git-lfs backed products

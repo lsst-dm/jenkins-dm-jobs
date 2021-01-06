@@ -5,9 +5,9 @@ def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrixi_t
 
 // note that this job *will not work* unless run-rebuild has been executed at
 // least once in order to initialize the env.
-def p = new Plumber(name: 'release/run-publish-test', dsl: this)
+def p = new Plumber(name: 'release/test-run-publish', dsl: this)
 p.pipeline().with {
-  description('Create and publish EUPS distrib packages.')
+  description('Create and publish EUPS distrib packages. (TEST)')
 
   parameters {
     choiceParam('EUPSPKG_SOURCE', ['git', 'package'], 'type of "eupspkg" to create -- "git" should always be used except for a final (non-rc) release')

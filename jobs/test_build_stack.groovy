@@ -3,9 +3,9 @@ import org.yaml.snakeyaml.Yaml
 
 def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrix_test.yaml'))
 
-def p = new Plumber(name: 'release/docker/build-stack-test', dsl: this)
+def p = new Plumber(name: 'release/docker/test-build-stack', dsl: this)
 p.pipeline().with {
-  description('Constructs docker images with EUPS tarballs.')
+  description('Constructs docker images with EUPS tarballs. (TEST)')
 
   parameters {
     stringParam('PRODUCTS', scipipe.canonical.products,
