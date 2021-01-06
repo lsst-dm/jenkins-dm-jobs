@@ -728,6 +728,10 @@ def String buildScript(
       eups distrib create --server-dir "\$EUPS_PKGROOT" -d tarball "\$prod" -t "${tag}" -vvv
     done
     eups distrib declare --server-dir "\$EUPS_PKGROOT" -t "${tag}" -vvv
+
+    # saving environment information
+    mkdir -p "\${EUPS_PKGROOT}/env"
+    conda list --explicit > "\${EUPS_PKGROOT}/env/${tag}.env"
   """)
 }
 
