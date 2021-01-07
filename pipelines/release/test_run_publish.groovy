@@ -35,8 +35,6 @@ notify.wrap {
   def canonical    = scipipe.canonical
   def lsstswConfig = canonical.lsstsw_config
 
-  def pkgroot = "${cwd}/test_distrib"
-
   def splenvRef = lsstswConfig.splenv_ref
   if (params.SPLENV_REF) {
     splenvRef = params.SPLENV_REF
@@ -47,6 +45,7 @@ notify.wrap {
   def run = {
     ws(canonical.workspace) {
       def cwd = pwd()
+      def pkgroot = "${cwd}/test_distrib"
 
       stage('create packages') {
         dir('lsstsw') {
