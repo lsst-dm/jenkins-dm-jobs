@@ -77,37 +77,39 @@ notify.wrap {
 
     // NOOP / DRY_RUN
     stage('git tag eups products') {
-      retry(retries) {
-        util.nodeWrap('docker') {
-          // needs eups distrib tag to be sync'd from s3 -> k8s volume
-          util.githubTagRelease(
-            options: [
-              '--dry-run': true,
-              '--org': scipipe.release_tag_org,
-              '--manifest': manifestId,
-              '--eups-tag': eupsTag,
-            ],
-            args: [gitTag],
-          )
-        } // util.nodeWrap
-      } // retry
+      println "Disabled."
+      //retry(retries) {
+      //  util.nodeWrap('docker') {
+      //    // needs eups distrib tag to be sync'd from s3 -> k8s volume
+      //    util.githubTagRelease(
+      //      options: [
+      //        '--dry-run': true,
+      //        '--org': scipipe.release_tag_org,
+      //        '--manifest': manifestId,
+      //        '--eups-tag': eupsTag,
+      //      ],
+      //      args: [gitTag],
+      //    )
+      //  } // util.nodeWrap
+      //} // retry
     } // stage
 
     // add aux repo tags *after* tagging eups product repos so as to avoid a
     // trainwreck if an aux repo has been pulled into the build (without
     // first being removed from the aux team).
     stage('git tag auxilliaries') {
-      retry(retries) {
-        util.nodeWrap('docker') {
-          util.githubTagTeams(
-            options: [
-              '--dry-run': true,
-              '--org': scipipe.release_tag_org,
-              '--tag': gitTag,
-            ],
-          )
-        } // util.nodeWrap
-      } // retry
+      println "Disabled."
+      //retry(retries) {
+      //  util.nodeWrap('docker') {
+      //    util.githubTagTeams(
+      //      options: [
+      //        '--dry-run': true,
+      //        '--org': scipipe.release_tag_org,
+      //        '--tag': gitTag,
+      //      ],
+      //    )
+      //  } // util.nodeWrap
+      //} // retry
     } // stage
 
     stage('build eups tarballs') {
@@ -261,9 +263,10 @@ notify.wrap {
       } // retry
     }
 
-    //stage('triggered jobs') {
+    stage('triggered jobs') {
+      println "Disabled"
     //  parallel triggerMe
-    //} // stage
+    } // stage
   } // run
 
   try {
