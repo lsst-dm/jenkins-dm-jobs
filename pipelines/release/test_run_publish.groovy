@@ -35,6 +35,8 @@ notify.wrap {
   def canonical    = scipipe.canonical
   def lsstswConfig = canonical.lsstsw_config
 
+  def pkgroot = "${cwd}/test_distrib"
+
   def splenvRef = lsstswConfig.splenv_ref
   if (params.SPLENV_REF) {
     splenvRef = params.SPLENV_REF
@@ -46,12 +48,11 @@ notify.wrap {
     ws(canonical.workspace) {
       def cwd = pwd()
 
-      stage('publish') {
+      stage('create packages') {
         dir('lsstsw') {
           util.cloneLsstsw()
         }
 
-        def pkgroot = "${cwd}/distrib"
         def tagDir  = "${pkgroot}/tags"
 
         // remove any pre-existing eups tags to prevent them from being
@@ -114,7 +115,7 @@ notify.wrap {
             variable: 'EUPS_S3_BUCKET'
           ]]) {
             def env = [
-              "EUPS_PKGROOT=${cwd}/distrib",
+              "EUPS_PKGROOT=${pkgroot}",
               "HOME=${cwd}/home",
               "EUPS_S3_OBJECT_PREFIX=stack_test/src/"
             ]
