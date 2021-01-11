@@ -264,6 +264,13 @@ def void verifyDataset(Map p) {
             resultFile: f,
             squashUrl: sqre.squash.url,
           )
+          util.runDispatchVerify(
+            runDir: runDir,
+            lsstswDir: fakeLsstswDir,
+            datasetName: ds.name,
+            resultFile: f,
+            squashUrl: sqre.squash.sandbox_url,
+          )
         }
       }
     } // inside
