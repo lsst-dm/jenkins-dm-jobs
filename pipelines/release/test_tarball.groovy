@@ -731,7 +731,7 @@ def String buildScript(
 
     # saving environment information
     mkdir -p "\${EUPS_PKGROOT}/env"
-    conda list --explicit > "\${EUPS_PKGROOT}/env/\${tag}.env"
+    conda list --explicit > "\${EUPS_PKGROOT}/env/${tag}.env"
   """)
 }
 
