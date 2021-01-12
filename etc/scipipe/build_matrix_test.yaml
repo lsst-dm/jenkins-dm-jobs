@@ -94,9 +94,7 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
-#    allow_fail: true
   - <<: *el8-conda
-#    allow_fail: true
   - <<: *catalina-conda
     # allow builds on catalina and big sur
     label: osx-10.13||osx-10.14
@@ -203,7 +201,7 @@ newinstall:
     git_ref: master
     dir: ''
   docker_registry:
-    repo: lsstsqre/newinstall
+    repo: lsstsqre/newinstall-test
     tag: latest
   github_repo: lsst/lsst
   git_ref: tickets/DM-27005
