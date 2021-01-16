@@ -1081,7 +1081,7 @@ def void buildTarballMatrix(Map p) {
               value: p.parameters.RUN_SCONS_CHECK
             ),
             booleanParam(name: 'PUBLISH', value: p.parameters.PUBLISH),
-            booleanParam(name: 'WIPEOUT', value: false),
+            booleanParam(name: 'WIPEOUT', value: true),
             string(name: 'TIMEOUT', value: item.timelimit.toString()), // hours
             string(name: 'IMAGE', value: nullToEmpty(item.image)),
             string(name: 'LABEL', value: item.label),
