@@ -62,9 +62,9 @@ notify.wrap {
       if (flatten) {
         if (opts) {
           opts = "-f ${opts}"
-	} else {
-	  opts = '-f'
-	}
+        } else {
+          opts = '-f'
+        }
       }
       dir('jupyterlab') {
         if (pushDocker) {
