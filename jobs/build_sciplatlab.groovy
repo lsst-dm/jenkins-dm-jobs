@@ -5,11 +5,12 @@ def p = new Plumber(
   dsl: this
 )
 p.pipeline().with {
-  description('Constructs docker LSST Science Platform Notebook Aspect images.')
+  description('Constructs Rubin Science Platform Notebook Aspect docker images.')
 
   parameters {
     stringParam('TAG', null, 'eups distrib tag')
     booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
+    booleanParam('FLATTEN', false, 'Collapse image to single layer.')
     stringParam('PYVER', '3', 'Python version')
     stringParam('BASE_IMAGE', 'lsstsqre/centos', 'Base Docker image')
     stringParam('IMAGE_NAME', 'lsstsqre/sciplat-lab', 'Output image name')
