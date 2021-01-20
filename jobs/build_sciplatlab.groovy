@@ -11,7 +11,7 @@ p.pipeline().with {
     stringParam('TAG', null, 'eups distrib tag')
     booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
     booleanParam('FLATTEN', true, 'Collapse image to single layer.')
-    stringParam('PYVER', '3', 'Python version')
+    booleanParam('VERBOSE', false, 'Verbose build script output.')
     stringParam('BASE_IMAGE', 'lsstsqre/centos', 'Base Docker image')
     stringParam('IMAGE_NAME', 'lsstsqre/sciplat-lab', 'Output image name')
     stringParam('TAG_PREFIX', '7-stack-lsst_distrib-', 'Tag prefix')

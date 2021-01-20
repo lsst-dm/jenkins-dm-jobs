@@ -20,7 +20,7 @@ notify.wrap {
     'IMAGE_NAME',
     'NO_PUSH',
     'FLATTEN',
-    'PYVER',
+    'VERBOSE',
     'TAG',
     'TAG_PREFIX',
     'TIMEOUT',
@@ -30,7 +30,7 @@ notify.wrap {
   Boolean jlbleed    = params.JLBLEED
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
   Boolean flatten    = params.FLATTEN.toBoolean()
-  String pyver       = params.PYVER // use as opaque string
+  Boolean verbose    = params.VERBOSE.toBoolean()
   String baseImage   = params.BASE_IMAGE
   String imageName   = params.IMAGE_NAME
   String tagPrefix   = params.TAG_PREFIX
@@ -66,6 +66,13 @@ notify.wrap {
           opts = '-f'
         }
       }
+      if (verbose) {
+        if (opts) {
+          opts = "-v ${opts}"
+        } else {
+          opts = '-v'
+        }
+      }
       dir('jupyterlab') {
         if (pushDocker) {
           docker.withRegistry(
@@ -74,7 +81,6 @@ notify.wrap {
           ) {
             util.bash """
               ./bld \
-               -p '${pyver}' \
                -b '${baseImage}' \
                -n '${imageName}' \
                -t '${tagPrefix}' \
@@ -86,7 +92,6 @@ notify.wrap {
           util.bash """
               ./bld \
                -x \
-               -p '${pyver}' \
                -b '${baseImage}' \
                -n '${imageName}' \
                -t '${tagPrefix}' \
