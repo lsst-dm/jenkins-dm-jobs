@@ -21,6 +21,7 @@ notify.wrap {
     'NO_PUSH',
     'FLATTEN',
     'VERBOSE',
+    'JLBLEED',
     'TAG',
     'TAG_PREFIX',
     'TIMEOUT',
