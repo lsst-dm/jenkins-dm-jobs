@@ -58,22 +58,15 @@ notify.wrap {
     stage('build+push') {
       def opts = ''
       if (jlbleed) {
-        opts = '-e -s jlbleed'
+        opts = '-e -s jlbleed ${opts}'
       }
       if (flatten) {
-        if (opts) {
           opts = "-f ${opts}"
-        } else {
-          opts = '-f'
-        }
       }
       if (verbose) {
-        if (opts) {
           opts = "-v ${opts}"
-        } else {
-          opts = '-v'
-        }
       }
+      opts=opts.trim()
       dir('jupyterlab') {
         if (pushDocker) {
           docker.withRegistry(
