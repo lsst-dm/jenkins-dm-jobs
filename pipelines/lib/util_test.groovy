@@ -363,7 +363,7 @@ def lsstswBuild(
           }
 
           try {
-            timeout(time: 8, unit: 'HOURS') {
+            timeout(time: 2, unit: 'HOURS') {
               doRun()
             } // timeout
           } catch (e) {
