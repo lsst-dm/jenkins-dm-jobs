@@ -353,7 +353,6 @@ def lsstswBuild(
   } // runDocker
 
   def runEnv = { doRun ->
-    timeout(time: 8, unit: 'HOURS') {
       // use different workspace dirs for python 2/3 to avoid residual state
       // conflicts
       def buildDirHash = hashpath(slug).take(10)
@@ -364,7 +363,9 @@ def lsstswBuild(
           }
 
           try {
-            doRun()
+            timeout(time: 8, unit: 'HOURS') {
+              doRun()
+            } // timeout
           } catch (e) {
             if (!lsstswConfig.allow_fail) {
               throw e
@@ -378,7 +379,6 @@ def lsstswBuild(
         // add the slug as a prefix to the archived files.
         jenkinsWrapperPost(buildDirHash)
       }
-    } // timeout
   } // runEnv
 
   def agent = null
