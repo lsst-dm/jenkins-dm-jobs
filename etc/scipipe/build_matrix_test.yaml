@@ -176,7 +176,7 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: tickets/DM-28511
+  git_ref: master
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: master
