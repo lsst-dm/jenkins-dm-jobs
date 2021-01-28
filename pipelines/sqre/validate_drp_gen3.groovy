@@ -251,13 +251,6 @@ def void verifyDataset(Map p) {
             resultFile: f,
             squashUrl: sqre.squash.url,
           )
-          util.runDispatchVerify(
-            runDir: runDir,
-            lsstswDir: fakeLsstswDir,
-            datasetName: ds.name,
-            resultFile: f,
-            squashUrl: sqre.squash.sandbox_url,
-          )
         }
       }
     } // inside
@@ -321,7 +314,7 @@ def void buildDrpGen3(Map p) {
 
       source /opt/lsst/software/stack/loadLSST.bash
       setup -k -r .
-
+      
       pip install --user dustmaps
       python -c "import dustmaps.sfd;dustmaps.sfd.fetch()"
 
