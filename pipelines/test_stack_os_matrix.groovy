@@ -46,7 +46,7 @@ notify.wrap {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
   }
 
-  timeout(time: 23, unit: 'HOURS') {
+  timeout(time: 12, unit: 'HOURS') {
     stage('build') {
       util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean())
     }
