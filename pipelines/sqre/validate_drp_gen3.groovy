@@ -315,11 +315,10 @@ def void buildDrpGen3(Map p) {
       source /opt/lsst/software/stack/loadLSST.bash
       setup -k -r .
       
-      pip install --user dustmaps
-      python -c "import dustmaps.sfd;dustmaps.sfd.fetch()"
+      git clone https://github.com/lsst/dustmaps_cachedata
+      setup -k -r dustmaps_cachedata
 
       set -o xtrace
-      export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python3.7/site-packages/
       scons
     '''
   }
@@ -384,6 +383,7 @@ def void runDrpGen3(Map p) {
         util.bash '''
           set +o xtrace
           source /opt/lsst/software/stack/loadLSST.bash
+          setup -k -r "${LSST_VALIDATE_DRP_GEN3_CODE_DIR}/dustmaps_cachedata"
           set -o xtrace
 
           "${LSST_CI_SCRIPTS_DIR}/run_validate_drp_gen3.sh"
