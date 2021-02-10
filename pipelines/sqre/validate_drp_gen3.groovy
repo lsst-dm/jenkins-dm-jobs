@@ -313,10 +313,10 @@ def void buildDrpGen3(Map p) {
       cc::setup_first "$LSST_COMPILER"
 
       source /opt/lsst/software/stack/loadLSST.bash
-      setup -k -r .
-      
       git clone https://github.com/lsst/dustmaps_cachedata
       setup -k -r dustmaps_cachedata
+
+      setup -k -r .
 
       set -o xtrace
       scons
