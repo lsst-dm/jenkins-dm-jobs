@@ -313,6 +313,7 @@ def void buildDrpGen3(Map p) {
       cc::setup_first "$LSST_COMPILER"
 
       source /opt/lsst/software/stack/loadLSST.bash
+      rm -rf dustmaps_cachedata
       git clone https://github.com/lsst/dustmaps_cachedata
       setup -k -r dustmaps_cachedata
 
