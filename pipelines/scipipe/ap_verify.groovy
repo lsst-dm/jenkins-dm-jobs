@@ -270,10 +270,14 @@ def void verifyDataset(Map p) {
       // push results to squash
       if (p.squashPush) {
         switch (conf.gen) {
+          case 3:
+            // TODO: implement after DM-21916
+            break  // Avoid fall-through until Gen 3 code ready
+            // Delegate upload to Gen 2 code
           case 2:
             def files = []
             dir(runDir) {
-              files = findFiles(glob: '**/ap_verify.*.verify.json')
+              files = findFiles(glob: '**/*.verify.json')
             }
 
             def codeRef = buildCode ? code.git_ref : "master"
@@ -290,9 +294,6 @@ def void verifyDataset(Map p) {
                 )
               }
             }
-            break
-          case 3:
-            // TODO: implement after DM-21916
             break
           default:
             currentBuild.result = 'UNSTABLE'
