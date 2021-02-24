@@ -271,8 +271,15 @@ def void verifyDataset(Map p) {
       if (p.squashPush) {
         switch (conf.gen) {
           case 3:
-            // TODO: implement after DM-21916
-            break  // Avoid fall-through until Gen 3 code ready
+            // Partially hard-coded in ap_verify
+            def gen3Dir = util.joinPath(runDir, ds.name, "repo")
+            def collection = "ap_verify-output"
+            util.runGen3ToJob(
+              gen3Dir: gen3Dir,
+              collectionName: collection,
+              namespace: "",
+              datasetName: ds.name,
+            )
             // Delegate upload to Gen 2 code
           case 2:
             def files = []
