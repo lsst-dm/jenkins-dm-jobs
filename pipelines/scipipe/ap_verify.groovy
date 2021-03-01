@@ -270,10 +270,21 @@ def void verifyDataset(Map p) {
       // push results to squash
       if (p.squashPush) {
         switch (conf.gen) {
+          case 3:
+            // Partially hard-coded in ap_verify
+            def gen3Dir = util.joinPath(runDir, ds.name, "repo")
+            def collection = "ap_verify-output"
+            util.runGen3ToJob(
+              gen3Dir: gen3Dir,
+              collectionName: collection,
+              namespace: "",
+              datasetName: ds.name,
+            )
+            // Delegate upload to Gen 2 code
           case 2:
             def files = []
             dir(runDir) {
-              files = findFiles(glob: '**/ap_verify.*.verify.json')
+              files = findFiles(glob: '**/*.verify.json')
             }
 
             def codeRef = buildCode ? code.git_ref : "master"
@@ -290,9 +301,6 @@ def void verifyDataset(Map p) {
                 )
               }
             }
-            break
-          case 3:
-            // TODO: implement after DM-21916
             break
           default:
             currentBuild.result = 'UNSTABLE'
