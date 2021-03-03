@@ -272,6 +272,10 @@ def void verifyDataset(Map p) {
         switch (conf.gen) {
           case 3:
             // Partially hard-coded in ap_verify
+            def fee = util.makeCliCmd('nonsense.py', ['--option': 'none'], ['--option': 'value'], ['arg'])  // CPS
+            def fi = util.dedent('bar')  // NonCPS
+            def foo = util.hashpath('a string of text') // NonCPS
+            util.createDirs(['groovyTest'])  // CPS
             def gen3Dir = util.joinPath(runDir, ds.name, 'repo')
             // Delegate upload to Gen 2 code
             break
