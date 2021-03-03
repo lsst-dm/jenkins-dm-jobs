@@ -281,6 +281,7 @@ def void verifyDataset(Map p) {
               datasetName: ds.name,
             )
             // Delegate upload to Gen 2 code
+            break
           case 2:
             def files = []
             dir(runDir) {
