@@ -272,12 +272,12 @@ def void verifyDataset(Map p) {
         switch (conf.gen) {
           case 3:
             // Partially hard-coded in ap_verify
-            def gen3Dir = util.joinPath(runDir, ds.name, "repo")
-            def collection = "ap_verify-output"
+            def gen3Dir = util.joinPath(runDir, ds.name, 'repo')
+            def collection = 'ap_verify-output'
             util.runGen3ToJob(
               gen3Dir: gen3Dir,
               collectionName: collection,
-              namespace: "",
+              namespace: '',
               datasetName: ds.name,
             )
             // Delegate upload to Gen 2 code
