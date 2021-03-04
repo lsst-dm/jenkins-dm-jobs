@@ -271,10 +271,17 @@ def void verifyDataset(Map p) {
       if (p.squashPush) {
         switch (conf.gen) {
           case 3:
-            // Partially hard-coded in ap_verify
-            def gen3Dir = util.joinPath(runDir.toString(), ds.name.toString(), 'repo')
+            // Path is partially hard-coded in ap_verify.
+            // runDir is a GString, which doesn't get auto-converted in this case.
+            def gen3Dir = util.joinPath(runDir.toString(), ds.name, 'repo')
+            def collection = 'ap_verify-output'
+            util.runGen3ToJob(
+              gen3Dir: gen3Dir,
+              collectionName: collection,
+              namespace: '',
+              datasetName: ds.name,
+            )
             // Delegate upload to Gen 2 code
-            break
           case 2:
             def files = []
             dir(runDir) {
