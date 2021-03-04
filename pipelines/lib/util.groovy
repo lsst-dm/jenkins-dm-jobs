@@ -1997,9 +1997,12 @@ def void runDispatchVerify(Map p) {
 /**
  * Convert Gen 3 results into a form suitable for dispatch-verify.
  *
+ * The output files are placed in runDir.
+ *
  * Example:
  *
  *     util.runGen3ToJob(
+ *       runDir: runDir,
  *       gen3Dir: gen3Dir,
  *       collectionName: collectionName,
  *       namespace: "",
@@ -2007,6 +2010,7 @@ def void runDispatchVerify(Map p) {
  *     )
  *
  * @param p Map
+ * @param p.runDir String
  * @param p.gen3Dir String Path to the Gen 3 repository
  * @param p.collectionName String The collection to search for metrics.
  * @param p.namespace String The metrics namespace to filter by, e.g. validate_drp, or "" for all metrics.
@@ -2056,8 +2060,9 @@ def void runGen3ToJob(Map p) {
     "METRIC_NAMESPACE=${p.namespace}",
     "dataset=${p.datasetName}",
   ]) {
-    // Don't change directories to avoid cluttering repo with external files
-    run()
+    dir(p.runDir) {
+      run()
+    }
   } // withEnv
 } // runGen3ToJob
 

@@ -272,10 +272,10 @@ def void verifyDataset(Map p) {
         switch (conf.gen) {
           case 3:
             // Path is partially hard-coded in ap_verify.
-            // runDir is a GString, which doesn't get auto-converted in this case.
-            def gen3Dir = util.joinPath(runDir.toString(), ds.name, 'repo')
+            def gen3Dir = util.joinPath(ds.name, 'repo')
             def collection = 'ap_verify-output'
             util.runGen3ToJob(
+              runDir: runDir,
               gen3Dir: gen3Dir,
               collectionName: collection,
               namespace: '',
