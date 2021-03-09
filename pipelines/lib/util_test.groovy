@@ -353,7 +353,6 @@ def lsstswBuild(
   } // runDocker
 
   def runEnv = { doRun ->
-    timeout(time: 8, unit: 'HOURS') {
       // use different workspace dirs for python 2/3 to avoid residual state
       // conflicts
       def buildDirHash = hashpath(slug).take(10)
@@ -364,7 +363,9 @@ def lsstswBuild(
           }
 
           try {
-            doRun()
+            timeout(time: 8, unit: 'HOURS') {
+              doRun()
+            } // timeout
           } catch (e) {
             if (!lsstswConfig.allow_fail) {
               throw e
@@ -378,7 +379,6 @@ def lsstswBuild(
         // add the slug as a prefix to the archived files.
         jenkinsWrapperPost(buildDirHash)
       }
-    } // timeout
   } // runEnv
 
   def agent = null
@@ -1993,6 +1993,78 @@ def void runDispatchVerify(Map p) {
     } // withCredentials
   } // withEnv
 } // runDispatchVerify
+
+/**
+ * Convert Gen 3 results into a form suitable for dispatch-verify.
+ *
+ * The output files are placed in runDir.
+ *
+ * Example:
+ *
+ *     util.runGen3ToJob(
+ *       runDir: runDir,
+ *       gen3Dir: gen3Dir,
+ *       collectionName: collectionName,
+ *       namespace: "",
+ *       datasetName: datasetName,
+ *     )
+ *
+ * @param p Map
+ * @param p.runDir String
+ * @param p.gen3Dir String Path to the Gen 3 repository
+ * @param p.collectionName String The collection to search for metrics.
+ * @param p.namespace String The metrics namespace to filter by, e.g. validate_drp, or "" for all metrics.
+ * @param p.datasetName String The dataset name. Eg., validation_data_cfht
+ */
+def void runGen3ToJob(Map p) {
+  util.requireMapKeys(p, [
+    'gen3Dir',
+    'collectionName',
+    'namespace',
+    'datasetName',
+  ])
+
+  def run = {
+    util.bash '''
+      set +o xtrace
+      source /opt/lsst/software/stack/loadLSST.bash
+      setup verify
+      set -o xtrace
+
+      if [[ -n $METRIC_NAMESPACE ]]
+        then gen3_to_job.py \
+          "$REPO_DIR" \
+          "$OUTPUT_COLLECTION" \
+          --metrics_package "$METRIC_NAMESPACE" \
+          --dataset_name "$dataset"
+        else gen3_to_job.py \
+          "$REPO_DIR" \
+          "$OUTPUT_COLLECTION" \
+          --dataset_name "$dataset"
+      fi
+    '''
+  } // run
+
+  /*
+  These are already present under pipeline:
+  - BUILD_ID
+  - BUILD_URL
+
+  This var was defined automagically by matrixJob and now must be manually
+  set:
+  - dataset
+  */
+  withEnv([
+    "REPO_DIR=${p.gen3Dir}",
+    "OUTPUT_COLLECTION=${p.collectionName}",
+    "METRIC_NAMESPACE=${p.namespace}",
+    "dataset=${p.datasetName}",
+  ]) {
+    dir(p.runDir) {
+      run()
+    }
+  } // withEnv
+} // runGen3ToJob
 
 /**
  * Create a "fake" lsstsw-ish dir structure as expected by

@@ -5,7 +5,7 @@
 # provide yaml anchors internal to this file.
 #
 template:
-  splenv_ref: &splenv_ref '0.1.5'
+  splenv_ref: &splenv_ref '0.4.1'
   tarball_defaults: &tarball_defaults
     miniver: &miniver 'py38_4.9.2'
     timelimit: 6
@@ -176,10 +176,10 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: tickets/DM-27005
+  git_ref: master
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
-  git_ref: tickets/DM-27005
+  git_ref: master
 shebangtron:
   github_repo: lsst/shebangtron
   git_ref: master
@@ -204,7 +204,7 @@ newinstall:
     repo: lsstsqre/newinstall-test
     tag: latest
   github_repo: lsst/lsst
-  git_ref: tickets/DM-27005
+  git_ref: master
 eups:
   base_url: https://eups.lsst.codes/stack
   s3_bucket: eups.lsst.codes
