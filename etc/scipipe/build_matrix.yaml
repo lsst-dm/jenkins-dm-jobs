@@ -5,7 +5,7 @@
 # provide yaml anchors internal to this file.
 #
 template:
-  splenv_ref: &splenv_ref '0.4.1'
+  splenv_ref: &splenv_ref '0.4.2'
   tarball_defaults: &tarball_defaults
     miniver: &miniver 'py38_4.9.2'
     timelimit: 6
@@ -94,7 +94,6 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
-  - <<: *el8-conda
   - <<: *catalina-conda
     # allow builds on catalina and big sur
     label: osx-10.13||osx-10.14
@@ -102,12 +101,10 @@ scipipe-lsstsw-matrix:
     display_compiler: clang
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
-  - <<: *el8-conda
   - <<: *catalina-conda
   - <<: *bigsur-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
-  - <<: *el8-conda
   - <<: *bigsur-conda
 dax-lsstsw-matrix:
   - <<: *el7-conda
@@ -134,10 +131,6 @@ tarball:
   # products: *canonical_products
   products: lsst_distrib pipelines_check
   build_config:
-    - <<: *tarball_defaults
-      <<: *el8-conda
-      platform: el8
-      osfamily: redhat
     - <<: *tarball_defaults
       <<: *el7-conda
       platform: el7
