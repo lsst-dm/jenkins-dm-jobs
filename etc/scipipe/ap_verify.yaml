@@ -9,13 +9,13 @@ template:
   datasets:
     hits2015: &dataset_hits2015
       display_name: hits2015
-      name: CI-HiTS2015
+      name: ap_verify_ci_hits2015
       github_repo: lsst/ap_verify_ci_hits2015
       git_ref: master
       clone_timelimit: 15
     cosmos_pdr2: &dataset_cosmos_pdr2
       display_name: cosmos_pdr2
-      name: CI-CosmosPDR2
+      name: ap_verify_ci_cosmos_pdr2
       github_repo: lsst/ap_verify_ci_cosmos_pdr2
       git_ref: master
       clone_timelimit: 15
