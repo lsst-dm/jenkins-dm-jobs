@@ -176,13 +176,25 @@ notify.wrap {
       //  stages within other parallel stages, so we do these all
       //  sequentially in order not to have them held up by validate_drp.
 
-      stage('SAL-sciplat-lab linked image set (master/summit/base/kueyen/nts/tts') {
+      stage('SAL-sciplat-lab linked image set (master/summit/base/kueyen/tts)') {
         retry(retries) {
           build(
             job: 'sqre/infra/aggregate-sal',
             parameters: [
               string(name: 'TAG', value: eupsTag),
-              string(name: 'ENVIRONMENTS', value: 'master summit base kueyen nts tts'),
+              string(name: 'ENVIRONMENTS', value: 'master summit base kueyen tts'),
+            ],
+            wait: false,
+          )
+        } // retry
+      } // stage
+      stage('SAL-sciplat-lab linked image set (nts)') {
+        retry(retries) {
+          build(
+            job: 'sqre/infra/aggregate-sal',
+            parameters: [
+              string(name: 'TAG', value: eupsTag),
+              string(name: 'ENVIRONMENTS', value: 'nts'),
             ],
             wait: false,
           )
