@@ -339,8 +339,25 @@ def lsstswBuild(
     LSST_SPLENV_REF:     lsstswConfig.splenv_ref
   ] + buildParams
 
+  if (!lsstswConfig.build_docs) {
+    buildParams['LSST_BUILD_DOCS'] = "false"
+  }
+
   def run = {
     jenkinsWrapper(buildParams)
+    if (buildParams['LSST_PUBLISH_DOCS'] == "true") {
+      println("Would upload here")
+//      withCredentials([
+//        $class: 'UsernamePasswordMultiBinding',
+//        credentialsId: 'ltd-upload',
+//        usernameVariable: 'LTD_USERNAME',
+//        passwordVariable: 'LTD_PASSWORD',
+//      ]) {
+//        bash '''
+//          GIT_REF=${LSST_REFS// /-}
+//          ltd upload --product pipelines --dir _build/html --git-ref "$GIT_REF"
+//        '''
+      }
   } // run
 
   def runDocker = {
