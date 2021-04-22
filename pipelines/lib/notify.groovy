@@ -509,7 +509,11 @@ void slackSendBuild(Map args) {
         footer: "<@${slackId}>",
       ]
 
-      slackProfile = slackProfile ?: slackUserProfile(SLACK_TOKEN, slackId)
+      try {
+        slackProfile = slackProfile ?: slackUserProfile(SLACK_TOKEN, slackId)
+      } catch (e) {
+        echo "error sending slack notification: ${e.toString()}"
+      }
       message.attachments.first() << [
         footer_icon: slackProfile.profile.image_24,
       ]
@@ -553,7 +557,12 @@ void slackSendBuild(Map args) {
     }
 
     // try to send message to channel
-    def send = sendMessage()
+    def send = null
+    try {
+      send = sendMessage()
+    } catch (e) {
+      echo "error sending slack notification: ${e.toString()}"
+    }
     if (send && !send?.ok) {
       if (send?.error == 'channel_not_found') {
         createChannel(
@@ -608,10 +617,10 @@ def trynotify(Closure run) {
   } else {
     try {
       run()
-//    } catch (org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException e) {
+    } catch (org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException e) {
       // fail on groovy sandbox exceptions. ie., methods that need to be
       // whitelisted
-//      throw e
+      throw e
     } catch (e) {
       // ignore other exception so problems with slack messaging will not cause
       // the build to be marked as a failure.
