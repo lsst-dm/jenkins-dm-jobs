@@ -509,11 +509,7 @@ void slackSendBuild(Map args) {
         footer: "<@${slackId}>",
       ]
 
-      try {
-        slackProfile = slackProfile ?: slackUserProfile(SLACK_TOKEN, slackId)
-      } catch (Error e) {
-        echo "error sending slack notification: ${e.toString()}"
-      }
+      slackProfile = slackProfile ?: slackUserProfile(SLACK_TOKEN, slackId)
       message.attachments.first() << [
         footer_icon: slackProfile.profile.image_24,
       ]
@@ -557,12 +553,7 @@ void slackSendBuild(Map args) {
     }
 
     // try to send message to channel
-    def send = null
-    try {
-      send = sendMessage()
-    } catch (Error e) {
-      echo "error sending slack notification: ${e.toString()}"
-    }
+    def send = sendMessage()
     if (send && !send?.ok) {
       if (send?.error == 'channel_not_found') {
         createChannel(
