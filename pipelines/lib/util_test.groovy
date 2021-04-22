@@ -339,8 +339,8 @@ def lsstswBuild(
     LSST_SPLENV_REF:     lsstswConfig.splenv_ref
   ] + buildParams
 
-  if (!lsstswConfig.build_docs) {
-    buildParams['LSST_BUILD_DOCS'] = "false"
+  if (lsstswConfig.build_docs && buildParams['LSST_BUILD_DOCS'] == "true") {
+    buildParams['LSST_PRODUCTS'] += " pipelines_lsst_io"
   }
 
   def run = {
