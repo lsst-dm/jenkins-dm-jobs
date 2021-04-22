@@ -511,7 +511,7 @@ void slackSendBuild(Map args) {
 
       try {
         slackProfile = slackProfile ?: slackUserProfile(SLACK_TOKEN, slackId)
-      } catch (e) {
+      } catch (Error e) {
         echo "error sending slack notification: ${e.toString()}"
       }
       message.attachments.first() << [
@@ -560,7 +560,7 @@ void slackSendBuild(Map args) {
     def send = null
     try {
       send = sendMessage()
-    } catch (e) {
+    } catch (Error e) {
       echo "error sending slack notification: ${e.toString()}"
     }
     if (send && !send?.ok) {
@@ -621,7 +621,7 @@ def trynotify(Closure run) {
       // fail on groovy sandbox exceptions. ie., methods that need to be
       // whitelisted
       throw e
-    } catch (e) {
+    } catch (Error e) {
       // ignore other exception so problems with slack messaging will not cause
       // the build to be marked as a failure.
       echo "error sending slack notification: ${e.toString()}"
