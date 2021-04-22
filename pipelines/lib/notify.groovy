@@ -603,6 +603,7 @@ def failure() {
 }
 
 def trynotify(Closure run) {
+  debug = false
   if (debug) {
     run()
   } else {
