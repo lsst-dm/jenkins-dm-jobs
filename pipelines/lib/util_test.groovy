@@ -342,38 +342,43 @@ def lsstswBuild(
   if (lsstswConfig.build_docs && buildParams['LSST_BUILD_DOCS'] == "true") {
     buildParams['LSST_BUILD_DOCS'] = "false"
     buildParams['LSST_PRODUCTS'] += " pipelines_lsst_io"
+  } else {
+    buildParams['LSST_PUBLISH_DOCS'] = "false"
   }
 
   def run = {
     jenkinsWrapper(buildParams)
+
     if (buildParams['LSST_PUBLISH_DOCS'] == "true") {
-      withCredentials([[
-        $class: 'UsernamePasswordMultiBinding',
-        credentialsId: 'ltd-upload',
-        usernameVariable: 'LTD_USERNAME',
-        passwordVariable: 'LTD_PASSWORD',
-      ]]) {
-        bash '''
-          set +o xtrace
-          cd lsstsw
-          source bin/envconfig
-          (
-            conda activate ltd &&
-            conda install -y -c conda-forge ltd-conveyor
-          ) || (
-            conda create -y -n ltd -c conda-forge ltd-conveyor &&
-            conda activate ltd
-          )
-          set -o xtrace
-          GIT_REF=${LSST_REFS// /-}
-          echo "user=$LTD_USERNAME"
-          ls build/pipelines_lsst_io/_build/html
-          ln -s ../../_doxygen/html/cpp-api build/pipelines_lsst_io/_build/html/cpp-api
-          # ltd upload --product pipelines --dir build/pipelines_lsst_io/_build/html --git-ref "$GIT_REF"
-          conda deactivate
-        '''
-      }
-    }
+      withEnv(["LSST_REFS=${buildParams['LSST_REFS']}"]) {
+        withCredentials([[
+          $class: 'UsernamePasswordMultiBinding',
+          credentialsId: 'ltd-upload',
+          usernameVariable: 'LTD_USERNAME',
+          passwordVariable: 'LTD_PASSWORD',
+        ]]) {
+          bash '''
+            set +o xtrace
+            cd lsstsw
+            source bin/envconfig
+            (
+              conda activate ltd &&
+              conda install -y -c conda-forge ltd-conveyor
+            ) || (
+              conda create -y -n ltd -c conda-forge ltd-conveyor &&
+              conda activate ltd
+            )
+            set -o xtrace
+            GIT_REF=${LSST_REFS// /-}
+            ln -s ../../_doxygen/html/cpp-api build/pipelines_lsst_io/_build/html/cpp-api
+            ltd upload --product pipelines --dir build/pipelines_lsst_io/_build/html --git-ref "$GIT_REF"
+            set +o xtrace
+            conda deactivate
+            set -o xtrace
+          '''
+        } // withCredentials
+      } // withEnv
+    } // if LSST_PUBLISH_DOCS
   } // run
 
   def runDocker = {
