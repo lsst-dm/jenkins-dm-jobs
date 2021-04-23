@@ -362,8 +362,9 @@ def lsstswBuild(
           )
           GIT_REF=${LSST_REFS// /-}
           echo "user=$LTD_USERNAME"
-          ls _build/html
-          # ltd upload --product pipelines --dir _build/html --git-ref "$GIT_REF"
+          ls build/pipelines_lsst_io/_build/html
+          ln -s ../../_doxygen/html/cpp-api build/pipelines_lsst_io/_build/html/cpp-api
+          # ltd upload --product pipelines --dir build/pipelines_lsst_io/_build/html --git-ref "$GIT_REF"
           conda deactivate
         '''
       }
