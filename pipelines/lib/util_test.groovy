@@ -340,6 +340,7 @@ def lsstswBuild(
   ] + buildParams
 
   if (lsstswConfig.build_docs && buildParams['LSST_BUILD_DOCS'] == "true") {
+    buildParams['LSST_BUILD_DOCS'] = "false"
     buildParams['LSST_PRODUCTS'] += " pipelines_lsst_io"
   }
 
@@ -353,6 +354,8 @@ def lsstswBuild(
         passwordVariable: 'LTD_PASSWORD',
       ]]) {
         bash '''
+          ls
+          source bin/envconfig
           (
             conda activate ltd &&
             conda install -y -c conda-forge ltd-conveyor
