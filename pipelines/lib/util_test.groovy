@@ -368,6 +368,7 @@ def lsstswBuild(
           conda deactivate
         '''
       }
+    }
   } // run
 
   def runDocker = {
