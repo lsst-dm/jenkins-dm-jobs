@@ -346,17 +346,25 @@ def lsstswBuild(
   def run = {
     jenkinsWrapper(buildParams)
     if (buildParams['LSST_PUBLISH_DOCS'] == "true") {
-      println("Would upload here")
-//      withCredentials([
-//        $class: 'UsernamePasswordMultiBinding',
-//        credentialsId: 'ltd-upload',
-//        usernameVariable: 'LTD_USERNAME',
-//        passwordVariable: 'LTD_PASSWORD',
-//      ]) {
-//        bash '''
-//          GIT_REF=${LSST_REFS// /-}
-//          ltd upload --product pipelines --dir _build/html --git-ref "$GIT_REF"
-//        '''
+      withCredentials([[
+        $class: 'UsernamePasswordMultiBinding',
+        credentialsId: 'ltd-upload',
+        usernameVariable: 'LTD_USERNAME',
+        passwordVariable: 'LTD_PASSWORD',
+      ]]) {
+        bash '''
+          (
+            conda activate ltd &&
+            conda install -y -c conda-forge ltd-conveyor
+          ) || (
+            conda create -y -n ltd ltd-conveyor &&
+            conda activate ltd
+          )
+          GIT_REF=${LSST_REFS// /-}
+          echo "user=$LTD_USERNAME"
+          ls _build/html
+          # ltd upload --product pipelines --dir _build/html --git-ref "$GIT_REF"
+        '''
       }
   } // run
 
