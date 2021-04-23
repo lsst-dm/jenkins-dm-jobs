@@ -340,9 +340,11 @@ def lsstswBuild(
   ] + buildParams
 
   if (lsstswConfig.build_docs && buildParams['LSST_BUILD_DOCS'] == "true") {
-    buildParams['LSST_BUILD_DOCS'] = "false"
     buildParams['LSST_PRODUCTS'] += " pipelines_lsst_io"
+    // disable old-style doc build
+    buildParams['LSST_BUILD_DOCS'] = "false"
   } else {
+    // don't publish docs if we haven't built them
     buildParams['LSST_PUBLISH_DOCS'] = "false"
   }
 
