@@ -363,13 +363,13 @@ def lsstswBuild(
             set +o xtrace
             cd lsstsw
             source bin/envconfig
-            (
+            {
               conda activate ltd &&
               conda install -y -c conda-forge ltd-conveyor
-            ) || (
+            } || {
               conda create -y -n ltd -c conda-forge ltd-conveyor &&
               conda activate ltd
-            )
+            }
             set -o xtrace
             GIT_REF=${LSST_REFS// /-}
             ln -s ../../_doxygen/html/cpp-api build/pipelines_lsst_io/_build/html/cpp-api
