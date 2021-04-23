@@ -357,13 +357,14 @@ def lsstswBuild(
             conda activate ltd &&
             conda install -y -c conda-forge ltd-conveyor
           ) || (
-            conda create -y -n ltd ltd-conveyor &&
+            conda create -y -n ltd -c conda-forge ltd-conveyor &&
             conda activate ltd
           )
           GIT_REF=${LSST_REFS// /-}
           echo "user=$LTD_USERNAME"
           ls _build/html
           # ltd upload --product pipelines --dir _build/html --git-ref "$GIT_REF"
+          conda deactivate
         '''
       }
   } // run
