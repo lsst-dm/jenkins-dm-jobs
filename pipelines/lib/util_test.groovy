@@ -340,9 +340,11 @@ def lsstswBuild(
   ] + buildParams
 
   if (lsstswConfig.build_docs && buildParams['LSST_BUILD_DOCS'] == "true") {
-    buildParams['LSST_BUILD_DOCS'] = "false"
     buildParams['LSST_PRODUCTS'] += " pipelines_lsst_io"
+    // disable old-style doc build
+    buildParams['LSST_BUILD_DOCS'] = "false"
   } else {
+    // don't publish docs if we haven't built them
     buildParams['LSST_PUBLISH_DOCS'] = "false"
   }
 
@@ -361,13 +363,13 @@ def lsstswBuild(
             set +o xtrace
             cd lsstsw
             source bin/envconfig
-            (
+            {
               conda activate ltd &&
               conda install -y -c conda-forge ltd-conveyor
-            ) || (
+            } || {
               conda create -y -n ltd -c conda-forge ltd-conveyor &&
               conda activate ltd
-            )
+            }
             set -o xtrace
             GIT_REF=${LSST_REFS// /-}
             ln -s ../../_doxygen/html/cpp-api build/pipelines_lsst_io/_build/html/cpp-api
