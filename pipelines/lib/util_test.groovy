@@ -354,7 +354,8 @@ def lsstswBuild(
         passwordVariable: 'LTD_PASSWORD',
       ]]) {
         bash '''
-          ls
+          set +o xtrace
+          cd lsstsw
           source bin/envconfig
           (
             conda activate ltd &&
@@ -363,6 +364,7 @@ def lsstswBuild(
             conda create -y -n ltd -c conda-forge ltd-conveyor &&
             conda activate ltd
           )
+          set -o xtrace
           GIT_REF=${LSST_REFS// /-}
           echo "user=$LTD_USERNAME"
           ls build/pipelines_lsst_io/_build/html
