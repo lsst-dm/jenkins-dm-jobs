@@ -40,9 +40,7 @@ void debugln(Object value) {
 }
 
 /*
- * print debugging info
- *
- * Switched on/off by the global `debug` variable
+ * Translate GitHub username to Slack username
  *
  * @param jenkins String user name (github)
  * @param authUser String checkerboard service user
