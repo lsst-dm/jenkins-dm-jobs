@@ -455,7 +455,7 @@ String jobChannel() {
 String githubToSlackEz(jenkinsId) {
   withCredentials([[
     $class: 'UsernamePasswordMultiBinding',
-    credentialsId: 'checkerboard',
+    credentialsId: 'ghslacker',
     usernameVariable: 'CB_USER',
     passwordVariable: 'CB_PASS'
   ]]) {
