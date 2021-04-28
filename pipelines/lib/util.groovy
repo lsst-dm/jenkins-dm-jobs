@@ -372,7 +372,6 @@ def lsstswBuild(
             }
             set -o xtrace
             GIT_REF=${LSST_REFS// /-}
-            ln -s ../../_doxygen/html/cpp-api build/pipelines_lsst_io/_build/html/cpp-api
             ltd upload --product pipelines --dir build/pipelines_lsst_io/_build/html --git-ref "$GIT_REF"
             set +o xtrace
             conda deactivate
