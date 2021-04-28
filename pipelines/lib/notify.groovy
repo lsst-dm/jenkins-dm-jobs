@@ -3,7 +3,7 @@ import org.codehaus.groovy.runtime.StackTraceUtils
 
 @Field String slackEndpoint = 'https://slack.com/api'
 @Field String checkerboardEndpoint = 'https://roundtable.lsst.codes/checkerboard'
-@Field Boolean debug = false
+@Field Boolean debug = true
 
 
 /*
