@@ -2,7 +2,7 @@ import groovy.transform.Field
 import org.codehaus.groovy.runtime.StackTraceUtils
 
 @Field String slackEndpoint = 'https://slack.com/api'
-@Field String ghslackerEndpoint = 'https://api.lsst.codes/ghslacker'
+@Field String checkerboardEndpoint = 'https://roundtable.lsst.codes/checkerboard'
 @Field Boolean debug = false
 
 
@@ -45,14 +45,14 @@ void debugln(Object value) {
  * Switched on/off by the global `debug` variable
  *
  * @param jenkins String user name (github)
- * @param authUser String ghslacker service user
- * @param authPass String ghslacker service password
+ * @param authUser String checkerboard service user
+ * @param authPass String checkerboard service password
  * @return String slack user Id
  */
 String githubToSlack(String jenkinsUser, String authUser, String authPass) {
   def auth    = "${authUser}:${authPass}".getBytes().encodeBase64().toString()
 
-  def url = new URL("${ghslackerEndpoint}/github/${jenkinsUser}/")
+  def url = new URL("${checkerboardEndpoint}/github/${jenkinsUser}")
   debugln("url: ${url.toString()}")
 
   def slackId = null
@@ -455,11 +455,11 @@ String jobChannel() {
 String githubToSlackEz(jenkinsId) {
   withCredentials([[
     $class: 'UsernamePasswordMultiBinding',
-    credentialsId: 'ghslacker',
-    usernameVariable: 'GS_USER',
-    passwordVariable: 'GS_PASS'
+    credentialsId: 'checkerboard',
+    usernameVariable: 'CB_USER',
+    passwordVariable: 'CB_PASS'
   ]]) {
-    return githubToSlack(jenkinsId, GS_USER, GS_PASS)
+    return githubToSlack(jenkinsId, CB_USER, CB_PASS)
   }
 }
 
