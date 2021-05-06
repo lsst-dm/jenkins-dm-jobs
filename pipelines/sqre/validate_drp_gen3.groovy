@@ -29,11 +29,13 @@ notify.wrap {
     'DOCKER_IMAGE',
     'NO_PUSH',
     'WIPEOUT',
+    'GIT_REF',
   ])
 
   String dockerImage = params.DOCKER_IMAGE
   Boolean noPush     = params.NO_PUSH
   Boolean wipeout    = params.WIPEOUT
+  String gitRef      = params.GIT_REF
 
   // run multiple datasets, if defined, in parallel
   def jobConf     = drp
@@ -60,6 +62,7 @@ notify.wrap {
         squashPush: (!noPush) && conf.squash_push,
         slug: runSlug,
         wipeout: wipeout,
+        gitRef: gitRef,
       )
     }
   }
@@ -120,6 +123,7 @@ def String displayName(Map m) {
  * @param p.squashPush Boolean
  * @param p.slug String Name of dataset.
  * @param p.wipeout Boolean
+ * @param p.gitRef String Git reference to checkout in faro repo.
  */
 def void verifyDataset(Map p) {
   util.requireMapKeys(p, [
@@ -128,6 +132,7 @@ def void verifyDataset(Map p) {
     'slug',
     'squashPush',
     'wipeout',
+    'gitRef',
   ])
 
   def conf = p.config
@@ -196,7 +201,7 @@ def void verifyDataset(Map p) {
       timeout(time: code.clone_timelimit, unit: 'MINUTES') {
         // the simplier git step doesn't support 'CleanBeforeCheckout'
         def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
-        def codeRef     = code.git_ref
+        def codeRef     = p.gitRef
 
         checkout(
           scm: [
