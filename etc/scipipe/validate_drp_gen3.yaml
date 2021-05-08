@@ -29,7 +29,6 @@ template:
     validate_drp_gen3: &code_drp_gen3
       name: faro
       github_repo: lsst/faro
-      git_ref: master
       clone_timelimit: 5
 validate_drp_gen3:
   # defaults are used in all configs which do not explicitly set a value for
