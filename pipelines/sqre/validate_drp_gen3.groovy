@@ -52,7 +52,7 @@ notify.wrap {
 
     // note that `:` seems to break python imports and `*` seems to break the
     // butler
-    def runSlug = "${datasetSlug(conf)}^${codeSlug(conf)}"
+    def runSlug = "${datasetSlug(conf)}^${codeSlug(conf, gitRef)}"
 
     matrix[runSlug] = {
       verifyDataset(
@@ -88,7 +88,7 @@ def String datasetSlug(Map conf) {
  *
  * @param c Map
  */
-def String codeSlug(Map conf) {
+def String codeSlug(Map conf, String gitRef) {
   def code = conf.code
 
   def name = 'validate_drp_gen3'
@@ -99,7 +99,7 @@ def String codeSlug(Map conf) {
   }
   if (code?.github_repo) {
     name = code.name
-    ref  = code.git_ref.tr('/', '_')
+    ref  = gitRef.tr('/', '_')
   }
   def slug = "${name}-${ref}".toLowerCase()
   return slug.toLowerCase()
