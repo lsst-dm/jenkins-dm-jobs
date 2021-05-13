@@ -603,9 +603,9 @@ def failure() {
 }
 
 def trynotify(Closure run) {
-  if (debug) {
-    run()
-  } else {
+  // if (debug) {
+  //   run()
+  // } else {
     try {
       run()
     } catch (org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException e) {
@@ -617,7 +617,7 @@ def trynotify(Closure run) {
       // the build to be marked as a failure.
       echo "error sending slack notification: ${e.toString()}"
     }
-  }
+  // }
 }
 
 def wrap(Closure run) {
