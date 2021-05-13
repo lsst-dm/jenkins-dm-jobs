@@ -3,7 +3,7 @@ import org.codehaus.groovy.runtime.StackTraceUtils
 
 @Field String slackEndpoint = 'https://slack.com/api'
 @Field String checkerboardEndpoint = 'https://roundtable.lsst.codes/checkerboard'
-@Field Boolean debug = false
+@Field Boolean debug = true
 
 
 /*
@@ -99,6 +99,7 @@ Object slackApiGet(Map args) {
 
   url = new URL(call)
   debugln("url: ${url.toString()}")
+  debugln("token: ${args.query.token.subString(0,8)}")
 
   def data = null
   def conn = url.openConnection().with { conn ->
@@ -136,6 +137,7 @@ Object slackApiPost(Map args) {
   def call = "${slackEndpoint}/${args.method}"
   url = new URL(call)
   debugln("url: ${url.toString()}")
+  debugln("token: ${token.subString(0,8)}")
 
   def data = null
   def conn = url.openConnection().with { conn ->
