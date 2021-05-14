@@ -137,7 +137,7 @@ Object slackApiPost(Map args) {
   def call = "${slackEndpoint}/${args.method}"
   url = new URL(call)
   debugln("url: ${url.toString()}")
-  debugln("token: ${token.substring(0,8)}")
+  debugln("token: ${args.token.substring(0,8)}")
 
   def data = null
   def conn = url.openConnection().with { conn ->
