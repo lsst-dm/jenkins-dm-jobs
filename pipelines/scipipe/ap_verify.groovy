@@ -261,6 +261,7 @@ def void verifyDataset(Map p) {
         runDir: runDir,
         dataset: ds,
         gen: conf.gen,
+        pipeline: conf.pipeline,
         datasetDir: datasetDir,
         homeDir: homeDir,
         archiveDir: jobDir,
@@ -405,6 +406,7 @@ def void runApVerify(Map p) {
     'runDir',
     'dataset',
     'gen',
+    'pipeline',
     'datasetDir',
     'homeDir',
     'archiveDir',
@@ -427,7 +429,8 @@ def void runApVerify(Map p) {
       setup -k -r .
 
       cd ${RUN_DIR}
-      run_ci_dataset.sh -d ${DATASET_NAME} -g ${DATASET_GEN}
+      # -p ignored if not -g 3
+      run_ci_dataset.sh -d ${DATASET_NAME} -g ${DATASET_GEN} -p ${DATASET_PIPE}
     '''
   }
 
@@ -436,6 +439,7 @@ def void runApVerify(Map p) {
     "RUN_DIR=${p.runDir}",
     "DATASET_NAME=${p.dataset.name}",
     "DATASET_GEN=${p.gen}",
+    "DATASET_PIPE"=${p.pipeline}
     "DATASET_DIR=${p.datasetDir}",
     "HOME=${p.homeDir}",
     "CODE_DIR=${p.codeDir}",
