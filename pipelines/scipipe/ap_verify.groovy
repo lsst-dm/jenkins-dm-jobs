@@ -261,7 +261,6 @@ def void verifyDataset(Map p) {
         runDir: runDir,
         dataset: ds,
         gen: conf.gen,
-        pipeline: conf.gen3_pipeline,
         datasetDir: datasetDir,
         homeDir: homeDir,
         archiveDir: jobDir,
@@ -395,7 +394,7 @@ def void buildAp(Map p) {
  *
  * @param p Map
  * @param p.runDir String runtime cwd
- * @param p.dataset String full name of the validation dataset
+ * @param p.dataset Map Dataset block in the format of ap_verify.yaml.
  * @param p.gen Integer pipeline generation to run
  * @param p.datasetDir String path to validation dataset
  * @param p.homemDir String path to $HOME -- where to put dotfiles
@@ -406,7 +405,6 @@ def void runApVerify(Map p) {
     'runDir',
     'dataset',
     'gen',
-    'pipeline',
     'datasetDir',
     'homeDir',
     'archiveDir',
@@ -439,7 +437,7 @@ def void runApVerify(Map p) {
     "RUN_DIR=${p.runDir}",
     "DATASET_NAME=${p.dataset.name}",
     "DATASET_GEN=${p.gen}",
-    "DATASET_PIPE=${p.pipeline}",
+    "DATASET_PIPE=${p.dataset.gen3_pipeline}",
     "DATASET_DIR=${p.datasetDir}",
     "HOME=${p.homeDir}",
     "CODE_DIR=${p.codeDir}",
