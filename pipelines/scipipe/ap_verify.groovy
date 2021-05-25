@@ -261,7 +261,7 @@ def void verifyDataset(Map p) {
         runDir: runDir,
         dataset: ds,
         gen: conf.gen,
-        pipeline: conf.pipeline,
+        pipeline: conf.gen3_pipeline,
         datasetDir: datasetDir,
         homeDir: homeDir,
         archiveDir: jobDir,
