@@ -439,7 +439,7 @@ def void runApVerify(Map p) {
     "RUN_DIR=${p.runDir}",
     "DATASET_NAME=${p.dataset.name}",
     "DATASET_GEN=${p.gen}",
-    "DATASET_PIPE"=${p.pipeline}
+    "DATASET_PIPE=${p.pipeline}",
     "DATASET_DIR=${p.datasetDir}",
     "HOME=${p.homeDir}",
     "CODE_DIR=${p.codeDir}",
