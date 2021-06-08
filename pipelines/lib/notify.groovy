@@ -95,14 +95,18 @@ String mapToArg(Map data) {
 Object slackApiGet(Map args) {
   requiredParams(['method', 'query'], args)
 
+  // token is not allowed in query parameters anymore
+  token = args.query.token
+  args.query.remove("token")
   def call = "${slackEndpoint}/${args.method}?${mapToArg(args.query)}"
 
   url = new URL(call)
   debugln("url: ${url.toString()}")
-  debugln("token: ${args.query.token.substring(0,8)}")
+  debugln("token: ${token.substring(0,8)}")
 
   def data = null
   def conn = url.openConnection().with { conn ->
+    conn.setRequestProperty('Authorization', "Bearer ${token}")
     debugln("responseCode: ${conn.responseCode}")
     def text = conn.getInputStream().getText()
     debugln("text: ${text}")
