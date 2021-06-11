@@ -15,37 +15,121 @@ node('jenkins-master') {
 }
 
 notify.wrap {
-  util.requireParams(['YEAR', 'MONTH', 'DAY'])
+  util.requireParams([
+    'SOURCE_GIT_REFS',
+    'RELEASE_GIT_TAG',
+    'SPLENV_REF',
+    'O_LATEST',
+  ])
 
-  String year  = params.YEAR.padLeft(4, "0")
-  String month = params.MONTH.padLeft(2, "0")
-  String day   = params.DAY.padLeft(2, "0")
+  String sourceGitRefs = params.SOURCE_GIT_REFS
+  String gitTag        = params.RELEASE_GIT_TAG
+  String splenvRef     = params.SPLENV_REF
+  Boolean dockerLatest = params.O_LATEST
+
+  // generate eups tag from git tag
+  String eupsTag = "t" + util.sanitizeEupsTag(gitTag)
+
+  // determine if this is an rc release (does not start with an integer)
+  Boolean finalRelease = !!(gitTag =~ /^\d/)
+
+  // o_latest is only allowed for a final release
+  if (dockerLatest && !finalRelease) {
+    error "O_LATEST is only allowed on final (non-rc) releases"
+  }
+
+  // type of eupspkg to create -- "git" should always be used except for a
+  // final (non-rc) release
+  String eupspkgSource = finalRelease ? 'package' : 'git'
+
+  // A final release git tag for a "regular" package does not start with a `v`.
+  // However, the release git tag for an external packages is always prefixed
+  // with a `v`.  Thus, in the case of a final release, we need to use both
+  // v<tag> and <tag> as the source git refs to produce the eups source
+  // packages.
+  def buildGitTags = finalRelease ? "v${gitTag} ${gitTag}" : gitTag
+
+  def lsstswConfig = scipipe.canonical.lsstsw_config
+
+  echo "final release (non-rc): ${finalRelease}"
+  echo "EUPSPKG_SOURCE: ${eupspkgSource}"
+  echo "input git refs: ${sourceGitRefs}"
+  echo "build git refs: ${buildGitTags}"
+  echo "publish [git] tag: ${gitTag}"
+  echo "publish [eups] tag: ${eupsTag}"
 
   def products        = scipipe.canonical.products
   def tarballProducts = scipipe.tarball.products
   def retries         = 3
   def extraDockerTags = ''
 
-  def gitTag       = null
-  def eupsTag      = null
-  def manifestId   = null
-  def stackResults = null
+// if (dockerLatest) {
+//   extraDockerTags = '7-stack-lsst_distrib-o_latest o_latest'
+// }
 
-  def lsstswConfig = scipipe.canonical.lsstsw_config
+  def gitTagOnlyManifestId = null
+  def manifestId           = null
+  def stackResults         = null
 
   def run = {
-    stage('format nightly tag') {
-      gitTag  = "dt.${year}.${month}.${day}"
-      eupsTag = util.sanitizeEupsTag(gitTag)
-      echo "generated [git] tag: ${gitTag}"
-      echo "generated [eups] tag: ${eupsTag}"
+    stage('generate manifest') {
+      retry(retries) {
+          gitTagOnlyManifestId = util.runRebuild(
+          parameters: [
+            PRODUCTS: products,
+            REFS: sourceGitRefs,
+            SPLENV_REF: splenvRef,
+            BUILD_DOCS: false,
+            PREP_ONLY: true,
+          ],
+        )
+      } // retry
+    } // stage
+
+    stage('git tag eups products') {
+      println "Disabled."
+   // retry(retries) {
+   //   util.nodeWrap('docker') {
+   //     util.githubTagRelease(
+   //       options: [
+   //         '--dry-run': false,
+   //         '--org': scipipe.release_tag_org,
+   //         '--manifest': gitTagOnlyManifestId,
+   //         '--manifest-only': true,
+   //         '--ignore-git-message': true,
+   //         '--ignore-git-tagger': true,
+   //       ],
+   //       args: [gitTag],
+   //     )
+   //   } // util.nodeWrap
+   // } // retry
+    } // stage
+
+    // add aux repo tags *after* tagging eups product repos so as to avoid a
+    // trainwreck if an aux repo has been pulled into the build (without
+    // first being removed from the aux team).
+    stage('git tag auxilliaries') {
+      println("Disabled")
+   // retry(retries) {
+   //   util.nodeWrap('docker') {
+   //     util.githubTagTeams(
+   //       options: [
+   //         '--dry-run': false,
+   //         '--org': scipipe.release_tag_org,
+   //         '--tag': gitTag,
+   //       ],
+   //     )
+   //   } // util.nodeWrap
+   // } // retry
     } // stage
 
     stage('build') {
       retry(retries) {
         manifestId = util.runRebuild(
           parameters: [
+            REFS: buildGitTags,
             PRODUCTS: products,
+            SPLENV_REF: splenvRef,
             BUILD_DOCS: true,
           ],
         )
@@ -55,15 +139,16 @@ notify.wrap {
     stage('eups publish') {
       def pub = [:]
 
-      [eupsTag, 'dt_latest'].each { tagName ->
+      [eupsTag, 'o_latest'].each { tagName ->
         pub[tagName] = {
           retry(retries) {
             util.runPublish(
               parameters: [
-                EUPSPKG_SOURCE: 'git',
+                EUPSPKG_SOURCE: eupspkgSource,
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
                 PRODUCTS: products,
+                SPLENV_REF: splenvRef,
               ],
             )
           } // retry
@@ -75,49 +160,13 @@ notify.wrap {
 
     util.waitForS3()
 
-    // NOOP / DRY_RUN
-    stage('git tag eups products') {
-      println "Disabled."
-      //retry(retries) {
-      //  util.nodeWrap('docker') {
-      //    // needs eups distrib tag to be sync'd from s3 -> k8s volume
-      //    util.githubTagRelease(
-      //      options: [
-      //        '--dry-run': true,
-      //        '--org': scipipe.release_tag_org,
-      //        '--manifest': manifestId,
-      //        '--eups-tag': eupsTag,
-      //      ],
-      //      args: [gitTag],
-      //    )
-      //  } // util.nodeWrap
-      //} // retry
-    } // stage
-
-    // add aux repo tags *after* tagging eups product repos so as to avoid a
-    // trainwreck if an aux repo has been pulled into the build (without
-    // first being removed from the aux team).
-    stage('git tag auxilliaries') {
-      println "Disabled."
-      //retry(retries) {
-      //  util.nodeWrap('docker') {
-      //    util.githubTagTeams(
-      //      options: [
-      //        '--dry-run': true,
-      //        '--org': scipipe.release_tag_org,
-      //        '--tag': gitTag,
-      //      ],
-      //    )
-      //  } // util.nodeWrap
-      //} // retry
-    } // stage
-
     stage('build eups tarballs') {
       util.buildTarballMatrix(
         tarballConfigs: scipipe.tarball.build_config,
         parameters: [
           PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
+          SPLENV_REF: splenvRef,
           SMOKE: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
@@ -137,6 +186,7 @@ notify.wrap {
             DOCKER_TAGS: extraDockerTags,
             MANIFEST_ID: manifestId,
             LSST_COMPILER: lsstswConfig.compiler,
+            SPLENV_REF:splenvRef,
           ],
         )
       } // retry
@@ -186,25 +236,6 @@ notify.wrap {
       } // retry
     }
 
-    triggerMe['validate_drp_gen3'] = {
-      retry(1) {
-        // based on lsstsqre/stack image
-        build(
-          job: 'sqre/validate_drp_gen3',
-          parameters: [
-            string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            booleanParam(
-              name: 'NO_PUSH',
-              value: scipipe.release.step.validate_drp_gen3.no_push,
-            ),
-            booleanParam(name: 'WIPEOUT', value: false),
-            string(name: 'GIT_REF', value: 'master'),
-          ],
-          wait: false,
-        )
-      } // retry
-    }
-    
     triggerMe['doc build'] = {
       retry(retries) {
         build(
@@ -241,8 +272,8 @@ notify.wrap {
     }
 
     stage('triggered jobs') {
-      println "Disabled"
-    //  parallel triggerMe
+      println("Disabled")
+   // parallel triggerMe
     } // stage
   } // run
 
@@ -256,9 +287,13 @@ notify.wrap {
 
       util.nodeTiny {
         util.dumpJson(resultsFile, [
-          manifest_id: manifestId ?: null,
-          git_tag: gitTag ?: null,
-          eups_tag: eupsTag ?: null,
+          build_git_tags:   buildGitTags ?: null,
+          eups_tag:         eupsTag ?: null,
+          final_release:    finalRelease ?: null,
+          git_tag:          gitTag ?: null,
+          manifest_id:      manifestId ?: null,
+          products:         products ?: null,
+          tarball_products: tarballProducts ?: null,
         ])
 
         archiveArtifacts([
