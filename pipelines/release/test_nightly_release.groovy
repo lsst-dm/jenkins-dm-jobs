@@ -198,6 +198,7 @@ notify.wrap {
               value: scipipe.release.step.validate_drp_gen3.no_push,
             ),
             booleanParam(name: 'WIPEOUT', value: false),
+            string(name: 'GIT_REF', value: 'master'),
           ],
           wait: false,
         )
