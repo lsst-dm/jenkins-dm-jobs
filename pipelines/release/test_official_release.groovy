@@ -19,12 +19,14 @@ notify.wrap {
     'SOURCE_GIT_REFS',
     'RELEASE_GIT_TAG',
     'SPLENV_REF',
+    'RUBINENV_VER',
     'O_LATEST',
   ])
 
   String sourceGitRefs = params.SOURCE_GIT_REFS
   String gitTag        = params.RELEASE_GIT_TAG
   String splenvRef     = params.SPLENV_REF
+  String rubinEnvVer   = params.RUBINENV_VER
   Boolean dockerLatest = params.O_LATEST
 
   // generate eups tag from git tag
@@ -166,7 +168,7 @@ notify.wrap {
         parameters: [
           PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
-          SPLENV_REF: eupsTag,
+          SPLENV_REF: rubinEnvVer,
           SMOKE: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
@@ -186,7 +188,7 @@ notify.wrap {
             DOCKER_TAGS: extraDockerTags,
             MANIFEST_ID: manifestId,
             LSST_COMPILER: lsstswConfig.compiler,
-            SPLENV_REF: eupsTag,
+            SPLENV_REF: rubinEnvVer,
           ],
         )
       } // retry
