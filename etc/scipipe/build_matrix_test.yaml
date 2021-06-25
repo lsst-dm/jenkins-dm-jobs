@@ -197,10 +197,10 @@ newinstall:
     git_ref: master
     dir: ''
   docker_registry:
-    repo: lsstsqre/newinstall
+    repo: lsstsqre/newinstall-test
     tag: latest
   github_repo: lsst/lsst
-  git_ref: master
+  git_ref: tickets/DM-30833
 eups:
   base_url: https://eups.lsst.codes/stack
   s3_bucket: eups.lsst.codes
