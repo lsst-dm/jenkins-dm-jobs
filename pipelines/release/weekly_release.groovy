@@ -163,43 +163,6 @@ notify.wrap {
           )
         } // retry
       } // stage
-
-      // After building the weekly, we fire off the sal-sciplat-lab jobs
-      //  that depend on it.
-
-      // The idea here is that all the ones that are links should be built
-      //  sequentially, with an aggregator script used to
-      //  ensure they all run on the same host so they take advantage of
-      //  having a build that just needs a tag-and-push.  Those which are
-      //  not all the same underlying versions can be built in parallel.
-      // Unfortunately, Jenkins Groovy does not allow nesting of parallel
-      //  stages within other parallel stages, so we do these all
-      //  sequentially in order not to have them held up by validate_drp.
-
-      stage('SAL-sciplat-lab linked image set (master/summit/base/kueyen/tts/nts)') {
-        retry(retries) {
-          build(
-            job: 'sqre/infra/aggregate-sal',
-            parameters: [
-              string(name: 'TAG', value: eupsTag),
-              string(name: 'ENVIRONMENTS', value: 'master summit base kueyen tts nts'),
-            ],
-            wait: false,
-          )
-        } // retry
-      } // stage
-      // stage('SAL-sciplat-lab linked image set (nts)') {
-      //   retry(retries) {
-      //     build(
-      //       job: 'sqre/infra/aggregate-sal',
-      //       parameters: [
-      //         string(name: 'TAG', value: eupsTag),
-      //         string(name: 'ENVIRONMENTS', value: 'nts'),
-      //       ],
-      //       wait: false,
-      //     )
-      //   } // retry
-      // } // stage
     }
 
     triggerMe['validate_drp'] = {
