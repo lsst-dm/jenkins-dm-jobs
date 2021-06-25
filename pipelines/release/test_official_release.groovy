@@ -166,7 +166,7 @@ notify.wrap {
         parameters: [
           PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
-          SPLENV_REF: splenvRef,
+          SPLENV_REF: eupsTag,
           SMOKE: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
@@ -186,7 +186,7 @@ notify.wrap {
             DOCKER_TAGS: extraDockerTags,
             MANIFEST_ID: manifestId,
             LSST_COMPILER: lsstswConfig.compiler,
-            SPLENV_REF:splenvRef,
+            SPLENV_REF: eupsTag,
           ],
         )
       } // retry
