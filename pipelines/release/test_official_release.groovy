@@ -168,7 +168,7 @@ notify.wrap {
         parameters: [
           PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
-          SPLENV_REF: rubinEnvVer,
+          SPLENV_REF: splenvRef,
           SMOKE: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
