@@ -108,6 +108,9 @@ scipipe-lsstsw-lsst_distrib:
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
   - <<: *bigsur-conda
+scipipe-lsstsw-ci_imsim:
+  - <<: *el7-conda
+  - <<: *bigsur-conda
 dax-lsstsw-matrix:
   - <<: *el7-conda
     splenv_ref: 'ceb6bb6'

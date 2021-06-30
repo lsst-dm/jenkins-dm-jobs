@@ -21,6 +21,12 @@ import util.CleanBuild
     seedJob: SEED_JOB,
   ],
   [
+    name: 'scipipe/ci_imsim',
+    products: 'ci_imsim',
+    buildConfig: 'scipipe-lsstsw-ci_imsim',
+    seedJob: SEED_JOB,
+  ],
+  [
     name: 'dax/qserv_distrib',
     products: 'qserv_distrib',
     buildConfig: 'dax-lsstsw-matrix',
