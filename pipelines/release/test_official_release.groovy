@@ -169,6 +169,7 @@ notify.wrap {
           PRODUCTS: tarballProducts,
           EUPS_TAG: eupsTag,
           SPLENV_REF: splenvRef,
+          RUBINENV_VER: rubinEnvVer,
           SMOKE: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
