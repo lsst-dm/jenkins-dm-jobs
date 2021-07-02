@@ -175,7 +175,7 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: master
+  git_ref: tickets/DM-30981
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: master
