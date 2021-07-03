@@ -18,6 +18,8 @@ notify.wrap {
   util.requireParams([
     'LATEST',
     'NO_PUSH',
+    'SPLENV_REF',
+    'RUBINENV_VER',
   ])
 
   Boolean pushLatest = params.LATEST
@@ -36,7 +38,8 @@ notify.wrap {
   def baseDockerRepo = sqre.scipipe_base.docker_registry.repo
   def baseDockerTag  = '7'
   def baseImage      = "${baseDockerRepo}:${baseDockerTag}"
-  def splenvRef      = scipipe.canonical.lsstsw_config.splenv_ref
+  def splenvRef      = params.SPLENV_REF
+  def rubinEnvVer    = params.RUBINENV_VER
 
   def image = null
 
@@ -60,6 +63,7 @@ notify.wrap {
       opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
       opt << "--build-arg NEWINSTALL_URL=\"${newinstallUrl}\""
       opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
+      opt << "--build-arg LSST_CONDA_ENV_NAME=\"lsst-scipipe-${rubinEnvVer}\""
       withCredentials([[
         $class: 'StringBinding',
         credentialsId: 'eups-url',
@@ -81,10 +85,10 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-          image.push(splenvRef)
-          image.push("${splenvRef}-${util.sanitizeDockerTag(gitRef)}")
+          image.push(rubinEnvVer)
+          image.push("${rubinEnvVer}-${util.sanitizeDockerTag(gitRef)}")
           if (gitRef == 'master') {
-            image.push("${splenvRef}-g${abbrHash}")
+            image.push("${rubinEnvVer}-g${abbrHash}")
           }
           if (pushLatest) {
             image.push('latest')
