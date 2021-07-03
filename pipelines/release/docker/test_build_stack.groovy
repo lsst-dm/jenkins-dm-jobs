@@ -51,7 +51,7 @@ notify.wrap {
     splenvRef = params.SPLENV_REF
   }
 
-  def baseImage       = "${newinstallImage}:latest"
+  def baseImage       = "${newinstallImage}:${splenvRef}"
 
   def image = null
   def repo  = null
