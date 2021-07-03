@@ -200,7 +200,7 @@ newinstall:
     git_ref: master
     dir: ''
   docker_registry:
-    repo: lsstsqre/newinstall
+    repo: lsstsqre/newinstall-test
     tag: latest
   github_repo: lsst/lsst
   git_ref: tickets/DM-30833
