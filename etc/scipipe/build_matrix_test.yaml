@@ -190,7 +190,7 @@ shebangtron:
 scipipe_release:
   dockerfile:
     github_repo: lsst-sqre/docker-tarballs
-    git_ref: master
+    git_ref: tickets/DM-30913
     dir: ''
   docker_registry:
     repo: lsstsqre/centos
@@ -203,7 +203,7 @@ newinstall:
     repo: lsstsqre/newinstall-test
     tag: latest
   github_repo: lsst/lsst
-  git_ref: tickets/DM-30833
+  git_ref: master
 eups:
   base_url: https://eups.lsst.codes/stack
   s3_bucket: eups.lsst.codes
