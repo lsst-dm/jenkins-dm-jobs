@@ -189,7 +189,7 @@ shebangtron:
 # use 'stack'
 scipipe_release:
   dockerfile:
-    github_repo: lsst-sqre/docker-tarballs
+    github_repo: ktlim/docker-tarballs
     git_ref: tickets/DM-30913
     dir: ''
   docker_registry:
