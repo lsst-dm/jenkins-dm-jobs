@@ -25,6 +25,7 @@ notify.wrap {
     'IMAGE',
     'LABEL',
     'SPLENV_REF',
+    'RUBINENV_VER',
     'MINIVER',
     'OSFAMILY',
     'PLATFORM',
@@ -41,6 +42,7 @@ notify.wrap {
   String image          = util.emptyToNull(params.IMAGE) // '' means null
   String label          = params.LABEL
   String splenvRef      = params.SPLENV_REF
+  String rubinEnvVer    = params.RUBINENV_VER
   String miniver        = params.MINIVER
   String products       = params.PRODUCTS
   String osfamily       = params.OSFAMILY
@@ -52,7 +54,7 @@ notify.wrap {
   Integer timeout       = params.TIMEOUT
   Boolean wipeout       = params.WIPEOUT
 
-  def py = new MinicondaEnv(pythonVersion,miniver, splenvRef)
+  def py = new MinicondaEnv(pythonVersion,miniver, splenvRef, rubinEnvVer)
 
   def buildTarget = [
     products: products,
@@ -867,6 +869,7 @@ class MinicondaEnv implements Serializable {
   String pythonVersion
   String minicondaVersion
   String splenvRef
+  String rubineEnvVer
 
   /**
    * Constructor.
@@ -878,17 +881,18 @@ class MinicondaEnv implements Serializable {
    */
   // unfortunately, a constructor is required under the security sandbox
   // See: https://issues.jenkins-ci.org/browse/JENKINS-34741
-  MinicondaEnv(String p, String m, String l) {
+  MinicondaEnv(String p, String m, String l, String v) {
     this.pythonVersion = p
     this.minicondaVersion = m
     this.splenvRef = l
+    this.rubinEnvVer = v
   }
 
   /**
    * Generate a single string description of miniconda env.
    */
   String slug() {
-    "miniconda${pythonVersion}-${minicondaVersion}-${splenvRef}"
+    "miniconda${pythonVersion}-${minicondaVersion}-${rubinEnvVer}"
   }
 }
 
