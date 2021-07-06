@@ -188,6 +188,9 @@ notify.wrap {
             MANIFEST_ID: manifestId,
             LSST_COMPILER: lsstswConfig.compiler,
             SPLENV_REF: rubinEnvVer,
+            // This is not splenvRef, which could be an eups tag.
+            // This parameter is used to select the base newinstall container,
+            // which only has rubin-env version tags.
           ],
         )
       } // retry
