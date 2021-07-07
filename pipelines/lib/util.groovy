@@ -1065,6 +1065,7 @@ def void buildTarballMatrix(Map p) {
     if (p.parameters.SPLENV_REF) {
       splenvRef = p.parameters.SPLENV_REF
     }
+    def rubinEnvVer = splenvRef
     if (p.parameters.RUBINENV_VER) {
       rubinEnvVer = p.parameters.RUBINENV_VER
     }
