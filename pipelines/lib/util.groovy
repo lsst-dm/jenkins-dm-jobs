@@ -1065,6 +1065,9 @@ def void buildTarballMatrix(Map p) {
     if (p.parameters.SPLENV_REF) {
       splenvRef = p.parameters.SPLENV_REF
     }
+    if (p.parameters.RUBINENV_VER) {
+      rubinEnvVer = p.parameters.RUBINENV_VER
+    }
 
     def slug = "miniconda${item.python}"
     slug += "-${item.miniver}-${splenvRef}"
@@ -1089,6 +1092,7 @@ def void buildTarballMatrix(Map p) {
             string(name: 'PYTHON_VERSION', value: item.python),
             string(name: 'MINIVER', value: item.miniver),
             string(name: 'SPLENV_REF', value: splenvRef),
+            string(name: 'RUBINENV_VER', value: rubinEnvVer),
             string(name: 'OSFAMILY', value: item.osfamily),
             string(name: 'PLATFORM', value: item.platform),
           ]
