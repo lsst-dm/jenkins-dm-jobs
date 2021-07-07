@@ -869,7 +869,7 @@ class MinicondaEnv implements Serializable {
   String pythonVersion
   String minicondaVersion
   String splenvRef
-  String rubineEnvVer
+  String rubinEnvVer
 
   /**
    * Constructor.
