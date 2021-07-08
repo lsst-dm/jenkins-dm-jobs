@@ -181,9 +181,9 @@ Object slackApiPost(Map args) {
 Object createChannel(Map args) {
   requiredParams(['name', 'token'], args)
 
-  // https://api.slack.com/methods/channels.create
+  // https://api.slack.com/methods/conversations.create
   def create = slackApiPost(
-    method: 'channels.create',
+    method: 'conversations.create',
     token: args.token,
     body: [
       name: args.name,
@@ -193,10 +193,10 @@ Object createChannel(Map args) {
   if (create?.ok) {
     def channelId = create.channel.id
 
-    // https://api.slack.com/methods/channels.setTopic
+    // https://api.slack.com/methods/conversations.setTopic
     if (args.topic) {
       slackApiPost(
-        method: 'channels.setTopic',
+        method: 'conversations.setTopic',
         token: args.token,
         body: [
           channel: channelId,
@@ -206,10 +206,10 @@ Object createChannel(Map args) {
       )
     }
 
-    // https://api.slack.com/methods/channels.setPurpose
+    // https://api.slack.com/methods/conversations.setPurpose
     if (args.purpose) {
       slackApiPost(
-        method: 'channels.setPurpose',
+        method: 'conversations.setPurpose',
         token: args.token,
         body: [
           channel: channelId,
@@ -222,9 +222,9 @@ Object createChannel(Map args) {
     // this prevents the user that added the slack app from ending up in every
     // channel created.  The channel can only be left after the topic/purpose
     // is set as otherwise these calls will fail.
-    // https://api.slack.com/methods/channels.leave
+    // https://api.slack.com/methods/conversations.leave
     slackApiPost(
-      method: 'channels.leave',
+      method: 'conversations.leave',
       token: args.token,
       body: [
         channel: channelId,
@@ -532,10 +532,10 @@ void slackSendBuild(Map args) {
       // incase there has been a long period between the build start and
       // completion.
       if (send?.ok && slackId) {
-        // https://api.slack.com/methods/channels.invite
+        // https://api.slack.com/methods/conversations.invite
         // note that this method seems to only work with a channel ID
         def invite = slackApiPost(
-          method: 'channels.invite',
+          method: 'conversations.invite',
           token: SLACK_TOKEN,
           body: [
             channel: send.channel,
