@@ -175,7 +175,7 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: tickets/DM-30981
+  git_ref: u/ktl/debug-release
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: master
@@ -189,8 +189,8 @@ shebangtron:
 # use 'stack'
 scipipe_release:
   dockerfile:
-    github_repo: ktlim/docker-tarballs
-    git_ref: tickets/DM-30913
+    github_repo: lsst-sqre/docker-tarballs
+    git_ref: master
     dir: ''
   docker_registry:
     repo: lsstsqre/centos
