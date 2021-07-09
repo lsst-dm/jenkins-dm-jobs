@@ -175,7 +175,7 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: tickets/DM-30981
+  git_ref: u/ktl/debug-release
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: master
