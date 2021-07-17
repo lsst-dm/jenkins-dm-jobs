@@ -310,6 +310,9 @@ def void runPublish(Map p) {
   if (useP.parameters.SPLENV_REF) {
     jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
   }
+  if (useP.parameters.RUBINENV_VER) {
+    jobParameters += string(name: 'RUBINENV_VER', value: useP.parameters.RUBINENV_VER)
+  }
 
   build(
     job: useP.job,

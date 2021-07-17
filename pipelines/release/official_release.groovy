@@ -149,6 +149,7 @@ notify.wrap {
                 EUPS_TAG: tagName,
                 PRODUCTS: products,
                 SPLENV_REF: splenvRef,
+                RUBINENV_VER: rubinEnvVer,
               ],
             )
           } // retry
