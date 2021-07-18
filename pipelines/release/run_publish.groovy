@@ -39,6 +39,10 @@ notify.wrap {
   if (params.SPLENV_REF) {
     splenvRef = params.SPLENV_REF
   }
+  def rubinEnvVer = splenvRef
+  if (params.RUBINENV_VER) {
+    rubinEnvVer = params.RUBINENV_VER
+  }
 
   def slug = util.lsstswConfigSlug(lsstswConfig)
 
@@ -67,6 +71,7 @@ notify.wrap {
           "EUPS_USERDATA=${cwd}/home/.eups_userdata",
           "EUPSPKG_SOURCE=${eupspkgSource}",
           "LSST_SPLENV_REF=${splenvRef}",
+          "RUBINENV_VER=${rubinEnvVer}",
           "MANIFEST_ID=${manifestId}",
           "EUPS_TAG=${eupsTag}",
           "PRODUCTS=${products}",

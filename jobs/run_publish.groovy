@@ -16,6 +16,7 @@ p.pipeline().with {
     stringParam('PRODUCTS', null, 'Whitespace delimited list of EUPS products to tag.')
     stringParam('TIMEOUT', '1', 'build timeout in hours')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
+    stringParam('RUBINENV_VER', scipipe.template.splenv_ref, 'conda env ref')
     // enable for debugging only
     // booleanParam('NO_PUSH', true, 'Skip s3 push.')
   }
