@@ -65,7 +65,8 @@ notify.wrap {
   }
 
   stage("${jobConfName} matrix") {
-    parallel(matrix)
+    println "Disabled"
+    // parallel(matrix)
   }
 } // notify.wrap
 
