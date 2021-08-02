@@ -11,7 +11,7 @@ template:
       display_name: hits2015
       name: ap_verify_ci_hits2015
       github_repo: lsst/ap_verify_ci_hits2015
-      gen3_pipeline: ${AP_VERIFY_DIR}/pipelines/ApVerify.yaml
+      gen3_pipeline: ${AP_VERIFY_DIR}/pipelines/ApVerifyWithFakes.yaml
       git_ref: master
       clone_timelimit: 15
     cosmos_pdr2: &dataset_cosmos_pdr2
