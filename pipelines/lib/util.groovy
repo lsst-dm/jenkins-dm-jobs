@@ -356,9 +356,8 @@ def lsstswBuild(
   } // runDocker
 
   def runEnv = { doRun ->
-      // use different workspace dirs for python 2/3 to avoid residual state
-      // conflicts
-      def buildDirHash = hashpath(slug).take(10)
+      // No longer need hashpath as slug is short enough
+      def buildDirHash = slug
       try {
         dir(buildDirHash) {
           if (wipeout) {
@@ -1492,7 +1491,9 @@ def String lsstswConfigSlug(Map lsstswConfig) {
   def displayName = lc.display_name ?: lc.label
   def displayCompiler = lc.display_compiler ?: lc.compiler
 
-  "${displayName}.${displayCompiler}.py${lc.python}"
+  // Since we use conda compilers and Python 3, leave them out.
+  // "${displayName}.${displayCompiler}.py${lc.python}"
+  "${displayName}"
 }
 
 /*
