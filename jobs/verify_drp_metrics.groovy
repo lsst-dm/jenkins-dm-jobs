@@ -1,8 +1,8 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/validate_drp_gen3', dsl: this)
+def p = new Plumber(name: 'sqre/verify_drp_metrics', dsl: this)
 p.pipeline().with {
-  description('Execute validate_drp_gen3 and ship the results to the squash qa-dashboard.')
+  description('Execute verify_drp_metrics and ship the results to SQuaSH.')
 
   parameters {
     stringParam('DOCKER_IMAGE', null, 'Explicit name of release docker image including tag.')

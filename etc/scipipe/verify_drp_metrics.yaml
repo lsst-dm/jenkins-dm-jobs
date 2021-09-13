@@ -15,8 +15,8 @@ template:
       clone_timelimit: 15
     hsc: &dataset_hsc
       display_name: hsc
-      name: validation_data_hsc
-      github_repo: lsst/validation_data_hsc
+      name: rc2_subset
+      github_repo: lsst-dm/rc2_subset
       git_ref: master
       clone_timelimit: 240
     decam: &dataset_decam
@@ -26,12 +26,11 @@ template:
       git_ref: master
       clone_timelimit: 60
   codes:
-    validate_drp: &code_drp
-      name: validate_drp
-      github_repo: lsst/validate_drp
-      git_ref: master
+    verify_drp_metrics: &code_verify_drp
+      name: faro
+      github_repo: lsst/faro
       clone_timelimit: 5
-validate_drp:
+verify_drp_metrics:
   # defaults are used in all configs which do not explicitly set a value for
   # key(s) of the same name.
   defaults:
@@ -40,12 +39,14 @@ validate_drp:
   # all configs must include a dataset and run_timelimit.
   # if no code map is defined, the version present in the container is used.
   configs:
-    - dataset:
-        <<: *dataset_cfht
-      run_timelimit: 30
+    # - dataset:
+    #     <<: *dataset_cfht
+    #   run_timelimit: 30
     - dataset:
         <<: *dataset_hsc
       run_timelimit: 1080
+      code:
+        <<: *code_verify_drp
     # - dataset:
     #     <<: *dataset_decam
     #   run_timelimit: 60

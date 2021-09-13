@@ -165,34 +165,16 @@ notify.wrap {
       } // stage
     }
 
-    triggerMe['validate_drp'] = {
+    triggerMe['verify_drp_metrics'] = {
       retry(1) {
         // based on lsstsqre/stack image
         build(
-          job: 'sqre/validate_drp',
+          job: 'sqre/verify_drp_metrics',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
             booleanParam(
               name: 'NO_PUSH',
-              value: scipipe.release.step.validate_drp.no_push,
-            ),
-            booleanParam(name: 'WIPEOUT', value: false),
-          ],
-          wait: false,
-        )
-      } // retry
-    }
-
-    triggerMe['validate_drp_gen3'] = {
-      retry(1) {
-        // based on lsstsqre/stack image
-        build(
-          job: 'sqre/validate_drp_gen3',
-          parameters: [
-            string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            booleanParam(
-              name: 'NO_PUSH',
-              value: scipipe.release.step.validate_drp_gen3.no_push,
+              value: scipipe.release.step.verify_drp_metrics.no_push,
             ),
             booleanParam(name: 'WIPEOUT', value: false),
             string(name: 'GIT_REF', value: 'master'),

@@ -156,9 +156,7 @@ release:
   step:
     build_sciplatlab:
       image_name: lsstsqre/sciplat-lab
-    validate_drp:
-      no_push: false
-    validate_drp_gen3:
+    verify_drp_metrics:
       no_push: false
     documenteer:
       publish: true
