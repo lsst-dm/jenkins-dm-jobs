@@ -1,8 +1,3 @@
-// Consideration has been given to renaming this job to scipipe/validate_drp
-// but there is concern about breakage of links back to previous biulds from
-// squash.  A rename needs to be coordinated with a simultaneous fixing up of
-// the squash database.
-
 node('jenkins-master') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -20,7 +15,7 @@ node('jenkins-master') {
     util = load 'pipelines/lib/util.groovy'
     scipipe = util.scipipeConfig()
     sqre = util.sqreConfig() // for squash config
-    drp = util.validateDrpConfig()
+    drp = util.verifyDrpMetricsConfig()
   }
 }
 
@@ -29,15 +24,17 @@ notify.wrap {
     'DOCKER_IMAGE',
     'NO_PUSH',
     'WIPEOUT',
+    'GIT_REF',
   ])
 
   String dockerImage = params.DOCKER_IMAGE
   Boolean noPush     = params.NO_PUSH
   Boolean wipeout    = params.WIPEOUT
+  String gitRef      = params.GIT_REF
 
   // run multiple datasets, if defined, in parallel
   def jobConf     = drp
-  def jobConfName = 'validate_drp'
+  def jobConfName = 'verify_drp_metrics'
   def matrix      = [:]
   def defaults    = jobConf."$jobConfName".defaults
   jobConf."$jobConfName".configs.each { conf ->
@@ -50,7 +47,7 @@ notify.wrap {
 
     // note that `:` seems to break python imports and `*` seems to break the
     // butler
-    def runSlug = "${datasetSlug(conf)}^${codeSlug(conf)}"
+    def runSlug = "${datasetSlug(conf)}^${codeSlug(conf, gitRef)}"
 
     matrix[runSlug] = {
       verifyDataset(
@@ -60,6 +57,7 @@ notify.wrap {
         squashPush: (!noPush) && conf.squash_push,
         slug: runSlug,
         wipeout: wipeout,
+        gitRef: gitRef,
       )
     }
   }
@@ -86,10 +84,10 @@ def String datasetSlug(Map conf) {
  *
  * @param c Map
  */
-def String codeSlug(Map conf) {
+def String codeSlug(Map conf, String gitRef) {
   def code = conf.code
 
-  def name = 'validate_drp'
+  def name = 'verify_drp_metrics'
   def ref = 'installed'
 
   if (code) {
@@ -97,7 +95,7 @@ def String codeSlug(Map conf) {
   }
   if (code?.github_repo) {
     name = code.name
-    ref  = code.git_ref.tr('/', '_')
+    ref  = gitRef.tr('/', '_')
   }
   def slug = "${name}-${ref}".toLowerCase()
   return slug.toLowerCase()
@@ -113,7 +111,7 @@ def String displayName(Map m) {
 }
 
 /**
- * Prepare, execute, and record results of a validation_drp run.
+ * Prepare, execute, and record results of a verify_drp_metrics run.
  *
  * @param p Map
  * @param p.config Map
@@ -121,6 +119,7 @@ def String displayName(Map m) {
  * @param p.squashPush Boolean
  * @param p.slug String Name of dataset.
  * @param p.wipeout Boolean
+ * @param p.gitRef String Git reference to checkout in faro repo.
  */
 def void verifyDataset(Map p) {
   util.requireMapKeys(p, [
@@ -129,6 +128,7 @@ def void verifyDataset(Map p) {
     'slug',
     'squashPush',
     'wipeout',
+    'gitRef',
   ])
 
   def conf = p.config
@@ -136,7 +136,6 @@ def void verifyDataset(Map p) {
   def code = conf.code
 
   // code.name is required in order to build code
-  Boolean buildCode = code?.name
 
   def run = {
     // note that pwd() must be run inside of a node {} block
@@ -145,7 +144,7 @@ def void verifyDataset(Map p) {
     def ciDir            = "${jobDir}/ci-scripts"
     def baseDir          = "${jobDir}/${p.slug}"
     // the code clone needs to be under the long winded path for archiving
-    def codeDir          = buildCode ? "${baseDir}/${code.name}" : ''
+    def codeDir          = "${baseDir}/${code.name}"
     def homeDir          = "${baseDir}/home"
     def runDir           = "${baseDir}/run"
     def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
@@ -194,46 +193,42 @@ def void verifyDataset(Map p) {
     } // dir
 
     // clone code
-    if (buildCode) {
-      dir(codeDir) {
-        timeout(time: code.clone_timelimit, unit: 'MINUTES') {
-          // the simplier git step doesn't support 'CleanBeforeCheckout'
-          def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
-          def codeRef     = code.git_ref
+    dir(codeDir) {
+      timeout(time: code.clone_timelimit, unit: 'MINUTES') {
+        // the simplier git step doesn't support 'CleanBeforeCheckout'
+        def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
+        def codeRef     = p.gitRef
 
-          checkout(
-            scm: [
-              $class: 'GitSCM',
-              branches: [[name: "*/${codeRef}"]],
-              doGenerateSubmoduleConfigurations: false,
-              extensions: [[$class: 'CleanBeforeCheckout']],
-              submoduleCfg: [],
-              userRemoteConfigs: [[url: codeRepoUrl]]
-            ],
-            changelog: false,
-            poll: false,
-          )
-        } // timeout
-      } // dir
-    }
+        checkout(
+          scm: [
+            $class: 'GitSCM',
+            branches: [[name: "*/${codeRef}"]],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [[$class: 'CleanBeforeCheckout']],
+            submoduleCfg: [],
+            userRemoteConfigs: [[url: codeRepoUrl]]
+          ],
+          changelog: false,
+          poll: false,
+        )
+      } // timeout
+    } // dir
 
     util.insideDockerWrap(
       image: p.dockerImage,
       pull: true,
       args: "-v ${datasetDir}:${datasetDir} -v ${ciDir}:${ciDir}",
     ) {
-      if (buildCode) {
-        buildDrp(
-          codeDir: codeDir,
-          ciDir: ciDir,
-          homeDir: homeDir,
-          runSlug: p.slug,
-          lsstCompiler: lsstCompiler,
-          archiveDir: jobDir,
-        )
-      }
+      buildDrp(
+        codeDir: codeDir,
+        ciDir: ciDir,
+        homeDir: homeDir,
+        runSlug: p.slug,
+        lsstCompiler: lsstCompiler,
+        archiveDir: jobDir,
+      )
 
-      runDrp(
+      runDrpMetrics(
         runDir: runDir,
         codeDir: codeDir,
         ciDir: ciDir,
@@ -242,19 +237,11 @@ def void verifyDataset(Map p) {
         archiveDir: jobDir,
       )
 
-      // compute characterization report
-      runReportPerformance(
-        runDir: runDir,
-        codeDir: codeDir,
-        datasetName: ds.name,
-        archiveDir: jobDir,
-      )
-
       // push results to squash
       if (p.squashPush) {
         def files = []
         dir(runDir) {
-          files = findFiles(glob: '*_output_*.json')
+          files = findFiles(glob: 'validate_drp_*.json')
         }
 
         files.each { f ->
@@ -299,11 +286,11 @@ def void runNodeCleanup() {
 }
 
 /**
- * Build validate_drp
+ * Build DRP metric measurement code
  *
  * @param p Map
  * @param p.homemDir String path to $HOME -- where to put dotfiles
- * @param p.codeDir String path to validate_drp (code)
+ * @param p.codeDir String path to DRP metrics (code)
  * @param p,runSlug String short name to describe this drp run
  * @param p.ciDir String
  * @param p.lsstCompiler String
@@ -330,7 +317,6 @@ def void buildDrp(Map p) {
       setup -k -r .
 
       set -o xtrace
-
       scons
     '''
   }
@@ -362,31 +348,31 @@ def void buildDrp(Map p) {
 }
 
 /**
- * Run validate_drp driver script.
+ * Run verify_drp_metrics driver script.
  *
  * @param p Map
- * @param p.runDir String runtime cwd for validate_drp
- * @param p.datasetName String full name of the validation dataset
- * @param p.datasetDir String path to validation dataset
+ * @param p.runDir String runtime cwd for DRP metrics code
+ * @param p.datasetName String full name of the dataset
+ * @param p.datasetDir String path to the dataset
  * @param p.ciDir String
- * @param p.codeDir (Optional) String path to validate_drp (code)
+ * @param p.codeDir (Optional) String path to the DRP metrics code
  * @param p.archiveDir String path from which to archive artifacts
  */
-def void runDrp(Map p) {
+def void runDrpMetrics(Map p) {
   util.requireMapKeys(p, [
     'runDir',
+    'codeDir',
     'datasetName',
     'datasetDir',
     'ciDir',
     'archiveDir',
   ])
 
-  p = [codeDir: ''] + p
 
   withEnv([
-    "LSST_VALIDATE_DRP_CODE_DIR=${p.codeDir}",
-    "LSST_VALIDATE_DRP_DATASET=${p.datasetName}",
-    "LSST_VALIDATE_DRP_DATASET_DIR=${p.datasetDir}",
+    "LSST_VERIFY_DRP_METRICS_CODE_DIR=${p.codeDir}",
+    "LSST_VERIFY_DRP_METRICS_DATASET=${p.datasetName}",
+    "LSST_VERIFY_DRP_METRICS_DATASET_DIR=${p.datasetDir}",
     "LSST_CI_SCRIPTS_DIR=${p.ciDir}",
   ]) {
     try {
@@ -397,73 +383,19 @@ def void runDrp(Map p) {
           source /opt/lsst/software/stack/loadLSST.bash
           set -o xtrace
 
-          "${LSST_CI_SCRIPTS_DIR}/run_validate_drp.sh"
+          "${LSST_CI_SCRIPTS_DIR}/run_verify_drp_metrics.sh"
         '''
       }
     } finally {
       dir(p.archiveDir) {
         util.record(util.xz([
           "${p.runDir}/**/*.log",
-          "${p.runDir}/**/*_output_*.json",
+          "${p.runDir}/**/validate_drp_*.json",
         ]))
       }
     } // try
   } // withEnv
-} // runDrp
-
-/**
- * Generate characterization report using reportPerformance.py
- *
- * @param p Map
- * @param p.runDir String
- * @param p.datasetName String The dataset name. Eg., validation_data_cfht
- * @param p.codeDir String (Optional)
- * @param p.archiveDir String path from which to archive artifacts
- */
-def void runReportPerformance(Map p) {
-  util.requireMapKeys(p, [
-    'runDir',
-    'datasetName',
-    'archiveDir',
-  ])
-
-  p = [codeDir: ''] + p
-
-  def run = {
-    util.bash '''
-      set +o xtrace
-      source /opt/lsst/software/stack/loadLSST.bash
-      # if CODE_DIR is defined, set that up instead of the default validate_drp
-      # product
-      if [[ -n $CODE_DIR ]]; then
-        setup -k -r "$CODE_DIR"
-      else
-        setup validate_drp
-      fi
-      set -o xtrace
-
-      # compute characterization report
-      reportPerformance.py \
-        --output_file="${DATASET}_char_report.rst" \
-        *_output_*.json
-    '''
-  } // run
-
-  withEnv([
-    "CODE_DIR=${p.codeDir}",
-    "DATASET=${p.datasetName}",
-  ]) {
-    try {
-      dir(p.runDir) {
-        run()
-      }
-    } finally {
-      dir(p.archiveDir) {
-        util.record(util.xz(["${p.runDir}/**/*_char_report.rst"]))
-      }
-    } // try
-  } // withEnv
-} // runReportPerformance
+} // runVerifyMetrics
 
 def void missingDockerLabel(String label) {
   error "docker ${label} label is missing"

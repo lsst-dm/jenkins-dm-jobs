@@ -1553,21 +1553,12 @@ def Object simsConfig() {
 }
 
 /*
- * Get validate_drp config
+ * Get verify_drp_metrics config
  *
  * @return config Object
  */
-def Object validateDrpConfig() {
-  readYamlFile('etc/scipipe/validate_drp.yaml')
-}
-
-/*
- * Get validate_drp_gen3 config
- *
- * @return config Object
- */
-def Object validateDrpGen3Config() {
-  readYamlFile('etc/scipipe/validate_drp_gen3.yaml')
+def Object verifyDrpMetricsConfig() {
+  readYamlFile('etc/scipipe/verify_drp_metrics.yaml')
 }
 
 /*
