@@ -240,7 +240,7 @@ def void verifyDataset(Map p) {
       if (p.squashPush) {
         def files = []
         dir(runDir) {
-          files = findFiles(glob: 'validate_drp_*.json')
+          files = findFiles(glob: '*.verify.json')
         }
 
         files.each { f ->
@@ -389,7 +389,7 @@ def void runDrpMetrics(Map p) {
       dir(p.archiveDir) {
         util.record(util.xz([
           "${p.runDir}/**/*.log",
-          "${p.runDir}/**/validate_drp_*.json",
+          "${p.runDir}/**/*.verify.json",
         ]))
       }
     } // try
