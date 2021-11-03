@@ -183,6 +183,8 @@ def void verifyDataset(Map p) {
 
     // clone dataset
     dir(datasetDir) {
+      // start with a fresh clone each time to avoid running out of disk
+      deleteDir()
       timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
         util.checkoutLFS(
           githubSlug: ds.github_repo,
