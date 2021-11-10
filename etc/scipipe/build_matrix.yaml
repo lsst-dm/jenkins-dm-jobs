@@ -8,7 +8,7 @@ template:
   splenv_ref: &splenv_ref '0.7.0'
   tarball_defaults: &tarball_defaults
     miniver: &miniver 'py38_4.9.2'
-    timelimit: 6
+    timelimit: 8
   linux_compiler: &linux_compiler devtoolset-6
   platform_defaults: &platform_defaults
     splenv_ref: *splenv_ref
