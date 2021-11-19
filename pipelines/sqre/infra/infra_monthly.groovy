@@ -58,13 +58,6 @@ notify.wrap {
       name: 'sqre/backup/build-s3backup'
 
     triggerJob trigger: tasks,
-      name: 'sqre/infra/build-ltd-mason',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
       name: 'sqre/infra/build-wget'
 
     triggerJob trigger: tasks,
