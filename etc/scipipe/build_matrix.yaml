@@ -111,7 +111,7 @@ scipipe-lsstsw-ci_imsim:
   - <<: *bigsur-conda
 dax-lsstsw-matrix:
   - <<: *el7-conda
-    splenv_ref: '1eb92eb'
+    splenv_ref: 'e945ec5'
 #  - <<: *el7-py3-llvm # compiler is overridden when using conda
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
