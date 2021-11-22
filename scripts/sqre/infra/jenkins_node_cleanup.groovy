@@ -129,6 +129,11 @@ class Cleaned extends Node {}
 @Field boolean forceCleanup = false
 
 /**
+ * Force a cleanup on a particular node.
+ */
+@Field String forceNode = ""
+
+/**
  * Accounting of node status (Cleaned, Failed, etc.).
  */
 @Field Map nodeStatus = [:].withDefault {[]}
@@ -369,9 +374,11 @@ void parseParams() {
 
   forceCleanup = resolver.resolve('FORCE_CLEANUP').toBoolean()
   threshold = resolver.resolve('CLEANUP_THRESHOLD').toInteger()
+  forceNode = resolver.resolve('FORCE_NODE').toString()
   println '### PARAMETERS'
   println "CLEANUP_THRESHOLD=${threshold}"
   println "FORCE_CLEANUP=${forceCleanup}"
+  println "FORCE_NODE=${forceNode}"
   println ''
 }
 
@@ -427,7 +434,8 @@ void processNodes() {
 
 
       // skip nodes with sufficient disk space
-      if (!forceCleanup && (roundedSize >= threshold)) {
+      if (!forceCleanup && (roundedSize >= threshold)
+          && node.getDisplayName() != forceNode) {
         throw new Skipped(node, 'disk threshold')
       }
 
