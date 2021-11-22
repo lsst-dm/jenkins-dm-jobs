@@ -20,7 +20,7 @@ notify.wrap {
       dir('qserv') {
         git([
           url: util.githubSlugToUrl('lsst/qserv'),
-          branch: 'master'
+          branch: 'qserv-classic'
         ])
       }
 
