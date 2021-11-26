@@ -164,19 +164,19 @@ release:
 #
 repos:
   github_repo: lsst/repos
-  git_ref: master
+  git_ref: main
 versiondb:
   github_repo: lsst/versiondb
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: master
+  git_ref: main
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: master
 shebangtron:
   github_repo: lsst/shebangtron
-  git_ref: master
+  git_ref: main
 #
 # docker releases of scipipe/lsst_distrib
 #
@@ -198,7 +198,7 @@ newinstall:
     repo: lsstsqre/newinstall
     tag: latest
   github_repo: lsst/lsst
-  git_ref: master
+  git_ref: main
 eups:
   base_url: https://eups.lsst.codes/stack
   s3_bucket: eups.lsst.codes

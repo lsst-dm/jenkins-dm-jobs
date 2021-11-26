@@ -22,7 +22,7 @@ notify.wrap {
     def local = "${hubRepo}-local"
 
     def gitRepo = util.githubSlugToUrl('lsst/validation_data_cfht')
-    def gitRef = 'master'
+    def gitRef = 'main'
 
     util.wrapDockerImage(
       image: hubRepo,

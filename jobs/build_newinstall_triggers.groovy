@@ -9,7 +9,7 @@ def j = job('sqre/infra/build-newinstall-triggers') {
     git {
       remote {
         github('lsst/lsst')
-        branch('master')
+        branch('main')
       }
     }
 

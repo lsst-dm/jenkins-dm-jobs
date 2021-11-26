@@ -738,7 +738,7 @@ def void githubTagRelease(Map p) {
 
   // compute versiondb url
   def scipipe = scipipeConfig()
-  def vdbUrl = "https://raw.githubusercontent.com/${scipipe.versiondb.github_repo}/master/manifests"
+  def vdbUrl = "https://raw.githubusercontent.com/${scipipe.versiondb.github_repo}/main/manifests"
 
   // --eupstag-base-url is needed [when running under a "test" env] if git tags
   // are being generated from an existing eups tag.  If all workflows are
@@ -1432,7 +1432,7 @@ def String githubSlugToUrl(String slug, String scheme = 'https') {
  *
  * @param p.slug String
  * @param p.path String
- * @param p.ref String Defaults to 'master'
+ * @param p.ref String Defaults to 'main'
  * @return url String
  */
 def String githubRawUrl(Map p) {
@@ -1441,7 +1441,7 @@ def String githubRawUrl(Map p) {
     'path',
   ])
   def useP = [
-    ref: 'master',
+    ref: 'main',
   ] + p
 
   def baseUrl = 'https://raw.githubusercontent.com'
@@ -1740,12 +1740,12 @@ def void withEupsEnv(Closure run) {
  *
  *     util.checkoutLFS(
  *       githubSlug: 'foo/bar',
- *       gitRef: 'master',
+ *       gitRef: 'main',
  *     )
  *
  * @param p Map
  * @param p.gitRepo String github repo slug
- * @param p.gitRef String git ref to checkout. Defaults to `master`
+ * @param p.gitRef String git ref to checkout. Defaults to `main`
  */
 def void checkoutLFS(Map p) {
   requireMapKeys(p, [
@@ -1753,7 +1753,7 @@ def void checkoutLFS(Map p) {
     'gitRef',
   ])
   p = [
-    gitRef: 'master',
+    gitRef: 'main',
   ] + p
 
   def gitRepo = githubSlugToUrl(p.githubSlug)

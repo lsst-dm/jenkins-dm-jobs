@@ -8,6 +8,6 @@ p.pipeline().with {
     stringParam('DOCKER_IMAGE', null, 'Explicit name of release docker image including tag.')
     booleanParam('NO_PUSH', true, 'Do not push results to squash.')
     booleanParam('WIPEOUT', false, 'Completely wipe out workspace(s) before starting build.')
-    stringParam('GIT_REF', 'master', 'Git ref (e.g. tickets/DM-NNNNN) of faro to use.')
+    stringParam('GIT_REF', 'main', 'Git ref (e.g. tickets/DM-NNNNN) of faro to use.')
   }
 }

@@ -788,7 +788,7 @@ def String smokeScript(
     # - 2.9.1.lsst1+1 as 2.9.1.lsst1
     # - 13.0-10-g692d0a9 as 692d0a9
     # - 13.0-10-g692d0a9+1 as 692d0a9
-    # - master-gd7f6e4dbf2+24 as d7f6e4dbf2
+    # - main-gd7f6e4dbf2+24 as d7f6e4dbf2
     # - 3.11.lsst1-2-g6ae2b7a as 6ae2b7a
     #
     # Eg.
