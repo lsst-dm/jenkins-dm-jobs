@@ -1,7 +1,7 @@
 import java.time.LocalDate
 import java.time.ZoneId
 
-node('jenkins-master') {
+node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',

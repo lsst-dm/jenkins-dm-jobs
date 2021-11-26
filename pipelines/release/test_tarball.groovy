@@ -1,4 +1,4 @@
-node('jenkins-master') {
+node('jenkins-manager') {
   if (params.WIPEOUT) {
     deleteDir()
   }

@@ -933,7 +933,7 @@ def void withGithubAdminCredentials(Closure run) {
  * @param run Closure Invoked inside of node step
  */
 def void nodeTiny(Closure run) {
-  nodeWrap('jenkins-master') {
+  nodeWrap('jenkins-manager') {
     timeout(time: 5, unit: 'MINUTES') {
       run()
     }
@@ -2136,7 +2136,7 @@ def void validateLsstswConfig(Map conf) {
  */
 def void printK8sVars() {
   // env.getEnvronment() returns vars groovy will set but not the current node env
-  // System.getenv() returns the master's env
+  // System.getenv() returns the manager's env
   // env.<foo> works as this uses magic to check the actual env
 
   // test to see if the agent has k8s env vars
