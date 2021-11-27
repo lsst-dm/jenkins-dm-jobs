@@ -1,4 +1,4 @@
-node('jenkins-master') {
+node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',
@@ -36,14 +36,14 @@ notify.wrap {
 
       //util.bash 'git lfs clone https://github.com/lsst/validation_data_cfht.git'
 
-      checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ci_hsc'], [$class: 'GitLFSPull']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/lsst/ci_hsc.git']]])
+      checkout([$class: 'GitSCM', branches: [[name: '*/main']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ci_hsc'], [$class: 'GitLFSPull']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/lsst/ci_hsc.git']]])
 
       /*
       dir('ci_hsc') {
         checkout([
           scm: [
             $class: 'GitSCM',
-            branches: [[name: 'master']],
+            branches: [[name: 'main']],
             extensions: [[$class: 'GitLFSPull']],
             userRemoteConfigs: [
               [url: 'https://github.com/lsst/ci_hsc.git'],

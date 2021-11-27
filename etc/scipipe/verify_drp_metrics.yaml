@@ -11,19 +11,19 @@ template:
       display_name: cfht
       name: validation_data_cfht
       github_repo: lsst/validation_data_cfht
-      git_ref: master
+      git_ref: main
       clone_timelimit: 15
     hsc: &dataset_hsc
       display_name: hsc
       name: rc2_subset
       github_repo: lsst-dm/rc2_subset
-      git_ref: master
+      git_ref: main
       clone_timelimit: 240
     decam: &dataset_decam
       display_name: decam
       name: validation_data_decam
       github_repo: lsst/validation_data_decam
-      git_ref: master
+      git_ref: main
       clone_timelimit: 60
   codes:
     verify_drp_metrics: &code_verify_drp

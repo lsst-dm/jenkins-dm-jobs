@@ -8,7 +8,7 @@ p.pipeline().with {
   description('Execute a build of EUPS products using `lsstsw` (TEST).')
 
   parameters {
-    stringParam('REFS', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" or branch from repos.yaml is implicitly appended to the right side of the list, if not specified; do not specify "master" explicitly.')
+    stringParam('REFS', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "main" or branch from repos.yaml is implicitly appended to the right side of the list, if not specified; do not specify "main" explicitly.')
     stringParam('PRODUCTS', scipipe.canonical.products,
       'Whitespace delimited list of EUPS products to build.')
     booleanParam('BUILD_DOCS', true, 'Build pipelines.lsst.io site')

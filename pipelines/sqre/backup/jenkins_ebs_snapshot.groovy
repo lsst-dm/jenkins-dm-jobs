@@ -1,4 +1,4 @@
-node('jenkins-master') {
+node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',
@@ -49,7 +49,7 @@ notify.wrap {
     } // withCredentials
   } // run
 
-  node('jenkins-master') {
+  node('jenkins-manager') {
     timeout(time: 1, unit: 'HOURS') {
       run()
     }

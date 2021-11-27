@@ -1,10 +1,10 @@
 /*
 
-Jenkins System Groovy script to clean up workspaces on all slaves.
+Jenkins System Groovy script to clean up workspaces on all workers.
 
-Check if a slave has < X GB of free space, perform cleanup if it's less.  If
-slave is idle, wipe out everything in the workspace directory as well any extra
-configured directories.  If slave is busy, wipe out individual job workspace
+Check if a worker has < X GB of free space, perform cleanup if it's less.  If
+worker is idle, wipe out everything in the workspace directory as well any extra
+configured directories.  If worker is busy, wipe out individual job workspace
 directories for jobs that aren't running.  Either way, remove custom workspaces
 also if they aren't in use.
 
@@ -117,7 +117,7 @@ class Cleaned extends Node {}
 @Field List skippedLabels = []
 
 /**
- * Additional paths under slave's root path that should be removed if found.
+ * Additional paths under worker's root path that should be removed if found.
  */
 @Field List extraDirectoriesToDelete = [
   'snowflake',

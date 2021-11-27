@@ -1,4 +1,4 @@
-node('jenkins-master') {
+node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',
@@ -21,7 +21,7 @@ notify.wrap {
   Integer runs  = params.RUNS
 
   def gitRepo         = 'https://github.com/lsst/validation_data_cfht'
-  def gitRef          = 'master'
+  def gitRef          = 'main'
   def repoDirCached   = 'validation_data_cfht-cached'
   def repoDirLfs      = 'validation_data_cfht-lfs'
   def resultsBasename = 'results'

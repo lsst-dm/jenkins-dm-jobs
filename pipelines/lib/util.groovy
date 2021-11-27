@@ -700,7 +700,7 @@ def void githubTagRelease(Map p) {
 
   // compute versiondb url
   def scipipe = scipipeConfig()
-  def vdbUrl = "https://raw.githubusercontent.com/${scipipe.versiondb.github_repo}/master/manifests"
+  def vdbUrl = "https://raw.githubusercontent.com/${scipipe.versiondb.github_repo}/main/manifests"
 
   // --eupstag-base-url is needed [when running under a "test" env] if git tags
   // are being generated from an existing eups tag.  If all workflows are
@@ -933,7 +933,7 @@ def void withGithubAdminCredentials(Closure run) {
  * @param run Closure Invoked inside of node step
  */
 def void nodeTiny(Closure run) {
-  nodeWrap('jenkins-master') {
+  nodeWrap('jenkins-manager') {
     timeout(time: 5, unit: 'MINUTES') {
       run()
     }
@@ -1394,7 +1394,7 @@ def String githubSlugToUrl(String slug, String scheme = 'https') {
  *
  * @param p.slug String
  * @param p.path String
- * @param p.ref String Defaults to 'master'
+ * @param p.ref String Defaults to 'main'
  * @return url String
  */
 def String githubRawUrl(Map p) {
@@ -1403,7 +1403,7 @@ def String githubRawUrl(Map p) {
     'path',
   ])
   def useP = [
-    ref: 'master',
+    ref: 'main',
   ] + p
 
   def baseUrl = 'https://raw.githubusercontent.com'
@@ -1704,12 +1704,12 @@ def void withEupsEnv(Closure run) {
  *
  *     util.checkoutLFS(
  *       githubSlug: 'foo/bar',
- *       gitRef: 'master',
+ *       gitRef: 'main',
  *     )
  *
  * @param p Map
  * @param p.gitRepo String github repo slug
- * @param p.gitRef String git ref to checkout. Defaults to `master`
+ * @param p.gitRef String git ref to checkout. Defaults to `main`
  */
 def void checkoutLFS(Map p) {
   requireMapKeys(p, [
@@ -1717,7 +1717,7 @@ def void checkoutLFS(Map p) {
     'gitRef',
   ])
   p = [
-    gitRef: 'master',
+    gitRef: 'main',
   ] + p
 
   def gitRepo = githubSlugToUrl(p.githubSlug)
@@ -2136,7 +2136,7 @@ def void validateLsstswConfig(Map conf) {
  */
 def void printK8sVars() {
   // env.getEnvronment() returns vars groovy will set but not the current node env
-  // System.getenv() returns the master's env
+  // System.getenv() returns the manager's env
   // env.<foo> works as this uses magic to check the actual env
 
   // test to see if the agent has k8s env vars

@@ -1,4 +1,4 @@
-node('jenkins-master') {
+node('jenkins-manager') {
   if (params.WIPEOUT) {
     deleteDir()
   }
@@ -288,7 +288,7 @@ def void verifyDataset(Map p) {
               files = findFiles(glob: '**/*.verify.json')
             }
 
-            def codeRef = buildCode ? code.git_ref : "master"
+            def codeRef = buildCode ? code.git_ref : "main"
             withEnv([
               "refs=${codeRef}",
             ]) {

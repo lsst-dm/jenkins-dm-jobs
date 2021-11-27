@@ -8,8 +8,8 @@ job('sqre/infra/jenkins-node-cleanup') {
     stringParam('FORCE_NODE', '', 'Force cleanup of workspace(s) on this node regardless of free space remaining threshold. Note that the workspace of active jobs *will not* be cleaned up.')
   }
 
-  // don't tie up a beefy build slave
-  label('jenkins-master')
+  // don't tie up a beefy build worker
+  label('jenkins-manager')
   concurrentBuild(false)
 
   triggers {

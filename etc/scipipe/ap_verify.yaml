@@ -13,7 +13,7 @@ template:
       github_repo: lsst/ap_verify_ci_hits2015
       gen3_pipeline: >
         ${AP_VERIFY_CI_HITS2015_DIR}/pipelines/ApVerifyWithFakes.yaml
-      git_ref: master
+      git_ref: main
       clone_timelimit: 15
     cosmos_pdr2: &dataset_cosmos_pdr2
       display_name: cosmos_pdr2
@@ -21,13 +21,13 @@ template:
       github_repo: lsst/ap_verify_ci_cosmos_pdr2
       gen3_pipeline: >
         ${AP_VERIFY_CI_COSMOS_PDR2_DIR}/pipelines/ApVerifyWithFakes.yaml
-      git_ref: master
+      git_ref: main
       clone_timelimit: 15
   codes:
     ap_verify: &code_ap
       name: ap_verify
       github_repo: lsst/ap_verify
-      git_ref: master
+      git_ref: main
       clone_timelimit: 5
 ap_verify:
   defaults:

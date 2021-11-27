@@ -1,4 +1,4 @@
-node('jenkins-master') {
+node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
     checkout([
       $class: 'GitSCM',
@@ -22,7 +22,7 @@ notify.wrap {
     def local = "${hubRepo}-local"
 
     def gitRepo = util.githubSlugToUrl('lsst/validation_data_cfht')
-    def gitRef = 'master'
+    def gitRef = 'main'
 
     util.wrapDockerImage(
       image: hubRepo,

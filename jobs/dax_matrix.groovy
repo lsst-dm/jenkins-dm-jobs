@@ -9,7 +9,7 @@ p.pipeline().with {
   description('Execute a build of EUPS products using `lsstsw`.')
 
   parameters {
-    stringParam('REFS', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "master" is implicitly appended to the right side of the list, if not specified.')
+    stringParam('REFS', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "main" is implicitly appended to the right side of the list, if not specified.')
     stringParam('PRODUCTS', 'qserv_distrib', 'Whitespace delimited list of EUPS products to build.')
   }
 
