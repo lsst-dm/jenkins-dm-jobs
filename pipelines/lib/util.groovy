@@ -1288,7 +1288,7 @@ def ltdPush(Map p) {
         // expect that the service will return an HTTP 502, which causes
         // ltd-mason-travis to exit 1
         sh '''
-        /usr/bin/ltd-mason-travis --html-dir _build/html --verbose || true
+        ltd-mason-travis --html-dir _build/html --verbose || true
         '''
       } // .inside
     } // withCredentials
