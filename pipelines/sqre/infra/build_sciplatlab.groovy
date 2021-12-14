@@ -29,6 +29,13 @@ notify.wrap {
   String branch = params.BRANCH
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
+  if ((branch != 'prod') && (! supplementary)) {
+     // Don't bother trying to canonicalize the branch name to a legal tag
+     //  component, just make supplementary non-null so we don't overwrite
+     //  a standard image.
+     supplementary = 'test'
+  }
+
   def make = { String m_target, String m_args ->
     util.bash """
     make '${m_target}' '${m_args}'
