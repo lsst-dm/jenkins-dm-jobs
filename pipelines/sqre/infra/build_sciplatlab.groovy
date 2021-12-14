@@ -42,11 +42,11 @@ notify.wrap {
     """
   } // make
 
-  def run = { String branch ->
+  def run = { String r_branch ->
     stage('checkout') {
       git([
         url: 'https://github.com/lsst-sqre/sciplat-lab',
-        branch: branch
+        branch: r_branch
       ])
     }
 
