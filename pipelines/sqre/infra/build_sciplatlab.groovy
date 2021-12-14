@@ -16,91 +16,68 @@ node('jenkins-manager') {
 
 notify.wrap {
   util.requireParams([
-    'BASE_IMAGE',
-    'IMAGE_NAME',
-    'NO_PUSH',
-    'FLATTEN',
-    'VERBOSE',
-    'JLBLEED',
     'TAG',
-    'TAG_PREFIX',
+    'SUPPLEMENTARY',
+    'NO_PUSH',
+    'BRANCH',
     'TIMEOUT',
   ])
 
   String tag         = params.TAG
-  Boolean jlbleed    = params.JLBLEED
-  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
-  Boolean flatten    = params.FLATTEN.toBoolean()
-  Boolean verbose    = params.VERBOSE.toBoolean()
-  String baseImage   = params.BASE_IMAGE
-  String imageName   = params.IMAGE_NAME
-  String tagPrefix   = params.TAG_PREFIX
+  String supplementary = params.SUPPLEMENTARY
   Integer timelimit  = params.TIMEOUT
+  String branch = params.BRANCH
+  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def run = {
+  if ((branch != 'prod') && (! supplementary)) {
+     // Don't bother trying to canonicalize the branch name to a legal tag
+     //  component, just make supplementary non-null so we don't overwrite
+     //  a standard image.
+     supplementary = 'test'
+  }
+
+  def make = { String m_target, String m_args ->
+    util.bash """
+    make '${m_target}' '${m_args}'
+    """
+  } // make
+
+  def run = { String branch ->
     stage('checkout') {
-      def branch = 'prod'
-      if (jlbleed) {
-        branch = 'master'
-      }
       git([
-        url: 'https://github.com/lsst-sqre/nublado',
+        url: 'https://github.com/lsst-sqre/sciplat-lab',
         branch: branch
       ])
     }
 
     // ensure the current image is used
     stage('docker pull') {
-      docImage = "${baseImage}:${tagPrefix}${tag}"
+      docImage = "lsstsqre/centos:7-stack-lsst_distrib-${tag}"
       docker.image(docImage).pull()
     }
 
-    stage('build+push') {
-      def opts = ''
-      if (jlbleed) {
-        opts = '-e -s jlbleed ${opts}'
+    stage('execute') {
+      def m_args = 'tag=${tag}'
+
+      if (supplementary) {
+        m_args = '${m_args} supplementary=${supplementary}'
       }
-      if (flatten) {
-          opts = "-f ${opts}"
-      }
-      if (verbose) {
-          opts = "-v ${opts}"
-      }
-      opts=opts.trim()
-      dir('jupyterlab') {
-        if (pushDocker) {
-          docker.withRegistry(
-            'https://index.docker.io/v1/',
-            'dockerhub-sqreadmin'
-          ) {
-            util.bash """
-              ./bld \
-               -b '${baseImage}' \
-               -n '${imageName}' \
-               -t '${tagPrefix}' \
-               ${opts} \
-               '${tag}'
-            """
+      if (pushDocker) {
+        docker.withRegistry(
+          'https://index.docker.io/v1/',
+          'dockerhub-sqreadmin'
+        ) { // build and push
+            make('push', m_args)
           }
-        } else {
-          util.bash """
-              ./bld \
-               -x \
-               -b '${baseImage}' \
-               -n '${imageName}' \
-               -t '${tagPrefix}' \
-               ${opts} \
-               '${tag}'
-              docker build .
-          """
-        }
-      }
-    }
+      } else { // just build
+        make('image', m_args)
+      } // pushDocker clause
+    } // execute
   } // run
 
   util.nodeWrap('docker') {
     timeout(time: timelimit, unit: 'HOURS') {
-      run()
+      run(branch)
     }
   } // util.nodeWrap
 } // notify.wrap
