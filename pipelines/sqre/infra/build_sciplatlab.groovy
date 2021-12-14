@@ -27,7 +27,7 @@ notify.wrap {
   Integer timelimit  = params.TIMEOUT
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
-  def make = { String m_target, String m_args ->
+  def make(m_target, m_args) = {
     util.bash """
     make '${m_target}' '${m_args}'
     """
