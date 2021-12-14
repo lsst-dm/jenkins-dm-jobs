@@ -19,12 +19,14 @@ notify.wrap {
     'TAG',
     'SUPPLEMENTARY',
     'NO_PUSH',
+    'BRANCH',
     'TIMEOUT',
   ])
 
   String tag         = params.TAG
   String supplementary = params.SUPPLEMENTARY
   Integer timelimit  = params.TIMEOUT
+  String branch = params.BRANCH
   Boolean pushDocker = (! params.NO_PUSH.toBoolean())
 
   def make = { String m_target, String m_args ->
@@ -33,9 +35,8 @@ notify.wrap {
     """
   } // make
 
-  def run = {
+  def run = { String branch ->
     stage('checkout') {
-      def branch = 'prod'
       git([
         url: 'https://github.com/lsst-sqre/sciplat-lab',
         branch: branch
@@ -69,7 +70,7 @@ notify.wrap {
 
   util.nodeWrap('docker') {
     timeout(time: timelimit, unit: 'HOURS') {
-      run()
+      run(branch)
     }
   } // util.nodeWrap
 } // notify.wrap
