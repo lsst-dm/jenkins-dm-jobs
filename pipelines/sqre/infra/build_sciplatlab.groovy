@@ -16,91 +16,57 @@ node('jenkins-manager') {
 
 notify.wrap {
   util.requireParams([
-    'BASE_IMAGE',
-    'IMAGE_NAME',
-    'NO_PUSH',
-    'FLATTEN',
-    'VERBOSE',
-    'JLBLEED',
     'TAG',
-    'TAG_PREFIX',
-    'TIMEOUT',
+    'IMAGE',
+    'SUPPLEMENTARY',
+    'NO_PUSH',
+    'BRANCH',
   ])
 
-  String tag         = params.TAG
-  Boolean jlbleed    = params.JLBLEED
-  Boolean pushDocker = (! params.NO_PUSH.toBoolean())
-  Boolean flatten    = params.FLATTEN.toBoolean()
-  Boolean verbose    = params.VERBOSE.toBoolean()
-  String baseImage   = params.BASE_IMAGE
-  String imageName   = params.IMAGE_NAME
-  String tagPrefix   = params.TAG_PREFIX
-  Integer timelimit  = params.TIMEOUT
+  String tag           = params.TAG
+  String supplementary = params.SUPPLEMENTARY
+  String image         = params.IMAGE
+  String push	       = "true"
+  String branch        = params.BRANCH
+
+  if (params.NO_PUSH) {
+    push = "false"
+  }
 
   def run = {
-    stage('checkout') {
-      def branch = 'prod'
-      if (jlbleed) {
-        branch = 'master'
-      }
-      git([
-        url: 'https://github.com/lsst-sqre/nublado',
-        branch: branch
-      ])
-    }
+    stage('trigger GHA') {
+      def body = [
+        ref: branch,
+        inputs: [
+          tag: tag,
+          supplementary: supplementary,
+          image: image,
+	  push: push
+        ]
+      ]
+      def json = new groovy.json.JsonBuilder(body)
 
-    // ensure the current image is used
-    stage('docker pull') {
-      docImage = "${baseImage}:${tagPrefix}${tag}"
-      docker.image(docImage).pull()
-    }
+      def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/dispatches")
+      println("url: ${call}")
+      println("body: ${json}")
 
-    stage('build+push') {
-      def opts = ''
-      if (jlbleed) {
-        opts = '-e -s jlbleed ${opts}'
-      }
-      if (flatten) {
-          opts = "-f ${opts}"
-      }
-      if (verbose) {
-          opts = "-v ${opts}"
-      }
-      opts=opts.trim()
-      dir('jupyterlab') {
-        if (pushDocker) {
-          docker.withRegistry(
-            'https://index.docker.io/v1/',
-            'dockerhub-sqreadmin'
-          ) {
-            util.bash """
-              ./bld \
-               -b '${baseImage}' \
-               -n '${imageName}' \
-               -t '${tagPrefix}' \
-               ${opts} \
-               '${tag}'
-            """
-          }
-        } else {
-          util.bash """
-              ./bld \
-               -x \
-               -b '${baseImage}' \
-               -n '${imageName}' \
-               -t '${tagPrefix}' \
-               ${opts} \
-               '${tag}'
-              docker build .
-          """
-        }
+      def conn = url.openConnection().with { conn ->
+        conn.setRequestMethod('POST')
+        conn.setRequestProperty('Content-Type', 'application/json; charset=utf-8')
+        conn.setRequestProperty('Accept', 'application/vnd.github.v3+json')
+        conn.setRequestProperty('Authorization', "Bearer ${GITHUB_TOKEN}")
+        conn.doOutput = true
+        conn.outputStream << json.toPrettyString()
+
+        println("responseCode: ${conn.responseCode}")
+        def text = conn.getInputStream().getText()
+        println("response: ${text}")
       }
     }
   } // run
 
-  util.nodeWrap('docker') {
-    timeout(time: timelimit, unit: 'HOURS') {
-      run()
-    }
-  } // util.nodeWrap
+
+  util.withGithubAdminCredentials( {
+    run()
+  })
 } // notify.wrap
