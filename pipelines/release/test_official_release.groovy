@@ -204,17 +204,6 @@ notify.wrap {
           job: 'sqre/infra/build-sciplatlab',
           parameters: [
             string(name: 'TAG', value: eupsTag),
-            booleanParam(name: 'NO_PUSH', value: false),
-            booleanParam(name: 'JLBLEED', value: false),
-            string(
-              name: 'IMAGE_NAME',
-              value: scipipe.release.step.build_sciplatlab.image_name,
-            ),
-            // BASE_IMAGE is the registry repo name *only* without a tag
-            string(
-              name: 'BASE_IMAGE',
-              value: stackResults.docker_registry.repo,
-            ),
           ],
           wait: false,
         )
