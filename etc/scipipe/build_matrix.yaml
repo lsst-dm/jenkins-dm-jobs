@@ -151,8 +151,6 @@ release:
   # minutes
   s3_wait_time: 15
   step:
-    build_sciplatlab:
-      image_name: lsstsqre/sciplat-lab
     verify_drp_metrics:
       no_push: false
     documenteer:
