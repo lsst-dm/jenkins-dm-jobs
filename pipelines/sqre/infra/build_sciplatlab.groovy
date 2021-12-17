@@ -26,7 +26,7 @@ notify.wrap {
   String tag           = params.TAG
   String supplementary = params.SUPPLEMENTARY
   String image         = params.IMAGE
-  String push	       = "true"
+  String push          = "true"
   String branch        = params.BRANCH
 
   if (params.NO_PUSH) {
@@ -41,13 +41,13 @@ notify.wrap {
           tag: tag,
           supplementary: supplementary,
           image: image,
-	  push: push
+          push: push
         ]
       ]
       def json = new groovy.json.JsonBuilder(body)
 
       def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/dispatches")
-      println("url: ${call}")
+      println("url: ${url}")
       println("body: ${json}")
 
       def conn = url.openConnection().with { conn ->
@@ -66,7 +66,7 @@ notify.wrap {
   } // run
 
 
-  util.withGithubAdminCredentials( {
+  util.withGithubAdminCredentials {
     run()
-  })
+  }
 } // notify.wrap
