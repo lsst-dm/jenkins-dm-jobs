@@ -68,7 +68,7 @@ notify.wrap {
 
       // I think we always want the prod branch.
 
-      def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/runs?per_page=1%25branch=prod")
+      def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/runs?per_page=1&branch=prod")
 
       def status = ""
       def conclusion = ""
