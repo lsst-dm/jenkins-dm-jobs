@@ -78,9 +78,9 @@ notify.wrap {
         if (loop_idx > 720) {
           assert 0: "GitHub Action did not complete in 2 hours: ${status}/${conclusion}"
         }
-        sleep(10 * 1000)  // Good old sleep 10 (even the first time, so the
-        // job has time to get started and we don't read the status from the
-        // previous run).
+        Thread.sleep(10 * 1000)  // Good old sleep 10 (even the first time,
+        // so the job has time to get started and we don't read the status
+        // from the previous run).
         loop_idx += 1
         def conn = url.openConnection().with { conn ->
           conn.setRequestMethod('GET')
