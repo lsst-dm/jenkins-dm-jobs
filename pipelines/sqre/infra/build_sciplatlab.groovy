@@ -58,13 +58,42 @@ notify.wrap {
         conn.doOutput = true
         conn.outputStream << json.toPrettyString()
 
-        println("responseCode: ${conn.responseCode}")
-        def text = conn.getInputStream().getText()
-        println("response: ${text}")
-      }
-    }
-  } // run
+        assert (conn.responseCode == 204) : "API dispatch failed: ${conn.responseCode}|${conn.getInputStream().getText()}"
+      } // openConnection().with
+    } // stage
 
+    stage('poll for job completion at GHA') {
+      // We presume that GH Actions will continue to list most recent runs
+      // at the top.  Poll the build.yaml runs for the first result.
+
+      // I think we always want the prod branch.
+
+      def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/runs?per_page=1&branch=prod")
+
+      def status = ""
+      def conclusion = ""
+      def loop_idx = 0
+      while (status != "completed") {
+        loop_idx += 1
+        if (loop_idx > 1) {
+          sleep(10 * 1000)  // Good old sleep 10 (but not the first time)
+        }
+        def conn = url.openConnection().with { conn ->
+          conn.setRequestMethod('GET')
+          conn.setRequestProperty('Content-Type', 'application/json; charset=utf-8')
+          conn.setRequestProperty('Accept', 'application/vnd.github.v3+json')
+          def text = conn.getInputStream().getText()
+          def jsonSlurper = new groovy.json.JsonSlurper()
+          def obj = jsonSlurper.parseText(text)
+          def wf = obj.workflow_runs[0]
+          status = wf.status
+          conclusion = wf.conclusion
+          println("#{$loop_idx}: status=${status}; conclusion=${conclusion}")
+        } // openConnection().with
+      } // while
+      assert (conclusion == 'success'): "Build failed: ${conclusion}"
+    } // stage
+  } // run
 
   util.withGithubAdminCredentials {
     run()
