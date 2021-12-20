@@ -75,12 +75,13 @@ notify.wrap {
       def loop_idx = 0
       def jsonSlurper = new groovy.json.JsonSlurper()
       while (status != "completed") {
-        loop_idx += 1
         if (loop_idx > 720) {
           assert 0: "GitHub Action did not complete in 2 hours: ${status}/${conclusion}"
-        } else if (loop_idx > 1) {
-          sleep(10 * 1000)  // Good old sleep 10 (but not the first time)
         }
+        sleep(10 * 1000)  // Good old sleep 10 (even the first time, so the
+        // job has time to get started and we don't read the status from the
+        // previous run).
+        loop_idx += 1
         def conn = url.openConnection().with { conn ->
           conn.setRequestMethod('GET')
           conn.setRequestProperty('Content-Type', 'application/json; charset=utf-8')
