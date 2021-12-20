@@ -73,9 +73,12 @@ notify.wrap {
       def status = ""
       def conclusion = ""
       def loop_idx = 0
+      def jsonSlurper = new groovy.json.JsonSlurper()
       while (status != "completed") {
         loop_idx += 1
-        if (loop_idx > 1) {
+        if (loop_idx > 720) {
+          assert 0: "GitHub Action did not complete in 2 hours: ${status}/${conclusion}"
+        } else if (loop_idx > 1) {
           sleep(10 * 1000)  // Good old sleep 10 (but not the first time)
         }
         def conn = url.openConnection().with { conn ->
@@ -83,7 +86,6 @@ notify.wrap {
           conn.setRequestProperty('Content-Type', 'application/json; charset=utf-8')
           conn.setRequestProperty('Accept', 'application/vnd.github.v3+json')
           def text = conn.getInputStream().getText()
-          def jsonSlurper = new groovy.json.JsonSlurper()
           def obj = jsonSlurper.parseText(text)
           def wf = obj.workflow_runs[0]
           status = wf.status
