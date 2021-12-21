@@ -75,7 +75,7 @@ notify.wrap {
       def loop_idx = 0
       def jsonSlurper = new groovy.json.JsonSlurper()
       while (status != "completed") {
-        if (loop_idx > 720) {
+        if (loop_idx > 240) {
           assert 0: "GitHub Action did not complete in 2 hours: ${status}/${conclusion}"
         }
         Thread.sleep(30 * 1000)  // wait 30 secs (even the first time,
