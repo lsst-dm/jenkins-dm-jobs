@@ -78,7 +78,7 @@ notify.wrap {
         if (loop_idx > 720) {
           assert 0: "GitHub Action did not complete in 2 hours: ${status}/${conclusion}"
         }
-        Thread.sleep(10 * 1000)  // Good old sleep 10 (even the first time,
+        Thread.sleep(30 * 1000)  // wait 30 secs (even the first time,
         // so the job has time to get started and we don't read the status
         // from the previous run).
         loop_idx += 1
@@ -86,6 +86,7 @@ notify.wrap {
           conn.setRequestMethod('GET')
           conn.setRequestProperty('Content-Type', 'application/json; charset=utf-8')
           conn.setRequestProperty('Accept', 'application/vnd.github.v3+json')
+          conn.setRequestProperty('Authorization', "Bearer ${GITHUB_TOKEN}")
           def text = conn.getInputStream().getText()
           def obj = jsonSlurper.parseText(text)
           def wf = obj.workflow_runs[0]
