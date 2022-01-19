@@ -709,7 +709,7 @@ def String buildScript(
     ciDir
   ) +
   util.dedent("""
-    curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
+    curl -sSL https://ls.st/lsstinstall | bash -s -- -B -v "${menv.splenvRef}"
     . ./loadLSST.bash
 
     for prod in ${products}; do
@@ -762,7 +762,7 @@ def String smokeScript(
     export EUPS_PKGROOT="${eupsPkgroot}"
     export BASE_URL="${baseUrl}"
 
-    curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
+    curl -sSL https://ls.st/lsstinstall | bash -s -- -X "${tag}"
     . ./loadLSST.bash
 
     # override newinstall.sh configured EUPS_PKGROOT
