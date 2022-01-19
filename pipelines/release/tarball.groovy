@@ -709,13 +709,8 @@ def String buildScript(
     ciDir
   ) +
   util.dedent("""
-    # remove leftovers from newinstall
-    if [ -e ./conda ] && [ ! -e ./conda/bin/conda ]; then
-      # wait for NFS
-      rm -rf ./conda || ( sleep 10 && rm -rf ./conda )
-    fi
-    curl -sSL https://raw.githubusercontent.com/lsst/lsst/main/scripts/lsstinstall | bash -s -- -B -v "${menv.splenvRef}"
-    . ./loadLSST.sh
+    curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
+    . ./loadLSST.bash
 
     for prod in ${products}; do
       eups distrib install "\$prod" -t "${tag}" -vvv
@@ -767,13 +762,8 @@ def String smokeScript(
     export EUPS_PKGROOT="${eupsPkgroot}"
     export BASE_URL="${baseUrl}"
 
-    # remove leftovers from newinstall
-    if [ -e ./conda ] && [ ! -e ./conda/bin/conda ]; then
-      # wait for NFS
-      rm -rf ./conda || ( sleep 10 && rm -rf ./conda )
-    fi
-    curl -sSL https://raw.githubusercontent.com/lsst/lsst/main/scripts/lsstinstall | bash -s -- -X "${tag}"
-    . ./loadLSST.sh
+    curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
+    . ./loadLSST.bash
 
     # override newinstall.sh configured EUPS_PKGROOT
     export EUPS_PKGROOT="${eupsPkgroot}"
@@ -854,7 +844,7 @@ def String scriptPreamble(
     export EUPS_USERDATA="\${PWD}/.eups"
 
     # isolate conda config
-    # export CONDARC="\${PWD}/.condarc"
+    export CONDARC="\${PWD}/.condarc"
 
     if [[ \$(uname -s) == Darwin* ]]; then
       export MACOSX_DEPLOYMENT_TARGET="${macosx_deployment_target}"
