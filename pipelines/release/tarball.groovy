@@ -710,7 +710,7 @@ def String buildScript(
   ) +
   util.dedent("""
     # remove leftovers from newinstall
-    if [ -e ./conda/current ]; then
+    if [ -e ./conda ] && [ ! -e ./conda/bin/conda ]; then
       # wait for NFS
       rm -rf ./conda || ( sleep 10 && rm -rf ./conda )
     fi
@@ -768,7 +768,7 @@ def String smokeScript(
     export BASE_URL="${baseUrl}"
 
     # remove leftovers from newinstall
-    if [ -e ./conda/current ]; then
+    if [ -e ./conda ] && [ ! -e ./conda/bin/conda ]; then
       # wait for NFS
       rm -rf ./conda || ( sleep 10 && rm -rf ./conda )
     fi
@@ -855,6 +855,7 @@ def String scriptPreamble(
 
     # isolate conda config
     export CONDARC="\${PWD}/.condarc"
+    touch "$CONDARC"
 
     if [[ \$(uname -s) == Darwin* ]]; then
       export MACOSX_DEPLOYMENT_TARGET="${macosx_deployment_target}"
