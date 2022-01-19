@@ -709,6 +709,8 @@ def String buildScript(
     ciDir
   ) +
   util.dedent("""
+    # remove leftovers from newinstall
+    [ -e ./conda/current ] && rm -rf ./conda
     curl -sSL https://ls.st/lsstinstall | bash -s -- -B -v "${menv.splenvRef}"
     . ./loadLSST.bash
 
@@ -762,6 +764,8 @@ def String smokeScript(
     export EUPS_PKGROOT="${eupsPkgroot}"
     export BASE_URL="${baseUrl}"
 
+    # remove leftovers from newinstall
+    [ -e ./conda/current ] && rm -rf ./conda
     curl -sSL https://ls.st/lsstinstall | bash -s -- -X "${tag}"
     . ./loadLSST.bash
 
