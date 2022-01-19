@@ -710,8 +710,11 @@ def String buildScript(
   ) +
   util.dedent("""
     # remove leftovers from newinstall
-    [ -e ./conda/current ] && rm -rf ./conda
-    curl -sSL https://ls.st/lsstinstall | bash -s -- -B -v "${menv.splenvRef}"
+    if [ -e ./conda/current ]; then
+      # wait for NFS
+      rm -rf ./conda || ( sleep 10 && rm -rf ./conda )
+    fi
+    curl -sSL https://raw.githubusercontent.com/lsst/lsst/main/scripts/lsstinstall | bash -s -- -B -v "${menv.splenvRef}"
     . ./loadLSST.bash
 
     for prod in ${products}; do
@@ -765,8 +768,11 @@ def String smokeScript(
     export BASE_URL="${baseUrl}"
 
     # remove leftovers from newinstall
-    [ -e ./conda/current ] && rm -rf ./conda
-    curl -sSL https://ls.st/lsstinstall | bash -s -- -X "${tag}"
+    if [ -e ./conda/current ]; then
+      # wait for NFS
+      rm -rf ./conda || ( sleep 10 && rm -rf ./conda )
+    fi
+    curl -sSL https://raw.githubusercontent.com/lsst/lsst/main/scripts/lsstinstall | bash -s -- -X "${tag}"
     . ./loadLSST.bash
 
     # override newinstall.sh configured EUPS_PKGROOT
