@@ -715,7 +715,7 @@ def String buildScript(
       rm -rf ./conda || ( sleep 10 && rm -rf ./conda )
     fi
     curl -sSL https://raw.githubusercontent.com/lsst/lsst/main/scripts/lsstinstall | bash -s -- -B -v "${menv.splenvRef}"
-    . ./loadLSST.bash
+    . ./loadLSST.sh
 
     for prod in ${products}; do
       eups distrib install "\$prod" -t "${tag}" -vvv
@@ -773,7 +773,7 @@ def String smokeScript(
       rm -rf ./conda || ( sleep 10 && rm -rf ./conda )
     fi
     curl -sSL https://raw.githubusercontent.com/lsst/lsst/main/scripts/lsstinstall | bash -s -- -X "${tag}"
-    . ./loadLSST.bash
+    . ./loadLSST.sh
 
     # override newinstall.sh configured EUPS_PKGROOT
     export EUPS_PKGROOT="${eupsPkgroot}"
