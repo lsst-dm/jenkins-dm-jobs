@@ -18,7 +18,7 @@ p.pipeline().with {
     booleanParam('RUN_SCONS_CHECK', false, '(no-op without SMOKE) Manually checkout the "base" product and invoke "scons".')
     booleanParam('PUBLISH', false, 'Publish generated EUPS distrib tarballs.')
     booleanParam('WIPEOUT', false, 'Completely wipe out workspace(s) before starting build.')
-    stringParam('TIMEOUT', '8', 'build timeout in hours')
+    stringParam('TIMEOUT', '23', 'build timeout in hours')
     stringParam('IMAGE', null, 'Pipeline base docker image (e.g. docker.io/lsstdm/scipipe-base:8 or empty for macOS)')
     choiceParam('LABEL', ['centos-8-conda', 'centos-7-conda', 'osx-10.13', 'osx-10.14'], 'Jenkins build agent label')
     stringParam('COMPILER', 'conda-system', 'compiler version string')
