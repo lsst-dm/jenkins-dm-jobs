@@ -451,6 +451,12 @@ def void jenkinsWrapper(Map buildParams) {
       }
     }
 
+    // This file is needed for conda to know it has a base environment.
+    bash '''
+      mkdir -p lsstsw/miniconda/conda-meta
+      touch lsstsw/miniconda/conda-meta/history
+    '''
+
     def buildEnv = [
       "WORKSPACE=${cwd}",
       "HOME=${homeDir}",
