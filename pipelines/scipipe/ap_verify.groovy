@@ -281,8 +281,6 @@ def void verifyDataset(Map p) {
               namespace: '',
               datasetName: ds.name,
             )
-            // Delegate upload to Gen 2 code
-          case 2:
             def files = []
             dir(runDir) {
               files = findFiles(glob: '**/*.verify.json')
