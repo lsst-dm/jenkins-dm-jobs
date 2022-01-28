@@ -365,7 +365,7 @@ def lsstswBuild(
           }
 
           try {
-            timeout(time: 8, unit: 'HOURS') {
+            timeout(time: 12, unit: 'HOURS') {
               doRun()
             } // timeout
           } catch (e) {
@@ -1319,7 +1319,7 @@ def ltdPush(Map p) {
  * @param p.parameters.REFS String Defaults to `''`.
  * @param p.parameters.PRODUCTS String Defaults to `''`.
  * @param p.parameters.BUILD_DOCS Boolean Defaults to `false`.
- * @param p.parameters.TIMEOUT String Defaults to `'8'`.
+ * @param p.parameters.TIMEOUT String Defaults to `'12'`.
  * @param p.parameters.PREP_ONLY Boolean Defaults to `false`.
  * @param p.parameters.SPLENV_REF String Optional
  * @return manifestId String
@@ -1333,7 +1333,7 @@ def String runRebuild(Map p) {
     REFS: '',  // null is not a valid value for a string param
     PRODUCTS: '',
     BUILD_DOCS: false,
-    TIMEOUT: '8', // should be String
+    TIMEOUT: '12', // should be String
     PREP_ONLY: false,
   ] + p.parameters
 
