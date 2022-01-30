@@ -37,6 +37,9 @@ notify.wrap {
   def baseDockerTag  = '7'
   def baseImage      = "${baseDockerRepo}:${baseDockerTag}"
   def splenvRef      = scipipe.canonical.lsstsw_config.splenv_ref
+  if (params.SPLENV_REF != "") {
+    splenvRef = params.SPLENV_REF
+  }
 
   def image = null
 
