@@ -7,5 +7,6 @@ p.pipeline().with {
   parameters {
     booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
     booleanParam('LATEST', true, 'Also push to docker registry with "latest" tag.')
+    stringParam('SPLENV_REF', '', 'rubin-env reference.')
   }
 }
