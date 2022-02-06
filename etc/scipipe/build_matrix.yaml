@@ -149,7 +149,7 @@ tarball:
 #
 release:
   # minutes
-  s3_wait_time: 15
+  s3_wait_time: 30
   step:
     verify_drp_metrics:
       no_push: false
