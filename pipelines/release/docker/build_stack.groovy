@@ -96,6 +96,7 @@ notify.wrap {
 
       dir(buildDir) {
         image = docker.build("${dockerRepo}", opt.join(' '))
+        image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
       }
     }
 
@@ -107,6 +108,14 @@ notify.wrap {
         ) {
           registryTags.each { name ->
             image.push(name)
+          }
+        }
+        docker.withRegistry(
+          'https://us-central1-docker.pkg.dev/',
+          'google_archive_registry_sa'
+        ) {
+          registryTags.each { name ->
+            image2.push(name)
           }
         }
       }
