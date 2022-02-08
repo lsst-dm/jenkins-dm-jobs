@@ -40,7 +40,7 @@ notify.wrap {
   def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
   def gitRef         = dockerfile.git_ref
   def buildDir       = dockerfile.dir
-  def dockerRepo     = dockerRegistry.repo
+  def dockerRepo     = "panda-dev-1a74/${dockerRegistry.repo}"
   def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
   def shebangtronUrl = util.shebangtronUrl()
@@ -102,7 +102,7 @@ notify.wrap {
     stage('push') {
       if (!noPush) {
         docker.withRegistry(
-          'https://us-central1-docker.pkg.dev/panda-dev-1a74/',
+          'https://us-central1-docker.pkg.dev/',
           'google_archive_registry_sa'
         ) {
           registryTags.each { name ->
