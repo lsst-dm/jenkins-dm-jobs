@@ -40,7 +40,7 @@ notify.wrap {
   def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
   def gitRef         = dockerfile.git_ref
   def buildDir       = dockerfile.dir
-  def dockerRepo     = "panda-dev-1a74/${dockerRegistry.repo}"
+  def dockerRepo     = dockerRegistry.repo
   def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
   def shebangtronUrl = util.shebangtronUrl()
