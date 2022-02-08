@@ -96,17 +96,26 @@ notify.wrap {
 
       dir(buildDir) {
         image = docker.build("${dockerRepo}", opt.join(' '))
+        image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
       }
     }
 
     stage('push') {
       if (!noPush) {
         docker.withRegistry(
+          'https://index.docker.io/v1/',
+          'dockerhub-sqreadmin'
+        ) {
+          registryTags.each { name ->
+            image.push(name)
+          }
+        }
+        docker.withRegistry(
           'https://us-central1-docker.pkg.dev/',
           'google_archive_registry_sa'
         ) {
           registryTags.each { name ->
-            image.push(name)
+            image2.push(name)
           }
         }
       }
