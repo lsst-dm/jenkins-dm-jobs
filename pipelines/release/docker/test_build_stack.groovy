@@ -102,8 +102,8 @@ notify.wrap {
     stage('push') {
       if (!noPush) {
         docker.withRegistry(
-          'https://index.docker.io/v1/',
-          'dockerhub-sqreadmin'
+          'https://us-central1-docker.pkg.dev/panda-dev-1a74/',
+          'google_archive_registry_sa'
         ) {
           registryTags.each { name ->
             image.push(name)
