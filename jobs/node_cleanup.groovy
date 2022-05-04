@@ -3,7 +3,7 @@ Common.makeFolders(this)
 
 job('sqre/infra/jenkins-node-cleanup') {
   parameters {
-    stringParam('CLEANUP_THRESHOLD', '100', 'minimum free space remaining on a node, in GiB, to trigger a cleanup')
+    stringParam('CLEANUP_THRESHOLD', '200', 'minimum free space remaining on a node, in GiB, to trigger a cleanup')
     booleanParam('FORCE_CLEANUP', false, 'Force cleanup of node workspace(s) regardless of free space remaining threshold. Note that the workspace of active jobs *will not* be cleaned up.')
     stringParam('FORCE_NODE', '', 'Force cleanup of workspace(s) on this node regardless of free space remaining threshold. Note that the workspace of active jobs *will not* be cleaned up.')
   }
