@@ -78,7 +78,10 @@ notify.wrap {
       def status = ""
       def conclusion = ""
       def loop_idx = 0
+      print("url: ${url}")
+      print("starttime: ${starttime}")
       def created_at = starttime.previous()
+      print("created_at: ${created_at}")
       // One second before we really started the action.
       // Note that we're assuming our local clock and GitHub's are pretty
       // well synchronized.  If this assumption is violated, we probably
@@ -102,7 +105,7 @@ notify.wrap {
           status = wf.status
           conclusion = wf.conclusion
           created_at = LocalDateTime.parse(wf.created_at)
-          println("#{$loop_idx}: status=${status}; conclusion=${conclusion}")
+          println("#{$loop_idx}: status=${status}; conclusion=${conclusion}; created_at=${created_at}")
         } // openConnection().with
       } // while
       assert (conclusion == 'success'): "Build failed: ${conclusion}"
