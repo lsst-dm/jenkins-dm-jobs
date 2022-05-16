@@ -30,7 +30,7 @@ notify.wrap {
   String image            = params.IMAGE
   String push             = "true"
   String branch           = params.BRANCH
-  LocalDateTime starttime = null
+  Instant starttime = null
 
   if (params.NO_PUSH) {
     push = "false"
