@@ -1,3 +1,5 @@
+import java.time.LocalDateTime
+
 node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -50,6 +52,8 @@ notify.wrap {
       println("url: ${url}")
       println("body: ${json}")
 
+      def starttime = LocalDateTime.now()
+
       def conn = url.openConnection().with { conn ->
         conn.setRequestMethod('POST')
         conn.setRequestProperty('Content-Type', 'application/json; charset=utf-8')
@@ -73,14 +77,18 @@ notify.wrap {
       def status = ""
       def conclusion = ""
       def loop_idx = 0
+      def created_at = starttime.previous()
+      // One second before we really sent the request.
+      // Note that we're assuming our local clock and GitHub's are pretty
+      // well synchronized.  If this assumption is violated, we probably
+      // have worse problems than this build failing.
       def jsonSlurper = new groovy.json.JsonSlurper()
-      while (status != "completed") {
+      while (status != "completed") or (created_at < starttime) {
         if (loop_idx > 240) {
           assert 0: "GitHub Action did not complete in 2 hours: ${status}/${conclusion}"
         }
         Thread.sleep(30 * 1000)  // wait 30 secs (even the first time,
-        // so the job has time to get started and we don't read the status
-        // from the previous run).
+        // so the job has time to get started.
         loop_idx += 1
         def conn = url.openConnection().with { conn ->
           conn.setRequestMethod('GET')
@@ -92,6 +100,7 @@ notify.wrap {
           def wf = obj.workflow_runs[0]
           status = wf.status
           conclusion = wf.conclusion
+	  created_at = LocalDateTime.parse(wf.created_at,"2020-01-22T19:33:08Z")
           println("#{$loop_idx}: status=${status}; conclusion=${conclusion}")
         } // openConnection().with
       } // while
