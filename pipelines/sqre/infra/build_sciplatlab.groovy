@@ -87,7 +87,7 @@ notify.wrap {
       // well synchronized.  If this assumption is violated, we probably
       // have worse problems than this build failing.
       def jsonSlurper = new groovy.json.JsonSlurper()
-      while (status != "completed") || (created_at < starttime) {
+      while ((status != "completed") || (created_at < starttime)) {
         if (loop_idx > 240) {
           assert 0: "GitHub Action did not complete in 2 hours: ${status}/${conclusion}"
         }
