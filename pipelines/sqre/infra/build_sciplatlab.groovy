@@ -1,5 +1,4 @@
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.time.Instant
 
 node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
@@ -51,7 +50,7 @@ notify.wrap {
       def json = new groovy.json.JsonBuilder(body)
 
       def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/dispatches")
-      starttime = LocalDateTime.now()
+      starttime = Instant.now()
       println("url: ${url}")
       println("body: ${json}")
       println("starttime: {$starttime}")
@@ -82,8 +81,6 @@ notify.wrap {
       print("url: ${url}")
       print("starttime: ${starttime}")
       def created_at = starttime.minusSeconds(1)
-      // looks like "2022-05-16T22:52:45Z"
-      def fmt=DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
       print("created_at: ${created_at}")
       // One second before we really started the action.
       // Note that we're assuming our local clock and GitHub's are pretty
@@ -107,7 +104,7 @@ notify.wrap {
           def wf = obj.workflow_runs[0]
           status = wf.status
           conclusion = wf.conclusion
-          created_at = LocalDateTime.parse(wf.created_at, fmt)
+          created_at = Instant.parse(wf.created_at)
           println("#{$loop_idx}: status=${status}; conclusion=${conclusion}; created_at=${created_at}")
         } // openConnection().with
       } // while
