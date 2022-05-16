@@ -83,7 +83,7 @@ notify.wrap {
       print("starttime: ${starttime}")
       def created_at = starttime.minusSeconds(1)
       // looks like "2022-05-16T22:52:45Z"
-      def fmt=DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ssX")
+      def fmt=DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
       print("created_at: ${created_at}")
       // One second before we really started the action.
       // Note that we're assuming our local clock and GitHub's are pretty
