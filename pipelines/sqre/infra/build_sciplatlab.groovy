@@ -100,7 +100,7 @@ notify.wrap {
           def wf = obj.workflow_runs[0]
           status = wf.status
           conclusion = wf.conclusion
-	  created_at = LocalDateTime.parse(wf.created_at,"2020-01-22T19:33:08Z")
+          created_at = LocalDateTime.parse(wf.created_at)
           println("#{$loop_idx}: status=${status}; conclusion=${conclusion}")
         } // openConnection().with
       } // while
