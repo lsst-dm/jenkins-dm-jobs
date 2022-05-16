@@ -25,11 +25,12 @@ notify.wrap {
     'BRANCH',
   ])
 
-  String tag           = params.TAG
-  String supplementary = params.SUPPLEMENTARY
-  String image         = params.IMAGE
-  String push          = "true"
-  String branch        = params.BRANCH
+  String tag              = params.TAG
+  String supplementary    = params.SUPPLEMENTARY
+  String image            = params.IMAGE
+  String push             = "true"
+  String branch           = params.BRANCH
+  LocalDateTime starttime = null
 
   if (params.NO_PUSH) {
     push = "false"
@@ -49,10 +50,10 @@ notify.wrap {
       def json = new groovy.json.JsonBuilder(body)
 
       def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/dispatches")
+      starttime = LocalDateTime.now()
       println("url: ${url}")
       println("body: ${json}")
-
-      def starttime = LocalDateTime.now()
+      println("starttime: {$starttime}")
 
       def conn = url.openConnection().with { conn ->
         conn.setRequestMethod('POST')
@@ -78,7 +79,7 @@ notify.wrap {
       def conclusion = ""
       def loop_idx = 0
       def created_at = starttime.previous()
-      // One second before we really sent the request.
+      // One second before we really started the action.
       // Note that we're assuming our local clock and GitHub's are pretty
       // well synchronized.  If this assumption is violated, we probably
       // have worse problems than this build failing.
