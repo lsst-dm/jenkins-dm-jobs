@@ -1,4 +1,5 @@
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
@@ -81,6 +82,7 @@ notify.wrap {
       print("url: ${url}")
       print("starttime: ${starttime}")
       def created_at = starttime.minusSeconds(1)
+      def fmt=DateTimeFormatter(ISO_INSTANT)
       print("created_at: ${created_at}")
       // One second before we really started the action.
       // Note that we're assuming our local clock and GitHub's are pretty
@@ -104,7 +106,7 @@ notify.wrap {
           def wf = obj.workflow_runs[0]
           status = wf.status
           conclusion = wf.conclusion
-          created_at = LocalDateTime.parse(wf.created_at)
+          created_at = LocalDateTime.parse(wf.created_at, fmt)
           println("#{$loop_idx}: status=${status}; conclusion=${conclusion}; created_at=${created_at}")
         } // openConnection().with
       } // while
