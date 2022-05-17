@@ -106,9 +106,9 @@ notify.wrap {
         if (loop_idx > 30) {
           assert 0: "Build did not start in 15 minutes: ${status}/${conclusion}"
         }
-	if (loop_idx != 0) {
+        if (loop_idx != 0) {
           Thread.sleep(30 * 1000)  // wait 30 secs second/subsequent loops
-	}
+        }
         loop_idx += 1
         def conn = url.openConnection().with { conn ->
           conn.setRequestMethod('GET')
@@ -118,7 +118,7 @@ notify.wrap {
           def text = conn.getInputStream().getText()
           def obj = jsonSlurper.parseText(text)
           wf = obj.workflow_runs[0]
-	  run_id = wf.id
+          run_id = wf.id
           created_at = Instant.parse(wf.created_at)
           println("#{$loop_idx}: id = ${run_id}; created_at=${created_at}")
         } // openConnection().with
@@ -134,7 +134,7 @@ notify.wrap {
         if (loop_idx > 240) {
           assert 0: "Build did not finish in 2 hours: ${status}/${conclusion}"
         }
-	if (loop_idx > 0) {
+        if (loop_idx > 0) {
           Thread.sleep(30 * 1000)  // wait 30 secs second/subsequent loops
         }
         loop_idx += 1
@@ -148,9 +148,9 @@ notify.wrap {
           status = wf.status
           conclusion = wf.conclusion
           println("#{$loop_idx}: id = ${run_id}; status=${status}; conclusion=${conclusion}")
-	} // openConnection.with()
+        } // openConnection.with()
       } // while
-    assert conclusion == "success": "Build for id ${run_id} failed: conclusion=${conclusion}"
+      assert conclusion == "success": "Build for id ${run_id} failed: conclusion=${conclusion}"
     } // stage
   } // run
 
