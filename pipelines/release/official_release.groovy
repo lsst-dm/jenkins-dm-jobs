@@ -219,6 +219,7 @@ notify.wrap {
           job: 'sqre/verify_drp_metrics',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
+            string(name: 'DATASET_REF', value: gitTag),
             booleanParam(
               name: 'NO_PUSH',
               value: scipipe.release.step.verify_drp_metrics.no_push,

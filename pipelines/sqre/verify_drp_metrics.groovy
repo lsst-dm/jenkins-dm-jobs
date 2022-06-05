@@ -22,12 +22,14 @@ node('jenkins-manager') {
 notify.wrap {
   util.requireParams([
     'DOCKER_IMAGE',
+    'DATASET_REF',
     'NO_PUSH',
     'WIPEOUT',
     'GIT_REF',
   ])
 
   String dockerImage = params.DOCKER_IMAGE
+  String datasetRef  = params.DATASET_REF
   Boolean noPush     = params.NO_PUSH
   Boolean wipeout    = params.WIPEOUT
   String gitRef      = params.GIT_REF
@@ -44,6 +46,9 @@ notify.wrap {
       conf.code.display_name = displayName(conf.code)
     }
     conf.dataset.display_name = displayName(conf.dataset)
+    if (datasetRef) {
+      conf.dataset.git_ref = datasetRef
+    }
 
     // note that `:` seems to break python imports and `*` seems to break the
     // butler
