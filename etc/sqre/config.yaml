@@ -4,7 +4,7 @@
 #
 awscli:
   pypi:
-    version: &awscli_ver '1.14.61'
+    version: &awscli_ver '1.25.21'
   dockerfile:
     github_repo: lsst-sqre/docker-awscli
     git_ref: master
