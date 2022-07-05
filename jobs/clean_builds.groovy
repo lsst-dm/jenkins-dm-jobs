@@ -26,12 +26,6 @@ import util.CleanBuild
     buildConfig: 'scipipe-lsstsw-ci_imsim',
     seedJob: SEED_JOB,
   ],
-  [
-    name: 'dax/qserv_distrib',
-    products: 'qserv_distrib',
-    buildConfig: 'dax-lsstsw-matrix',
-    seedJob: SEED_JOB,
-  ],
 ].each { j ->
   def clean = new CleanBuild(j)
 
