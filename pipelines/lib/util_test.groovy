@@ -387,7 +387,7 @@ def lsstswBuild(
   def task = null
   if (lsstswConfig.label == "usdf") {
     agent = 'usdf'
-    task = { runEnv{runDocker) }
+    task = { runEnv(runDocker) }
   } else if (lsstswConfig.image) {
     agent = 'docker'
     task = { runEnv(runDocker) }
