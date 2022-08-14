@@ -8,7 +8,7 @@ node('jenkins-manager') {
       poll: false
     ])
     notify = load 'pipelines/lib/notify.groovy'
-    util = load 'pipelines/lib/util_test.groovy'
+    util = load 'pipelines/lib/util.groovy'
     scipipe = util.scipipeConfig() // needed for side effects
     sqre = util.sqreConfig() // needed for side effects
   }
@@ -23,7 +23,6 @@ notify.wrap {
     'BUILD_CONFIG',
     'PRODUCTS',
     'BUILD_DOCS',
-    'PUBLISH_DOCS',
     'WIPEOUT',
   ])
 
@@ -31,16 +30,11 @@ notify.wrap {
     LSST_REFS:      REFS,
     LSST_PRODUCTS:  PRODUCTS,
     LSST_BUILD_DOCS: BUILD_DOCS,
-    LSST_PUBLISH_DOCS: PUBLISH_DOCS,
-    LSST_SPLENV_REF: SPLENV_REF
   ]
 
-  // if provided fork parameters, add them to the build params
-  if (params.RUBINENV_ORG_FORK != null) {
-    buildParams['RUBINENV_ORG_FORK'] = params.RUBINENV_ORG_FORK
-  }
-  if (params.RUBINENV_BRANCHi != null) {
-    buildParams['RUBINENV_BRANCH'] = params.RUBINENV_BRANCH
+  // override conda env ref from build_matrix.yaml
+  if (params.SPLENV_REF) {
+    buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
   }
 
   def lsstswConfigs = scipipe[BUILD_CONFIG]

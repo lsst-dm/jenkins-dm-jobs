@@ -5,7 +5,7 @@
 # provide yaml anchors internal to this file.
 #
 template:
-  splenv_ref: &splenv_ref '1.0.0'
+  splenv_ref: &splenv_ref '4.1.0'
   tarball_defaults: &tarball_defaults
     miniver: &miniver 'py38_4.9.2'
     timelimit: 30
@@ -34,7 +34,7 @@ template:
     - &el7-conda
       <<: *platform_defaults
       image: docker.io/lsstdm/scipipe-base:7
-      label: centos-7-conda
+      label: usdf
       compiler: conda-system
       python: '3'
     - &el8-conda
@@ -99,11 +99,9 @@ scipipe-lsstsw-matrix:
     label: osx-10.13||osx-10.14
     display_name: macos
     display_compiler: clang
-    build_docs: true
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
   - <<: *catalina-conda
-    build_docs: true
   - <<: *bigsur-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
@@ -111,10 +109,6 @@ scipipe-lsstsw-ci_hsc:
 scipipe-lsstsw-ci_imsim:
   - <<: *el7-conda
   - <<: *bigsur-conda
-dax-lsstsw-matrix:
-  - <<: *el7-conda
-    splenv_ref: 'e945ec5'
-#  - <<: *el7-py3-llvm # compiler is overridden when using conda
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
@@ -124,7 +118,6 @@ canonical:
     <<: *el7-conda
     label: snowflake-0
     display_name: centos-7
-    build_docs: true
   workspace: snowflake/release
 #
 # eups distrib tarball configuration -- used by
