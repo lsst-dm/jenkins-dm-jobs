@@ -285,7 +285,7 @@ def void runPublish(Map p) {
     'parameters',
   ])
   def useP = [
-    job: 'release/test-run-publish',
+    job: 'release/run-publish',
   ] + p
 
   requireMapKeys(p.parameters, [
@@ -309,6 +309,9 @@ def void runPublish(Map p) {
   // Optional parameter. Set 'em if you got 'em
   if (useP.parameters.SPLENV_REF) {
     jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
+  }
+  if (useP.parameters.RUBINENV_VER) {
+    jobParameters += string(name: 'RUBINENV_VER', value: useP.parameters.RUBINENV_VER)
   }
 
   build(
@@ -339,48 +342,8 @@ def lsstswBuild(
     LSST_SPLENV_REF:     lsstswConfig.splenv_ref
   ] + buildParams
 
-  if (lsstswConfig.build_docs && buildParams['LSST_BUILD_DOCS'] == "true") {
-    buildParams['LSST_PRODUCTS'] += " pipelines_lsst_io"
-    // disable old-style doc build
-    buildParams['LSST_BUILD_DOCS'] = "false"
-  } else {
-    // don't publish docs if we haven't built them
-    buildParams['LSST_PUBLISH_DOCS'] = "false"
-  }
-
   def run = {
     jenkinsWrapper(buildParams)
-
-    if (buildParams['LSST_PUBLISH_DOCS'] == "true") {
-      withEnv(["LSST_REFS=${buildParams['LSST_REFS']}"]) {
-        withCredentials([[
-          $class: 'UsernamePasswordMultiBinding',
-          credentialsId: 'ltd-upload',
-          usernameVariable: 'LTD_USERNAME',
-          passwordVariable: 'LTD_PASSWORD',
-        ]]) {
-          bash '''
-            set +o xtrace
-            cd lsstsw
-            source bin/envconfig
-            {
-              conda activate ltd &&
-              conda install -y -c conda-forge ltd-conveyor
-            } || {
-              conda create -y -n ltd -c conda-forge ltd-conveyor &&
-              conda activate ltd
-            }
-            set -o xtrace
-            GIT_REF=${LSST_REFS// /-}
-            ln -s ../../_doxygen/html/cpp-api build/pipelines_lsst_io/_build/html/cpp-api
-            ltd upload --product pipelines --dir build/pipelines_lsst_io/_build/html --git-ref "$GIT_REF"
-            set +o xtrace
-            conda deactivate
-            set -o xtrace
-          '''
-        } // withCredentials
-      } // withEnv
-    } // if LSST_PUBLISH_DOCS
   } // run
 
   def runDocker = {
@@ -393,9 +356,8 @@ def lsstswBuild(
   } // runDocker
 
   def runEnv = { doRun ->
-      // use different workspace dirs for python 2/3 to avoid residual state
-      // conflicts
-      def buildDirHash = hashpath(slug).take(10)
+      // No longer need hashpath as slug is short enough
+      def buildDirHash = slug
       try {
         dir(buildDirHash) {
           if (wipeout) {
@@ -403,7 +365,7 @@ def lsstswBuild(
           }
 
           try {
-            timeout(time: 8, unit: 'HOURS') {
+            timeout(time: 12, unit: 'HOURS') {
               doRun()
             } // timeout
           } catch (e) {
@@ -423,7 +385,10 @@ def lsstswBuild(
 
   def agent = null
   def task = null
-  if (lsstswConfig.image) {
+  if (lsstswConfig.label == "usdf") {
+    agent = 'usdf'
+    task = { runEnv{runDocker) }
+  } else if (lsstswConfig.image) {
     agent = 'docker'
     task = { runEnv(runDocker) }
   } else {
@@ -488,6 +453,12 @@ def void jenkinsWrapper(Map buildParams) {
         deleteDir()
       }
     }
+
+    // This file is needed for conda to know it has a base environment.
+    bash '''
+      mkdir -p lsstsw/miniconda/conda-meta
+      touch lsstsw/miniconda/conda-meta/history
+    '''
 
     def buildEnv = [
       "WORKSPACE=${cwd}",
@@ -1115,7 +1086,7 @@ def void buildTarballMatrix(Map p) {
 
     def tarballBuild = {
       retry(p.retries) {
-        build job: 'release/test-tarball',
+        build job: 'release/tarball',
           parameters: [
             string(name: 'PRODUCTS', value: p.parameters.PRODUCTS),
             string(name: 'EUPS_TAG', value: p.parameters.EUPS_TAG),
@@ -1326,7 +1297,7 @@ def ltdPush(Map p) {
         // expect that the service will return an HTTP 502, which causes
         // ltd-mason-travis to exit 1
         sh '''
-        /usr/bin/ltd-mason-travis --html-dir _build/html --verbose || true
+        ltd-mason-travis --html-dir _build/html --verbose || true
         '''
       } // .inside
     } // withCredentials
@@ -1351,21 +1322,21 @@ def ltdPush(Map p) {
  * @param p.parameters.REFS String Defaults to `''`.
  * @param p.parameters.PRODUCTS String Defaults to `''`.
  * @param p.parameters.BUILD_DOCS Boolean Defaults to `false`.
- * @param p.parameters.TIMEOUT String Defaults to `'8'`.
+ * @param p.parameters.TIMEOUT String Defaults to `'12'`.
  * @param p.parameters.PREP_ONLY Boolean Defaults to `false`.
  * @param p.parameters.SPLENV_REF String Optional
  * @return manifestId String
  */
 def String runRebuild(Map p) {
   def useP = [
-    job: 'release/test-run-rebuild',
+    job: 'release/run-rebuild',
   ] + p
 
   useP.parameters = [
     REFS: '',  // null is not a valid value for a string param
     PRODUCTS: '',
     BUILD_DOCS: false,
-    TIMEOUT: '8', // should be String
+    TIMEOUT: '12', // should be String
     PREP_ONLY: false,
   ] + p.parameters
 
@@ -1529,7 +1500,9 @@ def String lsstswConfigSlug(Map lsstswConfig) {
   def displayName = lc.display_name ?: lc.label
   def displayCompiler = lc.display_compiler ?: lc.compiler
 
-  "${displayName}.${displayCompiler}.py${lc.python}"
+  // Since we use conda compilers and Python 3, leave them out.
+  // "${displayName}.${displayCompiler}.py${lc.python}"
+  "${displayName}"
 }
 
 /*
@@ -1637,7 +1610,7 @@ def Object runBuildStack(Map p) {
     'parameters',
   ])
   p = [
-    job: 'release/docker/test-build-stack',
+    job: 'release/docker/build-stack',
   ] + p
 
   // validate p.parameters Map
