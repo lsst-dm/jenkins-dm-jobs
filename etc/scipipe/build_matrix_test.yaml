@@ -94,11 +94,11 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
-  - <<: *catalina-conda
+    # - <<: *catalina-conda
     # allow builds on catalina and big sur
-    label: osx-10.13||osx-10.14
-    display_name: macos
-    display_compiler: clang
+    # label: osx-10.13||osx-10.14
+    # display_name: macos
+    # display_compiler: clang
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
   - <<: *catalina-conda
