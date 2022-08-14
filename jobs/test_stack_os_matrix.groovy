@@ -11,17 +11,16 @@ p.pipeline().with {
     stringParam('REFS', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "main" or branch from repos.yaml is implicitly appended to the right side of the list, if not specified; do not specify "main" explicitly.')
     stringParam('PRODUCTS', scipipe.canonical.products,
       'Whitespace delimited list of EUPS products to build.')
-    booleanParam('BUILD_DOCS', true, 'Build pipelines.lsst.io site')
-    booleanParam('PUBLISH_DOCS', true, 'Publish pipelines.lsst.io/v edition')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
-    stringParam('RUBINENV_ORG_FORK', null, 'Organization where to look for rubinenv-feedstock fork.')
-    stringParam('RUBINENV_BRANCH', null, 'Branch to test in the rubinenv-feedstock fork.')
+    // XXX testing only
+    //booleanParam('NO_FETCH', false, 'Do not pull from git remote if branch is already the current ref. (This should generally be false outside of testing the CI system)')
   }
 
   concurrentBuild(true)
 
   environmentVariables(
     BUILD_CONFIG: 'scipipe-lsstsw-matrix',
+    BUILD_DOCS: false,
     WIPEOUT: false,
   )
 }
