@@ -14,18 +14,18 @@ dependencies {
     libs 'org.yaml:snakeyaml:1.17'
 }
 
-task clean(type: Delete) {
-    delete 'lib'
-}
+//task clean(type: Delete) {
+//    delete 'lib'
+//}
 
 task libs(type: Copy) {
     into 'lib'
     from configurations.libs
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.2.1'
-}
+//task wrapper(type: Wrapper) {
+//    gradleVersion = '2.2.1'
+//}
 
 // copied from
 // https://github.com/sheehan/job-dsl-gradle-example/blob/master/build.gradle
