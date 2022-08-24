@@ -29,6 +29,4 @@ p.pipeline().with {
     choiceParam('OSFAMILY', ['redhat', 'osx'], 'Published osfamily name')
     stringParam('PLATFORM', null, 'Published platform name (el7, 10.9)')
   }
-
-  concurrentBuild(true)
 }

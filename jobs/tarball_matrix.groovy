@@ -15,6 +15,4 @@ p.pipeline().with {
     booleanParam('RUN_SCONS_CHECK', true, '(no-op without SMOKE) Manually checkout the "base" product and invoke "scons".')
     booleanParam('PUBLISH', true, 'Publish generated EUPS distrib tarballs.')
   }
-
-  concurrentBuild(true)
 }

@@ -10,7 +10,9 @@ job('sqre/infra/jenkins-node-cleanup') {
 
   // don't tie up a beefy build worker
   label('jenkins-manager')
-  concurrentBuild(false)
+  properties {
+    disableConcurrentBuilds()
+  }
 
   triggers {
     cron('H/10 * * * *')

@@ -16,8 +16,6 @@ p.pipeline().with {
     //booleanParam('NO_FETCH', false, 'Do not pull from git remote if branch is already the current ref. (This should generally be false outside of testing the CI system)')
   }
 
-  concurrentBuild(true)
-
   environmentVariables(
     BUILD_CONFIG: 'scipipe-lsstsw-matrix',
     BUILD_DOCS: false,
