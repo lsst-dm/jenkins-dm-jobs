@@ -504,11 +504,25 @@ def jenkinsWrapperPost(String baseDir = null, boolean prepOnly = false) {
     manifestPath,
     statusPath,
   ]
+
+  def archive_exclude = []
+
   def record = [
     '*.log',
     '*.failed',
   ]
 
+  def failed_record = [
+          '_build.log',
+          'config.log',
+          'tests/.tests/pytest-*.xml',
+          '*.failed',
+  ]
+  def failed_exclude = [
+          'tests/.tests/pytest-*.xml-cov-*.xml',
+  ]
+
+  println "Ebter"
   try {
     if (!prepOnly) {
       // if only prepare, skip junit
@@ -542,6 +556,15 @@ def jenkinsWrapperPost(String baseDir = null, boolean prepOnly = false) {
 
           archive += reports
         }
+      } else {
+        // handle case when there is no status.yaml due to timeouts
+        // match logs for products that are not part of the current build
+        failed_record.each { pattern ->
+          archive += "${lsstsw_build_dir}/**/${pattern}"
+        }
+        failed_exclude.each { pattern ->
+          archive_exclude += "${lsstsw_build_dir}/**/${pattern}"
+        }
       }
     }
   } catch (e) {
@@ -554,6 +577,7 @@ def jenkinsWrapperPost(String baseDir = null, boolean prepOnly = false) {
   } finally {
     archiveArtifacts([
       artifacts: archive.join(', '),
+      excludes: archive_exclude.join(', '),
       allowEmptyArchive: true,
       fingerprint: true
     ])
