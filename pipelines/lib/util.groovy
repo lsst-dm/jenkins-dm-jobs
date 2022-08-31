@@ -365,7 +365,8 @@ def lsstswBuild(
           }
 
           try {
-            timeout(time: 12, unit: 'HOURS') {
+            timeout(time: 20, unit: 'MINUTES') {
+              echo "doRun"
               doRun()
             } // timeout
           } catch (e) {
