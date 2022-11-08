@@ -21,6 +21,7 @@ notify.wrap {
     'SPLENV_REF',
     'RUBINENV_VER',
     'O_LATEST',
+    'EXCLUDE_FROM_TARBALLS',
   ])
 
   String sourceGitRefs = params.SOURCE_GIT_REFS
@@ -28,6 +29,7 @@ notify.wrap {
   String splenvRef     = params.SPLENV_REF
   String rubinEnvVer   = params.RUBINENV_VER
   Boolean dockerLatest = params.O_LATEST
+  String exclude       = params.EXCLUDE_FROM_TARBALLS
 
   // generate eups tag from git tag
   String eupsTag = "t" + util.sanitizeEupsTag(gitTag)
@@ -60,8 +62,16 @@ notify.wrap {
   echo "publish [git] tag: ${gitTag}"
   echo "publish [eups] tag: ${eupsTag}"
 
+  def prodList = scipipe.tarball.products.split(' ')
+  def excludeList = exclude.split(' ')
+  def tarballProducts = ''
+
+  // remove excluded product from tarball build list
+  for(prod in prodList)
+    if(! (prod in excludeList)) tarballProducts += prod + ' '
+  tarballProducts = tarballProducts.trim()
+
   def products        = scipipe.canonical.products
-  def tarballProducts = scipipe.tarball.products
   def retries         = 3
   def extraDockerTags = ''
 
