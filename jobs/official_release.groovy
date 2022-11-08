@@ -18,12 +18,14 @@ p.pipeline().with {
 
   parameters {
     stringParam('SOURCE_GIT_REFS', null,
-      'existing git ref(s) upon which to base the release. Eg. "w.9999.52"')
+      'existing git ref(s) upon which to base the release, e.g. "w.9999.52"')
     stringParam('RELEASE_GIT_TAG', null,
-      'git tag for the new release. Eg. "v888.0.0.rc1"')
+      'git tag for the new release, e.g. "v888.0.0.rc1"')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref or eups tag')
     stringParam('RUBINENV_VER', scipipe.template.splenv_ref, 'rubin-env version')
     booleanParam('O_LATEST', false,
       'update the eups "O_LATEST" tag -- should only be done for a final (non-rc) release')
+    stringParam('EXCLUDE_FROM_TARBALLS', null,
+      'products to exclude from tarball builds, e.g. "lsst_sitcom"')
   }
 }
