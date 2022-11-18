@@ -23,6 +23,14 @@ template:
         ${AP_VERIFY_CI_COSMOS_PDR2_DIR}/pipelines/ApVerifyWithFakes.yaml
       git_ref: main
       clone_timelimit: 15
+    dc2: &dataset_dc2
+      display_name: dc2
+      name: ap_verify_ci_dc2
+      github_repo: lsst/ap_verify_ci_dc2
+      gen3_pipeline: >
+        ${AP_VERIFY_CI_DC2_DIR}/pipelines/ApVerifyWithFakes.yaml
+      git_ref: main
+      clone_timelimit: 15
   codes:
     ap_verify: &code_ap
       name: ap_verify
@@ -42,6 +50,11 @@ ap_verify:
         <<: *code_ap
     - dataset:
         <<: *dataset_cosmos_pdr2
+      gen: 3
+      code:
+        <<: *code_ap
+    - dataset:
+        <<: *dataset_dc2
       gen: 3
       code:
         <<: *code_ap
