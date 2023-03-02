@@ -453,8 +453,7 @@ def void runApVerify(Map p) {
       dir(p.archiveDir) {
         util.record(util.xz([
           "${p.runDir}/**/*.log",
-          "${p.runDir}/**/*.json",  // Gen 2
-          "${p.runDir}/**/metricvalue_*/**/*.yaml",  // Gen 3
+          "${p.runDir}/**/metricvalue_*/**/*.yaml",
           "${p.runDir}/**/*.db",
         ]))
       }
