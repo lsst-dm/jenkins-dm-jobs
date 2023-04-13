@@ -221,6 +221,22 @@ def void verifyDataset(Map p) {
       } // timeout
     } // dir
 
+    // TODO: remove the block starting here after DM-38454
+    // create a new directory for the rbClassifier_data
+    def rbClassifierDataDir = "${jobDir}/rbClassifierData"
+    mkdir(rbClassifierDataDir)
+    
+    // clone rbClassifier_data
+    dir(rbClassifierDataDir) {
+      timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
+        util.checkoutLFS(
+          githubSlug: 'lsst-dm/rbClassifier_data',
+          gitRef: 'main',
+        )
+      } // timeout
+    } // dir
+    // TODO: remove the block ending here after DM-38454
+
     // clone code
     if (buildCode) {
       dir(codeDir) {
@@ -261,7 +277,7 @@ def void verifyDataset(Map p) {
           archiveDir: jobDir,
         )
       }
-
+      
       runApVerify(
         runDir: runDir,
         dataset: ds,
@@ -270,6 +286,7 @@ def void verifyDataset(Map p) {
         homeDir: homeDir,
         archiveDir: jobDir,
         codeDir: codeDir,
+        rbClassifierDataDir: rbClassifierDataDir, //TODO:remove after DM-38454
       )
 
       // push results to squash
@@ -412,6 +429,7 @@ def void runApVerify(Map p) {
     'homeDir',
     'archiveDir',
     'codeDir',
+    'rbClassifierDataDir' //TODO:remove after DM-38454
   ])
 
   def run = {
@@ -425,6 +443,9 @@ def void runApVerify(Map p) {
       else
         setup ap_verify
       fi
+
+      # TODO: remove the below line after DM-38454 
+      setup -k -r ${RBCLASSIFIER_DATA_DIR}
 
       cd ${DATASET_DIR}
       setup -k -r .
@@ -444,6 +465,8 @@ def void runApVerify(Map p) {
     "DATASET_DIR=${p.datasetDir}",
     "HOME=${p.homeDir}",
     "CODE_DIR=${p.codeDir}",
+    // TODO: remove the below line after DM-38454
+    "RBCLASSIFIER_DATA_DIR=${p.rbClassifierDataDir}",
   ]) {
     try {
       dir(p.runDir) {
