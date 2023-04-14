@@ -224,7 +224,6 @@ def void verifyDataset(Map p) {
     // TODO: remove the block starting here after DM-38454
     // create a new directory for the rbClassifier_data
     def rbClassifierDataDir = "${jobDir}/rbClassifierData"
-    mkdir(rbClassifierDataDir)
     
     // clone rbClassifier_data
     dir(rbClassifierDataDir) {
