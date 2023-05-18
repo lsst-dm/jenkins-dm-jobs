@@ -244,6 +244,7 @@ def void verifyDataset(Map p) {
       )
 
       // push results to squash
+      /* Temporarily disable (DM-39271)
       if (p.squashPush) {
         def files = []
         dir(runDir) {
@@ -260,6 +261,7 @@ def void verifyDataset(Map p) {
           )
         }
       }
+      */
     } // inside
   } // run
 
