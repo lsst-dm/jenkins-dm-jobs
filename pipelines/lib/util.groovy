@@ -2096,6 +2096,77 @@ def void runGen3ToJob(Map p) {
 } // runGen3ToJob
 
 /**
+ * push results to sasquatch using verify_to_sasquatch.
+ *
+ *     util.runVerifyToSasquatch(
+ *       runDir: runDir,
+ *       gen3Dir: gen3Dir,
+ *       collectionName: collectionName,
+ *       namespace: "lsst.example",
+ *       datasetName: "ci_example",
+ *       sasquatchUrl: util.sqreConfig().sasquatch.url
+ *     )
+ * @param p Map
+ * @param p.runDir String
+ * @param p.gen3Dir String Path to the Gen 3 repository
+ * @param p.collectionName String The collection to search for metrics.
+ * @param p.namespace String The Sasquatch namespace to push to, e.g., lsst.dm.
+ * @param p.datasetName String The dataset name. Eg., validation_data_cfht
+ * @param p.sasquatchUrl String The URL to the Sasquatch REST proxy.
+ */
+def void runVerifyToSasquatch(Map p) {
+  util.requireMapKeys(p, [
+    'runDir',
+    'gen3Dir',
+    'collectionName',
+    'namespace',
+    'datasetName',
+    'sasquatchUrl',
+  ])
+
+  def run = {
+    util.bash '''
+      set +o xtrace
+      source /opt/lsst/software/stack/loadLSST.bash
+      setup analysis_tools
+      set -o xtrace
+
+      verify_to_sasquatch.py \
+          "$REPO_DIR" \
+          "$OUTPUT_COLLECTION" \
+          --dataset "$dataset" \
+          --url "$SASQUATCH_URL" \
+          --namespace "$SASQUATCH_NAMESPACE"
+    '''
+  } // run
+
+  /*
+  This var was defined automagically by matrixJob and now must be manually
+  set:
+  - dataset
+  */
+  withEnv([
+    "REPO_DIR=${p.gen3Dir}",
+    "OUTPUT_COLLECTION=${p.collectionName}",
+    "SASQUATCH_NAMESPACE=${p.namespace}",
+    "dataset=${p.datasetName}",
+    "SASQUATCH_URL=${p.sasquatchUrl}",
+  ]) {
+    // TODO: need Sasquatch authentication eventually; verify_to_sasquatch.py takes a --token arg
+    // withCredentials([[
+    //   $class: 'UsernamePasswordMultiBinding',
+    //   credentialsId: 'squash-api-user',
+    //   usernameVariable: 'SQUASH_USER',
+    //   passwordVariable: 'SQUASH_PASS',
+    // ]]) {
+      dir(p.runDir) {
+        run()
+      }
+    // } // withCredentials
+  } // withEnv
+} // runDispatchVerify
+
+/**
  * Create a "fake" lsstsw-ish dir structure as expected by
  * `dispatch-verify.py`, which includes a `manifest.txt` and a copy of
  * `repos.yaml`.
