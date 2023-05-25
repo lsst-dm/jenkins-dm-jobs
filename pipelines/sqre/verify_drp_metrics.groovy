@@ -243,6 +243,15 @@ def void verifyDataset(Map p) {
         archiveDir: jobDir,
       )
 
+      util.runVerifyToSasquatch(
+        runDir: runDir,
+        gen3Dir: util.joinPath(datasetDir, "SMALL_HSC")
+        collectionName: "jenkins/step3",
+        namespace: "lsst.verify.drp",
+        datasetName: "HSC/RC2/Nightly",
+        sasquatchUrl: sqre.sasquatch.url,
+      )
+
       // push results to squash
       /* Temporarily disable (DM-39271)
       if (p.squashPush) {
