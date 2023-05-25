@@ -295,31 +295,19 @@ def void verifyDataset(Map p) {
             // Path is partially hard-coded in ap_verify.
             def gen3Dir = util.joinPath(ds.name, 'repo')
             def collection = 'ap_verify-output'
-            util.runGen3ToJob(
-              runDir: runDir,
-              gen3Dir: gen3Dir,
-              collectionName: collection,
-              namespace: '',
-              datasetName: ds.name,
-            )
-            def files = []
-            dir(runDir) {
-              files = findFiles(glob: '**/*.verify.json')
-            }
 
             def codeRef = buildCode ? code.git_ref : "main"
             withEnv([
               "refs=${codeRef}",
             ]) {
-              files.each { f ->
-                util.runDispatchVerify(
-                  runDir: runDir,
-                  lsstswDir: fakeLsstswDir,
-                  datasetName: ds.name,
-                  resultFile: f,
-                  squashUrl: sqre.squash.url,
-                )
-              }
+              util.runVerifyToSasquatch(
+                runDir: runDir,
+                gen3Dir: gen3Dir,
+                collectionName: collection,
+                namespace: "lsst.verify.ap",
+                datasetName: ds.name,
+                sasquatchUrl: sqre.sasquatch.url
+              )
             }
             break
           default:
