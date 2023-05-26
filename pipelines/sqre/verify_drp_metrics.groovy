@@ -245,7 +245,7 @@ def void verifyDataset(Map p) {
 
       util.runVerifyToSasquatch(
         runDir: runDir,
-        gen3Dir: util.joinPath(datasetDir, "SMALL_HSC")
+        gen3Dir: util.joinPath(datasetDir, "SMALL_HSC"),
         collectionName: "jenkins/step3",
         namespace: "lsst.verify.drp",
         datasetName: "HSC/RC2/Nightly",
