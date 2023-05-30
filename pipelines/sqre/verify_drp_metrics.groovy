@@ -243,7 +243,7 @@ def void verifyDataset(Map p) {
         archiveDir: jobDir,
       )
 
-      def gen3Dir = util.joinPath(datasetDir, "SMALL_HSC")
+      def gen3Dir = util.joinPath(datasetDir.toString(), "SMALL_HSC")
       util.runVerifyToSasquatch(
         runDir: runDir,
         gen3Dir: gen3Dir,
