@@ -89,11 +89,18 @@ template:
       display_name: macos-11.0
       compiler: conda-system
       python: '3'
+    - &ventura-arm-conda
+      <<: *platform_defaults
+      image: null
+      label: ventura
+      display_name: macos-arm-13
+      compiler: conda-system
+      python: '3'
 #
 # build environment/matrix configs
 #
 scipipe-lsstsw-matrix:
-  - <<: *el7-conda
+  - <<: *ventura-arm-conda
     # - <<: *catalina-conda
     # allow builds on catalina and big sur
     # label: osx-10.13||osx-10.14
