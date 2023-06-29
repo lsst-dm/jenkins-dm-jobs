@@ -9,7 +9,7 @@ import util.CleanBuild
 [
   [
     name: 'scipipe/lsst_distrib',
-    products: scipipe.canonical.products,
+    products: 'lsst_distrib lsst_ci ci_middleware ci_cpp',
     buildDocs: true,
     buildConfig: 'scipipe-lsstsw-lsst_distrib',
     seedJob: SEED_JOB,
