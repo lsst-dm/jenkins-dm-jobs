@@ -55,7 +55,8 @@ notify.wrap {
       def cwd = pwd()
 
       def buildParams = [
-        EUPS_PKGROOT:       "${cwd}/distrib",
+        EUPS_PKGROOT:        "${cwd}/distrib",
+        EUPSPKG_NJOBS:       "4",
         GIT_SSH_COMMAND:     'ssh -o StrictHostKeyChecking=no',
         LSST_BUILD_DOCS:     buildDocs,
         LSST_COMPILER:       lsstswConfig.compiler,
