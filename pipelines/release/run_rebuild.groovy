@@ -56,8 +56,8 @@ notify.wrap {
 
       def buildParams = [
         EUPS_PKGROOT:        "${cwd}/distrib",
-        EUPSPKG_NJOBS:       "4",
         GIT_SSH_COMMAND:     'ssh -o StrictHostKeyChecking=no',
+        K8S_DIND_LIMITS_CPU: "4",
         LSST_BUILD_DOCS:     buildDocs,
         LSST_COMPILER:       lsstswConfig.compiler,
         LSST_JUNIT_PREFIX:   slug,
