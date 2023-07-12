@@ -2138,7 +2138,8 @@ def void runVerifyToSasquatch(Map p) {
           --url "$SASQUATCH_URL" \
           --namespace "$SASQUATCH_NAMESPACE" \
           --extra "ci_id=$BUILD_ID" \
-          --extra "ci_url=$BUILD_URL"
+          --extra "ci_url=$BUILD_URL" \
+          --extra "ci_name=$JOB_NAME"
     '''
   } // run
 
@@ -2146,6 +2147,7 @@ def void runVerifyToSasquatch(Map p) {
   These are already present under pipeline:
   - BUILD_ID
   - BUILD_URL
+  - JOB_NAME
 
   This var was defined automagically by matrixJob and now must be manually
   set:
