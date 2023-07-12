@@ -2104,7 +2104,8 @@ def void runGen3ToJob(Map p) {
  *       collectionName: collectionName,
  *       namespace: "lsst.example",
  *       datasetName: "ci_example",
- *       sasquatchUrl: util.sqreConfig().sasquatch.url
+ *       sasquatchUrl: util.sqreConfig().sasquatch.url,
+ *       branchRefs: "tickets/DM-12345 tickets/DM-67890"
  *     )
  * @param p Map
  * @param p.runDir String
@@ -2113,6 +2114,7 @@ def void runGen3ToJob(Map p) {
  * @param p.namespace String The Sasquatch namespace to push to, e.g., lsst.dm.
  * @param p.datasetName String The dataset name. Eg., validation_data_cfht
  * @param p.sasquatchUrl String The URL to the Sasquatch REST proxy.
+ * @param p.branchRefs String The branch(es) used in the run, as a space-delimited string (optional).
  */
 def void runVerifyToSasquatch(Map p) {
   util.requireMapKeys(p, [
@@ -2139,7 +2141,8 @@ def void runVerifyToSasquatch(Map p) {
           --namespace "$SASQUATCH_NAMESPACE" \
           --extra "ci_id=$BUILD_ID" \
           --extra "ci_url=$BUILD_URL" \
-          --extra "ci_name=$JOB_NAME"
+          --extra "ci_name=$JOB_NAME" \
+          --extra "ci_refs=$JOB_REFS"
     '''
   } // run
 
@@ -2159,6 +2162,7 @@ def void runVerifyToSasquatch(Map p) {
     "SASQUATCH_NAMESPACE=${p.namespace}",
     "dataset=${p.datasetName}",
     "SASQUATCH_URL=${p.sasquatchUrl}",
+    "JOB_REFS=${p.containsKey('branchRefs') ? p.branchRefs : ''}",
   ]) {
     // TODO: need Sasquatch authentication eventually; verify_to_sasquatch.py takes a --token arg
     // withCredentials([[
