@@ -845,6 +845,7 @@ def String scriptPreamble(
 
     # isolate conda config
     export CONDARC="\${PWD}/.condarc"
+    touch "$CONDARC"
 
     if [[ \$(uname -s) == Darwin* ]]; then
       export MACOSX_DEPLOYMENT_TARGET="${macosx_deployment_target}"
