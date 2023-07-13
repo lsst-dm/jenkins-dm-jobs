@@ -604,10 +604,12 @@ def void s3PushDocker(String ... parts) {
 
   withEnv(env) {
     withEupsBucketEnv {
-      docker.image(util.defaultAwscliImage()).inside {
-        // alpine does not include bash by default
-        util.posixSh(s3PushCmd())
-      } // .inside
+      timeout(time: 10, unit: 'MINUTES') {
+        docker.image(util.defaultAwscliImage()).inside {
+          // alpine does not include bash by default
+          util.posixSh(s3PushCmd())
+        } // .inside
+      }
     } //withEupsBucketEnv
   } // withEnv
 }
