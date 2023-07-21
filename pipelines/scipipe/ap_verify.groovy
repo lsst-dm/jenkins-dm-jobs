@@ -297,18 +297,15 @@ def void verifyDataset(Map p) {
             def collection = 'ap_verify-output'
 
             def codeRef = buildCode ? code.git_ref : "main"
-            withEnv([
-              "refs=${codeRef}",
-            ]) {
-              util.runVerifyToSasquatch(
-                runDir: runDir,
-                gen3Dir: gen3Dir,
-                collectionName: collection,
-                namespace: "lsst.verify.ap",
-                datasetName: ds.name,
-                sasquatchUrl: sqre.sasquatch.url
-              )
-            }
+            util.runVerifyToSasquatch(
+              runDir: runDir,
+              gen3Dir: gen3Dir,
+              collectionName: collection,
+              namespace: "lsst.verify.ap",
+              datasetName: ds.name,
+              sasquatchUrl: sqre.sasquatch.url,
+              branchRefs: codeRef
+            )
             break
           default:
             currentBuild.result = 'UNSTABLE'
