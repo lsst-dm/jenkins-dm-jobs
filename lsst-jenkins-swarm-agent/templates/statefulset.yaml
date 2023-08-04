@@ -1,0 +1,268 @@
+apiVersion: "apps/v1"
+kind: StatefulSet
+metadata:
+  name: {{ include "lsst-jenkins-swarm-agent.fullname" . }}
+  labels:
+    {{- include "lsst-jenkins-swarm-agent.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "lsst-jenkins-swarm-agent.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "lsst-jenkins-swarm-agent.selectorLabels" . | nindent 6 }}
+  podManagementPolicy: Parallel
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "lsst-jenkins-swarm-agent.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "lsst-jenkins-swarm-agent.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: dind
+          securityContext:
+            {{- toYaml .Values.dind.securityContext | nindent 12 }}
+          image: "{{ .Values.dind.image.repository }}:{{ .Values.dind.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.dind.image.pullPolicy }}
+          command:
+            - "/usr/local/bin/dockerd"
+          args:
+            - "--host=tcp://localhost:2375"
+            - "--mtu=1376"
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          env:
+            - name: DOCKER_HOST
+              value: "tcp://localhost:2375"
+          volumeMounts:
+            - name: "docker-graph-storage"
+              mountPath: "/var/lib/docker"
+            - name: "ws"
+              mountPath: "/j"
+          livenessProbe:
+            exec:
+              command: [
+                "wget",
+                "--spider",
+                "-q",
+                "http://localhost:2375/_ping",
+              ]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+          readinessProbe:
+            exec:
+              command: [
+                "wget",
+                "--spider",
+                "-q",
+                "http://localhost:2375/_ping",
+              ]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+          resources:
+            {{- toYaml .Values.dind.resources | nindent 12 }}
+        - name: "dockergc"
+          image: "{{ .Values.dockergc.image.repository }}:{{ .Values.dockergc.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.dockergc.image.pullPolicy }}
+          command:
+            - "sh"
+            - "-c"
+            - "while true; do /usr/local/bin/docker-gc; sleep $GRACE_PERIOD_SECONDS; done"
+          env:
+            - name: "DOCKER_HOST"
+              value: "tcp://localhost:2375"
+            - name: "GRACE_PERIOD_SECONDS"
+              value: "3600"
+            - name: "MINIMUM_IMAGES_TO_SAVE"
+              value: "5"
+            - name: "REMOVE_VOLUMES"
+              value: "1"
+            - name: "FORCE_CONTAINER_REMOVAL"
+              value: "1"
+            - name: "FORCE_IMAGE_REMOVAL"
+              value: "1"
+          resources:
+            {{- toYaml .Values.dockergc.resources | nindent 12 }}
+        - name: "swarm"
+          securityContext:
+            {{- toYaml .Values.swarm.securityContext | nindent 12 }}
+          image: "{{ .Values.swarm.image.repository }}:{{ .Values.swarm.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.swarm.image.pullPolicy }}
+          env:
+            - name: "DOCKER_HOST"
+              value: "tcp://localhost:2375"
+            - name: "JSWARM_MASTER_URL"
+              value: "{{ .Values.swarm.master_url }}"
+            - name: "JSWARM_MODE"
+              value: "{{ .Values.swarm.agent_mode }}"
+            - name: "JSWARM_LABELS"
+              value: '{{ .Values.swarm.agent_labels | join " " }}'
+            - name: "JSWARM_EXECUTORS"
+              value: "{{ .Values.swarm.agent_executors }}"
+            - name: "JSWARM_AGENT_NAME"
+              valueFrom:
+                fieldRef:
+                  fieldPath: "metadata.name"
+            - name: "JSWARM_DISABLE_CLIENTS_UNIQUE_ID"
+              value: "true"
+            - name: "JSWARM_DELETE_EXISTING_CLIENTS"
+              value: "true"
+            - name: "JSWARM_USERNAME"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.swarm.secret_name }}
+                  key: "JSWARM_USERNAME"
+            - name: "JSWARM_PASSWORD"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.swarm.secret_name }}
+                  key: "JSWARM_PASSWORD"
+            - name: "K8S_NODE_NAME"
+              valueFrom:
+                fieldRef:
+                  fieldPath: "spec.nodeName"
+            - name: "K8S_POD_NAMESPACE"
+              valueFrom:
+                fieldRef:
+                  fieldPath: "metadata.namespace"
+            - name: "K8S_POD_IP"
+              valueFrom:
+                fieldRef:
+                  fieldPath: "status.podIP"
+            - name: "K8S_SWARM_REQUESTS_CPU"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "swarm"
+                  resource: "requests.cpu"
+            - name: "K8S_SWARM_LIMITS_CPU"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "swarm"
+                  resource: "limits.cpu"
+            - name: "K8S_SWARM_REQUESTS_MEMORY_GI"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "swarm"
+                  resource: "requests.memory"
+                  divisor: "1Gi"
+            - name: "K8S_SWARM_LIMITS_MEMORY_GI"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "swarm"
+                  resource: "limits.memory"
+                  divisor: "1Gi"
+            - name: "K8S_DIND_REQUESTS_CPU"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "dind"
+                  resource: "requests.cpu"
+            - name: "K8S_DIND_LIMITS_CPU"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "dind"
+                  resource: "limits.cpu"
+            - name: "K8S_DIND_REQUESTS_MEMORY_GI"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "dind"
+                  resource: "requests.memory"
+                  divisor: "1Gi"
+            - name: "K8S_DIND_LIMITS_MEMORY_GI"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "dind"
+                  resource: "limits.memory"
+                  divisor: "1Gi"
+            - name: "K8S_DOCKER_GC_REQUESTS_CPU_M"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "dockergc"
+                  resource: "requests.cpu"
+                  divisor: "1m"
+            - name: "K8S_DOCKER_GC_LIMITS_CPU_M"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "dockergc"
+                  resource: "limits.cpu"
+                  divisor: "1m"
+            - name: "K8S_DOCKER_GC_REQUESTS_MEMORY_MI"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "dockergc"
+                  resource: "requests.memory"
+                  divisor: "1Mi"
+            - name: "K8S_DOCKER_GC_LIMITS_MEMORY_MI"
+              valueFrom:
+                resourceFieldRef:
+                  containerName: "dockergc"
+                  resource: "limits.memory"
+                  divisor: "1Mi"
+          volumeMounts:
+            - name: "ws"
+              mountPath: "/j"
+          livenessProbe:
+            exec:
+              command: [
+                "wget",
+                "--spider",
+                "-q",
+                "http://localhost:2375/_ping",
+              ]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+          readinessProbe:
+            exec:
+              command: [
+                "wget",
+                "--spider",
+                "-q",
+                "http://localhost:2375/_ping",
+              ]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 2
+          resources:
+            {{- toYaml .Values.swarm.resources | nindent 12 }}
+      volumes:
+        - name: "docker-graph-storage"
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: "ws"
+      spec:
+        accessModes:
+          - "ReadWriteMany"
+        resources:
+          requests:
+            storage: "{{ .Values.swarm.agent_volume_size }}"

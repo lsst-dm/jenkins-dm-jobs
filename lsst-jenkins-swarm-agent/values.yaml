@@ -1,0 +1,92 @@
+# Default values for lsst-jenkins-swarm-agent.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+### Chart values
+nameOverride: ""
+fullnameOverride: ""
+
+# StatefulSet values
+replicaCount: 1
+
+### Container values
+
+# values for dind container
+dind:
+  resources:
+    limits:
+      cpu: "8"
+      memory: "64Gi"
+    requests:
+      cpu: "8"
+      memory: "64Gi"
+
+  securityContext:
+    privileged: True
+  image:
+    repository: lsstsqre/dind
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "18.09.5"
+
+# values for docker-gc container
+dockergc:
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+  securityContext:
+    # docker-gc writes to /var by default
+    runAsUser: 0
+  image:
+    repository: lsstsqre/jenkins-swarm-client
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "3.15-ldfc"
+
+# values for swarm container
+swarm:
+  agent_volume_size: "1023Gi"
+  agent_labels:
+  secret_name: "jswarm-secret"
+  resources:
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+  securityContext:
+    # TODO: Pull these out so they can be configured in one place
+    runAsUser: 888
+    runAsGroup: 888
+  image:
+    repository: lsstsqre/docker-gc
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "latest"
+
+
+### Pod values
+podAnnotations: {}
+imagePullSecrets: []
+podSecurityContext:
+  # Used for swarm agent gid
+  # intended primary for dind; can not set fs_group at container level
+  fsGroup: 888
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+### Service account values
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
