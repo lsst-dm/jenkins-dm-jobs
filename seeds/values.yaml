@@ -27,11 +27,9 @@ controller:
   imagePullSecretName:
   # Optionally configure lifetime for controller-container
   lifecycle:
-  #  postStart:
-  #    exec:
-  #      command:
-  #      - "uname"
-  #      - "-a"
+    postStart:
+      exec:
+        command: [ "/bin/sh", "-c", "echo 'handlers = java.util.logging.ConsoleHandler\njava.util.logging.ConsoleHandler.level = ALL\n.level= ALL' > /var/jenkins_home/logging.properties" ]
   disableRememberMe: false
   numExecutors: 0
   # configures the executor mode of the Jenkins node. Possible values are: NORMAL or EXCLUSIVE
@@ -53,11 +51,15 @@ controller:
     existingSecret: ""
     userKey: jenkins-admin-user
     passwordKey: jenkins-admin-password
-  # This values should not be changed unless you use your custom image of jenkins or any devired from. If you want to use
-  # Cloudbees Jenkins Distribution docker, you should set jenkinsHome: "/var/cloudbees-jenkins-distribution"
+  # This values should not be changed unless you use your custom image of
+  # jenkins or any devired from. If you want to use Cloudbees Jenkins
+  # Distribution docker, you should set jenkinsHome:
+  # "/var/cloudbees-jenkins-distribution"
   jenkinsHome: "/var/jenkins_home"
-  # This values should not be changed unless you use your custom image of jenkins or any devired from. If you want to use
-  # Cloudbees Jenkins Distribution docker, you should set jenkinsRef: "/usr/share/cloudbees-jenkins-distribution/ref"
+  # This values should not be changed unless you use your custom image of
+  # jenkins or any devired from. If you want to use Cloudbees Jenkins
+  # Distribution docker, you should set jenkinsRef:
+  # "/usr/share/cloudbees-jenkins-distribution/ref"
   jenkinsRef: "/usr/share/jenkins/ref"
   # Path to the jenkins war file which is used by jenkins-plugin-cli.
   jenkinsWar: "/usr/share/jenkins/jenkins.war"
@@ -79,32 +81,99 @@ controller:
   #   limits:
   #     cpu: "2000m"
   #     memory: "4096Mi"
-  # Environment variables that get added to the init container (useful for e.g. http_proxy)
-  # initContainerEnv:
+  # Environment variables that get added to the init container (useful for e.g.
+  # http_proxy)
+  initContainerEnv:
+  - name: CASC_VAULT_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: vault-token
+        key: VAULT_TOKEN
+  - name: CASC_VAULT_URL
+    value: https://vault.slac.stanford.edu
+  - name: CASC_VAULT_PATHS
+    value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth
+  - name: HTTP_PROXY
+    value: http://sdfproxy.sdf.slac.stanford.edu:3128
+  - name: HTTPS_PROXY
+    value: http://sdfproxy.sdf.slac.stanford.edu:3128
+  - name: http_proxy
+    value: http://sdfproxy.sdf.slac.stanford.edu:3128
+  - name: https_proxy
+    value: http://sdfproxy.sdf.slac.stanford.edu:3128
+  - name: no_proxy
+    value: '*.slac.stanford.edu'
+  - name: NO_PROXY
+    value: '*.slac.stanford.edu'
+  - name: JAVA_TOOL_OPTIONS
+    value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128"
+      #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
+  #- name: VAULT_TOKEN_LEASE_DURATION
+  #  valueFrom:
+  #    secretKeyRef:
+  #      name: vault-secrets-operator
+  #      key: VAULT_TOKEN_LEASE_DURATION
   #   - name: http_proxy
   #     value: "http://192.168.64.1:3128"
-  # containerEnv:
-  #   - name: http_proxy
-  #     value: "http://192.168.64.1:3128"
+  containerEnv:
+  - name: CASC_VAULT_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: vault-token
+        key: VAULT_TOKEN
+  - name: CASC_VAULT_URL
+    value: https://vault.slac.stanford.edu
+  - name: CASC_VAULT_PATHS
+    value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth
+  - name: HTTP_PROXY
+    value: http://sdfproxy.sdf.slac.stanford.edu:3128
+  - name: HTTPS_PROXY
+    value: http://sdfproxy.sdf.slac.stanford.edu:3128
+  - name: http_proxy
+    value: http://sdfproxy.sdf.slac.stanford.edu:3128
+  - name: https_proxy
+    value: http://sdfproxy.sdf.slac.stanford.edu:3128
+  - name: no_proxy
+    value: '*.slac.stanford.edu'
+  - name: NO_PROXY
+    value: '*.slac.stanford.edu'
+  - name: JAVA_TOOL_OPTIONS
+    value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128"
+      #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
+  #- name: VAULT_TOKEN_LEASE_DURATION
+  #  valueFrom:
+  #    secretKeyRef:
+  #      name: vault-secrets-operator
+  #      key: VAULT_TOKEN_LEASE_DURATION
   # Set min/max heap here if needed with:
   # javaOpts: "-Xms512m -Xmx512m"
   # jenkinsOpts: ""
-  # If you are using the ingress definitions provided by this chart via the `controller.ingress` block the configured hostname will be the ingress hostname starting with `https://` or `http://` depending on the `tls` configuration.
-  # The Protocol can be overwritten by specifying `controller.jenkinsUrlProtocol`.
+  # If you are using the ingress definitions provided by this chart via the
+  # `controller.ingress` block the configured hostname will be the ingress
+  # hostname starting with `https://` or `http://` depending on the `tls`
+  # configuration.
+  # The Protocol can be overwritten by specifying
+  # `controller.jenkinsUrlProtocol`.
   # jenkinsUrlProtocol: "https"
-  # If you are not using the provided ingress you can specify `controller.jenkinsUrl` to change the url definition.
+  # If you are not using the provided ingress you can specify
+  # `controller.jenkinsUrl` to change the url definition.
   # jenkinsUrl: ""
-  # If you set this prefix and use ingress controller then you might want to set the ingress path below
+  # If you set this prefix and use ingress controller then you might want to set
+  # the ingress path below
   # jenkinsUriPrefix: "/jenkins"
-  # Enable pod security context (must be `true` if podSecurityContextOverride, runAsUser or fsGroup are set)
+  # Enable pod security context (must be `true` if podSecurityContextOverride,
+  # runAsUser or fsGroup are set)
   usePodSecurityContext: true
   # Note that `runAsUser`, `fsGroup`, and `securityContextCapabilities` are
   # being deprecated and replaced by `podSecurityContextOverride`.
-  # Set runAsUser to 1000 to let Jenkins run as non-root user 'jenkins' which exists in 'jenkins/jenkins' docker image.
-  # When setting runAsUser to a different value than 0 also set fsGroup to the same value:
+  # Set runAsUser to 1000 to let Jenkins run as non-root user 'jenkins' which
+  # exists in 'jenkins/jenkins' docker image.
+  # When setting runAsUser to a different value than 0 also set fsGroup to the
+  # same value:
   runAsUser: 1000
   fsGroup: 1000
-  # If you have PodSecurityPolicies that require dropping of capabilities as suggested by CIS K8s benchmark, put them here
+  # If you have PodSecurityPolicies that require dropping of capabilities as
+  # suggested by CIS K8s benchmark, put them here
   securityContextCapabilities: {}
   #  drop:
   #    - NET_RAW
@@ -129,7 +198,8 @@ controller:
   # For minikube, set this to NodePort, elsewhere use LoadBalancer
   # Use ClusterIP if your setup includes ingress controller
   serviceType: ClusterIP
-  # Use Local to preserve the client source IP and avoids a second hop for LoadBalancer and Nodeport type services,
+  # Use Local to preserve the client source IP and avoids a second hop for
+  # LoadBalancer and Nodeport type services,
   # but risks potentially imbalanced traffic spreading.
   serviceExternalTrafficPolicy:
   # Jenkins controller service annotations
@@ -147,7 +217,9 @@ controller:
   # nodePort: <to set explicitly, choose port between 30000-32767
   # Enable Kubernetes Startup, Liveness and Readiness Probes
   # if Startup Probe is supported, enable it too
-  # ~ 2 minutes to allow Jenkins to restart when upgrading plugins. Set ReadinessTimeout to be shorter than LivenessTimeout.
+  # ~ 2 minutes to allow Jenkins to restart when upgrading plugins. Set
+  # ReadinessTimeout to be shorter than LivenessTimeout.
+  # set to true once everything works
   healthProbes: true
   probes:
     startupProbe:
@@ -156,7 +228,7 @@ controller:
         port: http
       periodSeconds: 10
       timeoutSeconds: 5
-      failureThreshold: 12
+      failureThreshold: 120
     livenessProbe:
       failureThreshold: 5
       httpGet:
@@ -164,9 +236,10 @@ controller:
         port: http
       periodSeconds: 10
       timeoutSeconds: 5
-      # If Startup Probe is not supported on your Kubernetes cluster, you might want to use "initialDelaySeconds" instead.
+      # If Startup Probe is not supported on your Kubernetes cluster, you might
+      # want to use "initialDelaySeconds" instead.
       # It delays the initial liveness probe while Jenkins is starting
-      # initialDelaySeconds: 60
+      initialDelaySeconds: 600
     readinessProbe:
       failureThreshold: 3
       httpGet:
@@ -174,9 +247,10 @@ controller:
         port: http
       periodSeconds: 10
       timeoutSeconds: 5
-      # If Startup Probe is not supported on your Kubernetes cluster, you might want to use "initialDelaySeconds" instead.
+      # If Startup Probe is not supported on your Kubernetes cluster, you might
+      # want to use "initialDelaySeconds" instead.
       # It delays the initial readyness probe while Jenkins is starting
-      # initialDelaySeconds: 60
+      initialDelaySeconds: 600
 
   # PodDisruptionBudget config
   podDisruptionBudget:
@@ -244,11 +318,13 @@ controller:
     - workflow-aggregator:581.v0c46fa_697ffd
     - job-dsl:1.78.3
     - blueocean:1.25.6
-    - configuration-as-code:1414.v878271fc496f
+    - configuration-as-code:1511.vb_f985b_894e40
+    - matrix-auth:3.1.5
+    - hashicorp-vault-plugin:359.v2da_3b_45f17d5
 
 
   # Set to false to download the minimum required version of all dependencies.
-  installLatestPlugins: true
+  installLatestPlugins: false
 
   # Set to true to download latest dependencies of any plugin that is requested to have the latest version.
   installLatestSpecifiedPlugins: true
@@ -325,7 +401,6 @@ controller:
     - kubernetes-client-api:5.12.2-193.v26a_6078f65a_9
     - kubernetes-credentials:0.9.0
     - lockable-resources:2.5
-    - matrix-auth:2.3
     - mercurial:2.5
       #- mina-sshd-api-common:2.8.0-36.v8e25ce90d4b_1
       #- mina-sshd-api-core:2.8.0-36.v8e25ce90d4b_1
@@ -403,10 +478,10 @@ controller:
   # 'name' and 'keyName' must be lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-',
   # and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc')
   additionalExistingSecrets: []
-  #  - name: secret-name-1
-  #    keyName: username
-  #  - name: secret-name-1
-  #    keyName: password
+  #  - name: github-oauth
+  #    keyName: client-id
+  #  - name: github-oauth
+  #    keyName: client-secret
 
   additionalSecrets: []
   #  - name: nameOfSecret
@@ -435,43 +510,380 @@ controller:
   # etc.  Best reference is https://<jenkins_url>/configuration-as-code/reference.  The example below creates a welcome message:
   JCasC:
     defaultConfig: true
+    # Ignored if securityRealm is defined in controller.JCasC.configScripts and
+    securityRealm: |-
+      #local:
+      #  allowsSignup: false
+      #  enableCaptcha: false
+      #  users:
+      #  - id: "${chart-admin-username}"
+      #    name: "Jenkins Admin"
+      #    password: "${chart-admin-password}"
+      github:
+        githubWebUri: "https://github.com"
+        githubApiUri: "https://api.github.com"
+        clientID: "${secret/rubin/rubin-jenkins-control/github-oauth/client-id}"
+        clientSecret: "${secret/rubin/rubin-jenkins-control/github-oauth/client-secret}"
+        oauthScopes: "read:org"
+    authorizationStrategy: |-
+      globalMatrix:
+        permissions:
+        - "USER:Agent/Connect:sqre-user"
+        - "USER:Agent/Create:sqre-user"
+        - "GROUP:Job/Build:lsst*data-management"
+        - "GROUP:Job/Build:lsst-dm*data-management"
+        - "GROUP:Job/Build:lsst*simulations"
+        - "GROUP:Job/Build:lsst-sqre*friends"
+        - "GROUP:Job/Cancel:lsst*data-management"
+        - "GROUP:Job/Cancel:lsst-dm*data-management"
+        - "GROUP:Job/Cancel:lsst*simulations"
+        - "GROUP:Job/Cancel:lsst-sqre*friends"
+        - "GROUP:Job/Discover:lsst*data-management"
+        - "GROUP:Job/Discover:lsst-dm*data-management"
+        - "GROUP:Job/Discover:lsst*simulations"
+        - "GROUP:Job/Discover:lsst-sqre*friends"
+        - "GROUP:Job/Read:lsst*data-management"
+        - "GROUP:Job/Read:lsst-dm*data-management"
+        - "GROUP:Job/Read:lsst*simulations"
+        - "GROUP:Job/Read:lsst-sqre*friends"
+        - "USER:Overall/Administer:admin"
+        - "USER:Overall/Administer:aragilar"
+        - "USER:Overall/Administer:frossie"
+        - "USER:Overall/Administer:jhoblitt"
+        - "USER:Overall/Administer:ktlim"
+        - "GROUP:Overall/Administer:lsst-sqre*leeroy-wranglers"
+        - "GROUP:Overall/Administer:lsst-sqre*square"
+        - "USER:Overall/Administer:mwittgen"
+        - "USER:Overall/Administer:yee379"
+        - "GROUP:Overall/Read:lsst*data-management"
+        - "GROUP:Overall/Read:lsst-dm*data-management"
+        - "GROUP:Overall/Read:lsst*simulations"
+        - "GROUP:Overall/Read:lsst-sqre*friends"
+
     configScripts:
+      welcome-message: |
+        jenkins:
+          systemMessage: Welcome to our CI\CD server.  This Jenkins is configured and managed 'as code'.
+
+      proxy: |
+        jenkins:
+          proxy:
+            name: "sdfproxy.sdf.slac.stanford.edu"
+            noProxyHost: "*.slac.stanford.edu"
+            port: 3128
+              #
+      systemCredentials: |-
+        credentials:
+          system:
+            domainCredentials:
+            - credentials:
+              - string:
+                  description: "name of conda channel bucket"
+                  id: "cmirror-s3-bucket"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/common/cmirror-s3-bucket}"
+              - string:
+                  description: "name of doxygen s3 bucket"
+                  id: "doxygen-push-bucket"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/common/doxygen-push-bucket}"
+              - string:
+                  description: "URL of doxygen site"
+                  id: "doxygen-url"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/common/doxygen-url}"
+              - string:
+                  description: "name of EUPS backup s3 bucket"
+                  id: "eups-backup-bucket"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/common/eups-backup-bucket}"
+              - string:
+                  description: "name of EUPS s3 bucket"
+                  id: "eups-push-bucket"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/common/eups-push-bucket}"
+              - string:
+                  description: "URL of eups site"
+                  id: "eups-url"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/common/eups-url}"
+              - string:
+                  description: "Name of Jenkins deployment"
+                  id: "jenkins-env"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/common/jenkins-env}"
+              - string:
+                  description: "Default slack channel"
+                  id: "slack-default-channel"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/common/slack-default-channel}"
+              - string:
+                  description: "Prefix for generated slack channels"
+                  id: "slack-channel-prefix"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/common/slack-channel-prefix}"
+              - usernamePassword:
+                  description: "jenkins master snapshot AWS credentials"
+                  id: "aws-jenkins-master-snapshot"
+                  password: "${secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot/username}"
+              - usernamePassword:
+                  description: "push EUPS packages -> s3"
+                  id: "aws-eups-push"
+                  password: "${secret/rubin/rubin-jenkins-control/aws-eups-push/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/aws-eups-push/username}"
+              - usernamePassword:
+                  description: "backup EUPS s3 bucket -> s3 bucket"
+                  id: "aws-eups-backup"
+                  password: "${secret/rubin/rubin-jenkins-control/aws-eups-backup/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/aws-eups-backup/username}"
+              - usernamePassword:
+                  description: "manage eups distrib tags in s3 bucket"
+                  id: "aws-eups-tag-admin"
+                  password: "${secret/rubin/rubin-jenkins-control/aws-eups-tag-admin/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/aws-eups-tag-admin/username}"
+              - usernamePassword:
+                  description: "push doxygen builds -> s3"
+                  id: "aws-doxygen-push"
+                  password: "${secret/rubin/rubin-jenkins-control/aws-doxygen-push/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/aws-doxygen-push/username}"
+              - string:
+                  description: "slack lsstc org API token"
+                  id: "slack-lsstc-token"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/slack-lsstc-token/token}"
+              - usernamePassword:
+                  description: "api.lsst.codes/ghslacker"
+                  id: "ghslacker"
+                  password: "${secret/rubin/rubin-jenkins-control/ghslacker/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/ghslacker/username}"
+              - string:
+                  description: "github API personal access token (sqreadmin)"
+                  id: "github-api-token-sqreadmin"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin/token}"
+              - basicSSHUserPrivateKey:
+                  description: "github lsst/versiondb deploy key"
+                  id: "github-jenkins-versiondb"
+                  privateKeySource:
+                    directEntry:
+                      privateKey: "${secret/rubin/rubin-jenkins-control/github-jenkins-versiondb/private_key}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/github-jenkins-versiondb/username}"
+              - basicSSHUserPrivateKey:
+                  description: "SQRE OSX build agents"
+                  id: "sqre-osx"
+                  privateKeySource:
+                    directEntry:
+                      privateKey: "${secret/rubin/rubin-jenkins-control/sqre-osx/private_key}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/sqre-osx/username}"
+              - usernamePassword:
+                  description: "push conda packages -> s3"
+                  id: "aws-cmirror-push"
+                  password: "${secret/rubin/rubin-jenkins-control/aws-cmirror-push/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/aws-cmirror-push/username}"
+              - usernamePassword:
+                  description: "github_backup AWS credentials"
+                  id: "github_backup"
+                  password: "${secret/rubin/rubin-jenkins-control/github_backup/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/github_backup/username}"
+              - usernamePassword:
+                  description: "user/pass for Squash API endpoint"
+                  id: "squash-api-user"
+                  password: "${secret/rubin/rubin-jenkins-control/squash-api-user/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/squash-api-user/username}"
+              - usernamePassword:
+                  description: "dockerhub - sqreadmin"
+                  id: "dockerhub-sqreadmin"
+                  password: "${secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin/username}"
+              - usernamePassword:
+                  description: "ltd-mason"
+                  id: "ltd-mason-aws"
+                  password: "${secret/rubin/rubin-jenkins-control/ltd-mason-aws/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/ltd-mason-aws/username}"
+              - usernamePassword:
+                  description: "ltd-keeper"
+                  id: "ltd-keeper"
+                  password: "${secret/rubin/rubin-jenkins-control/ltd-keeper/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/ltd-keeper/username}"
+              - usernamePassword:
+                  description: "Google Archive Registry service account"
+                  id: "google_archive_registry_sa"
+                  password: "${secret/rubin/rubin-jenkins-control/google_archive_registry_sa/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/google_archive_registry_sa/username}"
+
       add-seed-job: |
         jobs:
           - url: https://raw.githubusercontent.com/lsst-dm/jenkins-dm-jobs/update-gradle/seeds/seed-jobs.groovy
         security:
           globaljobdslsecurityconfiguration:
             useScriptSecurity: false
+      #permanent-nodes: |
+      #  jenkins:
+      #    nodes:
+      #      - permanent:
+      #          labelString: "osx osx-10.13 high_sierra"
+      #          launcher:
+      #            sSHLauncher:
+      #              credentialsId: "sqre-osx"
+      #              host: "mac1.lsst.cloud"
+      #              launchTimeoutSeconds: 210
+      #              maxNumRetries: 0
+      #              port: 22
+      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
+      #              retryWaitTime: 15
+      #              sshHostKeyVerificationStrategy:
+      #                manuallyTrustedKeyVerificationStrategy:
+      #                  requireInitialManualTrust: true
+      #          mode: EXCLUSIVE
+      #          name: "high_sierra-1"
+      #          nodeProperties:
+      #          - envVars:
+      #              env:
+      #              - key: "PATH+LOCAL_BIN"
+      #                value: "/usr/local/bin"
+      #          numExecutors: 1
+      #          remoteFS: "/Users/square/j"
+      #      - permanent:
+      #          labelString: "osx osx-10.13 high_sierra"
+      #          launcher:
+      #            sSHLauncher:
+      #              credentialsId: "sqre-osx"
+      #              host: "mac2.lsst.cloud"
+      #              launchTimeoutSeconds: 210
+      #              maxNumRetries: 0
+      #              port: 22
+      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
+      #              retryWaitTime: 15
+      #              sshHostKeyVerificationStrategy:
+      #                manuallyTrustedKeyVerificationStrategy:
+      #                  requireInitialManualTrust: true
+      #          mode: EXCLUSIVE
+      #          name: "high_sierra-2"
+      #          nodeProperties:
+      #          - envVars:
+      #              env:
+      #              - key: "PATH+LOCAL_BIN"
+      #                value: "/usr/local/bin"
+      #          numExecutors: 1
+      #          remoteFS: "/Users/square/j"
+      #      - permanent:
+      #          labelString: "osx osx-10.14 mojave"
+      #          launcher:
+      #            sSHLauncher:
+      #              credentialsId: "sqre-osx"
+      #              host: "mac3.lsst.cloud"
+      #              launchTimeoutSeconds: 210
+      #              maxNumRetries: 0
+      #              port: 22
+      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
+      #              retryWaitTime: 15
+      #              sshHostKeyVerificationStrategy:
+      #                manuallyTrustedKeyVerificationStrategy:
+      #                  requireInitialManualTrust: true
+      #          mode: EXCLUSIVE
+      #          name: "mojave-1"
+      #          nodeProperties:
+      #          - envVars:
+      #              env:
+      #              - key: "PATH+LOCAL_BIN"
+      #                value: "/usr/local/bin"
+      #          numExecutors: 1
+      #          remoteFS: "/Users/square/j"
+      #      - permanent:
+      #          labelString: "osx osx-10.14 mojave"
+      #          launcher:
+      #            sSHLauncher:
+      #              credentialsId: "sqre-osx"
+      #              host: "mac4.lsst.cloud"
+      #              launchTimeoutSeconds: 210
+      #              maxNumRetries: 0
+      #              port: 22
+      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
+      #              retryWaitTime: 15
+      #              sshHostKeyVerificationStrategy:
+      #                manuallyTrustedKeyVerificationStrategy:
+      #                  requireInitialManualTrust: true
+      #          mode: EXCLUSIVE
+      #          name: "mojave-2"
+      #          nodeProperties:
+      #          - envVars:
+      #              env:
+      #              - key: "PATH+LOCAL_BIN"
+      #                value: "/usr/local/bin"
+      #          numExecutors: 1
+      #          remoteFS: "/Users/square/j"
+      #      - permanent:
+      #          labelString: "osx osx-10.14 mojave"
+      #          launcher:
+      #            sSHLauncher:
+      #              credentialsId: "sqre-osx"
+      #              host: "mac5.lsst.cloud"
+      #              launchTimeoutSeconds: 210
+      #              maxNumRetries: 0
+      #              port: 22
+      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
+      #              retryWaitTime: 15
+      #              sshHostKeyVerificationStrategy:
+      #                manuallyTrustedKeyVerificationStrategy:
+      #                  requireInitialManualTrust: true
+      #          mode: EXCLUSIVE
+      #          name: "mojave-3"
+      #          nodeProperties:
+      #          - envVars:
+      #              env:
+      #              - key: "PATH+LOCAL_BIN"
+      #                value: "/usr/local/bin"
+      #          numExecutors: 1
+      #          remoteFS: "/Users/square/j"
+      #      - permanent:
+      #          labelString: "osx osx-10.14 mojave"
+      #          launcher:
+      #            sSHLauncher:
+      #              credentialsId: "sqre-osx"
+      #              host: "mac6.lsst.cloud"
+      #              launchTimeoutSeconds: 210
+      #              maxNumRetries: 0
+      #              port: 22
+      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
+      #              retryWaitTime: 15
+      #              sshHostKeyVerificationStrategy:
+      #                manuallyTrustedKeyVerificationStrategy:
+      #                  requireInitialManualTrust: true
+      #          mode: EXCLUSIVE
+      #          name: "mojave-4"
+      #          nodeProperties:
+      #          - envVars:
+      #              env:
+      #              - key: "PATH+LOCAL_BIN"
+      #                value: "/usr/local/bin"
+      #          numExecutors: 1
+      #          remoteFS: "/Users/square/j"
 
-      welcome-message: |
-        jenkins:
-          systemMessage: Welcome to our CI\CD server.  This Jenkins is configured and managed 'as code'.
-    # Ignored if securityRealm is defined in controller.JCasC.configScripts and
-    securityRealm: |-
-      local:
-        allowsSignup: false
-        enableCaptcha: false
-        users:
-        - id: "${chart-admin-username}"
-          name: "Jenkins Admin"
-          password: "${chart-admin-password}"
-    # Ignored if authorizationStrategy is defined in controller.JCasC.configScripts
-    authorizationStrategy: |-
-      loggedInUsersCanDoAnything:
-        allowAnonymousRead: false
   # Optionally specify additional init-containers
   customInitContainers: []
-  # - name: custom-init
-  #   image: "alpine:3.7"
-  #   imagePullPolicy: Always
-  #   command: [ "uname", "-a" ]
 
   sidecars:
     configAutoReload:
       # If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.  If false or not-specified,
       # jcasc changes will cause a reboot and will only be applied at the subsequent start-up.  Auto-reload uses the
       # http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to the configScripts are detected.
-      enabled: true
+      enabled: false
       image: kiwigrid/k8s-sidecar:1.15.0
       imagePullPolicy: IfNotPresent
       resources: {}
@@ -571,7 +983,8 @@ controller:
     # Set this path to jenkinsUriPrefix above or use annotations to rewrite path
     # path: "/jenkins"
     # configures the hostname e.g. jenkins.example.com
-    hostName: jenkins22.lsst.test
+    #hostName: jenkins26.lsst.test
+    hostName: rubin-ci-dev.slac.stanford.edu
     tls:
     # - secretName: jenkins.cluster.local
     #   hosts:
@@ -665,7 +1078,7 @@ controller:
     # Convert keystore.jks files content to base64 ( cat keystore.jks | base64 ) and put the output here
     jenkinsKeyStoreBase64Encoded:
 agent:
-  enabled: true
+  enabled: false
   defaultsProviderTemplate: ""
   # URL for connecting to the Jenkins contoller
   jenkinsUrl:
