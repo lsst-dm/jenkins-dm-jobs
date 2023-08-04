@@ -25,7 +25,7 @@ notify.wrap {
   String eupsTag         = params.EUPS_TAG
   String products        = params.PRODUCTS
   Boolean noPush         = params.NO_PUSH
-  Integer timelimit      = params.TIMEOUT
+  Integer timelimit      = Integer.parseInt(params.TIMEOUT)
   String extraDockerTags = params.DOCKER_TAGS
 
   // optional

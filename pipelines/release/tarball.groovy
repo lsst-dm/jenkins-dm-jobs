@@ -51,7 +51,7 @@ notify.wrap {
   String pythonVersion  = params.PYTHON_VERSION
   Boolean runSconsCheck = params.RUN_SCONS_CHECK
   Boolean smoke         = params.SMOKE
-  Integer timeout       = params.TIMEOUT
+  Integer timeout       = Integer.parseInt(params.TIMEOUT)
   Boolean wipeout       = params.WIPEOUT
 
   def py = new MinicondaEnv(pythonVersion,miniver, splenvRef, rubinEnvVer)

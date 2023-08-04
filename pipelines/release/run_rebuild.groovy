@@ -27,7 +27,7 @@ notify.wrap {
   Boolean prepOnly  = params.PREP_ONLY
   String products   = params.PRODUCTS
   Boolean buildDocs = params.BUILD_DOCS
-  Integer timelimit = params.TIMEOUT
+  Integer timelimit = Integer.parseInt(params.TIMEOUT)
 
   // not a normally exposed job param
   Boolean versiondbPush = (! params.NO_VERSIONDB_PUSH?.toBoolean())

@@ -27,7 +27,7 @@ notify.wrap {
   String eupspkgSource = params.EUPSPKG_SOURCE
   String products      = params.PRODUCTS
   String eupsTag       = params.EUPS_TAG
-  Integer timelimit    = params.TIMEOUT
+  Integer timelimit    = Integer.parseInt(params.TIMEOUT)
 
   // not a normally exposed job param
   Boolean pushS3 = (! params.NO_PUSH?.toBoolean())
