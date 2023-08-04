@@ -70,6 +70,7 @@ notify.wrap {
       ]]) {
         opt << "--build-arg LSST_EUPS_PKGROOT_BASE_URL=\"${EUPS_URL}/stack\""
       }
+      opt << "--load"
       opt << '.'
 
       dir(buildDir) {

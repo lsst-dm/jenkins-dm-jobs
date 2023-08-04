@@ -94,6 +94,7 @@ def void buildImage(Map p) {
   opt << '--build-arg D_GROUP="$(id -gn)"'
   opt << '--build-arg D_GID="$(id -g)"'
   opt << '--build-arg D_HOME="$HOME"'
+  opt << '--load'
   opt << '.'
 
   writeFile(file: 'Dockerfile', text: config)
