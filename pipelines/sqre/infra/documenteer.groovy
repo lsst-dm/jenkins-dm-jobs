@@ -45,7 +45,7 @@ notify.wrap {
     def meerImage = null
     def docTemplateDir = "${pwd()}/doc_template"
 
-    stage('prepare') {
+    stage('build docs') {
       def config = util.dedent("""
         FROM ${relImage}
 
@@ -59,10 +59,8 @@ notify.wrap {
         tag: meerImage,
         pull: true,
       )
-    } // stage
 
-    dir(docTemplateDir) {
-      stage('build docs') {
+      dir(docTemplateDir) {
         deleteDir()
 
         git([
