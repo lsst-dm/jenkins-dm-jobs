@@ -84,9 +84,9 @@ notify.wrap {
         }
       }
 
-      def withVersiondbCredentials = { invoke ->
+      def withVersiondbCredentials = { closure ->
         sshagent (credentials: ['github-jenkins-versiondb']) {
-          invoke()
+          closure()
         }
       }
 
