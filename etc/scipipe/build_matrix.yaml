@@ -94,21 +94,21 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
-  - <<: *catalina-conda
-    # allow builds on catalina and big sur
-    label: osx-10.13||osx-10.14
-    display_name: macos
-    display_compiler: clang
+#  - <<: *catalina-conda
+#    # allow builds on catalina and big sur
+#    label: osx-10.13||osx-10.14
+#    display_name: macos
+#    display_compiler: clang
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
-  - <<: *catalina-conda
-  - <<: *bigsur-conda
+#  - <<: *catalina-conda
+#  - <<: *bigsur-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
-  - <<: *bigsur-conda
+#  - <<: *bigsur-conda
 scipipe-lsstsw-ci_imsim:
   - <<: *el7-conda
-  - <<: *bigsur-conda
+#  - <<: *bigsur-conda
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
@@ -134,12 +134,12 @@ tarball:
       <<: *el7-conda
       platform: el7
       osfamily: redhat
-    - <<: *tarball_defaults
-      <<: *bigsur-conda
-      platform: '10.9'
-      osfamily: osx
-      timelimit: 8
-      allow_fail: true
+#    - <<: *tarball_defaults
+#      <<: *bigsur-conda
+#      platform: '10.9'
+#      osfamily: osx
+#      timelimit: 8
+#      allow_fail: true
 #
 # X-release pattern pipelines
 #
