@@ -92,7 +92,7 @@ controller:
   - name: CASC_VAULT_URL
     value: https://vault.slac.stanford.edu
   - name: CASC_VAULT_PATHS
-    value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth
+    value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control-dev/aws-eups-push,secret/rubin/rubin-jenkins-control-dev/aws-eups-backup,secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth
   - name: HTTP_PROXY
     value: http://sdfproxy.sdf.slac.stanford.edu:3128
   - name: HTTPS_PROXY
@@ -126,7 +126,7 @@ controller:
   - name: CASC_VAULT_URL
     value: https://vault.slac.stanford.edu
   - name: CASC_VAULT_PATHS
-    value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth
+    value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control-dev/aws-eups-push,secret/rubin/rubin-jenkins-control-dev/aws-eups-backup,secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth
   - name: HTTP_PROXY
     value: http://sdfproxy.sdf.slac.stanford.edu:3128
   - name: HTTPS_PROXY
@@ -567,8 +567,8 @@ controller:
       github:
         githubWebUri: "https://github.com"
         githubApiUri: "https://api.github.com"
-        clientID: "${secret/rubin/rubin-jenkins-control/github-oauth/client-id}"
-        clientSecret: "${secret/rubin/rubin-jenkins-control/github-oauth/client-secret}"
+        clientID: "${secret/rubin/rubin-jenkins-control-dev/github-oauth/client-id}"
+        clientSecret: "${secret/rubin/rubin-jenkins-control-dev/github-oauth/client-secret}"
         oauthScopes: "read:org"
     authorizationStrategy: |-
       globalMatrix:
@@ -608,7 +608,7 @@ controller:
     configScripts:
       welcome-message: |
         jenkins:
-          systemMessage: Welcome to our CI\CD server.  This Jenkins is configured and managed 'as code'.
+          systemMessage: This is the DEVELOPMENT instance of jenkins.
 
       systemCredentials: |-
         credentials:
@@ -619,151 +619,151 @@ controller:
                   description: "name of conda channel bucket"
                   id: "cmirror-s3-bucket"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/common/cmirror-s3-bucket}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/common/cmirror-s3-bucket}"
               - string:
                   description: "name of doxygen s3 bucket"
                   id: "doxygen-push-bucket"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/common/doxygen-push-bucket}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/common/doxygen-push-bucket}"
               - string:
                   description: "URL of doxygen site"
                   id: "doxygen-url"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/common/doxygen-url}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/common/doxygen-url}"
               - string:
                   description: "name of EUPS backup s3 bucket"
                   id: "eups-backup-bucket"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/common/eups-backup-bucket}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/common/eups-backup-bucket}"
               - string:
                   description: "name of EUPS s3 bucket"
                   id: "eups-push-bucket"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/common/eups-push-bucket}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/common/eups-push-bucket}"
               - string:
                   description: "URL of eups site"
                   id: "eups-url"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/common/eups-url}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/common/eups-url}"
               - string:
                   description: "Name of Jenkins deployment"
                   id: "jenkins-env"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/common/jenkins-env}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/common/jenkins-env}"
               - string:
                   description: "Default slack channel"
                   id: "slack-default-channel"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/common/slack-default-channel}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/common/slack-default-channel}"
               - string:
                   description: "Prefix for generated slack channels"
                   id: "slack-channel-prefix"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/common/slack-channel-prefix}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/common/slack-channel-prefix}"
               - usernamePassword:
                   description: "jenkins master snapshot AWS credentials"
                   id: "aws-jenkins-master-snapshot"
-                  password: "${secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot/username}"
               - usernamePassword:
                   description: "push EUPS packages -> s3"
                   id: "aws-eups-push"
-                  password: "${secret/rubin/rubin-jenkins-control/aws-eups-push/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/aws-eups-push/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/aws-eups-push/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/aws-eups-push/username}"
               - usernamePassword:
                   description: "backup EUPS s3 bucket -> s3 bucket"
                   id: "aws-eups-backup"
-                  password: "${secret/rubin/rubin-jenkins-control/aws-eups-backup/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/aws-eups-backup/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/aws-eups-backup/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/aws-eups-backup/username}"
               - usernamePassword:
                   description: "manage eups distrib tags in s3 bucket"
                   id: "aws-eups-tag-admin"
-                  password: "${secret/rubin/rubin-jenkins-control/aws-eups-tag-admin/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/aws-eups-tag-admin/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin/username}"
               - usernamePassword:
                   description: "push doxygen builds -> s3"
                   id: "aws-doxygen-push"
-                  password: "${secret/rubin/rubin-jenkins-control/aws-doxygen-push/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/aws-doxygen-push/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push/username}"
               - string:
                   description: "slack lsstc org API token"
                   id: "slack-lsstc-token"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/slack-lsstc-token/token}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token/token}"
               - usernamePassword:
                   description: "api.lsst.codes/ghslacker"
                   id: "ghslacker"
-                  password: "${secret/rubin/rubin-jenkins-control/ghslacker/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/ghslacker/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/ghslacker/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/ghslacker/username}"
               - string:
                   description: "github API personal access token (sqreadmin)"
                   id: "github-api-token-sqreadmin"
                   scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin/token}"
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin/token}"
               - basicSSHUserPrivateKey:
                   description: "github lsst/versiondb deploy key"
                   id: "github-jenkins-versiondb"
                   privateKeySource:
                     directEntry:
-                      privateKey: "${secret/rubin/rubin-jenkins-control/github-jenkins-versiondb/private_key}"
+                      privateKey: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/private_key}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/github-jenkins-versiondb/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/username}"
               - basicSSHUserPrivateKey:
                   description: "SQRE OSX build agents"
                   id: "sqre-osx"
                   privateKeySource:
                     directEntry:
-                      privateKey: "${secret/rubin/rubin-jenkins-control/sqre-osx/private_key}"
+                      privateKey: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/private_key}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/sqre-osx/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/username}"
               - usernamePassword:
                   description: "push conda packages -> s3"
                   id: "aws-cmirror-push"
-                  password: "${secret/rubin/rubin-jenkins-control/aws-cmirror-push/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/aws-cmirror-push/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push/username}"
               - usernamePassword:
                   description: "github_backup AWS credentials"
                   id: "github_backup"
-                  password: "${secret/rubin/rubin-jenkins-control/github_backup/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/github_backup/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/github_backup/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/github_backup/username}"
               - usernamePassword:
                   description: "user/pass for Squash API endpoint"
                   id: "squash-api-user"
-                  password: "${secret/rubin/rubin-jenkins-control/squash-api-user/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/squash-api-user/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/squash-api-user/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/squash-api-user/username}"
               - usernamePassword:
                   description: "dockerhub - sqreadmin"
                   id: "dockerhub-sqreadmin"
-                  password: "${secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin/username}"
               - usernamePassword:
                   description: "ltd-mason"
                   id: "ltd-mason-aws"
-                  password: "${secret/rubin/rubin-jenkins-control/ltd-mason-aws/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/ltd-mason-aws/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws/username}"
               - usernamePassword:
                   description: "ltd-keeper"
                   id: "ltd-keeper"
-                  password: "${secret/rubin/rubin-jenkins-control/ltd-keeper/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/ltd-keeper/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/ltd-keeper/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/ltd-keeper/username}"
               - usernamePassword:
                   description: "Google Archive Registry service account"
                   id: "google_archive_registry_sa"
-                  password: "${secret/rubin/rubin-jenkins-control/google_archive_registry_sa/password}"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/google_archive_registry_sa/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa/username}"
 
       add-seed-job: |
         jobs:
@@ -1022,7 +1022,7 @@ controller:
     # path: "/jenkins"
     # configures the hostname e.g. jenkins.example.com
     #hostName: jenkins26.lsst.test
-    hostName: rubin-ci.slac.stanford.edu
+    hostName: rubin-ci-dev.slac.stanford.edu
     tls:
     # - secretName: jenkins.cluster.local
     #   hosts:
