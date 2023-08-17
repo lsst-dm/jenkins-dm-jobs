@@ -19,7 +19,7 @@ dind:
       memory: "30Gi"
     requests:
       cpu: "6"
-      memory: "30i"
+      memory: "30Gi"
 
   securityContext:
     privileged: True
