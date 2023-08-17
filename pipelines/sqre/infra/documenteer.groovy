@@ -44,8 +44,8 @@ notify.wrap {
   def run = {
     def docTemplateDir = "${pwd()}/doc_template"
 
-    stage('build docs') {
-      dir(docTemplateDir) {
+    dir(docTemplateDir) {
+      stage('build docs') {
         deleteDir()
 
         git([
