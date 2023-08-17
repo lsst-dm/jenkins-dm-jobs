@@ -15,11 +15,11 @@ replicaCount: 1
 dind:
   resources:
     limits:
-      cpu: "8"
-      memory: "64Gi"
+      cpu: "6"
+      memory: "30Gi"
     requests:
-      cpu: "8"
-      memory: "64Gi"
+      cpu: "6"
+      memory: "30i"
 
   securityContext:
     privileged: True
