@@ -175,21 +175,15 @@ notify.wrap {
     }
 
     triggerMe['doc build'] = {
-      retry(retries) {
-        build(
-          job: 'sqre/infra/documenteer',
-          parameters: [
-            string(name: 'EUPS_TAG', value: eupsTag),
-            string(name: 'LTD_SLUG', value: eupsTag),
-            string(name: 'RELEASE_IMAGE', value: stackResults.image),
-            booleanParam(
-              name: 'PUBLISH',
-              value: scipipe.release.step.documenteer.publish,
-            ),
-          ],
-          wait: false,
-        )
-      } // retry
+      stage('build and publish docs') {
+        util.buildPipelinesDocs(
+          nodeLabel: lsstswConfig.label,
+          workspace: scipipe.canonical.workspace,
+          baseImage: lsstswConfig.image,
+          manifestId: manifestId,
+          eupsTag: eupsTag,
+         )
+      } // stage
     }
 
     triggerMe['ap_verify'] = {
