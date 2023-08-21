@@ -21,9 +21,9 @@ class Plumber {
 
     dsl.pipelineJob(name) {
       keepDependencies()
-      properties {
-        disableConcurrentBuilds()
-      }
+      // properties {
+      //   disableConcurrentBuilds()
+      // }
 
       def repo = dsl.SEED_JOB.scm.userRemoteConfigs.get(0).getUrl()
       def ref  = dsl.SEED_JOB.scm.getBranches().get(0).getName()
