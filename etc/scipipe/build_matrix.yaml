@@ -28,15 +28,15 @@ template:
     - &monterey-conda
       <<: *platform_defaults
       image: null
-      label: osx-13
-      display_name: macos-13
+      label: osx-12
+      display_name: macos-12
       compiler: conda-system
       python: '3'
     - &ventura-conda
       <<: *platform_defaults
       image: null
-      label: osx-14
-      display_name: macos-14
+      label: osx-13
+      display_name: macos-13
       compiler: conda-system
       python: '3'
 #
@@ -45,8 +45,8 @@ template:
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
   - <<: *ventura-conda
-    # allow builds on catalina and big sur
-    label: osx-13||osx-14
+    # allow builds on monterey and ventura
+    label: osx-12||osx-13
     display_name: macos
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
