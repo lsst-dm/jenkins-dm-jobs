@@ -60,6 +60,7 @@ scipipe-lsstsw-ci_imsim:
   - <<: *ventura-conda
 scipipe-lsstsw-ventura:
   - <<: *ventura-conda
+    label: osx-13-debug
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
