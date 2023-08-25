@@ -208,8 +208,31 @@ def void osxTarballs(
 
         stage('publish') {
           if (publish) {
-            s3PushDocker(envId)
-          }
+            def objectPrefix = "stack/" + envId
+            def cwd = pwd()
+
+            def env = [
+              "EUPS_PKGROOT=${cwd}/distrib",
+              "EUPS_S3_OBJECT_PREFIX=${objectPrefix}",
+              "HOME=${cwd}/home",
+            ]
+
+            withEnv(env) {
+              withEupsBucketEnv {
+                timeout(time: 10, unit: 'MINUTES') {
+                  util.bash """
+                    source ./loadLSST.bash
+                    mamba create -n awscli -y awscli
+                    conda activate awscli
+                    aws s3 cp \
+                      --only-show-errors \
+                      --recursive \
+                      "${EUPS_PKGROOT}/" \
+                      "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
+                  """
+                } // timeout
+             } // withEupsBucketEnv
+          } // withEnv
         }
       } // dir
     } // util.withEupsEnv
