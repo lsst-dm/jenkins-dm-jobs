@@ -21,8 +21,8 @@ controller:
   # Used for label app.kubernetes.io/component
   componentName: "jenkins-controller"
   image: "jenkins/jenkins"
-  # tag: "2.346.3-jdk11"
-  tagLabel: jdk11
+  tag: "2.414.2-lts-jdk11"
+  #tagLabel: jdk11
   imagePullPolicy: "Always"
   imagePullSecretName:
   # Optionally configure lifetime for controller-container
@@ -231,8 +231,8 @@ controller:
         path: '{{ default "" .Values.controller.jenkinsUriPrefix }}/login'
         port: http
       periodSeconds: 10
-      timeoutSeconds: 5
-      failureThreshold: 120
+      timeoutSeconds: 10
+      failureThreshold: 300
     livenessProbe:
       failureThreshold: 5
       httpGet:
@@ -318,13 +318,13 @@ controller:
 
   # List of plugins to be install during Jenkins controller start
   installPlugins:
-    - kubernetes:3600.v144b_cd192ca_a_
-    - workflow-aggregator:581.v0c46fa_697ffd
-    - job-dsl:1.78.3
-    - blueocean:1.25.6
-    - configuration-as-code:1511.vb_f985b_894e40
-    - matrix-auth:3.1.5
-    - hashicorp-vault-plugin:359.v2da_3b_45f17d5
+    - kubernetes:4029.v5712230ccb_f8
+    - workflow-aggregator:596.v8c21c963d92d
+    - job-dsl:1.85
+    - blueocean:1.27.7
+    - configuration-as-code:1700.v6f448841296e
+    - matrix-auth:3.1.9
+    - hashicorp-vault-plugin:361.v44fea_4fc08d9
 
 
   # Set to false to download the minimum required version of all dependencies.
@@ -336,119 +336,151 @@ controller:
   # List of plugins to install in addition to those listed in controller.installPlugins
   additionalPlugins:
     #- ace-editor:1.1
-    - antisamy-markup-formatter:1.5
-      #- apache-httpcomponents-client-4-api:4.5.13-138.v4e7d9a_7b_a_e61
-    - async-http-client:1.9.40.0
-      #- authentication-tokens:1.4
-      #- blueocean-autofavorite:1.2.5
-      #- blueocean-bitbucket-pipeline:1.25.6
-      #- blueocean-commons:1.25.6
-      #- blueocean-config:1.25.6
-      #- blueocean-core-js:1.25.6
-      #- blueocean-dashboard:1.25.6
-      #- blueocean-display-url:2.4.1
-      #- blueocean-events:1.25.6
-      #- blueocean-github-pipeline:1.25.6
-      #- blueocean-git-pipeline:1.25.6
-      #- blueocean-i18n:1.25.6
-      #- blueocean-personalization:1.25.6
-      #- blueocean-pipeline-api-impl:1.25.6
-      #- blueocean-pipeline-editor:1.25.6
-      #- blueocean-pipeline-scm-api:1.25.6
-      #- blueocean-rest:1.25.6
-      #- blueocean-rest-impl:1.25.6
-      #- blueocean-web:1.25.6
-      #- bootstrap5-api:5.2.0-1
-      #- branch-api:2.1046.v0ca_37783ecc5
-    - build-timeout:1.21
-    - build-user-vars-plugin:1.8
-    - checks-api:1.7.5
-    - command-launcher:84.v4a_97f2027398
-    - copyartifact:1.47
-    - display-url-api:2.3.6
-      #- docker-commons:1.19
-    - dockerhub-notification:2.6.0
-    - docker-workflow:563.vd5d2e5c4007f
-    - durable-task:500.v8927d9fd99d8
-    - echarts-api:5.3.3-1
-    - envinject:2.875.v9b_9e962da_a_ec
+    - antisamy-markup-formatter:162.v0e6ec0fcfcf6
+    - apache-httpcomponents-client-4-api:4.5.14-208.v438351942757 
+#depreciated    - async-http-client:1.9.40.0
+    - authentication-tokens:1.53.v1c90fd9191a_b_
+    - blueocean-autofavorite:1.2.5
+    - blueocean-bitbucket-pipeline:1.27.7
+    - blueocean-commons:1.27.7
+    - blueocean-config:1.27.7
+    - blueocean-core-js:1.27.7
+    - blueocean-dashboard:1.27.7
+    - blueocean-display-url:2.4.2
+    - blueocean-events:1.27.7
+    - blueocean-github-pipeline:1.27.7
+    - blueocean-git-pipeline:1.27.7
+    - blueocean-i18n:1.27.7
+    - blueocean-jwt:1.27.7
+    - blueocean-personalization:1.27.7
+    - blueocean-pipeline-api-impl:1.27.7
+    - blueocean-pipeline-editor:1.27.7
+    - blueocean-pipeline-scm-api:1.27.7
+    - blueocean-rest:1.27.7
+    - blueocean-rest-impl:1.27.7
+    - blueocean-web:1.27.7
+    - bootstrap5-api:5.3.2-1
+    - bouncycastle-api:2.29
+    - branch-api:2.1128.v717130d4f816
+    - build-timeout:1.31
+    - build-user-vars-plugin:1.9
+    - caffeine-api:3.1.8-133.v17b_1ff2e0599
+    - checks-api:2.0.2
+    - cloudbees-bitbucket-branch-source:845.v27a_d5823911b_
+    - cloudbees-folder:6.848.ve3b_fd7839a_81
+    - command-launcher:107.v773860566e2e
+    - commons-lang3-api:3.13.0-62.v7d18e55f51e2
+    - commons-text-api:1.10.0-78.v3e7b_ea_d5a_fe1
+    - copyartifact:714.v28a_34f8c563f
+    - credentials:1271.v54b_1c2c6388a_
+    - credentials-binding:636.v55f1275c7b_27
+    - data-tables-api:1.13.6-4
+    - display-url-api:2.3.9
+    - docker-commons:439.va_3cb_0a_6a_fb_29
+    - dockerhub-notification:2.7.0
+    - docker-workflow:572.v950f58993843
+    - durable-task:523.va_a_22cf15d5e0
+    - echarts-api:5.4.0-6
+    - envinject:2.908.v66a_774b_31d93
     - envinject-api:1.199.v3ce31253ed13
-    - external-monitor-job:1.7
-    - favorite:2.4.1
-    - font-awesome-api:6.1.2-1
-      #- github:1.34.5
-    - github-api:1.303-400.v35c2d8258028
-    - github-branch-source:1677.v731f745ea_0cf
-    - github-oauth:0.39
-    - git-server:1.7
-    - greenballs:1.15.1
-    - groovy:442.v817e6d937d6c
-    - handlebars:1.1.1
+    - external-monitor-job:215.v2e88e894db_f8
+    - favorite:2.4.3
+    - font-awesome-api:6.4.2-1
+    - git:5.2.0
+    - git-client:4.5.0
+    - github:1.37.3
+    - github-api:1.314-431.v78d72a_3fe4c3
+    - github-branch-source:1741.va_3028eb_9fd21
+    - github-oauth:588.vf696a_350572a_
+    - git-server:99.va_0826a_b_cdfa_d
+#depreciated    - greenballs:1.15.1
+    - groovy:453.vcdb_a_c5c99890
+#depreciated    - handlebars:3.0.8
     - handy-uri-templates-2-api:2.1.8-22.v77d5b_75e6953
-    - htmlpublisher:1.30
-    - icon-shim:2.0.3
-      #- jackson2-api:2.13.3-285.vc03c0256d517
-    - jakarta-activation-api:2.0.1-1
-    - jakarta-mail-api:2.0.1-1
-    - javadoc:1.5
-    - javax-activation-api:1.2.0-4
-    - javax-mail-api:1.6.2-7
-    - jaxb:2.3.6-1
-    - jdk-tool:55.v1b_32b_6ca_f9ca
-    - jenkins-design-language:1.25.6
-    - jira:3.0.5
+    - htmlpublisher:1.32
+#depreciated    - icon-shim:3.0.0
+    - instance-identity:173.va_37c494ec4e5
+    - ionicons-api:56.v1b_1c8c49374e
+    - jackson2-api:2.15.2-350.v0c2f3f8fc595
+    - jakarta-activation-api:2.0.1-3
+    - jakarta-mail-api:2.0.1-3
+    - javadoc:243.vb_b_503b_b_45537
+    - javax-activation-api:1.2.0-6
+    - javax-mail-api:1.6.2-9
+    - jaxb:2.3.8-1
+    - jdk-tool:73.vddf737284550
+    - jenkins-design-language:1.27.7
+    - jersey2-api:2.40-1
+    - jira:3.11
     - jjwt-api:0.11.5-77.v646c772fddb_0
-      #- jquery:1.12.4-0
-    - jquery-detached:1.2.1
-    - jquery3-api:3.6.0-4
-    - junit:1119.1121.vc43d0fc45561
-    - kubernetes-client-api:5.12.2-193.v26a_6078f65a_9
-    - kubernetes-credentials:0.9.0
-    - lockable-resources:2.5
-    - mercurial:2.5
-      #- mina-sshd-api-common:2.8.0-36.v8e25ce90d4b_1
-      #- mina-sshd-api-core:2.8.0-36.v8e25ce90d4b_1
-      #- momentjs:1.1.1
-    - multiple-scms:0.6
-    - nodelabelparameter:1.7.2
-    - parameterized-trigger:2.45
-    - pipeline-build-step:2.18
-    - pipeline-graph-analysis:195.v5812d95a_a_2f9
-    - pipeline-groovy-lib:612.v84da_9c54906d
-    - pipeline-input-step:449.v77f0e8b_845c4
-    - pipeline-milestone-step:101.vd572fef9d926
-    - pipeline-model-api:2.2114.v2654ca_721309
-    - pipeline-model-declarative-agent:1.1.1
-    - pipeline-model-definition:2.2114.v2654ca_721309
-    - pipeline-model-extensions:2.2114.v2654ca_721309
-    - pipeline-rest-api:2.10
-    - pipeline-stage-step:293.v200037eefcd5
-    - pipeline-stage-tags-metadata:2.2114.v2654ca_721309
-    - pipeline-stage-view:2.10
-    - pipeline-utility-steps:2.3.0
-    - plain-credentials:139.ved2b_9cf7587b
-    - plugin-util-api:2.17.0
-    - popper2-api:2.11.5-2
-    - postbuildscript:3.1.0-375.v3db_cd92485e1
-    - pubsub-light:1.16
-    - purge-build-queue-plugin:48.v39c52a_26a_264
-    - rebuild:1.34
-    - run-condition:1.2
-    - saferestart:0.3
-    - ssh-agent:1.17
-      #- sshd:3.242.va_db_9da_b_26a_c3
+    - jquery:1.12.4-1
+#depreciated    - jquery-detached:1.2.1
+    - jquery3-api:3.7.1-1
+    - jsch:0.2.8-65.v052c39de79b_2
+    - junit:1240.vf9529b_881428
+    - kubernetes-client-api:6.8.1-224.vd388fca_4db_3b_
+    - kubernetes-credentials:0.11
+    - lockable-resources:1185.v0c528656ce04
+    - log-parser:2.3.1
+    - mailer:463.vedf8358e006b_
+    - matrix-project:808.v5a_b_5f56d6966
+    - mercurial:1260.vdfb_723cdcc81
+    - mina-sshd-api-common:2.10.0-69.v28e3e36d18eb_
+    - mina-sshd-api-core:2.10.0-69.v28e3e36d18eb_
+    - metrics:4.2.18-442.v02e107157925
+#depreciated    - momentjs:1.1.1
+#depreciated - need alternative?    - multiple-scms:0.8
+    - nodelabelparameter:1.12.0
+    - okhttp-api:4.11.0-157.v6852a_a_fa_ec11
+    - parameterized-trigger:2.46
+    - pipeline-build-step:505.v5f0844d8d126
+    - pipeline-graph-analysis:202.va_d268e64deb_3
+    - pipeline-groovy-lib:689.veec561a_dee13
+    - pipeline-input-step:477.v339683a_8d55e
+    - pipeline-milestone-step:111.v449306f708b_7
+    - pipeline-model-api:2.2144.v077a_d1928a_40
+#depreciated    - pipeline-model-declarative-agent:1.1.1
+    - pipeline-model-definition:2.2144.v077a_d1928a_40
+    - pipeline-model-extensions:2.2144.v077a_d1928a_40
+    - pipeline-rest-api:2.33
+    - pipeline-stage-step:305.ve96d0205c1c6
+    - pipeline-stage-tags-metadata:2.2144.v077a_d1928a_40
+    - pipeline-stage-view:2.33
+    - pipeline-utility-steps:2.16.0
+    - plain-credentials:143.v1b_df8b_d3b_e48
+    - plugin-util-api:3.3.0
+    - popper2-api:2.11.6-2 #depreciated but needed for bootstrap5-api
+    - postbuildscript:3.2.0-550.v88192b_d3e922
+    - pubsub-light:1.17
+    - purge-build-queue-plugin:88.v23b_97b_f2c7a_d
+    - rebuild:320.v5a_0933a_e7d61
+    - run-condition:1.7
+    - saferestart:0.7
+    - scm-api:676.v886669a_199a_a_
+    - script-security:1275.v23895f409fb_d
+    - snakeyaml-api:2.2-111.vc6598e30cc65
+    - sse-gateway:1.26
+    - ssh-agent:333.v878b_53c89511
+    - ssh-credentials:308.ve4497b_ccd8f4 
+    - sshd:3.312.v1c601b_c83b_0e
     - ssh-slaves:1.29.4
-    - swarm:3.34
-      #- trilead-api:1.67.vc3938a_35172f
-    - variant:59.vf075fe829ccb
-    - windows-slaves:1.4
-    - workflow-api:1192.v2d0deb_19d212
-    - workflow-basic-steps:991.v43d80fea_ff66
-    - workflow-cps:2759.v87459c4eea_ca_
-    - workflow-cps-global-lib:2.13
-    - workflow-durable-task-step:1199.v02b_9244f8064
-    - workflow-job:1207.ve6191ff089f8
-    - workflow-multibranch:716.vc692a_e52371b_
+    - structs:325.vcb_307d2a_2782
+    - swarm:3.40
+    - token-macro:384.vf35b_f26814ec
+    - trilead-api:2.84.v72119de229b_7
+    - variant:60.v7290fc0eb_b_cd
+#depreciated     - windows-slaves:1.8.1  need to find alternative?
+    - workflow-api:1281.vca_5fddb_3fceb_
+    - workflow-basic-steps:1042.ve7b_140c4a_e0c
+    - workflow-cps:3791.va_c0338ea_b_59c
+#depreciated    - workflow-cps-global-lib:609.vd95673f149b_b
+    - workflow-durable-task-step:1289.v4d3e7b_01546b_
+    - workflow-job:1346.v180a_63f40267
+    - workflow-multibranch:756.v891d88f2cd46
+    - workflow-scm-step:415.v434365564324
+    - workflow-step-api:639.v6eca_cd8c04a_a_
+    - workflow-support:865.v43e78cc44e0d
+
 
   # Enable to initialize the Jenkins controller only once on initial installation.
   # Without this, whenever the controller gets restarted (Evicted, etc.) it will fetch plugin updates which has the potential to cause breakage.
@@ -552,10 +584,10 @@ controller:
   # characters: lowercase letters, numbers, and hyphens.  The keys become the name of a configuration yaml file on the controller in
   # /var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin.  The lines after each |
   # become the content of the configuration yaml file.  The first line after this is a JCasC root element, eg jenkins, credentials,
-  # etc.  Best reference is https://<jenkins_url>/configuration-as-code/reference.  The example below creates a welcome message:
-  JCasC:
+  # etc.  Best reference is https://<jenkins_url>/configuration-as-code/reference.  
+  JCasC: 
     defaultConfig: true
-    # Ignored if securityRealm is defined in controller.JCasC.configScripts and
+    # Ignored if securityRealm is defined in controller.JCasC.configScripts 
     securityRealm: |-
       #local:
       #  allowsSignup: false
@@ -570,7 +602,8 @@ controller:
         clientID: "${secret/rubin/rubin-jenkins-control-dev/github-oauth/client-id}"
         clientSecret: "${secret/rubin/rubin-jenkins-control-dev/github-oauth/client-secret}"
         oauthScopes: "read:org"
-    authorizationStrategy: |-
+    # Uses matrix-auth plugin to configure user and group permissions
+    authorizationStrategy: |- 
       globalMatrix:
         permissions:
         - "USER:Agent/Connect:sqre-user"
@@ -596,6 +629,7 @@ controller:
         - "USER:Overall/Administer:frossie"
         - "USER:Overall/Administer:jhoblitt"
         - "USER:Overall/Administer:ktlim"
+        - "USER:Overall/Administer:aranabhat"
         - "GROUP:Overall/Administer:lsst-sqre*leeroy-wranglers"
         - "GROUP:Overall/Administer:lsst-sqre*square"
         - "USER:Overall/Administer:mwittgen"
@@ -609,8 +643,8 @@ controller:
       welcome-message: |
         jenkins:
           systemMessage: This is the DEVELOPMENT instance of jenkins.
-
-      systemCredentials: |-
+      # Connects to vault to provide all credentials 
+      systemCredentials: |- 
         credentials:
           system:
             domainCredentials:
@@ -771,32 +805,33 @@ controller:
         security:
           globaljobdslsecurityconfiguration:
             useScriptSecurity: false
-      #permanent-nodes: |
-      #  jenkins:
-      #    nodes:
-      #      - permanent:
-      #          labelString: "osx osx-10.13 high_sierra"
-      #          launcher:
-      #            sSHLauncher:
-      #              credentialsId: "sqre-osx"
-      #              host: "mac1.lsst.cloud"
-      #              launchTimeoutSeconds: 210
-      #              maxNumRetries: 0
-      #              port: 22
-      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
-      #              retryWaitTime: 15
-      #              sshHostKeyVerificationStrategy:
-      #                manuallyTrustedKeyVerificationStrategy:
-      #                  requireInitialManualTrust: true
-      #          mode: EXCLUSIVE
-      #          name: "high_sierra-1"
-      #          nodeProperties:
-      #          - envVars:
-      #              env:
-      #              - key: "PATH+LOCAL_BIN"
-      #                value: "/usr/local/bin"
-      #          numExecutors: 1
-      #          remoteFS: "/Users/square/j"
+      # Connects mac agents to jenkins controller 
+      permanent-nodes: |       
+        jenkins:
+          nodes:
+            - permanent:
+                labelString: "osx-12"
+                launcher:
+                  sSHLauncher:
+                    credentialsId: "sqre-osx"
+                    host: "mac1.lsst.cloud"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22 
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: true
+                name: "mac1"
+      #           nodeProperties:
+      #           - envVars:
+      #               env:
+      #               - key: "PATH+LOCAL_BIN"
+      #                 value: "/usr/local/bin"
+                numExecutors: 1
+                remoteFS: "/Users/squaredev/j"
+                retentionStrategy: "always"
+      # Additional mac agents for prod jenkins
       #      - permanent:
       #          labelString: "osx osx-10.13 high_sierra"
       #          launcher:
