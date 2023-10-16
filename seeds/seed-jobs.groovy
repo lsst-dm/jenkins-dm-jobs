@@ -1,4 +1,4 @@
-freeStyleJob('jc-test') {
+freeStyleJob('seed-job') {
     scm {
         git {
             remote {
