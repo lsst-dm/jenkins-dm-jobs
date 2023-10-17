@@ -1,3 +1,7 @@
+properties([
+  copyArtifactPermission('/release/*'),
+]);
+
 node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
     checkout([
@@ -25,7 +29,7 @@ notify.wrap {
   String eupsTag         = params.EUPS_TAG
   String products        = params.PRODUCTS
   Boolean noPush         = params.NO_PUSH
-  Integer timelimit      = params.TIMEOUT
+  Integer timelimit      = Integer.parseInt(params.TIMEOUT)
   String extraDockerTags = params.DOCKER_TAGS
 
   // optional
@@ -92,6 +96,7 @@ notify.wrap {
       opt << "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\""
       opt << "--build-arg LSST_COMPILER=\"${lsstCompiler}\""
       opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
+      opt << "--load"
       opt << '.'
 
       dir(buildDir) {

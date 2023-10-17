@@ -18,6 +18,4 @@ p.pipeline().with {
     stringParam('LSST_COMPILER', null, '(Optional) LSST_COMPILER string. Eg. devtoolset-6')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
   }
-
-  concurrentBuild(true)
 }

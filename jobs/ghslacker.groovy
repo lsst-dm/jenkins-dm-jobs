@@ -7,6 +7,4 @@ p.pipeline().with {
   parameters {
     stringParam('GITHUB_USER', null)
   }
-
-  concurrentBuild(true)
 }

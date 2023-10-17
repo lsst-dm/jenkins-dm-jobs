@@ -42,24 +42,7 @@ notify.wrap {
   relImage = relImage ?: "${dockerRepo}:7-stack-lsst_distrib-${eupsTag}"
 
   def run = {
-    def meerImage = null
     def docTemplateDir = "${pwd()}/doc_template"
-
-    stage('prepare') {
-      def config = util.dedent("""
-        FROM ${relImage}
-
-        USER    root
-        RUN     yum -y install graphviz && yum -y clean all
-      """)
-
-      meerImage = "${relImage}-docubase"
-      util.buildImage(
-        config: config,
-        tag: meerImage,
-        pull: true,
-      )
-    } // stage
 
     dir(docTemplateDir) {
       stage('build docs') {
@@ -71,7 +54,7 @@ notify.wrap {
         ])
 
         util.runDocumenteer(
-          docImage: meerImage,
+          docImage: relImage,
           docTemplateDir: docTemplateDir,
           docPull: false,
           eupsTag: 'current',

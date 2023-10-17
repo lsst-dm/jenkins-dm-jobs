@@ -476,7 +476,7 @@ void processNodes() {
           nodeStatus['failedNodes'] << t
       }
     } finally {
-      if (!manualOffline) {
+      if (node.toComputer() != null && !manualOffline) {
         node.toComputer().setTemporarilyOffline(false, null)
       }
 

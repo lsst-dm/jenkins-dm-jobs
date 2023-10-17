@@ -14,6 +14,4 @@ p.pipeline().with {
     booleanParam('NO_PUSH', false, 'Do not push image to docker registr(y/ies)')
     stringParam('BRANCH', 'prod', 'Branch from which to build image')
   }
-
-  concurrentBuild(true)
 }

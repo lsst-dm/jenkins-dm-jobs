@@ -29,7 +29,6 @@ def j = job("${folder}/jenkins-dm-jobs") {
       autoRebuild()
     }
   }
-  concurrentBuild()
 
   triggers {
     githubPush()

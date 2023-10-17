@@ -1,3 +1,4 @@
+import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.ZoneId
@@ -1891,12 +1892,11 @@ def void record(List archiveDirs) {
 def List relPath(String relativeToDir, List paths) {
   // convert to relative paths
   // https://gist.github.com/ysb33r/5804364
-  def rootDir = new File(relativeToDir)
+  def rootPath = Path.of(relativeToDir)
   return paths.collect { it ->
     // skip non-rel paths
     if (!it.startsWith('/')) { return it }
-    def fullPath = new File(it)
-    rootDir.toPath().relativize(fullPath.toPath()).toFile().toString()
+    rootPath.relativize(Path.of(it)).toString()
   }
 } // relPath
 

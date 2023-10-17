@@ -13,24 +13,6 @@ template:
   platform_defaults: &platform_defaults
     splenv_ref: *splenv_ref
   platforms:
-    - &el7-dts8-py3
-      <<: *platform_defaults
-      image: docker.io/lsstsqre/centos:7-stackbase-devtoolset-8
-      label: centos-7
-      compiler: devtoolset-8
-      python: '3'
-    - &el6-dts8-py3
-      <<: *platform_defaults
-      image: docker.io/lsstsqre/centos:6-stackbase-devtoolset-8
-      label: centos-6
-      compiler: devtoolset-8
-      python: '3'
-    - &el7-py3-llvm
-      <<: *platform_defaults
-      image: docker.io/lsstsqre/centos:7-stackbase-llvm-toolset-7
-      label: centos-7
-      compiler: llvm-toolset-7
-      python: '3'
     - &el7-conda
       <<: *platform_defaults
       image: docker.io/lsstdm/scipipe-base:7
@@ -43,50 +25,18 @@ template:
       label: centos-8-conda
       compiler: conda-system
       python: '3'
-    - &sierra-py3
+    - &monterey-conda
       <<: *platform_defaults
       image: null
-      label: osx-10.12
-      compiler: clang-802.0.42
-      python: '3'
-    - &high_sierra-py3
-      <<: *platform_defaults
-      image: null
-      label: osx-10.13
-      compiler: clang-1000.10.44.4
-      python: '3'
-    - &mojave-py3
-      <<: *platform_defaults
-      image: null
-      label: osx-10.14
-      compiler: clang-1000.10.44.4
-      python: '3'
-    - &high_sierra-conda
-      <<: *platform_defaults
-      image: null
-      label: osx-10.13
+      label: osx-12
+      display_name: macos-12
       compiler: conda-system
       python: '3'
-    - &mojave-conda
+    - &ventura-conda
       <<: *platform_defaults
       image: null
-      label: osx-10.14
-      compiler: conda-system
-      python: '3'
-    - &catalina-conda
-      <<: *platform_defaults
-      image: null
-      # Yes, the label is inconsistent for historical reasons
-      label: osx-10.13
-      display_name: macos-10.15
-      compiler: conda-system
-      python: '3'
-    - &bigsur-conda
-      <<: *platform_defaults
-      image: null
-      # Yes, the label is inconsistent for historical reasons
-      label: osx-10.14
-      display_name: macos-11.0
+      label: osx-13
+      display_name: macos-13
       compiler: conda-system
       python: '3'
 #
@@ -94,21 +44,23 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
-  - <<: *catalina-conda
-    # allow builds on catalina and big sur
-    label: osx-10.13||osx-10.14
+  - <<: *ventura-conda
+    # allow builds on monterey and ventura
+    label: osx-12||osx-13
     display_name: macos
-    display_compiler: clang
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
-  - <<: *catalina-conda
-  - <<: *bigsur-conda
+  - <<: *monterey-conda
+  - <<: *ventura-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
-  - <<: *bigsur-conda
+  - <<: *ventura-conda
 scipipe-lsstsw-ci_imsim:
   - <<: *el7-conda
-  - <<: *bigsur-conda
+  - <<: *ventura-conda
+scipipe-lsstsw-ventura:
+  - <<: *ventura-conda
+    label: osx-13-debug
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
@@ -135,7 +87,7 @@ tarball:
       platform: el7
       osfamily: redhat
     - <<: *tarball_defaults
-      <<: *bigsur-conda
+      <<: *ventura-conda
       platform: '10.9'
       osfamily: osx
       timelimit: 8
