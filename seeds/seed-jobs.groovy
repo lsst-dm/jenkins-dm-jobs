@@ -5,7 +5,7 @@ freeStyleJob('seed-job') {
                 name('origin')
                 url('https://github.com/lsst-dm/jenkins-dm-jobs')
             }
-            branches('update-gradle')
+            branches('main')
         }
     }
     steps {
