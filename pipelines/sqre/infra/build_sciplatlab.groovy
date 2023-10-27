@@ -71,9 +71,9 @@ notify.wrap {
       // We presume that GH Actions will continue to list most recent runs
       // at the top.  Poll the build.yaml runs for the first result.
 
-      // I think we always want the prod branch.
+      // I think we always want the main branch.
 
-      def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/runs?per_page=1&branch=prod")
+      def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/runs?per_page=1&branch=main")
 
       def created_at = starttime.minusSeconds(1)
       // One second before we really started the action.
