@@ -84,11 +84,16 @@ controller:
   # Environment variables that get added to the init container (useful for e.g.
   # http_proxy)
   initContainerEnv:
-  - name: CASC_VAULT_TOKEN
+  - name: CASC_VAULT_APPROLE
     valueFrom:
       secretKeyRef:
-        name: vault-token
-        key: VAULT_TOKEN
+        name: vault-approle
+        key: APPROLE_ID
+  - name: CASC_VAULT_APPROLE_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: vault-approle
+        key: APPROLE_SECRET
   - name: CASC_VAULT_URL
     value: https://vault.slac.stanford.edu
   - name: CASC_VAULT_PATHS
@@ -118,11 +123,16 @@ controller:
   #   - name: http_proxy
   #     value: "http://192.168.64.1:3128"
   containerEnv:
-  - name: CASC_VAULT_TOKEN
+  - name: CASC_VAULT_APPROLE
     valueFrom:
       secretKeyRef:
-        name: vault-token
-        key: VAULT_TOKEN
+        name: vault-approle
+        key: APPROLE_ID
+  - name: CASC_VAULT_APPROLE_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: vault-approle
+        key: APPROLE_SECRET
   - name: CASC_VAULT_URL
     value: https://vault.slac.stanford.edu
   - name: CASC_VAULT_PATHS
@@ -243,7 +253,7 @@ controller:
       # If Startup Probe is not supported on your Kubernetes cluster, you might
       # want to use "initialDelaySeconds" instead.
       # It delays the initial liveness probe while Jenkins is starting
-      initialDelaySeconds: 600
+      initialDelaySeconds: 120
     readinessProbe:
       failureThreshold: 3
       httpGet:
@@ -254,7 +264,7 @@ controller:
       # If Startup Probe is not supported on your Kubernetes cluster, you might
       # want to use "initialDelaySeconds" instead.
       # It delays the initial readyness probe while Jenkins is starting
-      initialDelaySeconds: 600
+      initialDelaySeconds: 120
 
   # PodDisruptionBudget config
   podDisruptionBudget:
@@ -286,11 +296,12 @@ controller:
   # Note if you set this to 'LoadBalancer', you *must* define annotations to secure it. By default
   # this will be an external load balancer and allowing inbound 0.0.0.0/0, a HUGE
   # security risk:  https://github.com/kubernetes/charts/issues/1341
-  agentListenerServiceType: "ClusterIP"
+  agentListenerServiceType: "LoadBalancer"
   # Optionally assign an IP to the LoadBalancer agentListenerService LoadBalancer
   # GKE users: only regional static IPs will work for Service Load balancer.
   agentListenerLoadBalancerIP:
-  agentListenerServiceAnnotations: {}
+  agentListenerServiceAnnotations: 
+    metallb.universe.tf/address-pool: sdf-services
 
   # Example of 'LoadBalancer' type of agent listener with annotations securing it
   # agentListenerServiceType: LoadBalancer
@@ -643,7 +654,7 @@ controller:
       welcome-message: |
         jenkins:
           systemMessage: This is the DEVELOPMENT instance of jenkins.
-      # Connects to vault to provide all credentials 
+      # Connects to specified vault paths and variables to provide all credentials 
       systemCredentials: |- 
         credentials:
           system:
@@ -801,7 +812,7 @@ controller:
 
       add-seed-job: |
         jobs:
-          - url: https://raw.githubusercontent.com/lsst-dm/jenkins-dm-jobs/update-gradle/seeds/seed-jobs.groovy
+          - url: https://raw.githubusercontent.com/lsst-dm/jenkins-dm-jobs/main/seeds/seed-jobs.groovy
         security:
           globaljobdslsecurityconfiguration:
             useScriptSecurity: false
@@ -821,13 +832,13 @@ controller:
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
-                        requireInitialManualTrust: true
+                        requireInitialManualTrust: false
                 name: "mac1"
-      #           nodeProperties:
-      #           - envVars:
-      #               env:
-      #               - key: "PATH+LOCAL_BIN"
-      #                 value: "/usr/local/bin"
+                # nodeProperties:
+                # - envVars:
+                    # env:
+                    # - key: "PATH+LOCAL_BIN"
+                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
