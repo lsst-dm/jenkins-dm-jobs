@@ -398,8 +398,10 @@ void processNodes() {
       // executors.
       def computer = node.toComputer()
 
-      // a null channel indicates that the node is offline
-      if (computer == null || computer.isOffline()) {
+      if (computer == null) {
+        // a null channel indicates that the node is offline
+        throw new Offline(node)
+      } else if (computer.isOffline()) {
         // check if previous run screwed up
         if (computer.getOfflineCauseReason().startsWith('disk cleanup from job')) {
           // ignore it and clear it at the end
