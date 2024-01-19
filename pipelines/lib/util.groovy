@@ -1225,6 +1225,59 @@ def void librarianPuppet(String cmd='install', String tag='2.2.3') {
 }
 
 /**
+ * Build pipelines.lsst.io docs
+ *
+ * @param p Map
+ * @param p.nodeLabel String label of node to build on
+ * @param p.workspace String directory containing lsstsw build
+ * @param p.baseImage String base docker image
+ * @param p.manifestId String manifest id of lsst_distrib build
+ * @param p.eupsTag String tag to publish under
+ */
+def buildPipelinesDocs(Map p) {
+  requireMapKeys(p, [
+    'nodeLabel',
+    'workspace',
+    'baseImage',
+    'manifestId,
+    'eupsTag',
+  ])
+  nodeWrap(p.nodeLabel) {
+    ws(p.workspace) {
+      dir("pipelines_lsst_io") {
+        gitNoNoise(
+          url: githubSlugToUrl("lsst/pipelines_lsst_io"),
+          branch: "main",
+        )
+      }
+      insideDockerWrap(
+        image: p.baseImage,
+        pull: true,
+      ) {
+        withCredentials([[
+          $class: 'UsernamePasswordMultiBinding',
+          credentialsId: 'ltd-keeper',
+          usernameVariable: 'LTD_KEEPER_USER',
+          passwordVariable: 'LTD_KEEPER_PASSWORD',
+        ]]) {
+          bash """
+            source "$WORKSPACE"/lsstsw/bin/envconfig
+            mamba install -y --no-update-deps --force-reinstall lsst-documenteer-pipelines
+            setup -r "$WORKSPACE"/pipelines_lsst_io -t ${p.manifestId}
+            cd "$WORKSPACE"/pipelines_lsst_io
+            stack-docs build
+            rm -rf "$WORKSPACE"/pipelines_lsst_io/envs/ltd
+            mamba create -y -p "$WORKSPACE"/pipelines_lsst_io/envs/ltd ltd-conveyor
+            conda activate "$WORKSPACE"/pipelines_lsst_io/envs/ltd
+            ltd -u $LTD_KEEPER_USER -p $LTD_KEEPER_PASSWORD upload --product pipelines --dir _build/html --git-ref ${p.eupsTag}
+          """
+        } // withCredentials
+      } // docker
+    } // ws
+  } // node
+} // def
+
+/**
  * run documenteer doc build
  *
  * @param p Map
