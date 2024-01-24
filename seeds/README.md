@@ -14,9 +14,9 @@ that repository to understand how seed jobs are set up.
 As per <https://www.jenkins.io/doc/book/installing/kubernetes/>, there are three
 ways of installing jenkins into a kubernetes cluster:
 
-1. Use the kubernetes operator
-2. Use the provided helm chart
-3. Manually define the setup using standard kubernetes objects
+* Use the kubernetes operator
+* Use the provided helm chart
+* Manually define the setup using standard kubernetes objects
 
 Whilst using the kubernetes operator would be ideal, the way it is currently set
 up requires that all plugins and jobs are predefined, and there appears to be no
@@ -43,7 +43,7 @@ running `helm repo list`.
 
 ## Installing jenkins via helm
 
-As per https://helm.sh/docs/intro/using_helm/, running:
+As per <https://helm.sh/docs/intro/using_helm/>, running:
 
 ```
 helm install -n <namespace_to_use> <install_name> jenkinsci/jenkins -f <config>
