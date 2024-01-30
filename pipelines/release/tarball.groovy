@@ -632,6 +632,7 @@ def String s3PushCmd() {
       --only-show-errors \
       --recursive \
       "${EUPS_PKGROOT}/" \
+      --endpoint-url=${EUPS_BASE_URL} \
       "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
   ''')
 }
