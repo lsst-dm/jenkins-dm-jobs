@@ -1720,9 +1720,11 @@ def void withEupsEnv(Closure run) {
 
   def baseUrl = scipipe.eups.base_url
   def s3Bucket = scipipe.eups.s3_bucket
+  def endpointUrl = scipipe.eups.endpoint_url
   withEnv([
     "EUPS_S3_BUCKET=${s3Bucket}",
     "EUPS_BASE_URL=${baseUrl}",
+    "EUPS_ENDPOINT_URL=${endpointUrl}",
   ]) {
     run()
   }
