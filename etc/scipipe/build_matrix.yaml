@@ -143,5 +143,6 @@ newinstall:
   github_repo: lsst/lsst
   git_ref: main
 eups:
-  base_url: https://s3dfrgw.slac.stanford.edu/
+  base_url: https://s3dfrgw.slac.stanford.edu/rubin-jenkins-dev-eups/stack
   s3_bucket: rubin-jenkins-dev-eups
+  endpoint_url: https://s3dfrgw.slac.stanford.edu
