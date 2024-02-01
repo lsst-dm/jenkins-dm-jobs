@@ -146,5 +146,6 @@ eups:
   #base_url: https://s3dfrgw.slac.stanford.edu/rubin-jenkins-dev-eups/stack 
         #this^ was for dev but wasn't connecting source packages located at eups.lsst.codes
   base_url: https://eups.lsst.codes/stack
+  eups_url: eups.lsst.codes
   s3_bucket: rubin-jenkins-dev-eups
   endpoint_url: https://s3dfrgw.slac.stanford.edu
