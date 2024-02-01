@@ -839,14 +839,16 @@ def String scriptPreamble(
   boolean useTarballs,
   String ciDir
 ) {
+  def eupsUrl = ${scipipe.eups.base_url}"
   util.dedent("""
     #!/bin/bash
-
+    export EUPS_URL="${eupsUrl}"
+    
     set -xe
     set -o pipefail
 
     if [[ -n \$EUPS_S3_BUCKET ]]; then
-        export LSST_EUPS_PKGROOT_BASE_URL="https://\${scipipe.eups.base_url}"
+        export LSST_EUPS_PKGROOT_BASE_URL="https://\${EUPS_URL}"
     fi
 
     # isolate eups cache files
