@@ -839,7 +839,7 @@ def String scriptPreamble(
   boolean useTarballs,
   String ciDir
 ) {
-  def eupsUrl = ${scipipe.eups.base_url}"
+  def eupsUrl = "${scipipe.eups.base_url}"
   util.dedent("""
     #!/bin/bash
     export EUPS_URL="${eupsUrl}"
