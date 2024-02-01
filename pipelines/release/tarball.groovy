@@ -848,7 +848,7 @@ def String scriptPreamble(
     set -o pipefail
 
     if [[ -n \$EUPS_S3_BUCKET ]]; then
-        export LSST_EUPS_PKGROOT_BASE_URL="https://\${EUPS_URL}"
+        export LSST_EUPS_PKGROOT_BASE_URL="${EUPS_URL}"
     fi
 
     # isolate eups cache files
