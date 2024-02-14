@@ -8,24 +8,24 @@
 template:
   datasets:
     hits2015: &dataset_hits2015
-      display_name: hits2015
-      name: ap_verify_ci_hits2015
+      display_name: hits2015       # Jenkins slug
+      name: ap_verify_ci_hits2015  # ap_verify dataset, Sasquatch dataset ID
       github_repo: lsst/ap_verify_ci_hits2015
       gen3_pipeline: >
         ${AP_VERIFY_CI_HITS2015_DIR}/pipelines/ApVerifyWithFakes.yaml
       git_ref: main
       clone_timelimit: 15
     cosmos_pdr2: &dataset_cosmos_pdr2
-      display_name: cosmos_pdr2
-      name: ap_verify_ci_cosmos_pdr2
+      display_name: cosmos_pdr2       # Jenkins slug
+      name: ap_verify_ci_cosmos_pdr2  # ap_verify dataset, Sasquatch dataset ID
       github_repo: lsst/ap_verify_ci_cosmos_pdr2
       gen3_pipeline: >
         ${AP_VERIFY_CI_COSMOS_PDR2_DIR}/pipelines/ApVerifyWithFakes.yaml
       git_ref: main
       clone_timelimit: 15
     dc2: &dataset_dc2
-      display_name: dc2
-      name: ap_verify_ci_dc2
+      display_name: dc2       # Jenkins slug
+      name: ap_verify_ci_dc2  # ap_verify dataset ID, Sasquatch dataset ID
       github_repo: lsst/ap_verify_ci_dc2
       gen3_pipeline: >
         ${AP_VERIFY_CI_DC2_DIR}/pipelines/ApVerifyWithFakes.yaml
