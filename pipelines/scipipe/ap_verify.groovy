@@ -293,7 +293,7 @@ def void verifyDataset(Map p) {
             break
           default:
             currentBuild.result = 'UNSTABLE'
-            echo "SQuaSH upload not supported for Gen ${conf.gen} pipeline framework; skipping"
+            echo "Sasquatch upload not supported for Gen ${conf.gen} pipeline framework; skipping"
         }
       }
     } // insideDockerWrap
