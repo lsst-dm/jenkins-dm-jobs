@@ -12,7 +12,7 @@ template:
       name: ap_verify_ci_hits2015  # ap_verify dataset, Sasquatch dataset ID
       github_repo: lsst/ap_verify_ci_hits2015
       gen3_pipeline: >
-        ${AP_VERIFY_CI_HITS2015_DIR}/pipelines/ApVerifyWithFakes.yaml
+        ${AP_VERIFY_CI_HITS2015_DIR}/pipelines/ApVerify.yaml
       git_ref: main
       clone_timelimit: 15
     cosmos_pdr2: &dataset_cosmos_pdr2
@@ -20,7 +20,7 @@ template:
       name: ap_verify_ci_cosmos_pdr2  # ap_verify dataset, Sasquatch dataset ID
       github_repo: lsst/ap_verify_ci_cosmos_pdr2
       gen3_pipeline: >
-        ${AP_VERIFY_CI_COSMOS_PDR2_DIR}/pipelines/ApVerifyWithFakes.yaml
+        ${AP_VERIFY_CI_COSMOS_PDR2_DIR}/pipelines/ApVerify.yaml
       git_ref: main
       clone_timelimit: 15
     dc2: &dataset_dc2
@@ -28,7 +28,7 @@ template:
       name: ap_verify_ci_dc2  # ap_verify dataset ID, Sasquatch dataset ID
       github_repo: lsst/ap_verify_ci_dc2
       gen3_pipeline: >
-        ${AP_VERIFY_CI_DC2_DIR}/pipelines/ApVerifyWithFakes.yaml
+        ${AP_VERIFY_CI_DC2_DIR}/pipelines/ApVerify.yaml
       git_ref: main
       clone_timelimit: 15
   codes:
@@ -55,6 +55,30 @@ ap_verify:
         <<: *code_ap
     - dataset:
         <<: *dataset_dc2
+      gen: 3
+      code:
+        <<: *code_ap
+    - dataset:
+        <<: *dataset_hits2015
+        display_name: hits2015+fakes
+        gen3_pipeline: >
+          ${AP_VERIFY_CI_HITS2015_DIR}/pipelines/ApVerifyWithFakes.yaml
+      gen: 3
+      code:
+        <<: *code_ap
+    - dataset:
+        <<: *dataset_cosmos_pdr2
+        display_name: cosmos_pdr2+fakes
+        gen3_pipeline: >
+          ${AP_VERIFY_CI_COSMOS_PDR2_DIR}/pipelines/ApVerifyWithFakes.yaml
+      gen: 3
+      code:
+        <<: *code_ap
+    - dataset:
+        <<: *dataset_dc2
+        display_name: dc2+fakes
+        gen3_pipeline: >
+          ${AP_VERIFY_CI_DC2_DIR}/pipelines/ApVerifyWithFakes.yaml
       gen: 3
       code:
         <<: *code_ap
