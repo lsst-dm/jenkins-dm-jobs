@@ -2,7 +2,7 @@ import groovy.transform.Field
 import org.codehaus.groovy.runtime.StackTraceUtils
 
 @Field String slackEndpoint = 'https://slack.com/api'
-@Field String checkerboardEndpoint = 'https://roundtable.lsst.codes/checkerboard'
+@Field String checkerboardEndpoint = 'https://roundtable.lsst.cloud/checkerboard'
 @Field Boolean debug = false
 
 
@@ -43,19 +43,16 @@ void debugln(Object value) {
  * Translate GitHub username to Slack username
  *
  * @param jenkins String user name (github)
- * @param authUser String checkerboard service user
- * @param authPass String checkerboard service password
+ * @param authToken String checkerboard service token
  * @return String slack user Id
  */
-String githubToSlack(String jenkinsUser, String authUser, String authPass) {
-  def auth    = "${authUser}:${authPass}".getBytes().encodeBase64().toString()
-
+String githubToSlack(String jenkinsUser, String authToken) {
   def url = new URL("${checkerboardEndpoint}/github/${jenkinsUser}")
   debugln("url: ${url.toString()}")
 
   def slackId = null
   url.openConnection().with { conn ->
-    conn.setRequestProperty('Authorization', "Basic ${auth}")
+    conn.setRequestProperty('Authorization', "Bearer ${authToken}")
 
     debugln("responseCode: ${conn.responseCode}")
     if (conn.responseCode.equals(200)) {
@@ -463,7 +460,7 @@ String githubToSlackEz(jenkinsId) {
     usernameVariable: 'CB_USER',
     passwordVariable: 'CB_PASS'
   ]]) {
-    return githubToSlack(jenkinsId, CB_USER, CB_PASS)
+    return githubToSlack(jenkinsId, CB_PASS)
   }
 }
 
