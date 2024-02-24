@@ -281,6 +281,7 @@ def void verifyDataset(Map p) {
             def collection = 'ap_verify-output'
 
             def codeRef = buildCode ? code.git_ref : "main"
+            def pipeline_path = ds.gen3_pipeline.split("/")
             util.runVerifyToSasquatch(
               runDir: runDir,
               gen3Dir: gen3Dir,
@@ -289,7 +290,7 @@ def void verifyDataset(Map p) {
               datasetName: ds.name,
               sasquatchUrl: sqre.sasquatch.url,
               branchRefs: codeRef,
-              pipeline: new File(ds.gen3_pipeline).getName(),  // equivalent to Python's os.path.basename
+              pipeline: pipeline_path[pipeline_path.length-1]
             )
             break
           default:
