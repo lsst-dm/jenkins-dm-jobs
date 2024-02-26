@@ -291,7 +291,7 @@ def void verifyDataset(Map p) {
               datasetName: ds.name,
               sasquatchUrl: sqre.sasquatch.url,
               branchRefs: codeRef,
-              pipeline: Path.of(ds.gen3_pipeline).getFileName().toString()
+              pipeline: Path.of(ds.gen3_pipeline.trim()).getFileName().toString()
             )
             break
           default:
