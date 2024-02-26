@@ -611,10 +611,20 @@ def void s3PushDocker(String ... parts) {
   withEnv(env) {
     withEupsBucketEnv {
       timeout(time: 10, unit: 'MINUTES') {
-        docker.image(util.defaultAwscliImage()).inside {
+        //docker.image(util.defaultAwscliImage()).inside {
+  
           // alpine does not include bash by default
-          util.posixSh(s3PushCmd())
-        } // .inside
+        util.posixSh("""
+        conda create --name aws-cli-env
+        conda activate aws-cli-env
+        conda install pip
+        pip install awscli
+        aws --version
+        s3PushCmd() 
+        conda deactivate
+        """)
+        
+        //} // .inside
       }
     } //withEupsBucketEnv
   } // withEnv
