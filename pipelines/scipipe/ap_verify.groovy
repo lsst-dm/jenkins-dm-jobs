@@ -1,3 +1,5 @@
+import java.nio.file.Path
+
 node('jenkins-manager') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -281,7 +283,6 @@ def void verifyDataset(Map p) {
             def collection = 'ap_verify-output'
 
             def codeRef = buildCode ? code.git_ref : "main"
-            def pipeline_path = ds.gen3_pipeline.split("/")
             util.runVerifyToSasquatch(
               runDir: runDir,
               gen3Dir: gen3Dir,
@@ -290,7 +291,7 @@ def void verifyDataset(Map p) {
               datasetName: ds.name,
               sasquatchUrl: sqre.sasquatch.url,
               branchRefs: codeRef,
-              pipeline: pipeline_path[pipeline_path.length-1]
+              pipeline: Path.of(ds.gen3_pipeline).getFileName().toString()
             )
             break
           default:
