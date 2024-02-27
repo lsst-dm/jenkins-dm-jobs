@@ -21,7 +21,7 @@ controller:
   # Used for label app.kubernetes.io/component
   componentName: "jenkins-controller"
   image: "jenkins/jenkins"
-  tag: "2.414.2-lts-jdk11"
+  tag: "2.426.3-lts-jdk11"
   #tagLabel: jdk11
   imagePullPolicy: "Always"
   imagePullSecretName:
@@ -84,6 +84,12 @@ controller:
   # Environment variables that get added to the init container (useful for e.g.
   # http_proxy)
   initContainerEnv:
+  # - name: CASC_VAULT_TOKEN
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: vault-token
+  #       key: VAULT_TOKEN
+
   - name: CASC_VAULT_APPROLE
     valueFrom:
       secretKeyRef:
@@ -97,7 +103,7 @@ controller:
   - name: CASC_VAULT_URL
     value: https://vault.slac.stanford.edu
   - name: CASC_VAULT_PATHS
-    value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control-dev/aws-eups-push,secret/rubin/rubin-jenkins-control-dev/aws-eups-backup,secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth
+    value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control-dev/aws-eups-push,secret/rubin/rubin-jenkins-control-dev/aws-eups-backup,secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev
   - name: HTTP_PROXY
     value: http://sdfproxy.sdf.slac.stanford.edu:3128
   - name: HTTPS_PROXY
@@ -133,10 +139,15 @@ controller:
       secretKeyRef:
         name: vault-approle
         key: APPROLE_SECRET
+  #- name: CASC_VAULT_TOKEN
+  #  valueFrom:
+  #    secretKeyRef:
+  #      name: vault-token2
+  #      key: VAULT_TOKEN
   - name: CASC_VAULT_URL
     value: https://vault.slac.stanford.edu
   - name: CASC_VAULT_PATHS
-    value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control-dev/aws-eups-push,secret/rubin/rubin-jenkins-control-dev/aws-eups-backup,secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth
+    value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control-dev/aws-eups-push,secret/rubin/rubin-jenkins-control-dev/aws-eups-backup,secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev
   - name: HTTP_PROXY
     value: http://sdfproxy.sdf.slac.stanford.edu:3128
   - name: HTTPS_PROXY
@@ -277,12 +288,11 @@ controller:
     # maxUnavailable: "0"
 
   agentListenerEnabled: true
-  agentListenerPort: 50000
+  agentListenerPort: 20000
   agentListenerHostPort:
   agentListenerNodePort:
   agentListenerExternalTrafficPolicy:
   agentListenerLoadBalancerSourceRanges:
-  - 0.0.0.0/0
   disabledAgentProtocols:
     - JNLP-connect
     - JNLP2-connect
@@ -301,7 +311,7 @@ controller:
   # GKE users: only regional static IPs will work for Service Load balancer.
   agentListenerLoadBalancerIP:
   agentListenerServiceAnnotations: 
-    metallb.universe.tf/address-pool: sdf-services
+    metallb.universe.tf/address-pool: sdf-dmz
 
   # Example of 'LoadBalancer' type of agent listener with annotations securing it
   # agentListenerServiceType: LoadBalancer
@@ -312,7 +322,7 @@ controller:
   # LoadBalancerSourcesRange is a list of allowed CIDR values, which are combined with ServicePort to
   # set allowed inbound rules on the security group assigned to the controller load balancer
   loadBalancerSourceRanges:
-  - 0.0.0.0/0
+#  - 0.0.0.0/0
   # Optionally assign a known public LB IP
   # loadBalancerIP: 1.2.3.4
   # Optionally configure a JMX port
@@ -329,13 +339,13 @@ controller:
 
   # List of plugins to be install during Jenkins controller start
   installPlugins:
-    - kubernetes:4029.v5712230ccb_f8
+    - kubernetes:4147.va_d406fb_66172
     - workflow-aggregator:596.v8c21c963d92d
-    - job-dsl:1.85
-    - blueocean:1.27.7
-    - configuration-as-code:1700.v6f448841296e
+    - job-dsl:1.87
+    - blueocean:1.27.9
+    - configuration-as-code:1738.v2d8b_a_b_8a_54b_1
     - matrix-auth:3.1.9
-    - hashicorp-vault-plugin:361.v44fea_4fc08d9
+    - hashicorp-vault-plugin:364.vf5d54b_3dc313
 
 
   # Set to false to download the minimum required version of all dependencies.
@@ -352,76 +362,76 @@ controller:
 #depreciated    - async-http-client:1.9.40.0
     - authentication-tokens:1.53.v1c90fd9191a_b_
     - blueocean-autofavorite:1.2.5
-    - blueocean-bitbucket-pipeline:1.27.7
-    - blueocean-commons:1.27.7
-    - blueocean-config:1.27.7
-    - blueocean-core-js:1.27.7
-    - blueocean-dashboard:1.27.7
+    - blueocean-bitbucket-pipeline:1.27.9
+    - blueocean-commons:1.27.9
+    - blueocean-config:1.27.9
+    - blueocean-core-js:1.27.9
+    - blueocean-dashboard:1.27.9
     - blueocean-display-url:2.4.2
-    - blueocean-events:1.27.7
-    - blueocean-github-pipeline:1.27.7
-    - blueocean-git-pipeline:1.27.7
-    - blueocean-i18n:1.27.7
-    - blueocean-jwt:1.27.7
-    - blueocean-personalization:1.27.7
-    - blueocean-pipeline-api-impl:1.27.7
-    - blueocean-pipeline-editor:1.27.7
-    - blueocean-pipeline-scm-api:1.27.7
-    - blueocean-rest:1.27.7
-    - blueocean-rest-impl:1.27.7
-    - blueocean-web:1.27.7
-    - bootstrap5-api:5.3.2-1
-    - bouncycastle-api:2.29
-    - branch-api:2.1128.v717130d4f816
-    - build-timeout:1.31
+    - blueocean-events:1.27.9
+    - blueocean-github-pipeline:1.27.9
+    - blueocean-git-pipeline:1.27.9
+    - blueocean-i18n:1.27.9
+    - blueocean-jwt:1.27.9
+    - blueocean-personalization:1.27.9
+    - blueocean-pipeline-api-impl:1.27.9
+    - blueocean-pipeline-editor:1.27.9
+    - blueocean-pipeline-scm-api:1.27.9
+    - blueocean-rest:1.27.9
+    - blueocean-rest-impl:1.27.9
+    - blueocean-web:1.27.9
+    - bootstrap5-api:5.3.2-3
+    - bouncycastle-api:2.30.1.77-225.v26ea_c9455fd9
+    - branch-api:2.1135.v8de8e7899051
+    - build-timeout:1.32
     - build-user-vars-plugin:1.9
     - caffeine-api:3.1.8-133.v17b_1ff2e0599
     - checks-api:2.0.2
-    - cloudbees-bitbucket-branch-source:845.v27a_d5823911b_
-    - cloudbees-folder:6.848.ve3b_fd7839a_81
+    - cloudbees-bitbucket-branch-source:856.v04c46c86f911
+    - cloudbees-folder:6.858.v898218f3609d
     - command-launcher:107.v773860566e2e
     - commons-lang3-api:3.13.0-62.v7d18e55f51e2
-    - commons-text-api:1.10.0-78.v3e7b_ea_d5a_fe1
-    - copyartifact:714.v28a_34f8c563f
-    - credentials:1271.v54b_1c2c6388a_
-    - credentials-binding:636.v55f1275c7b_27
-    - data-tables-api:1.13.6-4
-    - display-url-api:2.3.9
+    - commons-text-api:1.11.0-94.v3e1f4a_926e49
+    - copyartifact:722.v0662a_9b_e22a_c
+    - credentials:1309.v8835d63eb_d8a_
+    - credentials-binding:642.v737c34dea_6c2
+    - data-tables-api:1.13.8-1
+    - display-url-api:2.200.vb_9327d658781
     - docker-commons:439.va_3cb_0a_6a_fb_29
-    - dockerhub-notification:2.7.0
+    - dockerhub-notification:2.7.1
     - docker-workflow:572.v950f58993843
     - durable-task:523.va_a_22cf15d5e0
-    - echarts-api:5.4.0-6
+    - echarts-api:5.4.3-1
     - envinject:2.908.v66a_774b_31d93
     - envinject-api:1.199.v3ce31253ed13
     - external-monitor-job:215.v2e88e894db_f8
     - favorite:2.4.3
     - font-awesome-api:6.4.2-1
-    - git:5.2.0
+    - git:5.2.1
     - git-client:4.5.0
-    - github:1.37.3
-    - github-api:1.314-431.v78d72a_3fe4c3
-    - github-branch-source:1741.va_3028eb_9fd21
-    - github-oauth:588.vf696a_350572a_
+    - github:1.37.3.1
+    - github-api:1.316-451.v15738eef3414
+    - github-branch-source:1751.v90e17c48a_6a_c
+    - github-oauth:597.ve0c3480fcb_d0
     - git-server:99.va_0826a_b_cdfa_d
 #depreciated    - greenballs:1.15.1
-    - groovy:453.vcdb_a_c5c99890
+    - groovy:457.v99900cb_85593
 #depreciated    - handlebars:3.0.8
     - handy-uri-templates-2-api:2.1.8-22.v77d5b_75e6953
     - htmlpublisher:1.32
 #depreciated    - icon-shim:3.0.0
-    - instance-identity:173.va_37c494ec4e5
+    - instance-identity:185.v303dc7c645f9
     - ionicons-api:56.v1b_1c8c49374e
-    - jackson2-api:2.15.2-350.v0c2f3f8fc595
+    - jackson2-api:2.15.3-372.v309620682326
     - jakarta-activation-api:2.0.1-3
     - jakarta-mail-api:2.0.1-3
     - javadoc:243.vb_b_503b_b_45537
     - javax-activation-api:1.2.0-6
     - javax-mail-api:1.6.2-9
-    - jaxb:2.3.8-1
+    - jaxb:2.3.9-1
     - jdk-tool:73.vddf737284550
-    - jenkins-design-language:1.27.7
-    - jersey2-api:2.40-1
+    - jenkins-design-language:1.27.9
+    - jersey2-api:2.41-133.va_03323b_a_1396
     - jira:3.11
     - jjwt-api:0.11.5-77.v646c772fddb_0
     - jquery:1.12.4-1
@@ -434,59 +444,59 @@ controller:
     - lockable-resources:1185.v0c528656ce04
     - log-parser:2.3.1
     - mailer:463.vedf8358e006b_
-    - matrix-project:808.v5a_b_5f56d6966
+    - matrix-project:818.v7eb_e657db_924
     - mercurial:1260.vdfb_723cdcc81
-    - mina-sshd-api-common:2.10.0-69.v28e3e36d18eb_
-    - mina-sshd-api-core:2.10.0-69.v28e3e36d18eb_
+    - mina-sshd-api-common:2.11.0-86.v836f585d47fa_
+    - mina-sshd-api-core:2.11.0-86.v836f585d47fa_
     - metrics:4.2.18-442.v02e107157925
 #depreciated    - momentjs:1.1.1
 #depreciated - need alternative?    - multiple-scms:0.8
     - nodelabelparameter:1.12.0
     - okhttp-api:4.11.0-157.v6852a_a_fa_ec11
-    - parameterized-trigger:2.46
-    - pipeline-build-step:505.v5f0844d8d126
+    - parameterized-trigger:787.v665fcf2a_830b_
+    - pipeline-build-step:516.v8ee60a_81c5b_9
     - pipeline-graph-analysis:202.va_d268e64deb_3
     - pipeline-groovy-lib:689.veec561a_dee13
     - pipeline-input-step:477.v339683a_8d55e
     - pipeline-milestone-step:111.v449306f708b_7
-    - pipeline-model-api:2.2144.v077a_d1928a_40
+    - pipeline-model-api:2.2151.ve32c9d209a_3f
 #depreciated    - pipeline-model-declarative-agent:1.1.1
-    - pipeline-model-definition:2.2144.v077a_d1928a_40
-    - pipeline-model-extensions:2.2144.v077a_d1928a_40
-    - pipeline-rest-api:2.33
+    - pipeline-model-definition:2.2151.ve32c9d209a_3f
+    - pipeline-model-extensions:2.2151.ve32c9d209a_3f
+    - pipeline-rest-api:2.34
     - pipeline-stage-step:305.ve96d0205c1c6
-    - pipeline-stage-tags-metadata:2.2144.v077a_d1928a_40
-    - pipeline-stage-view:2.33
+    - pipeline-stage-tags-metadata:2.2151.ve32c9d209a_3f
+    - pipeline-stage-view:2.34
     - pipeline-utility-steps:2.16.0
     - plain-credentials:143.v1b_df8b_d3b_e48
-    - plugin-util-api:3.3.0
-    - popper2-api:2.11.6-2 #depreciated but needed for bootstrap5-api
+    - plugin-util-api:3.6.0
+    - popper2-api:2.11.6-4 #depreciated but needed for bootstrap5-api
     - postbuildscript:3.2.0-550.v88192b_d3e922
-    - pubsub-light:1.17
+    - pubsub-light:1.18
     - purge-build-queue-plugin:88.v23b_97b_f2c7a_d
-    - rebuild:320.v5a_0933a_e7d61
+    - rebuild:330.v645b_7df10e2a_
     - run-condition:1.7
     - saferestart:0.7
-    - scm-api:676.v886669a_199a_a_
-    - script-security:1275.v23895f409fb_d
+    - scm-api:683.vb_16722fb_b_80b_
+    - script-security:1281.v22fb_899df1a_e
     - snakeyaml-api:2.2-111.vc6598e30cc65
     - sse-gateway:1.26
-    - ssh-agent:333.v878b_53c89511
+    - ssh-agent:346.vda_a_c4f2c8e50
     - ssh-credentials:308.ve4497b_ccd8f4 
     - sshd:3.312.v1c601b_c83b_0e
     - ssh-slaves:1.29.4
     - structs:325.vcb_307d2a_2782
-    - swarm:3.40
+    - swarm:3.41
     - token-macro:384.vf35b_f26814ec
     - trilead-api:2.84.v72119de229b_7
     - variant:60.v7290fc0eb_b_cd
 #depreciated     - windows-slaves:1.8.1  need to find alternative?
-    - workflow-api:1281.vca_5fddb_3fceb_
+    - workflow-api:1283.v99c10937efcb_
     - workflow-basic-steps:1042.ve7b_140c4a_e0c
-    - workflow-cps:3791.va_c0338ea_b_59c
+    - workflow-cps:3806.va_3a_6988277b_2
 #depreciated    - workflow-cps-global-lib:609.vd95673f149b_b
     - workflow-durable-task-step:1289.v4d3e7b_01546b_
-    - workflow-job:1346.v180a_63f40267
+    - workflow-job:1360.vc6700e3136f5
     - workflow-multibranch:756.v891d88f2cd46
     - workflow-scm-step:415.v434365564324
     - workflow-step-api:639.v6eca_cd8c04a_a_
@@ -496,7 +506,7 @@ controller:
   # Enable to initialize the Jenkins controller only once on initial installation.
   # Without this, whenever the controller gets restarted (Evicted, etc.) it will fetch plugin updates which has the potential to cause breakage.
   # Note that for this to work, `persistence.enabled` needs to be set to `true`
-  initializeOnce: true
+  initializeOnce: false
 
   # Enable to always override the installed plugins with the values of 'controller.installPlugins' on upgrade or redeployment.
   # overwritePlugins: true
@@ -512,6 +522,7 @@ controller:
   enableRawHtmlMarkupFormatter: false
   # Used to approve a list of groovy functions in pipelines used the script-security plugin. Can be viewed under /scriptApproval
   scriptApproval:
+    - "method java.nio.file.Path getFileName"
     - "method groovy.json.JsonBuilder toPrettyString"
     - "method groovy.json.JsonSlurperClassic parseText java.lang.String"
     - "method groovy.lang.GString getBytes"
@@ -540,6 +551,7 @@ controller:
     - "new java.lang.Throwable"
     - "staticMethod java.lang.Thread sleep long"
     - "staticMethod java.net.URLEncoder encode java.lang.String"
+    - "staticMethod java.nio.file.Path of java.lang.String java.lang.String[]"
     - "staticMethod java.security.MessageDigest getInstance java.lang.String"
     - "staticMethod java.time.Instant now"
     - "staticMethod java.time.Instant ofEpochMilli long"
@@ -759,7 +771,8 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/username}"
-              - basicSSHUserPrivateKey:
+              
+              - basicSSHUserPrivateKey: 
                   description: "SQRE OSX build agents"
                   id: "sqre-osx"
                   privateKeySource:
@@ -767,6 +780,16 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/username}"
+                  
+              # - basicSSHUserPrivateKey:
+                  # description: "SQRE OSX build agents"
+                  # id: "sqre-osx"
+                  # privateKeySource:
+                    # directEntry:
+                      # privateKey: "${secret/rubin/rubin-jenkins-control/sqre-osx/private_key}"
+                  # scope: GLOBAL
+                  # username: "${secret/rubin/rubin-jenkins-control/sqre-osx/username}"
+                  
               - usernamePassword:
                   description: "push conda packages -> s3"
                   id: "aws-cmirror-push"
@@ -812,7 +835,7 @@ controller:
 
       add-seed-job: |
         jobs:
-          - url: https://raw.githubusercontent.com/lsst-dm/jenkins-dm-jobs/main/seeds/seed-jobs.groovy
+          - url: https://raw.githubusercontent.com/lsst-dm/jenkins-dm-jobs/main/seeds/sqre/seed-jobs.groovy
         security:
           globaljobdslsecurityconfiguration:
             useScriptSecurity: false
@@ -842,122 +865,116 @@ controller:
                 numExecutors: 1
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
-      # Additional mac agents for prod jenkins
-      #      - permanent:
-      #          labelString: "osx osx-10.13 high_sierra"
-      #          launcher:
-      #            sSHLauncher:
-      #              credentialsId: "sqre-osx"
-      #              host: "mac2.lsst.cloud"
-      #              launchTimeoutSeconds: 210
-      #              maxNumRetries: 0
-      #              port: 22
-      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
-      #              retryWaitTime: 15
-      #              sshHostKeyVerificationStrategy:
-      #                manuallyTrustedKeyVerificationStrategy:
-      #                  requireInitialManualTrust: true
-      #          mode: EXCLUSIVE
-      #          name: "high_sierra-2"
-      #          nodeProperties:
-      #          - envVars:
-      #              env:
-      #              - key: "PATH+LOCAL_BIN"
-      #                value: "/usr/local/bin"
-      #          numExecutors: 1
-      #          remoteFS: "/Users/square/j"
-      #      - permanent:
-      #          labelString: "osx osx-10.14 mojave"
-      #          launcher:
-      #            sSHLauncher:
-      #              credentialsId: "sqre-osx"
-      #              host: "mac3.lsst.cloud"
-      #              launchTimeoutSeconds: 210
-      #              maxNumRetries: 0
-      #              port: 22
-      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
-      #              retryWaitTime: 15
-      #              sshHostKeyVerificationStrategy:
-      #                manuallyTrustedKeyVerificationStrategy:
-      #                  requireInitialManualTrust: true
-      #          mode: EXCLUSIVE
-      #          name: "mojave-1"
-      #          nodeProperties:
-      #          - envVars:
-      #              env:
-      #              - key: "PATH+LOCAL_BIN"
-      #                value: "/usr/local/bin"
-      #          numExecutors: 1
-      #          remoteFS: "/Users/square/j"
-      #      - permanent:
-      #          labelString: "osx osx-10.14 mojave"
-      #          launcher:
-      #            sSHLauncher:
-      #              credentialsId: "sqre-osx"
-      #              host: "mac4.lsst.cloud"
-      #              launchTimeoutSeconds: 210
-      #              maxNumRetries: 0
-      #              port: 22
-      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
-      #              retryWaitTime: 15
-      #              sshHostKeyVerificationStrategy:
-      #                manuallyTrustedKeyVerificationStrategy:
-      #                  requireInitialManualTrust: true
-      #          mode: EXCLUSIVE
-      #          name: "mojave-2"
-      #          nodeProperties:
-      #          - envVars:
-      #              env:
-      #              - key: "PATH+LOCAL_BIN"
-      #                value: "/usr/local/bin"
-      #          numExecutors: 1
-      #          remoteFS: "/Users/square/j"
-      #      - permanent:
-      #          labelString: "osx osx-10.14 mojave"
-      #          launcher:
-      #            sSHLauncher:
-      #              credentialsId: "sqre-osx"
-      #              host: "mac5.lsst.cloud"
-      #              launchTimeoutSeconds: 210
-      #              maxNumRetries: 0
-      #              port: 22
-      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
-      #              retryWaitTime: 15
-      #              sshHostKeyVerificationStrategy:
-      #                manuallyTrustedKeyVerificationStrategy:
-      #                  requireInitialManualTrust: true
-      #          mode: EXCLUSIVE
-      #          name: "mojave-3"
-      #          nodeProperties:
-      #          - envVars:
-      #              env:
-      #              - key: "PATH+LOCAL_BIN"
-      #                value: "/usr/local/bin"
-      #          numExecutors: 1
-      #          remoteFS: "/Users/square/j"
-      #      - permanent:
-      #          labelString: "osx osx-10.14 mojave"
-      #          launcher:
-      #            sSHLauncher:
-      #              credentialsId: "sqre-osx"
-      #              host: "mac6.lsst.cloud"
-      #              launchTimeoutSeconds: 210
-      #              maxNumRetries: 0
-      #              port: 22
-      #              prefixStartSlaveCmd: "export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin;"
-      #              retryWaitTime: 15
-      #              sshHostKeyVerificationStrategy:
-      #                manuallyTrustedKeyVerificationStrategy:
-      #                  requireInitialManualTrust: true
-      #          mode: EXCLUSIVE
-      #          name: "mojave-4"
-      #          nodeProperties:
-      #          - envVars:
-      #              env:
-      #              - key: "PATH+LOCAL_BIN"
-      #                value: "/usr/local/bin"
-      #          numExecutors: 1
-      #          remoteFS: "/Users/square/j"
+            - permanent:
+                labelString: "osx-12"
+                launcher:
+                  sSHLauncher:
+                    credentialsId: "sqre-osx"
+                    host: "mac2.lsst.cloud"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22 
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                name: "mac2"
+                # nodeProperties:
+                # - envVars:
+                    # env:
+                    # - key: "PATH+LOCAL_BIN"
+                      # value: "/usr/local/bin"
+                numExecutors: 1
+                remoteFS: "/Users/squaredev/j"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "osx-13"
+                launcher:
+                  sSHLauncher:
+                    credentialsId: "sqre-osx"
+                    host: "mac3.lsst.cloud"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22 
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                name: "mac3"
+                # nodeProperties:
+                # - envVars:
+                    # env:
+                    # - key: "PATH+LOCAL_BIN"
+                      # value: "/usr/local/bin"
+                numExecutors: 1
+                remoteFS: "/Users/squaredev/j"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "osx-13"
+                launcher:
+                  sSHLauncher:
+                    credentialsId: "sqre-osx"
+                    host: "mac4.lsst.cloud"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22 
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                name: "mac4"
+                # nodeProperties:
+                # - envVars:
+                    # env:
+                    # - key: "PATH+LOCAL_BIN"
+                      # value: "/usr/local/bin"
+                numExecutors: 1
+                remoteFS: "/Users/squaredev/j"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "osx-13"
+                launcher:
+                  sSHLauncher:
+                    credentialsId: "sqre-osx"
+                    host: "mac5.lsst.cloud"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22 
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                name: "mac5"
+                # nodeProperties:
+                # - envVars:
+                    # env:
+                    # - key: "PATH+LOCAL_BIN"
+                      # value: "/usr/local/bin"
+                numExecutors: 1
+                remoteFS: "/Users/squaredev/j"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "osx-13"
+                launcher:
+                  sSHLauncher:
+                    credentialsId: "sqre-osx"
+                    host: "mac6.lsst.cloud"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22 
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                name: "mac6"
+                # nodeProperties:
+                # - envVars:
+                    # env:
+                    # - key: "PATH+LOCAL_BIN"
+                      # value: "/usr/local/bin"
+                numExecutors: 1
+                remoteFS: "/Users/squaredev/j"
+                retentionStrategy: "always"
 
   # Optionally specify additional init-containers
   customInitContainers: []
@@ -1347,7 +1364,7 @@ persistence:
   ## A manually managed Persistent Volume and Claim
   ## Requires persistence.enabled: true
   ## If defined, PVC must be created manually before volume will be bound
-  existingClaim:
+  existingClaim: #"dev-jenkins"
   ## jenkins data Persistent Volume Storage Class
   ## If defined, storageClassName: <storageClass>
   ## If set to "-", storageClassName: "", which disables dynamic provisioning
@@ -1355,11 +1372,12 @@ persistence:
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
   ##
-  storageClass:
-  annotations: {}
+  storageClass: #"wekafs--sdf-k8s01"
+  annotations: 
+#volume.beta.kubernetes.io/storage-provisioner: csi.weka.io
   labels: {}
   accessMode: "ReadWriteOnce"
-  size: "8Gi"
+  size: "800Gi"
   volumes:
   #  - name: nothing
   #    emptyDir: {}
