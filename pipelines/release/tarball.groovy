@@ -621,7 +621,7 @@ def void s3PushDocker(String ... parts) {
         conda install pip
         pip install awscli
         aws --version
-        s3PushCmd() 
+        ${s3PushCmd()}
         conda deactivate
         """)
         
