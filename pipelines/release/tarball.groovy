@@ -615,6 +615,7 @@ def void s3PushDocker(String ... parts) {
   
           // alpine does not include bash by default
         util.posixSh("""
+        source /workspace/release/tarball/8adb498aff/build/conda/miniconda3-py38_4.9.2/etc/profile.d/conda.sh
         conda create --name aws-cli-env
         conda activate aws-cli-env
         conda install pip
