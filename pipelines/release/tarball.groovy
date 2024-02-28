@@ -601,11 +601,13 @@ def void writeScript(Map p) {
 def void s3PushDocker(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
-
+  def buildDir = "${cwd}/build"
+  
   def env = [
     "EUPS_PKGROOT=${cwd}/distrib",
     "EUPS_S3_OBJECT_PREFIX=${objectPrefix}",
     "HOME=${cwd}/home",
+    "BUILDDIR=${buildDir}",
   ]
 
   withEnv(env) {
@@ -615,7 +617,7 @@ def void s3PushDocker(String ... parts) {
   
           // alpine does not include bash by default
         util.posixSh("""
-        source /Users/squaredev/j/workspace/release/tarball/8adb498aff/build/conda/miniconda3-py38_4.9.2/etc/profile.d/conda.sh
+        source "${BUILDDIR}/conda/miniconda3-py38_4.9.2/etc/profile.d/conda.sh"
         conda create --name aws-cli-env
         conda activate aws-cli-env
         conda install pip
