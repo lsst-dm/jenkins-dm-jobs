@@ -251,6 +251,7 @@ def void verifyDataset(Map p) {
         namespace: "lsst.verify.drp",
         datasetName: "HSC/RC2/Nightly",
         sasquatchUrl: sqre.sasquatch.url,
+        pipeline: "DRP-RC2_subset.yaml",
       )
 
       // push results to squash

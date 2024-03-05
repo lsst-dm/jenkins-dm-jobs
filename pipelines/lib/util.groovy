@@ -2108,7 +2108,8 @@ def void runGen3ToJob(Map p) {
  *       namespace: "lsst.example",
  *       datasetName: "ci_example",
  *       sasquatchUrl: util.sqreConfig().sasquatch.url,
- *       branchRefs: "tickets/DM-12345 tickets/DM-67890"
+ *       branchRefs: "tickets/DM-12345 tickets/DM-67890",
+ *       pipeline: "SingleFrame.yaml",
  *     )
  * @param p Map
  * @param p.runDir String
@@ -2118,6 +2119,7 @@ def void runGen3ToJob(Map p) {
  * @param p.datasetName String The dataset name. Eg., validation_data_cfht
  * @param p.sasquatchUrl String The URL to the Sasquatch REST proxy.
  * @param p.branchRefs String The branch(es) used in the run, as a space-delimited string (optional).
+ * @param p.pipeline String The pipeline used in the run (optional).
  */
 def void runVerifyToSasquatch(Map p) {
   util.requireMapKeys(p, [
@@ -2145,7 +2147,8 @@ def void runVerifyToSasquatch(Map p) {
           --extra "ci_id=$BUILD_ID" \
           --extra "ci_url=$BUILD_URL" \
           --extra "ci_name=$JOB_NAME" \
-          --extra "ci_refs=$JOB_REFS"
+          --extra "ci_refs=$JOB_REFS" \
+          --extra "pipeline=$JOB_PIPELINE"
     '''
   } // run
 
@@ -2166,6 +2169,7 @@ def void runVerifyToSasquatch(Map p) {
     "dataset=${p.datasetName}",
     "SASQUATCH_URL=${p.sasquatchUrl}",
     "JOB_REFS=${p.containsKey('branchRefs') ? p.branchRefs : ''}",
+    "JOB_PIPELINE=${p.containsKey('pipeline') ? p.pipeline : ''}",
   ]) {
     // TODO: need Sasquatch authentication eventually; verify_to_sasquatch.py takes a --token arg
     // withCredentials([[

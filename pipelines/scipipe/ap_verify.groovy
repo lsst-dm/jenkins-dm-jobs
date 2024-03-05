@@ -1,3 +1,5 @@
+import java.nio.file.Path
+
 node('jenkins-manager') {
   if (params.WIPEOUT) {
     deleteDir()
@@ -288,12 +290,13 @@ def void verifyDataset(Map p) {
               namespace: "lsst.verify.ap",
               datasetName: ds.name,
               sasquatchUrl: sqre.sasquatch.url,
-              branchRefs: codeRef
+              branchRefs: codeRef,
+              pipeline: Path.of(ds.gen3_pipeline.trim()).getFileName().toString()
             )
             break
           default:
             currentBuild.result = 'UNSTABLE'
-            echo "SQuaSH upload not supported for Gen ${conf.gen} pipeline framework; skipping"
+            echo "Sasquatch upload not supported for Gen ${conf.gen} pipeline framework; skipping"
         }
       }
     } // insideDockerWrap
