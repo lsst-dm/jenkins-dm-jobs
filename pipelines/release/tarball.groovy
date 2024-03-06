@@ -135,7 +135,7 @@ def void linuxTarballs(
 
         stage('publish') {
           if (publish) {
-            s3PushDocker(envId)
+            s3PushConda(envId)
           }
         }
       }
@@ -208,13 +208,13 @@ def void osxTarballs(
 
         stage('publish') {
           if (publish) {
-            util.bash """
-              if ! docker ps > /dev/null 2>&1; then
-                open /Applications/Docker.app/
-                sleep 10
-              fi
-            """
-            s3PushDocker(envId)
+//            util.bash """
+//              if ! docker ps > /dev/null 2>&1; then
+//                open /Applications/Docker.app/
+//                sleep 10
+//              fi
+//            """
+            s3PushConda(envId)
           }
         }
       } // dir
@@ -598,22 +598,32 @@ def void writeScript(Map p) {
  * Push {@code ./distrib} dir to an s3 bucket under the "path" formed by
  * joining the {@code parts} parameters.
  */
-def void s3PushDocker(String ... parts) {
+def void s3PushConda(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
+  def buildDir = "${cwd}/build"
 
   def env = [
     "EUPS_PKGROOT=${cwd}/distrib",
     "EUPS_S3_OBJECT_PREFIX=${objectPrefix}",
     "HOME=${cwd}/home",
+    "BUILDDIR=${buildDir}"
   ]
 
   withEnv(env) {
     withEupsBucketEnv {
       timeout(time: 10, unit: 'MINUTES') {
-        docker.image(util.defaultAwscliImage()).inside {
+        //docker.image(util.defaultAwscliImage()).inside {
           // alpine does not include bash by default
-          util.posixSh(s3PushCmd())
+        util.posixSh("""
+        source "${BUILDDIR}/conda/miniconda3-py38_4.9.2/etc/profile.d/conda.sh"
+        conda create --name aws-cli-env
+        conda activate aws-cli-env
+        conda install pip
+        pip install awscli
+        ${s3PushCmd()}
+        conda deactivate
+        """)
         } // .inside
       }
     } //withEupsBucketEnv
