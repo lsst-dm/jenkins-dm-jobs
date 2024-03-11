@@ -817,7 +817,8 @@ def String smokeScript(
     # py3.5+
     estring2ref() {
       python -c "
-    import sys, re
+    import sys
+    import re
     for line in sys.stdin:
       foo = re.sub(r'^\\s*(?:[\\w.-]*g([a-zA-Z0-9]+)|([\\w.-]+))(?:\\+[\\dA-Fa-f]+)?\\s+.*', lambda m: m.group(1) or m.group(2), line)
       if foo is line:
