@@ -612,9 +612,7 @@ def void s3PushConda(String ... parts) {
 
   withEnv(env) {
     withEupsBucketEnv {
-      timeout(time: 10, unit: 'MINUTES') {
-        //docker.image(util.defaultAwscliImage()).inside {
-  
+      timeout(time: 10, unit: 'MINUTES') { 
           // alpine does not include bash by default
         util.posixSh("""
         source "${BUILDDIR}/conda/miniconda3-py38_4.9.2/etc/profile.d/conda.sh"
@@ -627,11 +625,10 @@ def void s3PushConda(String ... parts) {
         conda deactivate
         """)
         
-        //} // .inside
       }
     } //withEupsBucketEnv
   } // withEnv
-}
+} // s3PushConda
 
 /**
  * Returns a shell command string for pushing the EUPS_PKGROOT to s3.
