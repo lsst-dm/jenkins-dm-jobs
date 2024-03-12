@@ -135,7 +135,7 @@ def void linuxTarballs(
 
         stage('publish') {
           if (publish) {
-            s3PushConda(envId)
+            s3PushDocker(envId)
           }
         }
       }
@@ -592,7 +592,7 @@ def void writeScript(Map p) {
  * Push {@code ./distrib} dir to an s3 bucket under the "path" formed by
  * joining the {@code parts} parameters.
  */
-def void s3PushConda(String ... parts) {
+def void s3PushDocker(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
   def buildDir = "${cwd}/build"
