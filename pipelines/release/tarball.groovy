@@ -208,12 +208,6 @@ def void osxTarballs(
 
         stage('publish') {
           if (publish) {
-//            util.bash """
-//              if ! docker ps > /dev/null 2>&1; then
-//                open /Applications/Docker.app/
-//                sleep 10
-//              fi
-//            """
             s3PushConda(envId)
           }
         }
