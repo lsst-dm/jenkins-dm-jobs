@@ -610,10 +610,13 @@ def void s3PushConda(String ... parts) {
           // alpine does not include bash by default
         util.posixSh("""
         source "${BUILDDIR}/conda/miniconda3-py38_4.9.2/etc/profile.d/conda.sh"
-        conda create --name aws-cli-env
-        conda activate aws-cli-env
-        conda install pip
-        pip install awscli
+        if conda env list | grep aws-cli-env > /dev/null 2>&1; then
+            conda activate aws-cli-env
+            mamba update awscli
+        else
+            mamba create -y --name aws-cli-env awscli
+            conda activate aws-cli-env
+        fi
         ${s3PushCmd()}
         conda deactivate
         """)
