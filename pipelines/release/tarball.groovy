@@ -208,12 +208,6 @@ def void osxTarballs(
 
         stage('publish') {
           if (publish) {
-//            util.bash """
-//              if ! docker ps > /dev/null 2>&1; then
-//                open /Applications/Docker.app/
-//                sleep 10
-//              fi
-//            """
             s3PushConda(envId)
           }
         }
@@ -620,7 +614,6 @@ def void s3PushConda(String ... parts) {
         conda activate aws-cli-env
         conda install pip
         pip install awscli
-        aws --version
         ${s3PushCmd()}
         conda deactivate
         """)
