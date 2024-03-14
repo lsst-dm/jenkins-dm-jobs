@@ -265,7 +265,7 @@ notify.wrap {
           job: 'scipipe/ap_verify',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            string(name: 'DATASET_REF', value: gitTag),
+            string(name: 'DATASET_REF', value: "refs/tags/" + gitTag),
             booleanParam(
               name: 'NO_PUSH',
               value: scipipe.release.step.ap_verify.no_push,
