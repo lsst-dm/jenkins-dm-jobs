@@ -135,7 +135,7 @@ def void linuxTarballs(
 
         stage('publish') {
           if (publish) {
-            s3PushDocker(envId)
+            s3PushConda(envId)
           }
         }
       }
@@ -208,13 +208,7 @@ def void osxTarballs(
 
         stage('publish') {
           if (publish) {
-            util.bash """
-              if ! docker ps > /dev/null 2>&1; then
-                open /Applications/Docker.app/
-                sleep 10
-              fi
-            """
-            s3PushDocker(envId)
+            s3PushConda(envId)
           }
         }
       } // dir
@@ -598,27 +592,39 @@ def void writeScript(Map p) {
  * Push {@code ./distrib} dir to an s3 bucket under the "path" formed by
  * joining the {@code parts} parameters.
  */
-def void s3PushDocker(String ... parts) {
+def void s3PushConda(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
-
+  def buildDir = "${cwd}/build"
+  
   def env = [
     "EUPS_PKGROOT=${cwd}/distrib",
     "EUPS_S3_OBJECT_PREFIX=${objectPrefix}",
     "HOME=${cwd}/home",
+    "BUILDDIR=${buildDir}",
   ]
 
   withEnv(env) {
     withEupsBucketEnv {
-      timeout(time: 10, unit: 'MINUTES') {
-        docker.image(util.defaultAwscliImage()).inside {
+      timeout(time: 10, unit: 'MINUTES') { 
           // alpine does not include bash by default
-          util.posixSh(s3PushCmd())
-        } // .inside
+        util.posixSh("""
+        source "${BUILDDIR}/conda/miniconda3-py38_4.9.2/etc/profile.d/conda.sh"
+        if conda env list | grep aws-cli-env > /dev/null 2>&1; then
+            conda activate aws-cli-env
+            mamba update awscli
+        else
+            mamba create -y --name aws-cli-env awscli
+            conda activate aws-cli-env
+        fi
+        ${s3PushCmd()}
+        conda deactivate
+        """)
+        
       }
     } //withEupsBucketEnv
   } // withEnv
-}
+} // s3PushConda
 
 /**
  * Returns a shell command string for pushing the EUPS_PKGROOT to s3.
@@ -806,12 +812,12 @@ def String smokeScript(
     # py3.5+
     estring2ref() {
       python -c "
-    import sys,re;
-    for line in sys.stdin:
-      foo = re.sub(r'^\\s*(?:[\\w.-]*g([a-zA-Z0-9]+)|([\\w.-]+))(?:\\+[\\dA-Fa-f]+)?\\s+.*', lambda m: m.group(1) or m.group(2), line)
-      if foo is line:
-        sys.exit(1)
-      print(foo)
+import sys, re
+for line in sys.stdin:
+  foo = re.sub(r'^\\s*(?:[\\w.-]*g([a-zA-Z0-9]+)|([\\w.-]+))(?:\\+[\\dA-Fa-f]+)?\\s+.*', lambda m: m.group(1) or m.group(2), line)
+  if foo is line:
+    sys.exit(1)
+  print(foo)
     "
     }
 
