@@ -609,7 +609,7 @@ def void s3PushConda(String ... parts) {
       timeout(time: 10, unit: 'MINUTES') { 
           // alpine does not include bash by default
         util.posixSh("""
-        source "${BUILDDIR}/conda/miniconda3-py38_4.9.2/etc/profile.d/conda.sh"
+        eval "\$(${BUILDDIR}/conda/miniconda3-py38_4.9.2/bin/conda shell.bash hook)"
         if conda env list | grep aws-cli-env > /dev/null 2>&1; then
             conda activate aws-cli-env
             mamba update awscli
