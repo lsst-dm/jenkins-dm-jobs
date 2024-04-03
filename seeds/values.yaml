@@ -1,3 +1,4 @@
+---
 # yamllint disable rule:line-length
 
 
@@ -32,7 +33,7 @@ controller:
   lifecycle:
     postStart:
       exec:
-        command: 
+        command:
           [
             "/bin/sh",
             "-c",
@@ -102,27 +103,27 @@ controller:
         secretKeyRef:
           name: vault-approle
           key: APPROLE_SECRET
-  - name: CASC_VAULT_URL
-    value: https://vault.slac.stanford.edu
-  - name: CASC_VAULT_PATHS
-    value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth
-  - name: HTTP_PROXY
-    value: http://sdfproxy.sdf.slac.stanford.edu:3128
-  - name: HTTPS_PROXY
-    value: http://sdfproxy.sdf.slac.stanford.edu:3128
-  - name: http_proxy
-    value: http://sdfproxy.sdf.slac.stanford.edu:3128
-  - name: https_proxy
-    value: http://sdfproxy.sdf.slac.stanford.edu:3128
-  - name: no_proxy
-    value: '*.slac.stanford.edu'
-  - name: NO_PROXY
-    value: '*.slac.stanford.edu'
-  - name: JAVA_TOOL_OPTIONS
-    value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Duser.timezone=America/Los_Angeles"
+    - name: CASC_VAULT_URL
+      value: https://vault.slac.stanford.edu
+    - name: CASC_VAULT_PATHS
+      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth
+    - name: HTTP_PROXY
+      value: http://sdfproxy.sdf.slac.stanford.edu:3128
+    - name: HTTPS_PROXY
+      value: http://sdfproxy.sdf.slac.stanford.edu:3128
+    - name: http_proxy
+      value: http://sdfproxy.sdf.slac.stanford.edu:3128
+    - name: https_proxy
+      value: http://sdfproxy.sdf.slac.stanford.edu:3128
+    - name: no_proxy
+      value: '*.slac.stanford.edu'
+    - name: NO_PROXY
+      value: '*.slac.stanford.edu'
+    - name: JAVA_TOOL_OPTIONS
+      value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Duser.timezone=America/Los_Angeles"
       #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
-  - name: TZ
-    value: America/Los_Angeles
+    - name: TZ
+      value: America/Los_Angeles
   #- name: VAULT_TOKEN_LEASE_DURATION
   #  valueFrom:
   #    secretKeyRef:
@@ -131,41 +132,41 @@ controller:
   #   - name: http_proxy
   #     value: "http://192.168.64.1:3128"
   containerEnv:
-  - name: CASC_VAULT_APPROLE
-    valueFrom:
-      secretKeyRef:
-        name: vault-approle
-        key: APPROLE_ID
-  - name: CASC_VAULT_APPROLE_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: vault-approle
-        key: APPROLE_SECRET
+    - name: CASC_VAULT_APPROLE
+      valueFrom:
+        secretKeyRef:
+          name: vault-approle
+          key: APPROLE_ID
+    - name: CASC_VAULT_APPROLE_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: vault-approle
+          key: APPROLE_SECRET
   #- name: CASC_VAULT_TOKEN
   #  valueFrom:
   #    secretKeyRef:
   #      name: vault-token2
   #      key: VAULT_TOKEN
-  - name: CASC_VAULT_URL
-    value: https://vault.slac.stanford.edu
-  - name: CASC_VAULT_PATHS
-    value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth
-  - name: HTTP_PROXY
-    value: http://sdfproxy.sdf.slac.stanford.edu:3128
-  - name: HTTPS_PROXY
-    value: http://sdfproxy.sdf.slac.stanford.edu:3128
-  - name: http_proxy
-    value: http://sdfproxy.sdf.slac.stanford.edu:3128
-  - name: https_proxy
-    value: http://sdfproxy.sdf.slac.stanford.edu:3128
-  - name: no_proxy
-    value: '*.slac.stanford.edu'
-  - name: NO_PROXY
-    value: '*.slac.stanford.edu'
-  - name: TZ
-    value: America/Los_Angeles
-  - name: JAVA_TOOL_OPTIONS
-    value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Duser.timezone=America/Los_Angeles"
+    - name: CASC_VAULT_URL
+      value: https://vault.slac.stanford.edu
+    - name: CASC_VAULT_PATHS
+      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth
+    - name: HTTP_PROXY
+      value: http://sdfproxy.sdf.slac.stanford.edu:3128
+    - name: HTTPS_PROXY
+      value: http://sdfproxy.sdf.slac.stanford.edu:3128
+    - name: http_proxy
+      value: http://sdfproxy.sdf.slac.stanford.edu:3128
+    - name: https_proxy
+      value: http://sdfproxy.sdf.slac.stanford.edu:3128
+    - name: no_proxy
+      value: '*.slac.stanford.edu'
+    - name: NO_PROXY
+      value: '*.slac.stanford.edu'
+    - name: TZ
+      value: America/Los_Angeles
+    - name: JAVA_TOOL_OPTIONS
+      value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Duser.timezone=America/Los_Angeles"
       #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
   #- name: VAULT_TOKEN_LEASE_DURATION
   #  valueFrom:
@@ -1459,3 +1460,7 @@ awsSecurityGroupPolicies:
     - name: ""
       securityGroupIds: []
       podSelector: {}
+
+
+      
+...
