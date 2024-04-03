@@ -1,5 +1,6 @@
-# From https://github.com/jenkinsci/helm-charts/blob/main/charts/jenkins/values.yaml
+# yamllint disable rule:line-length
 
+# From https://github.com/jenkinsci/helm-charts/blob/main/charts/jenkins/values.yaml
 # Default values for jenkins.
 # This is a YAML-formatted file.
 # Declare name/value pairs to be passed into your templates.
@@ -15,7 +16,6 @@
 # ref: https://github.com/kubernetes/dns/blob/master/docs/specification.md
 
 
-# yamllint disable rule:line-length
 clusterZone: "cluster.local"
 
 renderHelmLabels: true
@@ -782,7 +782,6 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/username}"
-              
               - basicSSHUserPrivateKey: 
                   description: "SQRE OSX build agents"
                   id: "sqre-osx"
@@ -791,7 +790,6 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/username}"
-                  
               - basicSSHUserPrivateKey:
                   description: "mini OSX build agents"
                   id: "mini-osx"
@@ -800,7 +798,6 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/sqre-mini/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control/sqre-mini/username}"
-                  
               - usernamePassword:
                   description: "push conda packages -> s3"
                   id: "aws-cmirror-push"
@@ -862,17 +859,12 @@ controller:
                     host: "mac1.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac1"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
@@ -884,17 +876,12 @@ controller:
                     host: "mac2.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac2"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
@@ -906,17 +893,12 @@ controller:
                     host: "mac3.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac3"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
@@ -928,17 +910,12 @@ controller:
                     host: "mac4.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac4"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
@@ -950,17 +927,12 @@ controller:
                     host: "mac5.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac5"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
@@ -972,17 +944,12 @@ controller:
                     host: "mac6.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac6"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
@@ -996,7 +963,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1014,7 +981,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1032,7 +999,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1050,7 +1017,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1068,7 +1035,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1086,7 +1053,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
