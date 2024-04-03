@@ -7,7 +7,8 @@ the sqre/seeds/dm-jobs job to rebuild the interface.
 
 [![Build Status](https://travis-ci.org/lsst-dm/jenkins-dm-jobs.png)](https://travis-ci.org/lsst-dm/jenkins-dm-jobs)
 
-## Installing Jenkins
+Installing jenkins
+---
 
 `seeds` contains a README plus a helm values file for deploying a Jenkins
 controller at SLAC. Read that README for more details.
