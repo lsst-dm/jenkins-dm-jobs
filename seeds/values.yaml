@@ -1,7 +1,6 @@
 ---
 # yamllint disable rule:line-length
 
-
 # From https://github.com/jenkinsci/helm-charts/blob/main/charts/jenkins/values.yaml
 
 # Default values for jenkins.
@@ -24,10 +23,12 @@ renderHelmLabels: true
 controller:
   # Used for label app.kubernetes.io/component
   componentName: "jenkins-controller"
-  image: "jenkins/jenkins"
-  tag: "2.426.3-lts-jdk11"
-  #tagLabel: jdk11
-  imagePullPolicy: "Always"
+  image:
+    registry: "docker.io"
+    repository: "jenkins/jenkins"
+    tag: "2.440.2-lts-jdk21"
+    #tagLabel: jdk11
+    pullPolicy: "Always"
   imagePullSecretName:
   # Optionally configure lifetime for controller-container
   lifecycle:
@@ -37,7 +38,9 @@ controller:
           [
             "/bin/sh",
             "-c",
-            "echo 'handlers = java.util.logging.ConsoleHandler\njava.util.logging.ConsoleHandler.level = ALL\n.level= ALL' > /var/jenkins_home/logging.properties"
+            "echo 'handlers =
+            java.util.logging.ConsoleHandler\njava.util.logging.ConsoleHandler.level
+            = ALL\n.level= ALL' > /var/jenkins_home/logging.properties",
           ]
   disableRememberMe: false
   numExecutors: 0
@@ -48,18 +51,19 @@ controller:
   customJenkinsLabels: []
   # The default configuration uses this secret to configure an admin user
   # If you don't need that user or use a different security realm then you can disable it
-  adminSecret: true
 
   hostNetworking: false
   # When enabling LDAP or another non-Jenkins identity source, the built-in admin account will no longer exist.
   # If you disable the non-Jenkins identity store and instead use the Jenkins internal one,
   # you should revert controller.adminUser to your preferred admin user:
-  adminUser: "admin"
+
   # adminPassword: <defaults to random>
   admin:
     existingSecret: ""
     userKey: jenkins-admin-user
     passwordKey: jenkins-admin-password
+    createSecret: true
+    username: "admin"
   # This values should not be changed unless you use your custom image of
   # jenkins or any devired from. If you want to use Cloudbees Jenkins
   # Distribution docker, you should set jenkinsHome:
@@ -116,11 +120,16 @@ controller:
     - name: https_proxy
       value: http://sdfproxy.sdf.slac.stanford.edu:3128
     - name: no_proxy
-      value: '*.slac.stanford.edu'
+      value: "*.slac.stanford.edu"
     - name: NO_PROXY
-      value: '*.slac.stanford.edu'
+      value: "*.slac.stanford.edu"
     - name: JAVA_TOOL_OPTIONS
-      value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Duser.timezone=America/Los_Angeles"
+      value:
+        "-Dhttp.nonProxyHosts='*.slac.stanford.edu'
+        -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128
+        -Dhttps.nonProxyHosts='*.slac.stanford.edu'
+        -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128
+        -Duser.timezone=America/Los_Angeles"
       #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
     - name: TZ
       value: America/Los_Angeles
@@ -142,11 +151,11 @@ controller:
         secretKeyRef:
           name: vault-approle
           key: APPROLE_SECRET
-  #- name: CASC_VAULT_TOKEN
-  #  valueFrom:
-  #    secretKeyRef:
-  #      name: vault-token2
-  #      key: VAULT_TOKEN
+    #- name: CASC_VAULT_TOKEN
+    #  valueFrom:
+    #    secretKeyRef:
+    #      name: vault-token2
+    #      key: VAULT_TOKEN
     - name: CASC_VAULT_URL
       value: https://vault.slac.stanford.edu
     - name: CASC_VAULT_PATHS
@@ -160,13 +169,18 @@ controller:
     - name: https_proxy
       value: http://sdfproxy.sdf.slac.stanford.edu:3128
     - name: no_proxy
-      value: '*.slac.stanford.edu'
+      value: "*.slac.stanford.edu"
     - name: NO_PROXY
-      value: '*.slac.stanford.edu'
+      value: "*.slac.stanford.edu"
     - name: TZ
       value: America/Los_Angeles
     - name: JAVA_TOOL_OPTIONS
-      value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Duser.timezone=America/Los_Angeles"
+      value:
+        "-Dhttp.nonProxyHosts='*.slac.stanford.edu'
+        -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128
+        -Dhttps.nonProxyHosts='*.slac.stanford.edu'
+        -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128
+        -Duser.timezone=America/Los_Angeles"
       #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
   #- name: VAULT_TOKEN_LEASE_DURATION
   #  valueFrom:
@@ -325,7 +339,7 @@ controller:
   # LoadBalancerSourcesRange is a list of allowed CIDR values, which are combined with ServicePort to
   # set allowed inbound rules on the security group assigned to the controller load balancer
   loadBalancerSourceRanges:
-#  - 0.0.0.0/0
+  #  - 0.0.0.0/0
   # Optionally assign a known public LB IP
   # loadBalancerIP: 1.2.3.4
   # Optionally configure a JMX port
@@ -350,7 +364,6 @@ controller:
     - matrix-auth:3.1.9
     - hashicorp-vault-plugin:364.vf5d54b_3dc313
 
-
   # Set to false to download the minimum required version of all dependencies.
   installLatestPlugins: false
 
@@ -362,7 +375,7 @@ controller:
     #- ace-editor:1.1
     - antisamy-markup-formatter:162.v0e6ec0fcfcf6
     - apache-httpcomponents-client-4-api:4.5.14-208.v438351942757
-#depreciated    - async-http-client:1.9.40.0
+    #depreciated    - async-http-client:1.9.40.0
     - authentication-tokens:1.53.v1c90fd9191a_b_
     - blueocean-autofavorite:1.2.5
     - blueocean-bitbucket-pipeline:1.27.9
@@ -417,12 +430,12 @@ controller:
     - github-branch-source:1751.v90e17c48a_6a_c
     - github-oauth:597.ve0c3480fcb_d0
     - git-server:99.va_0826a_b_cdfa_d
-#depreciated    - greenballs:1.15.1
+    #depreciated    - greenballs:1.15.1
     - groovy:457.v99900cb_85593
-#depreciated    - handlebars:3.0.8
+    #depreciated    - handlebars:3.0.8
     - handy-uri-templates-2-api:2.1.8-22.v77d5b_75e6953
     - htmlpublisher:1.32
-#depreciated    - icon-shim:3.0.0
+    #depreciated    - icon-shim:3.0.0
     - instance-identity:185.v303dc7c645f9
     - ionicons-api:56.v1b_1c8c49374e
     - jackson2-api:2.15.3-372.v309620682326
@@ -438,7 +451,7 @@ controller:
     - jira:3.11
     - jjwt-api:0.11.5-77.v646c772fddb_0
     - jquery:1.12.4-1
-#depreciated    - jquery-detached:1.2.1
+    #depreciated    - jquery-detached:1.2.1
     - jquery3-api:3.7.1-1
     - jsch:0.2.8-65.v052c39de79b_2
     - junit:1240.vf9529b_881428
@@ -452,8 +465,8 @@ controller:
     - mina-sshd-api-common:2.11.0-86.v836f585d47fa_
     - mina-sshd-api-core:2.11.0-86.v836f585d47fa_
     - metrics:4.2.18-442.v02e107157925
-#depreciated    - momentjs:1.1.1
-#depreciated - need alternative?    - multiple-scms:0.8
+    #depreciated    - momentjs:1.1.1
+    #depreciated - need alternative?    - multiple-scms:0.8
     - nodelabelparameter:1.12.0
     - okhttp-api:4.11.0-157.v6852a_a_fa_ec11
     - parameterized-trigger:787.v665fcf2a_830b_
@@ -463,7 +476,7 @@ controller:
     - pipeline-input-step:477.v339683a_8d55e
     - pipeline-milestone-step:111.v449306f708b_7
     - pipeline-model-api:2.2151.ve32c9d209a_3f
-#depreciated    - pipeline-model-declarative-agent:1.1.1
+    #depreciated    - pipeline-model-declarative-agent:1.1.1
     - pipeline-model-definition:2.2151.ve32c9d209a_3f
     - pipeline-model-extensions:2.2151.ve32c9d209a_3f
     - pipeline-rest-api:2.34
@@ -493,18 +506,17 @@ controller:
     - token-macro:384.vf35b_f26814ec
     - trilead-api:2.84.v72119de229b_7
     - variant:60.v7290fc0eb_b_cd
-#depreciated     - windows-slaves:1.8.1  need to find alternative?
+    #depreciated     - windows-slaves:1.8.1  need to find alternative?
     - workflow-api:1283.v99c10937efcb_
     - workflow-basic-steps:1042.ve7b_140c4a_e0c
     - workflow-cps:3806.va_3a_6988277b_2
-#depreciated    - workflow-cps-global-lib:609.vd95673f149b_b
+    #depreciated    - workflow-cps-global-lib:609.vd95673f149b_b
     - workflow-durable-task-step:1289.v4d3e7b_01546b_
     - workflow-job:1360.vc6700e3136f5
     - workflow-multibranch:756.v891d88f2cd46
     - workflow-scm-step:415.v434365564324
     - workflow-step-api:639.v6eca_cd8c04a_a_
     - workflow-support:865.v43e78cc44e0d
-
 
   # Enable to initialize the Jenkins controller only once on initial installation.
   # Without this, whenever the controller gets restarted (Evicted, etc.) it will fetch plugin updates which has the potential to cause breakage.
@@ -570,7 +582,7 @@ controller:
     - "staticMethod org.codehaus.groovy.runtime.StackTraceUtils sanitize java.lang.Throwable"
     - "method java.net.URL openConnection"
   # List of groovy init scripts to be executed during Jenkins controller start
-  initScripts: []
+  initScripts: {}
   #  - |
   #    print 'adding global pipeline libraries, register properties, bootstrap jobs...'
 
@@ -946,9 +958,13 @@ controller:
       # jcasc changes will cause a reboot and will only be applied at the subsequent start-up.  Auto-reload uses the
       # http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to the configScripts are detected.
       enabled: false
-      image: kiwigrid/k8s-sidecar:1.15.0
+      image:
+        registry: docker.io
+        repository: kiwigrid/k8s-sidecar
+        tag: 1.26.1
       imagePullPolicy: IfNotPresent
-      resources: {}
+      resources:
+        {}
         #   limits:
         #     cpu: 100m
         #     memory: 100Mi
@@ -1131,7 +1147,7 @@ controller:
   testEnabled: true
 
   httpsKeyStore:
-    jenkinsHttpsJksSecretName: ''
+    jenkinsHttpsJksSecretName: ""
     enable: false
     httpPort: 8081
     path: "/var/jenkins_keystore"
@@ -1150,8 +1166,9 @@ agent:
   kubernetesReadTimeout: 15
   maxRequestsPerHostStr: "32"
   namespace:
-  image: "jenkins/inbound-agent"
-  tag: "4.11.2-4"
+  image:
+    repository: "jenkins/inbound-agent"
+    tag: "4.11.2-4"
   workingDir: "/home/jenkins/agent"
   nodeUsageMode: "NORMAL"
   customJenkinsLabels: []
@@ -1356,7 +1373,8 @@ networkPolicy:
   internalAgents:
     allowed: true
     podLabels: {}
-    namespaceLabels: {}
+    namespaceLabels:
+      {}
       # project: myproject
   externalAgents: {}
   #   ipCIDR: 172.17.0.0/16
@@ -1375,7 +1393,6 @@ serviceAccount:
   annotations: {}
   imagePullSecretName:
 
-
 serviceAccountAgent:
   # Specifies whether a ServiceAccount should be created
   create: false
@@ -1387,71 +1404,7 @@ serviceAccountAgent:
 
 ## Backup cronjob configuration
 ## Ref: https://github.com/maorfr/kube-tasks
-backup:
-  # Backup must use RBAC
-  # So by enabling backup you are enabling RBAC specific for backup
-  enabled: false
-  # Used for label app.kubernetes.io/component
-  componentName: "backup"
-  # Schedule to run jobs. Must be in cron time format
-  # Ref: https://crontab.guru/
-  schedule: "0 2 * * *"
-  labels: {}
-  serviceAccount:
-    create: true
-    name:
-    annotations: {}
-    # Example for authorization to AWS S3 using kube2iam or IRSA
-    # Can also be done using environment variables
-    # iam.amazonaws.com/role: "jenkins"
-    # "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/jenkins-backup"
-  # Set this to terminate the job that is running/failing continously and set the job status to "Failed"
-  activeDeadlineSeconds: ""
-  image:
-    repository: "maorfr/kube-tasks"
-    tag: "0.2.0"
-  imagePullSecretName:
-  # Additional arguments for kube-tasks
-  # Ref: https://github.com/maorfr/kube-tasks#simple-backup
-  extraArgs: []
-  # Add existingSecret for AWS credentials
-  existingSecret: {}
-  ## Example for using an existing secret
-   # jenkinsaws:
-  ## Use this key for AWS access key ID
-     # awsaccesskey: jenkins_aws_access_key
-  ## Use this key for AWS secret access key
-     # awssecretkey: jenkins_aws_secret_key
-  # Add additional environment variables
-   # jenkinsgcp:
-  ## Use this key for GCP credentials
-     # gcpcredentials: credentials.json
-  env: []
-  # Example environment variable required for AWS credentials chain
-  # - name: "AWS_REGION"
-  #   value: "us-east-1"
-  resources:
-    requests:
-      memory: 1Gi
-      cpu: 1
-    limits:
-      memory: 1Gi
-      cpu: 1
-  # Destination to store the backup artifacts
-  # Supported cloud storage services: AWS S3, Minio S3, Azure Blob Storage, Google Cloud Storage
-  # Additional support can added. Visit this repository for details
-  # Ref: https://github.com/maorfr/skbn
-  destination: "s3://jenkins-data/backup"
-  # By enabling only the jenkins_home/jobs folder gets backed up, not the whole jenkins instance
-  onlyJobs: false
-  # Enable backup pod security context (must be `true` if runAsUser or fsGroup are set)
-  usePodSecurityContext: true
-  # When setting runAsUser to a different value than 0 also set fsGroup to the same value:
-  runAsUser: 1000
-  fsGroup: 1000
-  securityContextCapabilities: {}
-  #  drop:
-  #    - NET_RAW
+
 checkDeprecation: true
 
 awsSecurityGroupPolicies:

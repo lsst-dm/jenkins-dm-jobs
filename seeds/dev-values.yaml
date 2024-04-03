@@ -1,8 +1,8 @@
 ---
-
 # yamllint disable rule:line-length
 
 # From https://github.com/jenkinsci/helm-charts/blob/main/charts/jenkins/values.yaml
+
 # Default values for jenkins.
 # This is a YAML-formatted file.
 # Declare name/value pairs to be passed into your templates.
@@ -16,8 +16,6 @@
 
 # For FQDN resolving of the controller service. Change this value to match your existing configuration.
 # ref: https://github.com/kubernetes/dns/blob/master/docs/specification.md
-
-
 clusterZone: "cluster.local"
 
 renderHelmLabels: true
@@ -131,8 +129,12 @@ controller:
       value: "*.slac.stanford.edu"
     - name: JAVA_TOOL_OPTIONS
       value:
-        "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Duser.timezone=America/Los_Angeles"
-        #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
+        "-Dhttp.nonProxyHosts='*.slac.stanford.edu'
+        -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128
+        -Dhttps.nonProxyHosts='*.slac.stanford.edu'
+        -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128
+        -Duser.timezone=America/Los_Angeles"
+      #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
     - name: TZ
       value: America/Los_Angeles
   #- name: VAULT_TOKEN_LEASE_DURATION
@@ -178,8 +180,12 @@ controller:
       value: America/Los_Angeles
     - name: JAVA_TOOL_OPTIONS
       value:
-        "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Duser.timezone=America/Los_Angeles"
-        #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
+        "-Dhttp.nonProxyHosts='*.slac.stanford.edu'
+        -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128
+        -Dhttps.nonProxyHosts='*.slac.stanford.edu'
+        -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128
+        -Duser.timezone=America/Los_Angeles"
+      #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
   #- name: VAULT_TOKEN_LEASE_DURATION
   #  valueFrom:
   #    secretKeyRef:
@@ -784,7 +790,8 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/username}"
-              - basicSSHUserPrivateKey:
+              
+              - basicSSHUserPrivateKey: 
                   description: "SQRE OSX build agents"
                   id: "sqre-osx"
                   privateKeySource:
@@ -792,6 +799,7 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/username}"
+                  
               - basicSSHUserPrivateKey:
                   description: "mini OSX build agents"
                   id: "mini-osx"
@@ -800,6 +808,7 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/sqre-mini/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control/sqre-mini/username}"
+                  
               - usernamePassword:
                   description: "push conda packages -> s3"
                   id: "aws-cmirror-push"
@@ -965,7 +974,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22
+                    port: 22 
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -983,7 +992,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22
+                    port: 22 
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1001,7 +1010,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22
+                    port: 22 
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1019,7 +1028,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22
+                    port: 22 
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1037,7 +1046,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22
+                    port: 22 
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1055,7 +1064,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22
+                    port: 22 
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1457,7 +1466,7 @@ persistence:
   ## A manually managed Persistent Volume and Claim
   ## Requires persistence.enabled: true
   ## If defined, PVC must be created manually before volume will be bound
-  existingClaim: #"dev-jenkins"
+  existingClaim:
   ## jenkins data Persistent Volume Storage Class
   ## If defined, storageClassName: <storageClass>
   ## If set to "-", storageClassName: "", which disables dynamic provisioning
@@ -1465,9 +1474,8 @@ persistence:
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
   ##
-  storageClass: #"wekafs--sdf-k8s01"
-  annotations:
-  #volume.beta.kubernetes.io/storage-provisioner: csi.weka.io
+  storageClass:
+  annotations: {}
   labels: {}
   accessMode: "ReadWriteOnce"
   size: "800Gi"
