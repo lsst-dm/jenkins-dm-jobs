@@ -32,7 +32,12 @@ controller:
   lifecycle:
     postStart:
       exec:
-        command: [ "/bin/sh", "-c", "echo 'handlers = java.util.logging.ConsoleHandler\njava.util.logging.ConsoleHandler.level = ALL\n.level= ALL' > /var/jenkins_home/logging.properties" ]
+        command: 
+          [
+            "/bin/sh",
+            "-c",
+            "echo 'handlers = java.util.logging.ConsoleHandler\njava.util.logging.ConsoleHandler.level = ALL\n.level= ALL' > /var/jenkins_home/logging.properties"
+          ]
   disableRememberMe: false
   numExecutors: 0
   # configures the executor mode of the Jenkins node. Possible values are: NORMAL or EXCLUSIVE
@@ -87,16 +92,16 @@ controller:
   # Environment variables that get added to the init container (useful for e.g.
   # http_proxy)
   initContainerEnv:
-  - name: CASC_VAULT_APPROLE
-    valueFrom:
-      secretKeyRef:
-        name: vault-approle
-        key: APPROLE_ID
-  - name: CASC_VAULT_APPROLE_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: vault-approle
-        key: APPROLE_SECRET
+    - name: CASC_VAULT_APPROLE
+      valueFrom:
+        secretKeyRef:
+          name: vault-approle
+          key: APPROLE_ID
+    - name: CASC_VAULT_APPROLE_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: vault-approle
+          key: APPROLE_SECRET
   - name: CASC_VAULT_URL
     value: https://vault.slac.stanford.edu
   - name: CASC_VAULT_PATHS
@@ -307,7 +312,7 @@ controller:
   # Optionally assign an IP to the LoadBalancer agentListenerService LoadBalancer
   # GKE users: only regional static IPs will work for Service Load balancer.
   agentListenerLoadBalancerIP:
-  agentListenerServiceAnnotations: 
+  agentListenerServiceAnnotations:
     metallb.universe.tf/address-pool: sdf-dmz
 
   # Example of 'LoadBalancer' type of agent listener with annotations securing it
@@ -355,7 +360,7 @@ controller:
   additionalPlugins:
     #- ace-editor:1.1
     - antisamy-markup-formatter:162.v0e6ec0fcfcf6
-    - apache-httpcomponents-client-4-api:4.5.14-208.v438351942757 
+    - apache-httpcomponents-client-4-api:4.5.14-208.v438351942757
 #depreciated    - async-http-client:1.9.40.0
     - authentication-tokens:1.53.v1c90fd9191a_b_
     - blueocean-autofavorite:1.2.5
@@ -479,7 +484,7 @@ controller:
     - snakeyaml-api:2.2-111.vc6598e30cc65
     - sse-gateway:1.26
     - ssh-agent:346.vda_a_c4f2c8e50
-    - ssh-credentials:308.ve4497b_ccd8f4 
+    - ssh-credentials:308.ve4497b_ccd8f4
     - sshd:3.312.v1c601b_c83b_0e
     - ssh-slaves:1.29.4
     - structs:325.vcb_307d2a_2782
@@ -604,10 +609,10 @@ controller:
   # characters: lowercase letters, numbers, and hyphens.  The keys become the name of a configuration yaml file on the controller in
   # /var/jenkins_home/casc_configs (by default) and will be processed by the Configuration as Code Plugin.  The lines after each |
   # become the content of the configuration yaml file.  The first line after this is a JCasC root element, eg jenkins, credentials,
-  # etc.  Best reference is https://<jenkins_url>/configuration-as-code/reference.  
-  JCasC: 
+  # etc.  Best reference is https://<jenkins_url>/configuration-as-code/reference.
+  JCasC:
     defaultConfig: true
-    # Ignored if securityRealm is defined in controller.JCasC.configScripts 
+    # Ignored if securityRealm is defined in controller.JCasC.configScripts
     securityRealm: |-
       #local:
       #  allowsSignup: false
@@ -623,7 +628,7 @@ controller:
         clientSecret: "${secret/rubin/rubin-jenkins-control/github-oauth/client-secret}"
         oauthScopes: "read:org"
     # Uses matrix-auth plugin to configure user and group permissions
-    authorizationStrategy: |- 
+    authorizationStrategy: |-
       globalMatrix:
         permissions:
         - "USER:Agent/Connect:sqre-user"
@@ -825,8 +830,8 @@ controller:
         security:
           globaljobdslsecurityconfiguration:
             useScriptSecurity: false
-      # Connects mac agents to jenkins controller 
-      permanent-nodes: |       
+      # Connects mac agents to jenkins controller
+      permanent-nodes: |
         jenkins:
           nodes:
             - permanent:
@@ -837,17 +842,12 @@ controller:
                     host: "mac1.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac1"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/square/j"
                 retentionStrategy: "always"
@@ -859,17 +859,12 @@ controller:
                     host: "mac2.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac2"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/square/j"
                 retentionStrategy: "always"
@@ -881,17 +876,12 @@ controller:
                     host: "mac3.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac3"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/square/j"
                 retentionStrategy: "always"
@@ -903,17 +893,12 @@ controller:
                     host: "mac4.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac4"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/square/j"
                 retentionStrategy: "always"
@@ -925,17 +910,12 @@ controller:
                     host: "mac5.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac5"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/square/j"
                 retentionStrategy: "always"
@@ -947,21 +927,15 @@ controller:
                     host: "mac6.lsst.cloud"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 name: "mac6"
-                # nodeProperties:
-                # - envVars:
-                    # env:
-                    # - key: "PATH+LOCAL_BIN"
-                      # value: "/usr/local/bin"
                 numExecutors: 1
                 remoteFS: "/Users/square/j"
                 retentionStrategy: "always"
-
   # Optionally specify additional init-containers
   customInitContainers: []
 
