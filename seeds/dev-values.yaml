@@ -782,7 +782,7 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/username}"
-              - basicSSHUserPrivateKey: 
+              - basicSSHUserPrivateKey:
                   description: "SQRE OSX build agents"
                   id: "sqre-osx"
                   privateKeySource:

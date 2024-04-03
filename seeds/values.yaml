@@ -1,3 +1,6 @@
+# yamllint disable rule:line-length
+
+
 # From https://github.com/jenkinsci/helm-charts/blob/main/charts/jenkins/values.yaml
 
 # Default values for jenkins.
