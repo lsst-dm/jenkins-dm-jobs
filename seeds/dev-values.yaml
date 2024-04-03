@@ -1529,6 +1529,4 @@ awsSecurityGroupPolicies:
     - name: ""
       securityGroupIds: []
       podSelector: {}
-
-
 ...
