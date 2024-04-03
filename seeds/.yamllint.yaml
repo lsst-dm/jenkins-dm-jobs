@@ -1,9 +1,0 @@
-extends: default
-rules:
-  document-start: {present: false}
-  line-length:
-    max: 132
-    allow-non-breakable-words: true
-    allow-non-breakable-inline-mappings: true
-  indentation:
-    indent-sequences: consistent
