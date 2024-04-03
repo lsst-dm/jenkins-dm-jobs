@@ -13,6 +13,9 @@
 
 # For FQDN resolving of the controller service. Change this value to match your existing configuration.
 # ref: https://github.com/kubernetes/dns/blob/master/docs/specification.md
+
+
+# yamllint disable rule:line-length
 clusterZone: "cluster.local"
 
 renderHelmLabels: true
