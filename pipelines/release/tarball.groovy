@@ -607,7 +607,12 @@ def void s3PushConda(String ... parts) {
   withEnv(env) {
     withEupsBucketEnv {
       timeout(time: 10, unit: 'MINUTES') { 
-          // alpine does not include bash by default
+        if (osfamily != "osx") {
+          docker.image(util.defaultAwscliImage()).inside {
+            util.posixSh(s3PushCmd())
+          }
+          return
+        }
         util.posixSh("""
         eval "\$(${BUILDDIR}/conda/miniconda3-py38_4.9.2/bin/conda shell.bash hook)"
         if conda env list | grep aws-cli-env > /dev/null 2>&1; then
