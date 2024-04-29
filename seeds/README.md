@@ -115,11 +115,11 @@ The helm values files are stored in this repository under
       * Click `Restart Jenkins when installation is complete and no jobs are running` in the next window. (Cancel any jobs if you haven't before). 
       * Wait for Jenkins to restart -- if it does not restart, navigate back to the home page and click `Restart Safely`.
          * If the page gets stuck at `503 Service Temporarily Unavailable`
-           then check the pod logs. It is likely the `init` container is
+           * Check the pod logs. It is likely the `init` container is
            crashing due to a missed dependency.
-         * If the values file in `github` is up-to-date, can also use `helm upgrade`: 
-           `helm upgrade <release> -n namespace <chart> -f <filename>`
-         * If still stuck, rollback to the previous release:
+           * If the values file in `github` is up-to-date, can also use `helm upgrade`: 
+           `helm upgrade <release> -n namespace <chart> -f <filename>` to reset the values. 
+           * If still stuck, rollback to the previous release:
            `helm rollback <release> <rollback-number> -n <namespace>`.
            If `<rollback-number>` is left blank, helm will rollback the most recent release.
            To view previous releases: `helm history <release> -n <namespace>`.
@@ -132,3 +132,11 @@ The helm values files are stored in this repository under
    }
    ```
    Copy these values into the helm chart under `installPlugins` and `additionalPlugins`. 
+
+## Upgrading the Helm Chart
+Once the Jenkins version, JDK version and plugin versions are all updated in the helm chart, you can run `helm upgrade` on the release:
+```
+helm upgrade <release> -n namespace <chart> -f <filename>
+```
+For the current production, this will be: 
+`helm upgrade prod -n jenkins-prod jenkinsci/jenkins -f values.yaml`
