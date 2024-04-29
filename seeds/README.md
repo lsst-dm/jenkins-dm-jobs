@@ -63,7 +63,7 @@ you will want to be familiar with:
    properties, seed jobs and authentication are configured here.
 * `ingress`: This is where we configure external access to jenkins.
 
-# Updating Jenkins - step-by-step guide: 
+# Upgrading Jenkins - step-by-step guide: 
 
 ## Backing up Current Jenkins State:
 Before Jenkins can be properly updated, the state must be backed up. 
