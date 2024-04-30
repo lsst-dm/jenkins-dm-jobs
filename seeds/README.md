@@ -77,15 +77,16 @@ Jenkins state is currently stored in a tarball at s3df under the directory
   
 1. Ensure that no jobs are running at <https://rubin-ci.slac.stanford.edu/>.
    If there are jobs running during an update, cancel those jobs and notify the
-   owners of the jobs via the slack channel `dm-jenkins`. Ensure the jobs cancel
-   completely before beginning the backup. 
+   owners of the jobs via the slack channel `dm-jenkins`. Ensure the jobs are
+   cancelled completely before beginning the backup. 
 3. On cluster `rubin-jenkins-control`, `exec` into the jenkins container
    on the production pod:
 ```
 k exec prod-jenkins-0 -n jenkins-prod -it -- sh
 ```
-3. Move to the `jenkins_home` directory: `cd /var/jenkins_home`
-4. Tar the contents of the folder (excluding the . and .. directories) to s3df.
+3. Move to the `jenkins_home` directory: `cd /var/jenkins_home` - it should start like this:
+   ![](../runbook/images/jenkins8.png)
+5. Tar the contents of the folder (excluding the . and .. directories) to s3df.
    Replace YOUR_USERNAME and DATE appropriately in the code block below:
 ```
 tar czf -  --directory=/var/jenkins_home --exclude=. --exclude=.. * .* | ssh  YOUR_USERNAME@sdfdtn001.slac.stanford.edu 'cat > /sdf/data/rubin/user/ranabhat/prod_jenkins/prod_jenkins_home_DATE.tar.gz'
@@ -93,16 +94,17 @@ tar czf -  --directory=/var/jenkins_home --exclude=. --exclude=.. * .* | ssh  YO
   * DO NOT close this window until the tarball is finished - about 1 hour. 
 5. In a new terminal, `ssh` into the directory at s3df and `ls -lah` to check
    that the contents are being copied over.
-7. Once the contents have fully copied, proceed to the next step.
+7. Once the contents have been fully copied over, proceed to the next step.
 
 ## Updating the Helm Values Files
 The helm values files are stored in this repository under
    `dev-values.yaml` and `values.yaml`
 ### Upgrade the __Jenkins Version__
-   * Find the latest version lts-jdk21 version on docker and
+   * Find the most recent `lts-jdk21` version on dockerhub <https://hub.docker.com/r/jenkins/jenkins/tags?page=&page_size=&ordering=&name=lts-jdk21> and
    replace `controller.image.tag` (found at the top of the values file).
 ### Upgrade the __jdk version__ 
-   * Find a tag corresponding to the jdk version (ie, `lts-jdk17`, `lts-jdk21`).
+   * The `jdk21` part of the tag above corresponds to the JDK version (ie, `lts-jdk17`, `lts-jdk21`).
+   ![](../runbook/images/jenkins9.png)
 ### Upgrade the __plugins__
 1. Navigate to the UI.
 * Development Jenkins: <https://rubin-ci-dev.slac.stanford.edu/>
@@ -113,23 +115,21 @@ The helm values files are stored in this repository under
 
 3. Select `Plugins`
  ![](../runbook/images/jenkins2.png)
-4. Navigate to `Updates` to view available updates for current plugins. 
+4. Navigate to `Updates` to view available updates for current plugins.
+   ![](../runbook/images/jenkins7.png)
    There are two ways to go about upgrading the plugins:
-   * First, which is recommended, is to manually check and add the updated plugin version to the helm values chart. This allows you to easily catch `breaking upgrades` or `additional dependencies`.
-   * Second, is to check in the UI if there are any `breaking upgrades/additonal dependencies` in the UI -- they will be blocked out in red. 
+   * First, __which is the recommended process__, is to manually add the updated plugin version (highlighted above in yellow) to the helm values file. This allows you to easily catch `breaking upgrades` or `additional dependencies`. Additionally, plugin versions will be recorded right away in the helm values chart, making sure there are no discrepencies between the values chart and the UI. 
+     * Add these values to `installPlugins` and `additionalPlugins` in the values file: 
+     ![](../runbook/images/jenkins6.png)
+     * If you don't know the installation name of the plugin, click the plugin in the UI. This will bring you to a new page, click on 'releases' to see the installation name and options.
+     * See Plugin Upgrade Troubleshooting if the pod does not spin up.
+   * The second way to update the plugins is __not recommended for production__ as updating plugins in the UI can cause breaking changes and discrepencies between the helm chart. 
+      * Check in the UI if there are any `breaking upgrades/additional dependencies` -- they will be blocked out in red. 
       * Click the check box next to `name` at the top of the list and upgrade all the plugins.
         ![](../runbook/images/jenkins4.png)
       * Click `Restart Jenkins when installation is complete and no jobs are running` in the next window. (Cancel any jobs if you haven't before). 
       * Wait for Jenkins to restart -- if it does not restart, navigate back to the home page and click `Restart Safely`.
-         * If the page gets stuck at `503 Service Temporarily Unavailable`
-           * Check the pod logs. It is likely the `init` container is
-           crashing due to a missed dependency.
-           * If the values file in `github` is up-to-date, can also use `helm upgrade`: 
-           `helm upgrade <release> -n namespace <chart> -f <filename>` to reset the values. 
-           * If still stuck, rollback to the previous release:
-           `helm rollback <release> <rollback-number> -n <namespace>`.
-           If `<rollback-number>` is left blank, helm will rollback the most recent release.
-           To view previous releases: `helm history <release> -n <namespace>`.
+        * See Plugin Upgrade Troubleshooting if the pod does not spin up.
 
       * Navigate to `Manage Jenkins` then `Script Console`.
          ![](../runbook/images/jenkins3.png)
@@ -140,12 +140,28 @@ The helm values files are stored in this repository under
    }
    ```
    ![](../runbook/images/jenkins5.png)
-   Copy these values into the helm chart under `installPlugins` and `additionalPlugins`. 
+   ![](../runbook/images/jenkins10.png)
+      
+      * __Copy the results (ignoring the bit at the end) into the helm values file under `installPlugins` and `additionalPlugins`.__
+    
+### Plugin Upgrade Troubleshooting 
 
+* If the page gets stuck at `503 Service Temporarily Unavailable`
+  * Check the pod logs. The `init` container likely is
+    crashing due to a missed dependency.
+* If the values file in `github` is up-to-date, can also use `helm upgrade` to reset the values: 
+   * `helm upgrade <release> -n namespace <chart> -f <filename>` 
+* If still stuck, rollback to the previous release:
+  * `helm rollback <release> <rollback-number> -n <namespace>`
+  * If `<rollback-number>` is left blank, helm will rollback the most recent release.
+    * To view previous releases: `helm history <release> -n <namespace>`
 ## Upgrading the Helm Chart
 Once the Jenkins version, JDK version and plugin versions are all updated in the helm chart, you can run `helm upgrade` on the release:
-```
-helm upgrade <release> -n namespace <chart> -f <filename>
-```
+`helm upgrade <release> -n namespace <chart> -f <filename>`
 For the current production, this will be: 
-`helm upgrade prod -n jenkins-prod jenkinsci/jenkins -f values.yaml`
+```
+helm upgrade prod -n jenkins-prod jenkinsci/jenkins -f values.yaml
+```
+## Upgrading the linux agents JDK version
+The JDK version of the linux agents is located here: <https://github.com/lsst-dm/docker-jenkins-swarm-client/blob/6d70a7c072f2762600e6c42dea882683f18bcfdb/Dockerfile#L24> 
+This version should match the Jenkins control, which can be found under `Manage Jenkins / System Information / java.runtime.version ` 
