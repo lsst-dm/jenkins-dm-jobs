@@ -105,13 +105,20 @@ The helm values files are stored in this repository under
    * Find a tag corresponding to the jdk version (ie, `lts-jdk17`, `lts-jdk21`).
 ### Upgrade the __plugins__
 1. Navigate to the UI.
-2. Select `Manage Jenkins`
+* Development Jenkins: <https://rubin-ci-dev.slac.stanford.edu/>
+* Production Jenkins: <https://rubin-ci.slac.stanford.edu/>
+
+2. Select `Manage Jenkins` <br>
+ ![](../runbook/images/jenkins1.png)
+
 3. Select `Plugins`
+ ![](../runbook/images/jenkins2.png)
 4. Navigate to `Updates` to view available updates for current plugins. 
    There are two ways to go about upgrading the plugins:
    * First, which is recommended, is to manually check and add the updated plugin version to the helm values chart. This allows you to easily catch `breaking upgrades` or `additional dependencies`.
    * Second, is to check in the UI if there are any `breaking upgrades/additonal dependencies` in the UI -- they will be blocked out in red. 
       * Click the check box next to `name` at the top of the list and upgrade all the plugins.
+        ![](../runbook/images/jenkins4.png)
       * Click `Restart Jenkins when installation is complete and no jobs are running` in the next window. (Cancel any jobs if you haven't before). 
       * Wait for Jenkins to restart -- if it does not restart, navigate back to the home page and click `Restart Safely`.
          * If the page gets stuck at `503 Service Temporarily Unavailable`
@@ -125,12 +132,14 @@ The helm values files are stored in this repository under
            To view previous releases: `helm history <release> -n <namespace>`.
 
       * Navigate to `Manage Jenkins` then `Script Console`.
-      * In the script console, the following to get a list of the plugins with their updated versions:
+         ![](../runbook/images/jenkins3.png)
+      * In the script console, insert the following and press `run` to get a list of the plugins with their updated versions:
    ```
    Jenkins.instance.pluginManager.plugins.each {
       println("${it.getShortName()}: ${it.getVersion()}")
    }
    ```
+   ![](../runbook/images/jenkins5.png)
    Copy these values into the helm chart under `installPlugins` and `additionalPlugins`. 
 
 ## Upgrading the Helm Chart
