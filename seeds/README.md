@@ -119,7 +119,7 @@ The helm values files are stored in this repository under
 `dev-values.yaml` and `values.yaml`. To upgrade, copy the values file
 locally and make changes to it with upgraded version values. Then
 upgrade the chart with `helm upgrade` and the new values file. On a
-successful upgrade, update the values files in this repo. 
+successful upgrade, update the values files in this repo.
 
 #### Upgrade the __Jenkins Version__
 
@@ -152,7 +152,8 @@ There are two ways to go about upgrading the plugins:
   updated plugin version (highlighted above in yellow) to the helm values
   file. This allows you to easily catch `breaking upgrades` or
   `additional dependencies`. Additionally, plugin versions will be recorded
-  right away in the helm values chart, ensuring there are no discrepancies between the values chart and the UI.
+  right away in the helm values chart, ensuring there are no
+  discrepancies between the values chart and the UI.
 
    * Add these values to `installPlugins` and `additionalPlugins` in the
      values file:
