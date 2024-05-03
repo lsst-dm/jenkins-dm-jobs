@@ -118,10 +118,10 @@ The helm values files are stored in this repository under
 
 ### Upgrade the __jdk version__
 
-* The `jdk21` part of the tag above corresponds to the JDK version
-  (ie, `lts-jdk17`, `lts-jdk21`).
+The `jdk21` part of the tag above corresponds to the JDK version
+(ie, `lts-jdk17`, `lts-jdk21`).
+![](../runbook/images/jenkins9.png)
 
-   ![](../runbook/images/jenkins9.png)
 ### Upgrade the __plugins__
 
 1. Navigate to the UI.
