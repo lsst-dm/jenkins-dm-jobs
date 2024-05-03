@@ -853,8 +853,7 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/username}"
-              
-              - basicSSHUserPrivateKey: 
+              - basicSSHUserPrivateKey:
                   description: "SQRE OSX build agents"
                   id: "sqre-osx"
                   privateKeySource:
@@ -862,7 +861,6 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/username}"
-                  
               - basicSSHUserPrivateKey:
                   description: "mini OSX build agents"
                   id: "mini-osx"
@@ -871,7 +869,6 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/sqre-mini/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control/sqre-mini/username}"
-                  
               - usernamePassword:
                   description: "push conda packages -> s3"
                   id: "aws-cmirror-push"
@@ -1037,7 +1034,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1055,7 +1052,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1073,7 +1070,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1091,7 +1088,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1109,7 +1106,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
@@ -1127,7 +1124,7 @@ controller:
                     javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
                     launchTimeoutSeconds: 210
                     maxNumRetries: 10
-                    port: 22 
+                    port: 22
                     retryWaitTime: 15
                     sshHostKeyVerificationStrategy:
                       manuallyTrustedKeyVerificationStrategy:
