@@ -77,13 +77,12 @@ Jenkins state is currently stored in a tarball at s3df under the directory
   on the pod. To preserve the state, we tar the contents of `jenkins_home`
   to SLAC s3df. The transfer will take about an hour.
 * Check that you have `ssh` access to s3df with:
-  * __ssh *YOUR_USERNAME*@sdfdtn001.slac.stanford.edu__
+   * __ssh *YOUR_USERNAME*@sdfdtn001.slac.stanford.edu__
 
 1. Ensure that no jobs are running at <https://rubin-ci.slac.stanford.edu/>.
    If there are jobs running during an update, cancel those jobs and notify the
    owners of the jobs via the slack channel `dm-jenkins`. Ensure the jobs are
    cancelled completely before beginning the backup.
-
 2. On cluster `rubin-jenkins-control`, `exec` into the jenkins container
    on the production pod:
 
@@ -94,7 +93,6 @@ k exec prod-jenkins-0 -n jenkins-prod -it -- sh
 3. Move to the `jenkins_home` directory: `cd /var/jenkins_home` - it should
 start like this:
    ![](../runbook/images/jenkins8.png)
-
 4. Tar the contents of the folder (excluding the . and .. directories) to s3df.
    Replace YOUR_USERNAME and DATE appropriately in the code block below:
 
@@ -102,7 +100,7 @@ start like this:
 tar czf -  --directory=/var/jenkins_home --exclude=. --exclude=.. * .* | ssh  YOUR_USERNAME@sdfdtn001.slac.stanford.edu 'cat > /sdf/data/rubin/user/ranabhat/prod_jenkins/prod_jenkins_home_DATE.tar.gz'
 ```
 
-* DO NOT close this window until the tarball is finished - about 1 hour.
+   * DO NOT close this window until the tarball is finished - about 1 hour.
 5. In a new terminal, `ssh` into the directory at s3df and `ls -lah` to check
    that the contents are being copied over.
 6. Once the contents have been fully copied over, proceed to the next step.
@@ -114,13 +112,13 @@ The helm values files are stored in this repository under
 
 ### Upgrade the __Jenkins Version__
 
-   * Find the most recent `lts-jdk21` version on dockerhub
+* Find the most recent `lts-jdk21` version on dockerhub
 <https://hub.docker.com/r/jenkins/jenkins/tags?page=&page_size=&ordering=&name=lts-jdk21>
 and replace `controller.image.tag` (found at the top of the values file).
 
 ### Upgrade the __jdk version__
 
-   * The `jdk21` part of the tag above corresponds to the JDK version
+* The `jdk21` part of the tag above corresponds to the JDK version
    (ie, `lts-jdk17`, `lts-jdk21`).
 
    ![](../runbook/images/jenkins9.png)
@@ -128,8 +126,8 @@ and replace `controller.image.tag` (found at the top of the values file).
 
 1. Navigate to the UI.
 
-* Development Jenkins: <https://rubin-ci-dev.slac.stanford.edu/>
-* Production Jenkins: <https://rubin-ci.slac.stanford.edu/>
+* [Development Jenkins](https://rubin-ci-dev.slac.stanford.edu/)
+* [Production Jenkins](https://rubin-ci.slac.stanford.edu/)
 
 2. Select `Manage Jenkins` <br>
  ![](../runbook/images/jenkins1.png)
@@ -141,41 +139,41 @@ and replace `controller.image.tag` (found at the top of the values file).
    ![](../runbook/images/jenkins7.png)
    There are two ways to go about upgrading the plugins:
 
-   * First, __which is the recommended process__, is to manually add the
+*  First, __which is the recommended process__, is to manually add the
    updated plugin version (highlighted above in yellow) to the helm values
    file. This allows you to easily catch `breaking upgrades` or
    `additional dependencies`. Additionally, plugin versions will be recorded
    right away in the helm values chart, making sure there are no discrepencies
    between the values chart and the UI.
 
-     * Add these values to `installPlugins` and `additionalPlugins` in the
+   * Add these values to `installPlugins` and `additionalPlugins` in the
      values file:
      ![](../runbook/images/jenkins6.png)
-     * If you don't know the installation name of the plugin, click the plugin
+   * If you don't know the installation name of the plugin, click the plugin
      in the UI. This will bring you to a new page, click on 'releases' to see
      the installation name and options.
-     * See Plugin Upgrade Troubleshooting if the pod does not spin up.
+   * See Plugin Upgrade Troubleshooting if the pod does not spin up.
 
-   * The second way to update the plugins is __not recommended for production__
+*  The second way to update the plugins is __not recommended for production__
    as updating plugins in the UI can cause breaking changes and discrepencies
    between the helm chart.
 
-      * Check in the UI if there are any
+   * Check in the UI if there are any
       `breaking upgrades/additional dependencies`
       -- they will be blocked out in red.
-      * Click the check box next to `name` at the top of the list and upgrade
+   * Click the check box next to `name` at the top of the list and upgrade
       all the plugins.
         ![](../runbook/images/jenkins4.png)
-      * Click `Restart Jenkins when installation is complete and no jobs are running`
+   * Click `Restart Jenkins when installation is complete and no jobs are running`
       in the next window. (Cancel any jobs if you haven't before).
-      * Wait for Jenkins to restart -- if it does not restart, navigate back to
+   * Wait for Jenkins to restart -- if it does not restart, navigate back to
       the home page and click `Restart Safely`.
 
-        * See Plugin Upgrade Troubleshooting if the pod does not spin up.
+      * See Plugin Upgrade Troubleshooting if the pod does not spin up.
 
-      * Navigate to `Manage Jenkins` then `Script Console`.
+   * Navigate to `Manage Jenkins` then `Script Console`.
          ![](../runbook/images/jenkins3.png)
-      * In the script console, insert the following and press `run` to get a
+   * In the script console, insert the following and press `run` to get a
       list of the plugins with their updated versions:
 
    ```
@@ -193,18 +191,19 @@ and replace `controller.image.tag` (found at the top of the values file).
 ### Plugin Upgrade Troubleshooting
 
 * If the page gets stuck at `503 Service Temporarily Unavailable`
-  * Check the pod logs. The `init` container likely is
+   * Check the pod logs. The `init` container likely is
     crashing due to a missed dependency.
 * If the values file in `github` is up-to-date, can also use `helm upgrade`
   to reset the values:
    * `helm upgrade <release> -n namespace <chart> -f <filename>`
 * If still stuck, rollback to the previous release:
-  * `helm rollback <release> <rollback-number> -n <namespace>`
-  * If `<rollback-number>` is left blank, helm will rollback the
+   * `helm rollback <release> <rollback-number> -n <namespace>`
+   * If `<rollback-number>` is left blank, helm will rollback the
   most recent release.
-    * To view previous releases: `helm history <release> -n <namespace>`
+   * To view previous releases: `helm history <release> -n <namespace>`
 
 ## Upgrading the Helm Chart
+
 Once the Jenkins version, JDK version and plugin versions are all updated
 in the helm chart, you can run `helm upgrade` on the release:
 `helm upgrade <release> -n namespace <chart> -f <filename>`
@@ -215,7 +214,14 @@ helm upgrade prod -n jenkins-prod jenkinsci/jenkins -f values.yaml
 ```
 
 ## Upgrading the linux agents JDK version
-The JDK version of the linux agents is located here:
-<https://github.com/lsst-dm/docker-jenkins-swarm-client/blob/6d70a7c072f2762600e6c42dea882683f18bcfdb/Dockerfile#L24>
+
+The JDK version of the linux agents is located [here](https://github.com/lsst-dm/docker-jenkins-swarm-client/blob/6d70a7c072f2762600e6c42dea882683f18bcfdb/Dockerfile#L24).
 This version should match the Jenkins control, which can be found under
 `Manage Jenkins / System Information / java.runtime.version `
+
+* After the version is updated, navigate to the LSST Google Cloud `jenkins-prod`project
+* In the hamburger menu on the upper RHS, select `Kubernetes Engine` and `workloads`; there you will see a list of the deployed [statefulset swarm agents](https://console.cloud.google.com/kubernetes/workload/overview?authuser=1&project=prompt-proto&pageState=(%22savedViews%22:(%22i%22:%22bf849e9642c3422e9896e8f5c5a3089d%22,%22c%22:%5B%5D,%22n%22:%5B%5D)))
+* Select a statefulset agent
+* Select a pod and delete (be mindful that you are deleting the pod and NOT the statefulset). Continue to delete all pods. 
+   * Deleting the pods will restart a new instance and allow the pods to use the most recent JDK version. 
+   * Each pod can take up to 15 minutes to respawn, so feel free to delete all the agent pods at once to speed up the process.
