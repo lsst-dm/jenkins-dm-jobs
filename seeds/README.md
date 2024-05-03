@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD029 -->
 # Seed Jobs, Values Files, and  Step-by-Step Upgrade Guide for Jenkins
 
 ## Seed Jobs
@@ -112,9 +113,9 @@ The helm values files are stored in this repository under
 
 ### Upgrade the __Jenkins Version__
 
-* Find the most recent `lts-jdk21` version on
-  [dockerhub](https://hub.docker.com/r/jenkins/jenkins/tags?page=&page_size=&ordering=&name=lts-jdk21)
-  and replace `controller.image.tag` (found at the top of the values file).
+Find the most recent `lts-jdk21` version on
+[dockerhub](https://hub.docker.com/r/jenkins/jenkins/tags?page=&page_size=&ordering=&name=lts-jdk21)
+and replace `controller.image.tag` (found at the top of the values file).
 
 ### Upgrade the __jdk version__
 
