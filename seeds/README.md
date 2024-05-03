@@ -11,7 +11,7 @@ It appears that the original seed job system was based on
 <https://github.com/sheehan/job-dsl-gradle-example/>. It is worth referring to
 that repository to understand how seed jobs are set up.
 
-## Why use Helm to set up Jenkins
+### Why use Helm to set up Jenkins
 
 As per <https://www.jenkins.io/doc/book/installing/kubernetes/>, there are three
 ways of installing jenkins into a kubernetes cluster:
@@ -29,7 +29,9 @@ Whilst manually setting up the system might give more control of the system, it
 does involve more maintenance overhead than the other two options, and does not
 allow as easy configuration of the system.
 
-## Setting up Helm for installing Jenkins
+## Installation
+
+### Setting up Helm for installing Jenkins
 
 See <https://helm.sh/docs/intro/install/> for how to install helm.
 
@@ -43,7 +45,7 @@ helm repo add jenkinsci <https://charts.jenkins.io>
 This should now appear on the list of installed repositories that appear by
 running `helm repo list`.
 
-## Installing Jenkins via Helm
+### Installing Jenkins via Helm
 
 As per <https://helm.sh/docs/intro/using_helm/>, running:
 
@@ -128,7 +130,7 @@ The `jdk21` part of the tag above corresponds to the JDK version
 (ie, `lts-jdk17`, `lts-jdk21`).
 ![](../runbook/images/jenkins9.png)
 
-#### Upgrade the __plugins__
+### Upgrade the __plugins__
 
 1. Navigate to the UI.
    * [Development Jenkins](https://rubin-ci-dev.slac.stanford.edu/)
