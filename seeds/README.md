@@ -69,8 +69,6 @@ you will want to be familiar with:
 
 ## Backing up Current Jenkins State
 
-<!-- markdownlint-disable MD029 -->
-
 Before Jenkins can be properly updated, the state must be backed up.
 Jenkins state is currently stored in a tarball at s3df under the directory
 `/sdf/home/r/ranabhat/prod_jenkins/`.
@@ -85,17 +83,17 @@ Jenkins state is currently stored in a tarball at s3df under the directory
    If there are jobs running during an update, cancel those jobs and notify the
    owners of the jobs via the slack channel `dm-jenkins`. Ensure the jobs are
    cancelled completely before beginning the backup.
-2. On cluster `rubin-jenkins-control`, `exec` into the jenkins container
+1. On cluster `rubin-jenkins-control`, `exec` into the jenkins container
    on the production pod:
 
    ```
    k exec prod-jenkins-0 -n jenkins-prod -it -- sh
    ```
 
-3. Move to the `jenkins_home` directory: `cd /var/jenkins_home` - it should
+1. Move to the `jenkins_home` directory: `cd /var/jenkins_home` - it should
    start like this:
    ![](../runbook/images/jenkins8.png)
-4. Tar the contents of the folder (excluding the . and .. directories) to s3df.
+1. Tar the contents of the folder (excluding the . and .. directories) to s3df.
    Replace YOUR_USERNAME and DATE appropriately in the code block below:
 
    ```
@@ -103,9 +101,9 @@ Jenkins state is currently stored in a tarball at s3df under the directory
    ```
 
    * DO NOT close this window until the tarball is finished - about 1 hour.
-5. In a new terminal, `ssh` into the directory at s3df and `ls -lah` to check
+1. In a new terminal, `ssh` into the directory at s3df and `ls -lah` to check
    that the contents are being copied over.
-6. Once the contents have been fully copied over, proceed to the next step.
+1. Once the contents have been fully copied over, proceed to the next step.
 
 ## Updating the Helm Values Files
 
@@ -129,11 +127,11 @@ The `jdk21` part of the tag above corresponds to the JDK version
 1. Navigate to the UI.
    * [Development Jenkins](https://rubin-ci-dev.slac.stanford.edu/)
    * [Production Jenkins](https://rubin-ci.slac.stanford.edu/)
-2. Select `Manage Jenkins`
+1. Select `Manage Jenkins`
    ![](../runbook/images/jenkins1.png)
-3. Select `Plugins`
+1. Select `Plugins`
    ![](../runbook/images/jenkins2.png)
-4. Navigate to `Updates` to view available updates for current plugins.
+1. Navigate to `Updates` to view available updates for current plugins.
    ![](../runbook/images/jenkins7.png)
 
 There are two ways to go about upgrading the plugins:
