@@ -1,4 +1,3 @@
-<!-- markdownlint-disable MD029 -->
 # Seed Jobs, Values Files, and  Step-by-Step Upgrade Guide for Jenkins
 
 ## Seed Jobs
@@ -69,6 +68,8 @@ you will want to be familiar with:
 ## Upgrading Jenkins Step-by-Step Guide
 
 ## Backing up Current Jenkins State
+
+<!-- markdownlint-disable MD029 -->
 
 Before Jenkins can be properly updated, the state must be backed up.
 Jenkins state is currently stored in a tarball at s3df under the directory
