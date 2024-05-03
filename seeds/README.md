@@ -67,7 +67,7 @@ you will want to be familiar with:
 
 ## Upgrading Jenkins Step-by-Step Guide
 
-## Backing up Current Jenkins State
+### Backing up Current Jenkins State
 
 Before Jenkins can be properly updated, the state must be backed up.
 Jenkins state is currently stored in a tarball at s3df under the directory
@@ -97,7 +97,13 @@ Jenkins state is currently stored in a tarball at s3df under the directory
    Replace YOUR_USERNAME and DATE appropriately in the code block below:
 
    ```
-   tar czf -  --directory=/var/jenkins_home --exclude=. --exclude=.. * .* | ssh  YOUR_USERNAME@sdfdtn001.slac.stanford.edu 'cat > /sdf/data/rubin/user/ranabhat/  prod_jenkins/prod_jenkins_home_DATE.tar.gz'
+   tar czf -  \
+     --directory=/var/jenkins_home \
+     --exclude=. \
+     --exclude=.. \
+     * .* | \
+   ssh YOUR_USERNAME@sdfdtn001.slac.stanford.edu \
+     'cat > /sdf/data/rubin/user/ranabhat/prod_jenkins/prod_jenkins_home_DATE.tar.gz'
    ```
 
    * DO NOT close this window until the tarball is finished - about 1 hour.
@@ -105,24 +111,24 @@ Jenkins state is currently stored in a tarball at s3df under the directory
    that the contents are being copied over.
 1. Once the contents have been fully copied over, proceed to the next step.
 
-## Updating the Helm Values Files
+### Updating the Helm Values Files
 
 The helm values files are stored in this repository under
 `dev-values.yaml` and `values.yaml`
 
-### Upgrade the __Jenkins Version__
+#### Upgrade the __Jenkins Version__
 
 Find the most recent `lts-jdk21` version on
 [dockerhub](https://hub.docker.com/r/jenkins/jenkins/tags?page=&page_size=&ordering=&name=lts-jdk21)
 and replace `controller.image.tag` (found at the top of the values file).
 
-### Upgrade the __jdk version__
+#### Upgrade the __jdk version__
 
 The `jdk21` part of the tag above corresponds to the JDK version
 (ie, `lts-jdk17`, `lts-jdk21`).
 ![](../runbook/images/jenkins9.png)
 
-### Upgrade the __plugins__
+#### Upgrade the __plugins__
 
 1. Navigate to the UI.
    * [Development Jenkins](https://rubin-ci-dev.slac.stanford.edu/)
@@ -149,29 +155,31 @@ There are two ways to go about upgrading the plugins:
    * If you don't know the installation name of the plugin, click the plugin
      in the UI. This will bring you to a new page, click on 'releases' to see
      the installation name and options.
-   * See Plugin Upgrade Troubleshooting if the pod does not spin up.
+   * See [Plugin Upgrade Troubleshooting](#plugin-upgrade-troubleshooting)
+     if the pod does not spin up.
 
 * The second way to update the plugins is __not recommended for production__
   as updating plugins in the UI can cause breaking changes and discrepencies
   between the helm chart.
 
    * Check in the UI if there are any
-      `breaking upgrades/additional dependencies`
-      -- they will be blocked out in red.
+     `breaking upgrades/additional dependencies`
+     -- they will be blocked out in red.
    * Click the check box next to `name` at the top of the list and upgrade
-      all the plugins.
+     all the plugins.
         ![](../runbook/images/jenkins4.png)
    * Click `Restart Jenkins when installation is complete and no jobs are running`
-      in the next window. (Cancel any jobs if you haven't before).
+     in the next window. (Cancel any jobs if you haven't before).
    * Wait for Jenkins to restart -- if it does not restart, navigate back to
-      the home page and click `Restart Safely`.
+     the home page and click `Restart Safely`.
 
-      * See Plugin Upgrade Troubleshooting if the pod does not spin up.
+      * See [Plugin Upgrade Troubleshooting](#plugin-upgrade-troubleshooting)
+        if the pod does not spin up.
 
    * Navigate to `Manage Jenkins` then `Script Console`.
-         ![](../runbook/images/jenkins3.png)
+     ![](../runbook/images/jenkins3.png)
    * In the script console, insert the following and press `run` to get a
-      list of the plugins with their updated versions:
+     list of the plugins with their updated versions:
 
    ```
    Jenkins.instance.pluginManager.plugins.each {
@@ -183,13 +191,13 @@ There are two ways to go about upgrading the plugins:
    ![](../runbook/images/jenkins10.png)
 
    * __Copy the results (ignoring the bit at the end) into the helm values file
-      under `installPlugins` and `additionalPlugins`.__
+     under `installPlugins` and `additionalPlugins`.__
 
 ### Plugin Upgrade Troubleshooting
 
 * If the page gets stuck at `503 Service Temporarily Unavailable`
    * Check the pod logs. The `init` container likely is
-    crashing due to a missed dependency.
+     crashing due to a missed dependency.
 * If the values file in `github` is up-to-date, can also use `helm upgrade`
   to reset the values:
    * `helm upgrade <release> -n namespace <chart> -f <filename>`
