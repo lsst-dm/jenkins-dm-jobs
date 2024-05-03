@@ -85,22 +85,25 @@ Jenkins state is currently stored in a tarball at s3df under the directory
    cancelled completely before beginning the backup.
 2. On cluster `rubin-jenkins-control`, `exec` into the jenkins container
    on the production pod:
-```
-k exec prod-jenkins-0 -n jenkins-prod -it -- sh
-```
+
+   ```
+   k exec prod-jenkins-0 -n jenkins-prod -it -- sh
+   ```
+
 3. Move to the `jenkins_home` directory: `cd /var/jenkins_home` - it should
-start like this:
+   start like this:
    ![](../runbook/images/jenkins8.png)
 4. Tar the contents of the folder (excluding the . and .. directories) to s3df.
    Replace YOUR_USERNAME and DATE appropriately in the code block below:
-```
-tar czf -  --directory=/var/jenkins_home --exclude=. --exclude=.. * .* | ssh  YOUR_USERNAME@sdfdtn001.slac.stanford.edu 'cat > /sdf/data/rubin/user/ranabhat/prod_jenkins/prod_jenkins_home_DATE.tar.gz'
-```
+
+   ```
+   tar czf -  --directory=/var/jenkins_home --exclude=. --exclude=.. * .* | ssh  YOUR_USERNAME@sdfdtn001.slac.stanford.edu 'cat > /sdf/data/rubin/user/ranabhat/  prod_jenkins/prod_jenkins_home_DATE.tar.gz'
+   ```
+
    * DO NOT close this window until the tarball is finished - about 1 hour.
 5. In a new terminal, `ssh` into the directory at s3df and `ls -lah` to check
    that the contents are being copied over.
 6. Once the contents have been fully copied over, proceed to the next step.
-
 
 ## Updating the Helm Values Files
 
@@ -109,13 +112,14 @@ The helm values files are stored in this repository under
 
 ### Upgrade the __Jenkins Version__
 
-* Find the most recent `lts-jdk21` version on [dockerhub](https://hub.docker.com/r/jenkins/jenkins/tags?page=&page_size=&ordering=&name=lts-jdk21)
-and replace `controller.image.tag` (found at the top of the values file).
+* Find the most recent `lts-jdk21` version on 
+  [dockerhub](https://hub.docker.com/r/jenkins/jenkins/tags?page=&page_size=&ordering=&name=lts-jdk21)
+  and replace `controller.image.tag` (found at the top of the values file).
 
 ### Upgrade the __jdk version__
 
 * The `jdk21` part of the tag above corresponds to the JDK version
-   (ie, `lts-jdk17`, `lts-jdk21`).
+  (ie, `lts-jdk17`, `lts-jdk21`).
 
    ![](../runbook/images/jenkins9.png)
 ### Upgrade the __plugins__
@@ -123,13 +127,13 @@ and replace `controller.image.tag` (found at the top of the values file).
 1. Navigate to the UI.
    * [Development Jenkins](https://rubin-ci-dev.slac.stanford.edu/)
    * [Production Jenkins](https://rubin-ci.slac.stanford.edu/)
-2. Select `Manage Jenkins` 
-![](../runbook/images/jenkins1.png)
+2. Select `Manage Jenkins`
+   ![](../runbook/images/jenkins1.png)
 3. Select `Plugins`
-![](../runbook/images/jenkins2.png)
+   ![](../runbook/images/jenkins2.png)
 4. Navigate to `Updates` to view available updates for current plugins.
    ![](../runbook/images/jenkins7.png)
-   
+
 There are two ways to go about upgrading the plugins:
 
 * First, __which is the recommended process__, is to manually add the
