@@ -116,7 +116,10 @@ Jenkins state is currently stored in a tarball at s3df under the directory
 ### Updating the Helm Values Files
 
 The helm values files are stored in this repository under
-`dev-values.yaml` and `values.yaml`
+`dev-values.yaml` and `values.yaml`. To upgrade, copy the values file
+locally and make changes to it with upgraded version values. Then
+upgrade the chart with `helm upgrade` and the new values file. On a
+successful upgrade, update the values files in this repo. 
 
 #### Upgrade the __Jenkins Version__
 
@@ -128,6 +131,7 @@ and replace `controller.image.tag` (found at the top of the values file).
 
 The `jdk21` part of the tag above corresponds to the JDK version
 (ie, `lts-jdk17`, `lts-jdk21`).
+
 ![](../runbook/images/jenkins9.png)
 
 ### Upgrade the __plugins__
@@ -148,8 +152,7 @@ There are two ways to go about upgrading the plugins:
   updated plugin version (highlighted above in yellow) to the helm values
   file. This allows you to easily catch `breaking upgrades` or
   `additional dependencies`. Additionally, plugin versions will be recorded
-  right away in the helm values chart, making sure there are no discrepencies
-  between the values chart and the UI.
+  right away in the helm values chart, ensuring there are no discrepancies between the values chart and the UI.
 
    * Add these values to `installPlugins` and `additionalPlugins` in the
      values file:
@@ -158,11 +161,12 @@ There are two ways to go about upgrading the plugins:
      in the UI. This will bring you to a new page, click on 'releases' to see
      the installation name and options.
    * See [Plugin Upgrade Troubleshooting](#plugin-upgrade-troubleshooting)
-     if the pod does not spin up.
+     for help with common plugin upgrade problems.
 
-* The second way to update the plugins is __not recommended for production__
-  as updating plugins in the UI can cause breaking changes and discrepencies
-  between the helm chart.
+* The second way to update the plugins is via the UI. This is __not
+  recommended for production__ as updating plugins in the UI can
+  cause breaking changes and discrepancies between the UI and the
+  helm values config.
 
    * Check in the UI if there are any
      `breaking upgrades/additional dependencies`
@@ -171,7 +175,7 @@ There are two ways to go about upgrading the plugins:
      all the plugins.
         ![](../runbook/images/jenkins4.png)
    * Click `Restart Jenkins when installation is complete and no jobs are running`
-     in the next window. (Cancel any jobs if you haven't before).
+     in the next window. (Cancel any jobs if you haven't done so).
    * Wait for Jenkins to restart -- if it does not restart, navigate back to
      the home page and click `Restart Safely`.
 
@@ -180,8 +184,8 @@ There are two ways to go about upgrading the plugins:
 
    * Navigate to `Manage Jenkins` then `Script Console`.
      ![](../runbook/images/jenkins3.png)
-   * In the script console, insert the following and press `run` to get a
-     list of the plugins with their updated versions:
+   * In the script console, insert the following code and press `run`
+     to get a list of the plugins with their updated versions:
 
    ```
    Jenkins.instance.pluginManager.plugins.each {
@@ -200,8 +204,8 @@ There are two ways to go about upgrading the plugins:
 * If the page gets stuck at `503 Service Temporarily Unavailable`
    * Check the pod logs. The `init` container likely is
      crashing due to a missed dependency.
-* If the values file in `github` is up-to-date, can also use `helm upgrade`
-  to reset the values:
+* If the values file in `github` is up-to-date, you can also use
+  `helm upgrade` to reset the values:
    * `helm upgrade <release> -n namespace <chart> -f <filename>`
 * If still stuck, rollback to the previous release:
    * `helm rollback <release> <rollback-number> -n <namespace>`
@@ -211,7 +215,7 @@ There are two ways to go about upgrading the plugins:
 
 ## Upgrading the Helm Chart
 
-Once the Jenkins version, JDK version and plugin versions are all updated
+Once the Jenkins version, JDK version, and plugin versions are all updated
 in the helm chart, you can run `helm upgrade` on the release:
 `helm upgrade <release> -n namespace <chart> -f <filename>`
 For the current production, this will be:
@@ -220,21 +224,21 @@ For the current production, this will be:
 helm upgrade prod -n jenkins-prod jenkinsci/jenkins -f values.yaml
 ```
 
-## Upgrading the linux agents JDK version
+## Upgrading the Linux agents JDK version
 
-The JDK version of the linux agents is located [here.](https://github.com/lsst-dm/docker-jenkins-swarm-client/blob/6d70a7c072f2762600e6c42dea882683f18bcfdb/Dockerfile#L24)
+The JDK version of the Linux agents is located in [lsst-dm/docker-jenkins-swarm-client.](https://github.com/lsst-dm/docker-jenkins-swarm-client/blob/6d70a7c072f2762600e6c42dea882683f18bcfdb/Dockerfile#L24)
 This version should match the Jenkins control, which can be found under
 `Manage Jenkins` > `System Information` > `java.runtime.version`
 
 * After the version is updated, navigate to the LSST Google Cloud
- `jenkins-prod`project.
+ `jenkins-prod` project.
 * In the hamburger menu on the upper RHS, select `Kubernetes Engine`
-  and `workloads`; there you will see a list of the deployed
-  [statefulset swarm agents.](https://console.cloud.google.com/kubernetes/workload/overview?authuser=1&project=prompt-proto&pageState=(%22savedViews%22:(%22i%22:%22bf849e9642c3422e9896e8f5c5a3089d%22,%22c%22:%5B%5D,%22n%22:%5B%5D)))
-* Select a statefulset agent.
-* Select a pod and delete (be mindful that you are deleting the
-  pod and NOT the statefulset). Continue to delete all pods.
-   * Deleting the pods will restart a new instance and allow the pods
+  and `Workloads`; there you will see a list of the deployed
+  [StatefulSet swarm agents.](https://console.cloud.google.com/kubernetes/workload/overview?authuser=1&project=prompt-proto&pageState=(%22savedViews%22:(%22i%22:%22bf849e9642c3422e9896e8f5c5a3089d%22,%22c%22:%5B%5D,%22n%22:%5B%5D)))
+* Select a StatefulSet agent.
+* Select a pod and delete it (be mindful that you are deleting the
+  pod and NOT the StatefulSet). Continue to delete all pods.
+   * Deleting the pods will force restart, allowing the pods
      to use the most recent JDK version.
    * Each pod can take up to 15 minutes to respawn, so feel free to delete
      all the agent pods at once to speed up the process.
