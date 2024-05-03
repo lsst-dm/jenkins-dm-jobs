@@ -1,4 +1,4 @@
-# Seed Jobs, Values Files, and  Step-by-Step Upgrade Guide for Jenkins
+# Seed Jobs, Installation, and [Step-by-Step Upgrade Guide for Jenkins](#upgrading-jenkins-step-by-step-guide)
 
 ## Seed Jobs
 
