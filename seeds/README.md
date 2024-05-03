@@ -1,4 +1,4 @@
-# Seed Jobs, Values Files and Upgrade Step-by-step for Jenkins
+# Seed Jobs, Values Files, and  Step-by-Step Upgrade Guide for Jenkins
 
 ## Seed Jobs
 
@@ -65,7 +65,7 @@ you will want to be familiar with:
    properties, seed jobs and authentication are configured here.
 * `ingress`: This is where we configure external access to jenkins.
 
-## Upgrading Jenkins - step-by-step guide
+## Upgrading Jenkins Step-by-Step Guide
 
 ## Backing up Current Jenkins State
 
@@ -121,15 +121,16 @@ and replace `controller.image.tag` (found at the top of the values file).
 ### Upgrade the __plugins__
 
 1. Navigate to the UI.
-* [Development Jenkins](https://rubin-ci-dev.slac.stanford.edu/)
-* [Production Jenkins](https://rubin-ci.slac.stanford.edu/)
+   * [Development Jenkins](https://rubin-ci-dev.slac.stanford.edu/)
+   * [Production Jenkins](https://rubin-ci.slac.stanford.edu/)
 2. Select `Manage Jenkins` 
 ![](../runbook/images/jenkins1.png)
 3. Select `Plugins`
- ![](../runbook/images/jenkins2.png)
+![](../runbook/images/jenkins2.png)
 4. Navigate to `Updates` to view available updates for current plugins.
    ![](../runbook/images/jenkins7.png)
-   There are two ways to go about upgrading the plugins:
+   
+There are two ways to go about upgrading the plugins:
 
 * First, __which is the recommended process__, is to manually add the
   updated plugin version (highlighted above in yellow) to the helm values
@@ -207,17 +208,16 @@ helm upgrade prod -n jenkins-prod jenkinsci/jenkins -f values.yaml
 
 ## Upgrading the linux agents JDK version
 
-The JDK version of the linux agents is located [here]
-(https://github.com/lsst-dm/docker-jenkins-swarm-client/blob/6d70a7c072f2762600e6c42dea882683f18bcfdb/Dockerfile#L24).
+The JDK version of the linux agents is located [here.](https://github.com/lsst-dm/docker-jenkins-swarm-client/blob/6d70a7c072f2762600e6c42dea882683f18bcfdb/Dockerfile#L24)
 This version should match the Jenkins control, which can be found under
-`Manage Jenkins/System Information/java.runtime.version `
+`Manage Jenkins` > `System Information` > `java.runtime.version`
 
 * After the version is updated, navigate to the LSST Google Cloud
- `jenkins-prod`project
+ `jenkins-prod`project.
 * In the hamburger menu on the upper RHS, select `Kubernetes Engine`
   and `workloads`; there you will see a list of the deployed
-  [statefulset swarm agents](https://console.cloud.google.com/kubernetes/workload/overview?authuser=1&project=prompt-proto&pageState=(%22savedViews%22:(%22i%22:%22bf849e9642c3422e9896e8f5c5a3089d%22,%22c%22:%5B%5D,%22n%22:%5B%5D)))
-* Select a statefulset agent
+  [statefulset swarm agents.](https://console.cloud.google.com/kubernetes/workload/overview?authuser=1&project=prompt-proto&pageState=(%22savedViews%22:(%22i%22:%22bf849e9642c3422e9896e8f5c5a3089d%22,%22c%22:%5B%5D,%22n%22:%5B%5D)))
+* Select a statefulset agent.
 * Select a pod and delete (be mindful that you are deleting the
   pod and NOT the statefulset). Continue to delete all pods.
    * Deleting the pods will restart a new instance and allow the pods
