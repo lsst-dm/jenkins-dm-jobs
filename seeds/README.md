@@ -89,7 +89,7 @@ Jenkins state is currently stored in a tarball at s3df under the directory
    on the production pod:
 
    ```
-   k exec prod-jenkins-0 -n jenkins-prod -it -- sh
+   kubectl exec prod-jenkins-0 -n jenkins-prod -it -- sh
    ```
 
 1. Move to the `jenkins_home` directory: `cd /var/jenkins_home` - it should
