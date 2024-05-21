@@ -6,7 +6,7 @@
 #
 template:
   splenv_ref: &splenv_ref '8.0.0'
-  tarball_defaults: &tarball_defaults
+  : &tarball_defaults
     miniver: &miniver 'py38_4.9.2'
     timelimit: 30
   linux_compiler: &linux_compiler devtoolset-6
@@ -86,6 +86,10 @@ tarball:
     - <<: *tarball_defaults
       <<: *ventura-conda
       platform: '10.9'
+      osfamily: osx
+    - <<: *tarball_defaults
+      <<: *ventura-conda
+      platform: '10.13'
       osfamily: osx
       timelimit: 8
       allow_fail: true
