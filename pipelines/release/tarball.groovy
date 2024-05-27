@@ -846,7 +846,7 @@ for line in sys.stdin:
  */
 def String scriptPreamble(
   String compiler,
-  String macosx_deployment_target='10.13',
+  String macosx_deployment_target='10.9',
   MinicondaEnv menv,
   boolean useTarballs,
   String ciDir
