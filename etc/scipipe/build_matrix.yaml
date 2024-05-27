@@ -148,4 +148,6 @@ newinstall:
   git_ref: main
 eups:
   base_url: https://eups.lsst.codes/stack
-  s3_bucket: eups.lsst.codes
+  eups_url: eups.lsst.codes
+  s3_bucket: eups-gc-storage-dev
+  endpoint_url: https://storage.googleapis.com
