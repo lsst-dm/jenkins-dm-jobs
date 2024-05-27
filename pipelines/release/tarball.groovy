@@ -644,6 +644,7 @@ def String s3PushCmd() {
       --only-show-errors \
       --recursive \
       "${EUPS_PKGROOT}/" \
+      --endpoint-url="${EUPS_ENDPOINT_URL}" \
       "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
   ''')
 }
@@ -850,14 +851,16 @@ def String scriptPreamble(
   boolean useTarballs,
   String ciDir
 ) {
+  def eupsUrl = "${scipipe.eups.eups_url}"
   util.dedent("""
     #!/bin/bash
-
+    export EUPS_URL="${eupsUrl}"
+    
     set -xe
     set -o pipefail
 
     if [[ -n \$EUPS_S3_BUCKET ]]; then
-        export LSST_EUPS_PKGROOT_BASE_URL="https://\${EUPS_S3_BUCKET}/stack"
+        export LSST_EUPS_PKGROOT_BASE_URL="https://\${EUPS_URL}/stack"
     fi
 
     # isolate eups cache files
