@@ -85,7 +85,7 @@ tarball:
       osfamily: redhat
     - <<: *tarball_defaults
       <<: *ventura-conda
-      platform: '10.9'
+      platform: '10.13'
       osfamily: osx
     - <<: *tarball_defaults
       <<: *ventura-conda
