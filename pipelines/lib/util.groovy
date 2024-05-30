@@ -1725,6 +1725,7 @@ def void withEupsEnv(Closure run) {
     "EUPS_S3_BUCKET=${s3Bucket}",
     "EUPS_BASE_URL=${baseUrl}",
     "EUPS_ENDPOINT_URL=${endpointUrl}",
+    "EUPSPKG_SCONSFLAGS=macosx_deployment_flags=10.13 opt=3",
   ]) {
     run()
   }
