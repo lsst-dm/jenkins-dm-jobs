@@ -718,7 +718,7 @@ def String buildScript(
   String tag,
   String eupsPkgroot,
   String compiler,
-  String macosx_deployment_target,
+  String macosx_deployment_target='10.13',
   MinicondaEnv menv,
   String ciDir
 ) {
