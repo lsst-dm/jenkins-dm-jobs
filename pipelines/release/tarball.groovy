@@ -732,7 +732,7 @@ def String buildScript(
   util.dedent("""
     curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
     . ./loadLSST.bash
-    EUPSPKG_SCONSFLAGS=macosx_deployment_flags=10.13
+    export EUPSPKG_SCONSFLAGS=macosx_deployment_flags=10.13
     for prod in ${products}; do
       eups distrib install "\$prod" -t "${tag}" -vvv
     done
