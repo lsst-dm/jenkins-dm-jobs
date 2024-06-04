@@ -145,7 +145,7 @@ newinstall:
     repo: lsstsqre/newinstall
     tag: latest
   github_repo: lsst/lsst
-  git_ref: main
+  git_ref: tickets/DM-44440
 eups:
   base_url: https://eups.lsst.codes/stack
   eups_url: eups.lsst.codes
