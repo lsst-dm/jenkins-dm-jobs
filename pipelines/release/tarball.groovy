@@ -872,6 +872,7 @@ def String scriptPreamble(
 
     if [[ \$(uname -s) == Darwin* ]]; then
       export MACOSX_DEPLOYMENT_TARGET="${macosx_deployment_target}"
+      export macosx_deployment_target="${macosx_deployment_target}"
     fi
 
     export LSST_PYTHON_VERSION="${menv.pythonVersion}"
