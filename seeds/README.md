@@ -250,6 +250,7 @@ Similar to the JDK version, the Swarm Client version can be
  found in the same place:
 [lsst-dm/docker-jenkins-swarm-client.](https://github.com/lsst-dm/docker-jenkins-swarm-client/blob/6d70a7c072f2762600e6c42dea882683f18bcfdb/Dockerfile#L6)
 There are two places where `JSWARM_VERSION` must be edited in this file.
+
 * Release versions can be found [here](https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/)
     * Note that the dates are not fully in order.
 * Creating a Pull Request will check if the new package is buildable.
