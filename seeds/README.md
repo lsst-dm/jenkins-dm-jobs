@@ -252,7 +252,7 @@ Similar to the JDK version, the Swarm Client version can be
 There are two places where `JSWARM_VERSION` must be edited in this file.
 
 * Release versions can be found [here](https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/)
-    * Note that the dates are not fully in order.
+   * Note that the dates are not fully in order.
 * Creating a Pull Request will check if the new package is buildable.
 * After merging, the agents will pull from the `latest` image,
   as referenced in the yaml file:
