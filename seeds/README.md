@@ -255,6 +255,6 @@ There are two places where `JSWARM_VERSION` must be edited in this file.
 * After merging, the agents will pull from the `latest` image,
   as referenced in the yaml file:
   [jenkins-workers-deploy/agents-yaml/idf-agent-ldfc-prod.yaml](https://github.com/lsst-dm/jenkins-workers-deploy/blob/6deed11ab4eaeef27d654b819c846581af6ca61a/agents-yaml/idf-agent-ldfc-prod.yaml#L233)
-* !! Ensure the swarm client version matches the Swarm Server
+* _!! Ensure the swarm client version matches the Swarm Server_
   version on the Jenkins plugin page.
    * If they do not match, this could cause connection problems.
