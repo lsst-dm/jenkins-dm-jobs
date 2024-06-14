@@ -246,14 +246,19 @@ This version should match the Jenkins control, which can be found under
 
 ## Upgrading the Swarm Client version
 
-Similar to the JDK version, the Swarm Client version can be found in the same place: 
-[lsst-dm/docker-jenkins-swarm-client.](https://github.com/lsst-dm/docker-jenkins-swarm-client/blob/6d70a7c072f2762600e6c42dea882683f18bcfdb/Dockerfile#L6) 
+Similar to the JDK version, the Swarm Client version can be
+ found in the same place:
+[lsst-dm/docker-jenkins-swarm-client.](https://github.com/lsst-dm/docker-
+jenkins-swarm-client/blob/6d70a7c072f2762600e6c4
+2dea882683f18bcfdb/Dockerfile#L6)
 There are two places where `JSWARM_VERSION` must be edited in this file.
 
 * Creating a Pull Request will check if the new package is buildable.
-* After merging, the agents will pull from the `latest` image, as referenced in the yaml file:
-[jenkins-workers-deploy/agents-yaml/idf-agent-ldfc-prod.yaml]
-(https://github.com/lsst-dm/jenkins-workers-deploy/blob/6deed11ab4eaeef27d654b819c846581af6ca61a
-/agents-yaml/idf-agent-ldfc-prod.yaml#L233)
-* !! Ensure the swarm client version matches the swarm server version on the Jenkins plugin page.
+* After merging, the agents will pull from the `latest` image,
+  as referenced in the yaml file:
+  [jenkins-workers-deploy/agents-yaml/idf-agent-ldfc-prod.yaml](https://
+  github.com/lsst-dm/jenkins-workers-deploy/blob/6deed11ab4eaeef27
+  d654b819c846581af6ca61a/agents-yaml/idf-agent-ldfc-prod.yaml#L233)
+* !! Ensure the swarm client version matches the swarm server
+  version on the Jenkins plugin page.
    * If they do not match, this could cause connection problems.
