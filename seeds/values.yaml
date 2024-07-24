@@ -668,6 +668,7 @@ controller:
         - "USER:Overall/Administer:jhoblitt"
         - "USER:Overall/Administer:ktlim"
         - "USER:Overall/Administer:aranabhat"
+        - "USER:Overall/Administer:roceb"
         - "GROUP:Overall/Administer:lsst-sqre*leeroy-wranglers"
         - "GROUP:Overall/Administer:lsst-sqre*square"
         - "USER:Overall/Administer:mwittgen"
