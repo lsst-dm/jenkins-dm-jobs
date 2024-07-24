@@ -46,8 +46,8 @@ scipipe-lsstsw-matrix:
   - <<: *el7-conda
     # - <<: *ventura-conda
     # allow builds on monterey and ventura
-    # label: osx-12||osx-13
-    # display_name: macos
+    label: osx-12||osx-13
+    display_name: macos
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
     # - <<: *monterey-conda
