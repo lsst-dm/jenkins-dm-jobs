@@ -858,7 +858,6 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/username}"
-              
               - basicSSHUserPrivateKey: 
                   description: "SQRE OSX build agents"
                   id: "sqre-osx"
@@ -867,7 +866,6 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/username}"
-                  
               - basicSSHUserPrivateKey:
                   description: "mini OSX build agents"
                   id: "mini-osx"
@@ -876,7 +874,6 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/sqre-mini/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control/sqre-mini/username}"
-                  
               - usernamePassword:
                   description: "push conda packages -> s3"
                   id: "aws-cmirror-push"
