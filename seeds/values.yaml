@@ -713,6 +713,10 @@ controller:
               permissions:
                 - "Overall/Administer"
           - user:
+              name: "roceb"
+              permissions:
+                - "Overall/Administer"
+          - user:
               name: "frossie"
               permissions:
                 - "Overall/Administer"
