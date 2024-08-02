@@ -70,6 +70,13 @@ notify.wrap {
     registryTags += Arrays.asList(extraDockerTags.split())
   }
 
+  def newRegistryTags = []
+  registryTags.each { name ->
+    fixOSVersion = name.replaceFirst("7", "9")
+    fixDistribName = fixOSVersion.replace("stack-lsst_distrib", "lsst_sitcom")
+    newRegistryTags += fixDistribName
+  }
+
   def run = {
     stage('checkout') {
       repo = git([
@@ -102,6 +109,7 @@ notify.wrap {
       dir(buildDir) {
         image = docker.build("${dockerRepo}", opt.join(' '))
         image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
+        image3 = docker.build("lsstsqre/almalinux", opt.join(' '))
       }
     }
 
@@ -113,6 +121,9 @@ notify.wrap {
         ) {
           registryTags.each { name ->
             image.push(name)
+          }
+          newRegistryTags.each { name ->
+            image3.push(name)
           }
         }
         docker.withRegistry(
