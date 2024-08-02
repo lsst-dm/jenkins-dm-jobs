@@ -5,7 +5,7 @@
 # provide yaml anchors internal to this file.
 #
 template:
-  splenv_ref: &splenv_ref '8.0.0'
+  splenv_ref: &splenv_ref '9.0.0'
   tarball_defaults: &tarball_defaults
     miniver: &miniver 'py38_4.9.2'
     timelimit: 30
@@ -138,8 +138,8 @@ newinstall:
     git_ref: master
     dir: ''
   docker_registry:
-    repo: lsstsqre/newinstall
-    tag: latest
+    repo: ghcr.io/lsst-sqre/docker-newinstall
+    tag: 9-latest-9.0.0
   github_repo: lsst/lsst
   git_ref: main
 eups:
