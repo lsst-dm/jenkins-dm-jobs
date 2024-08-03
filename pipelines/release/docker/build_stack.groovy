@@ -50,12 +50,13 @@ notify.wrap {
   def shebangtronUrl = util.shebangtronUrl()
 
   def newinstallImage = newinstall.docker_registry.repo
+  def newinstallTagBase = newinstall.docker_registry.tag
   def splenvRef       = scipipe.canonical.lsstsw_config.splenv_ref
   if (params.SPLENV_REF) {
     splenvRef = params.SPLENV_REF
   }
 
-  def baseImage       = "${newinstallImage}:${splenvRef}"
+  def baseImage       = "${newinstallImage}:${newinstallTagBase}-${splenvRef}"
 
   def image = null
   def repo  = null

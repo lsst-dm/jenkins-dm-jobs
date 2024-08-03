@@ -139,7 +139,7 @@ newinstall:
     dir: ''
   docker_registry:
     repo: ghcr.io/lsst-sqre/docker-newinstall
-    tag: 9-latest-9.0.0
+    tag: 9-latest
   github_repo: lsst/lsst
   git_ref: main
 eups:
