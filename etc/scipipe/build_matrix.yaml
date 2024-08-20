@@ -127,19 +127,19 @@ shebangtron:
 # use 'stack'
 scipipe_release:
   dockerfile:
-    github_repo: lsst-sqre/docker-tarballs
-    git_ref: master
+    github_repo: lsst-dm/docker-tarballs
+    git_ref: main
     dir: ''
   docker_registry:
     repo: lsstsqre/centos
 newinstall:
   dockerfile:
-    github_repo: lsst-sqre/docker-newinstall
-    git_ref: master
+    github_repo: lsst-dm/docker-newinstall
+    git_ref: main
     dir: ''
   docker_registry:
-    repo: ghcr.io/lsst-sqre/docker-newinstall
-    tag: 9-latest
+    repo: ghcr.io/lsst-dm/docker-newinstall
+    tag: 9-latest-9.0.0
   github_repo: lsst/lsst
   git_ref: main
 eups:
