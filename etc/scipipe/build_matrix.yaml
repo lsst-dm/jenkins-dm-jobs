@@ -16,13 +16,15 @@ template:
     - &el7-conda
       <<: *platform_defaults
       image: docker.io/lsstdm/scipipe-base:7
-      label: centos-7-conda
+      display_name: centos-7-conda
+      label: docker
       compiler: conda-system
       python: '3'
     - &el8-conda
       <<: *platform_defaults
-      image: ghcr.io/lsstdm/scipipe-base:9
-      label: centos-8-conda
+      image: ghcr.io/lsst-dm/docker-scipipe:9-latest
+      label: arm64
+      display_name: centos-7-arm
       compiler: conda-system
       python: '3'
     - &monterey-conda
@@ -43,7 +45,7 @@ template:
       <<: *platform_defaults
       image: null
       label: mini
-      display_name: macosarm-14
+      display_name: macos-arm
       compiler: conda-system
       python: '3'
 #
@@ -51,6 +53,7 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
+  - <<: *el8-conda
   - <<: *macarm64-conda
   - <<: *ventura-conda
     # allow builds on monterey and ventura

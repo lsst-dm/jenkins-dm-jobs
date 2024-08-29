@@ -388,7 +388,6 @@ def lsstswBuild(
   def agent = lsstswConfig.label
   def task = null
   if (lsstswConfig.image) {
-    agent = 'docker'
     task = { runEnv(runDocker) }
   } else {
     task = { runEnv(run) }
