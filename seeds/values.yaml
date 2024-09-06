@@ -672,6 +672,14 @@ controller:
                 - "Job/Read"
                 - "Overall/Read"
           - group:
+              name: "lsst*ops"
+              permissions:
+                - "Job/Build"
+                - "Job/Cancel"
+                - "Job/Discover"
+                - "Job/Read"
+                - "Overall/Read"
+          - group:
               name: "lsst*simulations"
               permissions:
                 - "Job/Build"
