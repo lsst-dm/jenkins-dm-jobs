@@ -51,7 +51,8 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
-  - <<: *macarm64-conda
+  # Disabling mac minis
+  #- <<: *macarm64-conda
   - <<: *ventura-conda
     # allow builds on monterey and ventura
     label: osx-12||osx-13
