@@ -869,7 +869,7 @@ controller:
                     directEntry:
                       privateKey: "${secret/rubin/rubin-jenkins-control/sqre-osx/private_key}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/username}"
+                  username: "${secret/rubin/rubin-jenkins-control/sqre-osx/username}"
               - basicSSHUserPrivateKey:
                   description: "mini OSX build agents"
                   id: "mini-osx"
