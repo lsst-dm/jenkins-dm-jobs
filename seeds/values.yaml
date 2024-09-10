@@ -110,7 +110,7 @@ controller:
     - name: CASC_VAULT_URL
       value: https://vault.slac.stanford.edu
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth
+      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini
     - name: HTTP_PROXY
       value: http://sdfproxy.sdf.slac.stanford.edu:3128
     - name: HTTPS_PROXY
@@ -159,7 +159,7 @@ controller:
     - name: CASC_VAULT_URL
       value: https://vault.slac.stanford.edu
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth
+      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini
     - name: HTTP_PROXY
       value: http://sdfproxy.sdf.slac.stanford.edu:3128
     - name: HTTPS_PROXY
@@ -869,7 +869,15 @@ controller:
                     directEntry:
                       privateKey: "${secret/rubin/rubin-jenkins-control/sqre-osx/private_key}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/sqre-osx/username}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/sqre-osx/username}"
+              - basicSSHUserPrivateKey:
+                  description: "mini OSX build agents"
+                  id: "mini-osx"
+                  privateKeySource:
+                    directEntry:
+                      privateKey: "${secret/rubin/rubin-jenkins-control/sqre-mini/private_key}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/sqre-mini/username}"
               - usernamePassword:
                   description: "push conda packages -> s3"
                   id: "aws-cmirror-push"
@@ -1025,6 +1033,97 @@ controller:
                 numExecutors: 1
                 remoteFS: "/Users/square/j"
                 retentionStrategy: "always"
+            - permanent:
+                labelString: "mini"
+                name: "mini01"
+                launcher:
+                  ssh:
+                    credentialsId: "mini-osx"
+                    host: "mac01.ls.lsst.org"
+                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                numExecutors: 1
+                remoteFS: "/Users/jenkins/j"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "mini"
+                name: "mini02"
+                launcher:
+                  ssh:
+                    credentialsId: "mini-osx"
+                    host: "mac02.ls.lsst.org"
+                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                numExecutors: 1
+                remoteFS: "/Users/jenkins/j"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "mini"
+                name: "mini04"
+                launcher:
+                  ssh:
+                    credentialsId: "mini-osx"
+                    host: "mac04.ls.lsst.org"
+                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                numExecutors: 1
+                remoteFS: "/Users/jenkins/j"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "mini"
+                name: "mini05"
+                launcher:
+                  ssh:
+                    credentialsId: "mini-osx"
+                    host: "mac05.ls.lsst.org"
+                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                numExecutors: 1
+                remoteFS: "/Users/jenkins/j"
+                retentionStrategy: "always"
+  #            - permanent:
+  #                labelString: "mini"
+  #                name: "mini06"
+  #                launcher:
+  #                  ssh:
+  #                    credentialsId: "mini-osx"
+  #                    host: "mac06.ls.lsst.org"
+  #                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+  #                    launchTimeoutSeconds: 210
+  #                    maxNumRetries: 10
+  #                    port: 22
+  #                    retryWaitTime: 15
+  #                    sshHostKeyVerificationStrategy:
+  #                      manuallyTrustedKeyVerificationStrategy:
+  #                        requireInitialManualTrust: false
+  #                numExecutors: 1
+  #                remoteFS: "/Users/jenkins/j"
+  #                retentionStrategy: "always"
+
   # Optionally specify additional init-containers
   customInitContainers: []
 
