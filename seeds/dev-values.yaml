@@ -680,6 +680,14 @@ controller:
                 - "Job/Read"
                 - "Overall/Read"
           - group:
+              name: "lsst*ops"
+              permissions:
+                - "Job/Build"
+                - "Job/Cancel"
+                - "Job/Discover"
+                - "Job/Read"
+                - "Overall/Read"
+          - group:
               name: "lsst*simulations"
               permissions:
                 - "Job/Build"
@@ -862,7 +870,7 @@ controller:
                       privateKey: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/private_key}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb/username}"
-              - basicSSHUserPrivateKey:
+              - basicSSHUserPrivateKey: 
                   description: "SQRE OSX build agents"
                   id: "sqre-osx"
                   privateKeySource:
@@ -1049,7 +1057,7 @@ controller:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 numExecutors: 1
-                remoteFS: "/Users/jenkins/j"
+                remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini"
@@ -1067,7 +1075,7 @@ controller:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 numExecutors: 1
-                remoteFS: "/Users/jenkins/j"
+                remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini"
@@ -1085,7 +1093,7 @@ controller:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 numExecutors: 1
-                remoteFS: "/Users/jenkins/j"
+                remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini"
@@ -1103,7 +1111,7 @@ controller:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 numExecutors: 1
-                remoteFS: "/Users/jenkins/j"
+                remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini"
@@ -1121,7 +1129,7 @@ controller:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 numExecutors: 1
-                remoteFS: "/Users/jenkins/j"
+                remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini"
@@ -1139,7 +1147,7 @@ controller:
                       manuallyTrustedKeyVerificationStrategy:
                         requireInitialManualTrust: false
                 numExecutors: 1
-                remoteFS: "/Users/jenkins/j"
+                remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
 
   # Optionally specify additional init-containers
