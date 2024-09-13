@@ -95,6 +95,7 @@ def void buildImage(Map p) {
   opt << '--build-arg D_GROUP="$(id -gn)"'
   opt << '--build-arg D_GID="$(id -g)"'
   opt << '--build-arg D_HOME="$HOME"'
+  opt << '--build-arg EUPSPKG_NJOBS="$K8S_DIND_LIMITS_CPU"'
   opt << '--load'
   opt << '.'
 
