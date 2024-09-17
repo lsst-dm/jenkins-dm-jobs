@@ -95,7 +95,6 @@ def void buildImage(Map p) {
   opt << '--build-arg D_GROUP="$(id -gn)"'
   opt << '--build-arg D_GID="$(id -g)"'
   opt << '--build-arg D_HOME="$HOME"'
-  opt << '--build-arg EUPSPKG_NJOBS="$K8S_DIND_LIMITS_CPU"'
   opt << '--load'
   opt << '.'
 
@@ -459,10 +458,14 @@ def void jenkinsWrapper(Map buildParams) {
       touch lsstsw/miniconda/conda-meta/history
     '''
 
+    // This line uses k8s to set EUPSPKG_NJOBS
+    def njobs = System.getenv("K8S_DIND_LIMITS_CPU")
+
     def buildEnv = [
       "WORKSPACE=${cwd}",
       "HOME=${homeDir}",
       "EUPS_USERDATA=${homeDir}/.eups_userdata",
+      "EUPSPKG_NJOBS=${njobs}"
     ]
 
     // Map -> List
