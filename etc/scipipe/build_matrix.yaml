@@ -43,7 +43,7 @@ template:
       <<: *platform_defaults
       image: null
       label: mini
-      display_name: macosarm-14
+      display_name: macos-arm
       compiler: conda-system
       python: '3'
 #
@@ -51,8 +51,7 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
-  # Disabling mac minis
-  #- <<: *macarm64-conda
+  - <<: *macarm64-conda
   - <<: *ventura-conda
     # allow builds on monterey and ventura
     label: osx-12||osx-13
