@@ -458,10 +458,14 @@ def void jenkinsWrapper(Map buildParams) {
       touch lsstsw/miniconda/conda-meta/history
     '''
 
+    // This line uses k8s to set EUPSPKG_NJOBS
+    def njobs = System.getenv("K8S_DIND_LIMITS_CPU")
+
     def buildEnv = [
       "WORKSPACE=${cwd}",
       "HOME=${homeDir}",
       "EUPS_USERDATA=${homeDir}/.eups_userdata",
+      "EUPSPKG_NJOBS=${njobs}"
     ]
 
     // Map -> List
