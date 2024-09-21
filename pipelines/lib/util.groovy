@@ -459,7 +459,7 @@ def void jenkinsWrapper(Map buildParams) {
     '''
 
     // This line uses k8s to set EUPSPKG_NJOBS
-    def njobs = System.getenv("K8S_DIND_LIMITS_CPU")
+    def njobs = env.K8S_DIND_LIMITS_CPU
 
     def buildEnv = [
       "WORKSPACE=${cwd}",
