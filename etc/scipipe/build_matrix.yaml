@@ -39,13 +39,13 @@ template:
       display_name: macos-13
       compiler: conda-system
       python: '3'
-#    - &macarm64-conda
-#      <<: *platform_defaults
-#      image: null
-#      label: mini
-#      display_name: macosarm-14
-#      compiler: conda-system
-#      python: '3'
+    - &macarm64-conda
+      <<: *platform_defaults
+      image: null
+      label: mini
+      display_name: macosarm-14
+      compiler: conda-system
+      python: '3'
 #
 # build environment/matrix configs
 #
