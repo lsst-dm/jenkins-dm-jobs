@@ -78,9 +78,9 @@ scipipe-lsstsw-ci_imsim:
 canonical:
   products: &canonical_products lsst_distrib lsst_ci lsst_middleware
   lsstsw_config:
-    <<: *el7-conda
-    label: snowflake-0
-    display_name: centos-7
+    - <<: *el7-conda
+      label: snowflake-0
+    - <<: *linux-9-arm
   workspace: snowflake/release
 #
 # eups distrib tarball configuration -- used by

@@ -52,7 +52,7 @@ notify.wrap {
     splenvRef = params.SPLENV_REF
   }
 
-  def slug = util.lsstswConfigSlug(lsstswConfig)
+  // def slug = util.lsstswConfigSlug(lsstswConfig)
 
   def run = {
     ws(canonical.workspace) {
@@ -61,10 +61,10 @@ notify.wrap {
       def buildParams = [
         EUPS_PKGROOT:        "${cwd}/distrib",
         GIT_SSH_COMMAND:     'ssh -o StrictHostKeyChecking=no',
-        K8S_DIND_LIMITS_CPU: "4",
+        // K8S_DIND_LIMITS_CPU: "4",
         LSST_BUILD_DOCS:     buildDocs,
         LSST_COMPILER:       lsstswConfig.compiler,
-        LSST_JUNIT_PREFIX:   slug,
+        // LSST_JUNIT_PREFIX:   slug,
         LSST_PREP_ONLY:      prepOnly,
         LSST_PRODUCTS:       products,
         LSST_PYTHON_VERSION: lsstswConfig.python,
@@ -91,9 +91,10 @@ notify.wrap {
       }
 
       stage('build') {
-        util.insideDockerWrap(
-          image: lsstswConfig.image,
-          pull: true,
+        util.lsstswBuildMatrix(lsstswConfig, buildParams, true
+        // util.insideDockerWrap(
+        //   image: lsstswConfig.image,
+        //   pull: true,
         ) {
           // only setup sshagent if we are going to push
           if (versiondbPush) {
@@ -143,6 +144,7 @@ notify.wrap {
       } // stage('push docs')
     } // ws
   } // run
+util = load 'pipelines/lib/util.groovy'
 
   util.nodeWrap(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
