@@ -75,12 +75,15 @@ scipipe-lsstsw-ci_imsim:
 canonical:
   products: &canonical_products lsst_distrib lsst_ci
   lsstsw_config:
+    # <<: *el7-conda
+    # label: snowflake-0
+    # display_name: centos-7
     - <<: *el7-conda
-      # label: snowflake-0
-      display_name: centos-7
+      label: snowflake-0
+      display_name: linux-7-x86
     - <<: *linux-9-arm
       label: arm64
-      image: ghcr.io/lsst-dm/docker-scipipe:9-latest
+    #   image: ghcr.io/lsst-dm/docker-scipipe:9-latest
       display_name: linux-9-arm
   workspace: snowflake/release
 #
@@ -158,5 +161,5 @@ newinstall:
   github_repo: lsst/lsst
   git_ref: main
 eups:
-  base_url: https://eups.lsst.codes/stack
+  base_url: https://eups.lsst.codes/stack_test
   s3_bucket: eups.lsst.codes

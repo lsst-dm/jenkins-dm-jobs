@@ -198,6 +198,15 @@ def insideDockerWrap(Map p, Closure run) {
   docker.image(imageLocal).inside(args) { run() }
 }
 
+
+
+def void validateRebuildConfig(Map conf) {
+  requireMapKeys(conf, [
+    'image',
+    'label',
+  ])
+}
+
 /**
  * Join multiple String args togther with '/'s to resemble a filesystem path.
  */
@@ -626,7 +635,7 @@ def void requireEnvVars(List rev) {
   // note that `env` isn't a map and #get doesn't work as expected
   rev.each { it ->
     if (env."${it}" == null) {
-      error "${it} envirnoment variable is required"
+      error "${it} environment variable is required"
     }
   }
 }
@@ -2299,5 +2308,6 @@ def void nodeWrap(String label, Closure run) {
     run()
   }
 }
+
 
 return this;
