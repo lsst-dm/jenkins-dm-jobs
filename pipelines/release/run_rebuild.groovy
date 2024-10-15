@@ -19,6 +19,7 @@ node('jenkins-manager') {
 }
 
 notify.wrap {
+  // println(util)
   util.requireParams([
     'REFS',
     'PREP_ONLY',
@@ -51,8 +52,8 @@ notify.wrap {
   if (params.SPLENV_REF) {
     splenvRef = params.SPLENV_REF
   }
-
-  // def slug = util.lsstswConfigSlug(lsstswConfig)
+  // println(util)
+  def slug = util.lsstswConfigSlug(lsstswConfig)
 
   def run = {
     ws(canonical.workspace) {
@@ -64,7 +65,7 @@ notify.wrap {
         // K8S_DIND_LIMITS_CPU: "4",
         LSST_BUILD_DOCS:     buildDocs,
         LSST_COMPILER:       lsstswConfig.compiler,
-        // LSST_JUNIT_PREFIX:   slug,
+        LSST_JUNIT_PREFIX:   slug,
         LSST_PREP_ONLY:      prepOnly,
         LSST_PRODUCTS:       products,
         LSST_PYTHON_VERSION: lsstswConfig.python,
@@ -90,11 +91,16 @@ notify.wrap {
         }
       }
 
+      // stage('buildMatrix'){
+      //   util.insideDockerWrapMatrix(lsstswConfig)
+      // }
+
       stage('build') {
-        util.lsstswBuildMatrix(lsstswConfig, buildParams, true
-        // util.insideDockerWrap(
-        //   image: lsstswConfig.image,
-        //   pull: true,
+        util.insideDockerWrap(
+          image: lsstswConfig.image,
+          //image: 'ghcr.io/lsst-dm/docker-scipipe:9-latest'
+          pull: true,
+          //label: "arm64"
         ) {
           // only setup sshagent if we are going to push
           if (versiondbPush) {
@@ -103,6 +109,8 @@ notify.wrap {
             runJW()
           }
         } // util.insideDockerWrap
+
+        
       } // stage('build')
 
       stage('push docs') {
@@ -144,7 +152,6 @@ notify.wrap {
       } // stage('push docs')
     } // ws
   } // run
-util = load 'pipelines/lib/util.groovy'
 
   util.nodeWrap(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {

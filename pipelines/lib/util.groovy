@@ -198,6 +198,15 @@ def insideDockerWrap(Map p, Closure run) {
   docker.image(imageLocal).inside(args) { run() }
 }
 
+
+
+// def void validateRebuildConfig(Map conf) {
+//   requireMapKeys(conf, [
+//     'image',
+//     'label',
+//   ])
+// }
+
 /**
  * Join multiple String args togther with '/'s to resemble a filesystem path.
  */
@@ -626,7 +635,7 @@ def void requireEnvVars(List rev) {
   // note that `env` isn't a map and #get doesn't work as expected
   rev.each { it ->
     if (env."${it}" == null) {
-      error "${it} envirnoment variable is required"
+      error "${it} environment variable is required"
     }
   }
 }
@@ -2299,5 +2308,34 @@ def void nodeWrap(String label, Closure run) {
     run()
   }
 }
+
+// def insideDockerWrapMatrix(List matrixConfig, Closure run) {
+  // requireMapKeys(matrixConfig, [
+  //   'image',
+  // ])
+  // def matrix = [:]
+
+  // matrixConfig.each { lsstswConfig ->
+  // validateRebuildConfig(lsstswConfig)
+  // String image = lsstswConfig.image
+  // String args  = lsstswConfig.args ?: null
+  // Boolean pull = lsstswConfig.pull ?: false
+  // def slug = lsstswConfigSlug(lsstswConfig)
+
+  // def imageLocal = "${image}-local"
+
+  // wrapDockerImage(
+  //   image: image,
+  //   tag: imageLocal,
+  //   pull: pull,
+  // )
+  // matrix[slug] = {
+  // docker.image(imageLocal).inside(args) { run() }
+  // }
+
+  // }
+  // parallel matrix
+  
+// }
 
 return this;
