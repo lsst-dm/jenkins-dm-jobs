@@ -76,12 +76,15 @@ canonical:
   products: &canonical_products lsst_distrib lsst_ci
   lsstsw_config:
     - <<: *el7-conda
-      # label: snowflake-0
+      label: snowflake-0
       display_name: centos-7
+    # - <<: *el7-conda
+    #   label: snowflake-0
+    #   display_name: centos-7
     - <<: *linux-9-arm
       label: arm64
       image: ghcr.io/lsst-dm/docker-scipipe:9-latest
-      display_name: linux-9-arm
+    #   display_name: linux-9-arm
   workspace: snowflake/release
 #
 # eups distrib tarball configuration -- used by
