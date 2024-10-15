@@ -157,5 +157,5 @@ newinstall:
   github_repo: lsst/lsst
   git_ref: main
 eups:
-  base_url: https://eups.lsst.codes/stack
+  base_url: https://eups.lsst.codes/stack_test
   s3_bucket: eups.lsst.codes
