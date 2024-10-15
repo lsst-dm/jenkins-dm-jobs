@@ -17,4 +17,7 @@ p.pipeline().with {
     // enable for debugging only
     // booleanParam('NO_VERSIONDB_PUSH', true, 'Skip push to remote versiondb repo.')
   }
+    environmentVariables(
+    BUILD_CONFIG: 'canonical.lsstsw_config',
+    )
 }
