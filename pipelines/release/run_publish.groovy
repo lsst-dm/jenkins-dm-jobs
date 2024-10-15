@@ -33,7 +33,7 @@ notify.wrap {
   Boolean pushS3 = (! params.NO_PUSH?.toBoolean())
 
   def canonical    = scipipe.canonical
-  def lsstswConfig = canonical.lsstsw_config
+  def lsstswConfig = canonical.lsstsw_config[0]
 
   def splenvRef = lsstswConfig.splenv_ref
   if (params.SPLENV_REF) {

@@ -626,7 +626,7 @@ def void requireEnvVars(List rev) {
   // note that `env` isn't a map and #get doesn't work as expected
   rev.each { it ->
     if (env."${it}" == null) {
-      error "${it} envirnoment variable is required"
+      error "${it} environment variable is required"
     }
   }
 }
@@ -691,7 +691,8 @@ def void getManifest(String rebuildId, String filename) {
 
   step([$class: 'CopyArtifact',
         projectName: buildJob,
-        filter: manifest_artifact,
+        filter: "**/lsstsw/build/manifext.txt",
+        target: manifest_artifact,
         selector: [
           $class: 'SpecificBuildSelector',
           buildNumber: rebuildId // wants a string
@@ -1385,20 +1386,20 @@ def String runRebuild(Map p) {
     parameters: jobParameters,
     wait: true,
   )
-
   nodeTiny {
-    manifestArtifact = 'lsstsw/build/manifest.txt'
-
+    def manifestArtifact = 'lsstsw/build/manifest.txt'
     step([$class: 'CopyArtifact',
           projectName: useP.job,
-          filter: manifestArtifact,
+          filter: "**/lsstsw/build/manifest.txt",
+          //target: manifestArtifact,
+          target: 'buildmanifest',
           selector: [
             $class: 'SpecificBuildSelector',
             buildNumber: result.id,
           ],
         ])
+    def manifestId = parseManifestId(readFile('buildmanifest/linux-9-x86/lsstsw/build/manifest.txt'))
 
-    def manifestId = parseManifestId(readFile(manifestArtifact))
     echo "parsed manifest id: ${manifestId}"
     return manifestId
   } // nodeTiny
@@ -2299,5 +2300,6 @@ def void nodeWrap(String label, Closure run) {
     run()
   }
 }
+
 
 return this;
