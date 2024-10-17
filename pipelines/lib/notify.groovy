@@ -354,7 +354,7 @@ def warnMissingGithubUser(String token, String channel, String jenkinsId) {
   def message = baseBuildMessage(
     channel: channel,
     color:   'danger',
-    detail:  "Hey, whoever is the slack user corresponding to the github user <${jenkinsId}>, please edit the GitHub Username field in your slack profile.",
+    detail:  "Hey, whoever is the slack user corresponding to the github user <${jenkinsId}>, please edit the `GitHub username` field in your slack profile.",
   )
 
   slackApiPost(
