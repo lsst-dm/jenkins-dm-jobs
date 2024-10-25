@@ -73,7 +73,7 @@ scipipe-lsstsw-ci_imsim:
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
 canonical:
-  products: &canonical_products lsst_distrib lsst_ci
+  products: &canonical_products lsst_distrib lsst_ci lsst_middleware
   lsstsw_config:
     <<: *el7-conda
     label: snowflake-0
