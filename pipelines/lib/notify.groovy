@@ -351,6 +351,10 @@ String jenkinsUserId() {
  * @param jenkinsId String jenkins user id
  */
 def warnMissingGithubUser(String token, String channel, String jenkinsId) {
+  def excludeList = ['PaulPrice']
+  if excludeList.contains(jenkinsId) {
+    return
+  }
   def message = baseBuildMessage(
     channel: channel,
     color:   'danger',
