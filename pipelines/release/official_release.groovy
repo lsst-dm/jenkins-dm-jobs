@@ -21,15 +21,17 @@ notify.wrap {
     'SPLENV_REF',
     'RUBINENV_VER',
     'O_LATEST',
+    'EXCLUDE_FROM_BUILDS',
     'EXCLUDE_FROM_TARBALLS',
   ])
 
-  String sourceGitRefs = params.SOURCE_GIT_REFS
-  String gitTag        = params.RELEASE_GIT_TAG
-  String splenvRef     = params.SPLENV_REF
-  String rubinEnvVer   = params.RUBINENV_VER
-  Boolean dockerLatest = params.O_LATEST
-  String exclude       = params.EXCLUDE_FROM_TARBALLS
+  String sourceGitRef     = params.SOURCE_GIT_REFS
+  String gitTag           = params.RELEASE_GIT_TAG
+  String splenvRef        = params.SPLENV_REF
+  String rubinEnvVer      = params.RUBINENV_VER
+  Boolean dockerLatest    = params.O_LATEST
+  String exclude_builds   = params.EXCLUDE_FROM_BUILDS
+  String exclude_tarballs = params.EXCLUDE_FROM_TARBALLS
 
   // generate eups tag from git tag
   String eupsTag = util.sanitizeEupsTag(gitTag)
@@ -62,16 +64,24 @@ notify.wrap {
   echo "publish [git] tag: ${gitTag}"
   echo "publish [eups] tag: ${eupsTag}"
 
-  def prodList = scipipe.tarball.products.split(' ')
-  def excludeList = exclude.split(' ')
+  def prodTarballList = scipipe.tarball.products.split(' ')
+  def excludeTarballs = exclude_tarballs.split(' ')
   def tarballProducts = ''
 
-  // remove excluded product from tarball build list
-  for(prod in prodList)
-    if(! (prod in excludeList)) tarballProducts += prod + ' '
+  // remove excluded products from tarball build list
+  for(prod in prodTarballList)
+    if(! (prod in excludeTarBalls)) tarballProducts += prod + ' '
   tarballProducts = tarballProducts.trim()
 
-  def products        = scipipe.canonical.products
+  // remove excludes products from build list
+  def excludeBuilds = exclude_builds.split(' ')
+  def prodList = scipipe.canonical.products
+  def products = ''
+
+  for(prod in prodList)
+    if(! (prod in excludeBuilds)) products += prod + ' '
+  products = products.trim()
+
   def retries         = 3
   def extraDockerTags = ''
 
