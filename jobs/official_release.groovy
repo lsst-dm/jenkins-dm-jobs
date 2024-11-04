@@ -25,6 +25,8 @@ p.pipeline().with {
     stringParam('RUBINENV_VER', scipipe.template.splenv_ref, 'rubin-env version')
     booleanParam('O_LATEST', false,
       'update the eups "O_LATEST" tag -- should only be done for a final (non-rc) release')
+    stringParam('EXCLUDE_FROM_BUILDS', null,
+          'products to exclude from builds, e.g. "lsst_middleware"')
     stringParam('EXCLUDE_FROM_TARBALLS', null,
       'products to exclude from tarball builds, e.g. "lsst_sitcom"')
   }
