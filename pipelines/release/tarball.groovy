@@ -1,3 +1,4 @@
+// this is a jenkins checks test
 node('jenkins-manager') {
   if (params.WIPEOUT) {
     deleteDir()
