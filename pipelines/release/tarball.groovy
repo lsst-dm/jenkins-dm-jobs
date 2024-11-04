@@ -1,3 +1,4 @@
+// this is a test for gh-checks
 node('jenkins-manager') {
   if (params.WIPEOUT) {
     deleteDir()
