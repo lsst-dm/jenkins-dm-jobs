@@ -25,7 +25,7 @@ notify.wrap {
     'EXCLUDE_FROM_TARBALLS',
   ])
 
-  String sourceGitRef     = params.SOURCE_GIT_REFS
+  String sourceGitRefs    = params.SOURCE_GIT_REFS
   String gitTag           = params.RELEASE_GIT_TAG
   String splenvRef        = params.SPLENV_REF
   String rubinEnvVer      = params.RUBINENV_VER
