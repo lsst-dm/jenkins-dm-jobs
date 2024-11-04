@@ -75,7 +75,7 @@ notify.wrap {
 
   // remove excludes products from build list
   def excludeBuilds = exclude_builds.split(' ')
-  def prodList = scipipe.canonical.products
+  def prodList = scipipe.canonical.products.split(' ')
   def products = ''
 
   for(prod in prodList)
