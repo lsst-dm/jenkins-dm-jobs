@@ -1,2 +1,0 @@
-ARG base
-FROM $base
