@@ -70,7 +70,7 @@ notify.wrap {
 
   // remove excluded products from tarball build list
   for(prod in prodTarballList)
-    if(! (prod in excludeTarBalls)) tarballProducts += prod + ' '
+    if(! (prod in excludeTarballs)) tarballProducts += prod + ' '
   tarballProducts = tarballProducts.trim()
 
   // remove excludes products from build list
