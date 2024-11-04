@@ -44,7 +44,9 @@ notify.wrap {
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean())
+      withChecks(name: 'Jenkins', includeStage: true) {
+        util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean())
+      }
     }
   }
 } // notify.wrap
