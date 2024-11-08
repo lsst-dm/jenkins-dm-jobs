@@ -29,8 +29,8 @@ class Plumber {
       def ref  = dsl.SEED_JOB.scm.getBranches().get(0).getName()
 
       logRotator {
-        artifactDaysToKeep(365)
-        daysToKeep(730)
+        artifactDaysToKeep(180)
+        daysToKeep(365)
       }
 
       definition {
