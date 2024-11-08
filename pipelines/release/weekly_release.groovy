@@ -153,6 +153,21 @@ notify.wrap {
           )
         } // retry
       } // stage
+
+      stage('build two-python Lab images') {
+        retry(retries) {
+          // based on lsstsqre/stack image
+          build(
+            job: 'sqre/infra/build-sciplatlab',
+            parameters: [
+	      string(name: 'BRANCH', value: 'tickets/DM-47346'),
+              string(name: 'TAG', value: eupsTag),
+	      string(name: 'SUPPLEMENTARY', value: '2py'),
+              string(name: 'IMAGE', value: 'docker.io/lsstsqre/sciplat-lab,us-central1-docker.pkg.dev/rubin-shared-services-71ec/sciplat/sciplat-lab,ghcr.io/lsst-sqre/sciplat-lab'),
+            ],
+          )
+        } // retry
+      } // stage
     }
 
     triggerMe['verify_drp_metrics'] = {
