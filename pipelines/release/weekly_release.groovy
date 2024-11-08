@@ -153,10 +153,11 @@ notify.wrap {
           )
         } // retry
       } // stage
+    }
 
+    triggerMe['build two-python Science Platform Notebook Aspect Lab images'] = {
       stage('build two-python Lab images') {
         retry(retries) {
-          // based on lsstsqre/stack image
           build(
             job: 'sqre/infra/build-sciplatlab',
             parameters: [
