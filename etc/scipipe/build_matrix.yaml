@@ -118,7 +118,7 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: main
+  git_ref: tickets/DM-47418
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: main
