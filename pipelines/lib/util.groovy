@@ -463,11 +463,18 @@ def void jenkinsWrapper(Map buildParams) {
         njobs = 8
     }
 
+    // Check if NODE_LABELS is set in the environment
+    def nodeLabels = env.NODE_LABELS
+    if (nodeLabels == null) {
+        nodeLabels = "unknown" // Set a default value if NODE_LABELS is not found
+    }
+
     def buildEnv = [
       "WORKSPACE=${cwd}",
       "HOME=${homeDir}",
       "EUPS_USERDATA=${homeDir}/.eups_userdata",
       "EUPSPKG_NJOBS=${njobs}"
+      "NODE_LABELS=${nodeLabels}" 
     ]
 
     // Map -> List
