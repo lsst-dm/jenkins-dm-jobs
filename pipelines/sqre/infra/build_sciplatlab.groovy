@@ -71,9 +71,7 @@ notify.wrap {
       // We presume that GH Actions will continue to list most recent runs
       // at the top.  Poll the build.yaml runs for the first result.
 
-      // I think we always want the main branch.
-
-      def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/runs?per_page=1&branch=main")
+      def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/runs?per_page=1&branch=${branch}")
 
       def created_at = starttime.minusSeconds(1)
       // One second before we really started the action.
@@ -94,7 +92,7 @@ notify.wrap {
       // the POST that would identify the job the POST ran, I think this is
       // the best we can do.
 
-      println("Initial polling loop to find run_id: created_at: ${created_at}; url: ${url}; starttime: ${starttime}")
+      println("Initial polling loop to find run_id:  branch: ${branch}; created_at: ${created_at}; url: ${url}; starttime: ${starttime}")
 
       def loop_idx = 0
       def jsonSlurper = new groovy.json.JsonSlurper()
