@@ -473,7 +473,7 @@ def void jenkinsWrapper(Map buildParams) {
       "WORKSPACE=${cwd}",
       "HOME=${homeDir}",
       "EUPS_USERDATA=${homeDir}/.eups_userdata",
-      "EUPSPKG_NJOBS=${njobs}"
+      "EUPSPKG_NJOBS=${njobs}",
       "NODE_LABELS=${nodeLabels}" 
     ]
 
