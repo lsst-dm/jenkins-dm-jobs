@@ -18,6 +18,6 @@ p.pipeline().with {
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
     stringParam('RUBINENV_VER', scipipe.template.splenv_ref, 'conda env ref')
     // enable for debugging only
-    // booleanParam('NO_PUSH', true, 'Skip s3 push.')
+    booleanParam('NO_PUSH', true, 'Skip s3 push.')
   }
 }
