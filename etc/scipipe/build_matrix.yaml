@@ -63,6 +63,7 @@ scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
   - <<: *monterey-conda
   - <<: *ventura-conda
+  - <<: *macarm64-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
   - <<: *ventura-conda
