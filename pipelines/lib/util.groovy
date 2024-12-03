@@ -345,7 +345,13 @@ def lsstswBuild(
   ] + buildParams
 
   def run = {
-    jenkinsWrapper(buildParams)
+    withCredentials([[
+      $class: 'StringBinding',
+      credentialsId: 'github-api-token-sqreadmin',
+      variable: 'GITHUB_TOKEN'
+    ]]) {
+      jenkinsWrapper(buildParams)
+    } // withCredentials
   } // run
 
   def runDocker = {
