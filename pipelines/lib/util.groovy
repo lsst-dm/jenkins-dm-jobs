@@ -297,7 +297,8 @@ def void runPublish(Map p) {
     'PRODUCTS',
   ])
   useP.parameters = [
-    TIMEOUT: '1' // should be string
+    TIMEOUT: '1', // should be string
+    NO_PUSH: true
   ] + p.parameters
 
   def jobParameters = [
@@ -686,21 +687,19 @@ def void createDirs(List eds) {
  * @param filename String Output filename.
  */
 def void getManifest(String rebuildId, String filename) {
-  def manifest_artifact = 'lsstsw/build/manifest.txt'
   def buildJob          = 'release/run-rebuild'
 
-  step([$class: 'CopyArtifact',
+    step([$class: 'CopyArtifact',
         projectName: buildJob,
-        filter: "**/lsstsw/build/manifext.txt",
-        target: manifest_artifact,
-        selector: [
-          $class: 'SpecificBuildSelector',
+          filter: "**/lsstsw/build/manifest.txt",
+          target: 'buildmanifest',
+          selector: [
+            $class: 'SpecificBuildSelector',
           buildNumber: rebuildId // wants a string
-        ],
-      ])
-
-  def manifest = readFile manifest_artifact
-  writeFile(file: filename, text: manifest)
+          ],
+        ])
+    def manifest = readFile('buildmanifest/lsstsw/build/manifest.txt')
+    writeFile(file: filename, text: manifest)
 } // getManifest
 
 /**
@@ -1387,7 +1386,7 @@ def String runRebuild(Map p) {
     wait: true,
   )
   nodeTiny {
-    def manifestArtifact = 'lsstsw/build/manifest.txt'
+
     step([$class: 'CopyArtifact',
           projectName: useP.job,
           filter: "**/lsstsw/build/manifest.txt",
@@ -1398,7 +1397,8 @@ def String runRebuild(Map p) {
             buildNumber: result.id,
           ],
         ])
-    def manifestId = parseManifestId(readFile('buildmanifest/linux-9-x86/lsstsw/build/manifest.txt'))
+    def manifestId = parseManifestId(readFile('buildmanifest/lsstsw/build/manifest.txt'))
+  //  echo sh(returnStdout: true, script: 'env|sort') 
 
     echo "parsed manifest id: ${manifestId}"
     return manifestId

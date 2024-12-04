@@ -31,7 +31,7 @@ notify.wrap {
   def manifestId   = null
   def stackResults = null
 
-  def lsstswConfig = scipipe.canonical.lsstsw_config
+  def lsstswConfigs = scipipe.canonical.lsstsw_config
 
   def run = {
     stage('format nightly tag') {
@@ -46,7 +46,7 @@ notify.wrap {
         manifestId = util.runRebuild(
           parameters: [
             PRODUCTS: products,
-            BUILD_DOCS: true,
+            BUILD_DOCS: false,
           ],
         )
       } // retry
@@ -55,7 +55,9 @@ notify.wrap {
     stage('eups publish') {
       def pub = [:]
 
-      [eupsTag, 'd_latest'].each { tagName ->
+      [eupsTag, 
+      //'d_latest'
+      ].each { tagName ->
         pub[tagName] = {
           retry(retries) {
             util.runPublish(
@@ -64,6 +66,7 @@ notify.wrap {
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
                 PRODUCTS: products,
+                BUILD_DOCS: false,
               ],
             )
           } // retry
@@ -76,39 +79,39 @@ notify.wrap {
     util.waitForS3()
 
     // NOOP / DRY_RUN
-    stage('git tag eups products') {
-      retry(retries) {
-        util.nodeWrap('docker') {
-          // needs eups distrib tag to be sync'd from s3 -> k8s volume
-          util.githubTagRelease(
-            options: [
-              '--dry-run': true,
-              '--org': scipipe.release_tag_org,
-              '--manifest': manifestId,
-              '--eups-tag': eupsTag,
-            ],
-            args: [gitTag],
-          )
-        } // util.nodeWrap
-      } // retry
-    } // stage
+    // stage('git tag eups products') {
+    //   retry(retries) {
+    //     util.nodeWrap('docker') {
+    //       // needs eups distrib tag to be sync'd from s3 -> k8s volume
+    //       util.githubTagRelease(
+    //         options: [
+    //           '--dry-run': true,
+    //           '--org': scipipe.release_tag_org,
+    //           '--manifest': manifestId,
+    //           '--eups-tag': eupsTag,
+    //         ],
+    //         args: [gitTag],
+    //       )
+    //     } // util.nodeWrap
+    //   } // retry
+    // } // stage
 
     // add aux repo tags *after* tagging eups product repos so as to avoid a
     // trainwreck if an aux repo has been pulled into the build (without
     // first being removed from the aux team).
-    stage('git tag auxilliaries') {
-      retry(retries) {
-        util.nodeWrap('docker') {
-          util.githubTagTeams(
-            options: [
-              '--dry-run': true,
-              '--org': scipipe.release_tag_org,
-              '--tag': gitTag,
-            ],
-          )
-        } // util.nodeWrap
-      } // retry
-    } // stage
+    // stage('git tag auxilliaries') {
+    //   retry(retries) {
+    //     util.nodeWrap('docker') {
+    //       util.githubTagTeams(
+    //         options: [
+    //           '--dry-run': true,
+    //           '--org': scipipe.release_tag_org,
+    //           '--tag': gitTag,
+    //         ],
+    //       )
+    //     } // util.nodeWrap
+    //   } // retry
+    // } // stage
 
     stage('build eups tarballs') {
       util.buildTarballMatrix(
@@ -118,13 +121,13 @@ notify.wrap {
           EUPS_TAG: eupsTag,
           SMOKE: true,
           RUN_SCONS_CHECK: true,
-          PUBLISH: true,
+          PUBLISH: false,
         ],
         retries: retries,
       )
     } // stage
 
-    util.waitForS3()
+    // util.waitForS3()
 
     stage('build stack image') {
       retry(retries) {
@@ -134,7 +137,7 @@ notify.wrap {
             EUPS_TAG: eupsTag,
             DOCKER_TAGS: extraDockerTags,
             MANIFEST_ID: manifestId,
-            LSST_COMPILER: lsstswConfig.compiler,
+            LSST_COMPILER: lsstswConfigs.compiler[0],
           ],
         )
       } // retry
@@ -142,72 +145,72 @@ notify.wrap {
 
     def triggerMe = [:]
 
-    triggerMe['build Science Platform Notebook Aspect Lab image'] = {
-      retry(retries) {
-        // based on lsstsqre/stack image
-        build(
-          job: 'sqre/infra/build-sciplatlab',
-          parameters: [
-            string(name: 'TAG', value: eupsTag),
-          ],
-          wait: false,
-        )
-      } // retry
-    }
+    // triggerMe['build Science Platform Notebook Aspect Lab image'] = {
+    //   retry(retries) {
+    //     // based on lsstsqre/stack image
+    //     build(
+    //       job: 'sqre/infra/build-sciplatlab',
+    //       parameters: [
+    //         string(name: 'TAG', value: eupsTag),
+    //       ],
+    //       wait: false,
+    //     )
+    //   } // retry
+    // }
 
-    triggerMe['verify_drp_metrics'] = {
-      retry(1) {
-        // based on lsstsqre/stack image
-        build(
-          job: 'sqre/verify_drp_metrics',
-          parameters: [
-            string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            booleanParam(
-              name: 'NO_PUSH',
-              value: scipipe.release.step.verify_drp_metrics.no_push,
-            ),
-            booleanParam(name: 'WIPEOUT', value: false),
-            string(name: 'GIT_REF', value: 'main'),
-          ],
-          wait: false,
-        )
-      } // retry
-    }
+    // triggerMe['verify_drp_metrics'] = {
+    //   retry(1) {
+    //     // based on lsstsqre/stack image
+    //     build(
+    //       job: 'sqre/verify_drp_metrics',
+    //       parameters: [
+    //         string(name: 'DOCKER_IMAGE', value: stackResults.image),
+    //         booleanParam(
+    //           name: 'NO_PUSH',
+    //           value: scipipe.release.step.verify_drp_metrics.no_push,
+    //         ),
+    //         booleanParam(name: 'WIPEOUT', value: false),
+    //         string(name: 'GIT_REF', value: 'main'),
+    //       ],
+    //       wait: false,
+    //     )
+    //   } // retry
+    // }
 
-    triggerMe['doc build'] = {
-      retry(retries) {
-        build(
-          job: 'sqre/infra/documenteer',
-          parameters: [
-            string(name: 'EUPS_TAG', value: eupsTag),
-            string(name: 'LTD_SLUG', value: eupsTag),
-            string(name: 'RELEASE_IMAGE', value: stackResults.image),
-            booleanParam(
-              name: 'PUBLISH',
-              value: scipipe.release.step.documenteer.publish,
-            ),
-          ],
-          wait: false,
-        )
-      } // retry
-    }
+    // triggerMe['doc build'] = {
+    //   retry(retries) {
+    //     build(
+    //       job: 'sqre/infra/documenteer',
+    //       parameters: [
+    //         string(name: 'EUPS_TAG', value: eupsTag),
+    //         string(name: 'LTD_SLUG', value: eupsTag),
+    //         string(name: 'RELEASE_IMAGE', value: stackResults.image),
+    //         booleanParam(
+    //           name: 'PUBLISH',
+    //           value: scipipe.release.step.documenteer.publish,
+    //         ),
+    //       ],
+    //       wait: false,
+    //     )
+    //   } // retry
+    // }
 
-    triggerMe['ap_verify'] = {
-      retry(retries) {
-        build(
-          job: 'scipipe/ap_verify',
-          parameters: [
-            string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            booleanParam(
-              name: 'NO_PUSH',
-              value: scipipe.release.step.ap_verify.no_push,
-            ),
-            booleanParam(name: 'WIPEOUT', value: false),
-          ],
-          wait: false,
-        )
-      } // retry
-    }
+    // triggerMe['ap_verify'] = {
+    //   retry(retries) {
+    //     build(
+    //       job: 'scipipe/ap_verify',
+    //       parameters: [
+    //         string(name: 'DOCKER_IMAGE', value: stackResults.image),
+    //         booleanParam(
+    //           name: 'NO_PUSH',
+    //           value: scipipe.release.step.ap_verify.no_push,
+    //         ),
+    //         booleanParam(name: 'WIPEOUT', value: false),
+    //       ],
+    //       wait: false,
+    //     )
+    //   } // retry
+    // }
 
     stage('triggered jobs') {
       parallel triggerMe

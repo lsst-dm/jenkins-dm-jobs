@@ -1,6 +1,6 @@
 properties([
   copyArtifactPermission('/release/*'),
-])
+]);
 
 node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
@@ -46,32 +46,113 @@ notify.wrap {
 
   def canonical    = scipipe.canonical
   def lsstswConfigs = canonical.lsstsw_config
-  def cwd = '/j/' + canonical.workspace
 
-  def buildParams = [
+  def matrix = [:]
+  lsstswConfigs.each{ lsstswConfig ->
+    def slug = util.lsstswConfigSlug(lsstswConfig)
+    matrix[slug] ={
+    def run = {
+      def workingDir = canonical.workspace + "/${lsstswConfig.display_name}"
+      ws(workingDir) {
+      def cwd = pwd()
+      splenvRef = lsstswConfig.splenv_ref
+      if (params.SPLENV_REF) {
+        splenvRef = params.SPLENV_REF
+      }
+
+      def buildParams = [
         EUPS_PKGROOT:        "${cwd}/distrib",
         GIT_SSH_COMMAND:     'ssh -o StrictHostKeyChecking=no',
         K8S_DIND_LIMITS_CPU: "4",
         LSST_BUILD_DOCS:     buildDocs,
+        LSST_COMPILER:       lsstswConfig.compiler,
+        LSST_JUNIT_PREFIX:   slug,
         LSST_PREP_ONLY:      prepOnly,
         LSST_PRODUCTS:       products,
+        LSST_PYTHON_VERSION: lsstswConfig.python,
+        LSST_SPLENV_REF:     splenvRef,
         LSST_REFS:           refs,
         // VERSIONDB_PUSH:      versiondbPush,
         // VERSIONDB_REPO:      versiondbRepo,
       ]
-  
-  // override conda env ref from build_matrix.yaml
-  if (params.SPLENV_REF) {
-    buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
-  }
 
-  if (lsstswConfigs == null) {
-    error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
-  }
+      def runJW = {
+        // note that util.jenkinsWrapper() clones the ci-scripts repo, which is
+        // used by the push docs stage
+        try {
+          util.jenkinsWrapper(buildParams)
+        } finally {
+          util.jenkinsWrapperPost(null, prepOnly)
+        }
+      }
 
-  timeout(time: 12, unit: 'HOURS') {
-    stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, buildParams )
+      def withVersiondbCredentials = { closure ->
+        sshagent (credentials: ['github-jenkins-versiondb']) {
+          closure()
+        }
+      }
+
+      stage('build') {
+        util.insideDockerWrap(
+          image: lsstswConfig.image,
+          pull: true,
+        ) {
+          // only setup sshagent if we are going to push
+          if (versiondbPush) {
+            withVersiondbCredentials(runJW)
+          } else {
+            runJW()
+          }
+        } // util.insideDockerWrap
+      } // stage('build')
+
+      stage('push docs') {
+        if (buildDocs) {
+          withCredentials([[
+            $class: 'UsernamePasswordMultiBinding',
+            credentialsId: 'aws-doxygen-push',
+            usernameVariable: 'AWS_ACCESS_KEY_ID',
+            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+          ],
+          [
+            $class: 'StringBinding',
+            credentialsId: 'doxygen-push-bucket',
+            variable: 'DOXYGEN_S3_BUCKET'
+          ]]) {
+            withEnv([
+              "EUPS_PKGROOT=${cwd}/distrib",
+              "HOME=${cwd}/home",
+            ]) {
+              // the current iteration of the awscli container is alpine based
+              // and doesn't work with util.insideDockerWrap.  However, the aws
+              // cli seems to work OK without trying to lookup the username.
+              docker.image(util.defaultAwscliImage()).inside {
+                // alpine does not include bash by default
+                util.posixSh '''
+                  # provides DOC_PUSH_PATH
+                  . ./ci-scripts/settings.cfg.sh
+
+                  aws s3 cp \
+                    --only-show-errors \
+                    --recursive \
+                    "${DOC_PUSH_PATH}/" \
+                    "s3://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
+                '''
+                } // util.insideDockerWrap
+              } // withEnv
+            } // withCredentials
+          }
+        } // stage('push docs')
+      } // ws
+    } // run
+
+    util.nodeWrap(lsstswConfig.label) {
+    timeout(time: timelimit, unit: 'HOURS') {
+      run()
+      }
     }
   }
+}
+parallel matrix
+
 } // notify.wrap

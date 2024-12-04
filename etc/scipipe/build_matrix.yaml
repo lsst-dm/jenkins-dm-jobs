@@ -81,6 +81,8 @@ canonical:
     - <<: *el7-conda
       label: snowflake-0
     - <<: *linux-9-arm
+      label: arm64 # need to move to snowflake-aarch64
+  splenv_ref: *splenv_ref
   workspace: snowflake/release
 #
 # eups distrib tarball configuration -- used by
@@ -155,7 +157,7 @@ newinstall:
     repo: ghcr.io/lsst-dm/docker-newinstall
     tag: 9-latest
   github_repo: lsst/lsst
-  git_ref: main
+  git_ref: tickets/DM-48154
 eups:
   base_url: https://eups.lsst.codes/stack_test
   s3_bucket: eups.lsst.codes

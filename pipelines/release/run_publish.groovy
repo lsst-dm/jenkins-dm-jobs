@@ -51,7 +51,6 @@ notify.wrap {
     def workingDir = canonical.workspace + "/${lsstswConfig.display_name}"
     ws(workingDir) {
       def cwd = pwd()
-      println(cwd)
       def pkgroot = "${cwd}/distrib"
 
       stage('create packages') {
@@ -86,8 +85,6 @@ notify.wrap {
             pull: true,
           ) {
             util.bash '''
-              pwd
-              ls -a
               ARGS=()
               ARGS+=('-b' "$MANIFEST_ID")
               ARGS+=('-t' "$EUPS_TAG")
@@ -103,7 +100,6 @@ notify.wrap {
               #   this can be retrived using the -b option.
               # (note: bin/setup.sh is now deprecated)
               source ./lsstsw/bin/envconfig -n "lsst-scipipe-$LSST_SPLENV_REF"
-              cat conda/envs/lsst-scipipe-*/share/eups/ups_db/global.tags
               publish "${ARGS[@]}"
             '''
           }
@@ -111,7 +107,7 @@ notify.wrap {
       } // stage('publish')
 
       stage('push packages') {
-        if (pushS3) {
+        if (false) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-eups-push',
@@ -153,105 +149,6 @@ notify.wrap {
     }
   }
   }
-  parallel matrix
   }
+  parallel matrix
 } // notify.wrap
-  // def slug = util.lsstswConfigSlug(lsstswConfig)
-
-  // def run = {
-  //   ws(canonical.workspace) {
-  //     def cwd = pwd()
-  //     def pkgroot = "${cwd}/distrib"
-
-  //     stage('create packages') {
-  //       dir('lsstsw') {
-  //         util.cloneLsstsw()
-  //       }
-
-  //       def tagDir  = "${pkgroot}/tags"
-
-  //       // remove any pre-existing eups tags to prevent them from being
-  //       // [re]published
-  //       // the src pkgroot has tags under ./tags/
-  //       dir(tagDir) {
-  //         deleteDir()
-  //       }
-
-  //       def env = [
-  //         "HOME=${cwd}/home",
-  //         "EUPS_PKGROOT=${pkgroot}",
-  //         "EUPS_USERDATA=${cwd}/home/.eups_userdata",
-  //         "EUPSPKG_SOURCE=${eupspkgSource}",
-  //         "LSST_SPLENV_REF=${splenvRef}",
-  //         "RUBINENV_VER=${rubinEnvVer}",
-  //         "MANIFEST_ID=${manifestId}",
-  //         "EUPS_TAG=${eupsTag}",
-  //         "PRODUCTS=${products}",
-  //       ]
-
-  //       withEnv(env) {
-  //         util.insideDockerWrap(
-  //           image: lsstswConfig.image,
-  //           pull: true,
-  //         ) {
-  //           util.bash '''
-  //             ARGS=()
-  //             ARGS+=('-b' "$MANIFEST_ID")
-  //             ARGS+=('-t' "$EUPS_TAG")
-  //             # enable debug output
-  //             ARGS+=('-d')
-  //             # split whitespace separated EUPS products into separate array
-  //             # elements by not quoting
-  //             ARGS+=($PRODUCTS)
-
-  //             export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
-
-  //             # setting up the same environment used in the previous build step
-  //             #   this can be retrived using the -b option.
-  //             # (note: bin/setup.sh is now deprecated)
-  //             source ./lsstsw/bin/envconfig -n "lsst-scipipe-$LSST_SPLENV_REF"
-
-  //             publish "${ARGS[@]}"
-  //           '''
-  //         }
-  //       } // util.insideDockerWrap
-  //     } // stage('publish')
-
-  //     stage('push packages') {
-  //       if (pushS3) {
-  //         withCredentials([[
-  //           $class: 'UsernamePasswordMultiBinding',
-  //           credentialsId: 'aws-eups-push',
-  //           usernameVariable: 'AWS_ACCESS_KEY_ID',
-  //           passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-  //         ],
-  //         [
-  //           $class: 'StringBinding',
-  //           credentialsId: 'eups-push-bucket',
-  //           variable: 'EUPS_S3_BUCKET'
-  //         ]]) {
-  //           def env = [
-  //             "EUPS_PKGROOT=${pkgroot}",
-  //             "HOME=${cwd}/home",
-  //             "EUPS_S3_OBJECT_PREFIX=stack/src/"
-  //           ]
-  //           withEnv(env) {
-  //             docker.image(util.defaultAwscliImage()).inside {
-  //               // alpine does not include bash by default
-  //               util.posixSh '''
-  //                 aws s3 cp \
-  //                   --only-show-errors \
-  //                   --recursive \
-  //                   "${EUPS_PKGROOT}/" \
-  //                   "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
-  //               '''
-  //             } // .inside
-  //           } // withEnv
-  //         } // withCredentials
-  //       } else {
-  //         echo "skipping s3 push."
-  //       }
-  //     } // stage('push packages')
-  //   } // ws
-  // } // run
-
