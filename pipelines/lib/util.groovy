@@ -297,7 +297,8 @@ def void runPublish(Map p) {
     'PRODUCTS',
   ])
   useP.parameters = [
-    TIMEOUT: '1' // should be string
+    TIMEOUT: '1', // should be string
+    NO_PUSH: true
   ] + p.parameters
 
   def jobParameters = [
@@ -1387,7 +1388,9 @@ def String runRebuild(Map p) {
     wait: true,
   )
   nodeTiny {
-    def manifestArtifact = 'lsstsw/build/manifest.txt'
+
+    println("This is the output")
+    
     step([$class: 'CopyArtifact',
           projectName: useP.job,
           filter: "**/lsstsw/build/manifest.txt",
