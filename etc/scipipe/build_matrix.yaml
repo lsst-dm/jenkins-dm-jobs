@@ -67,9 +67,11 @@ scipipe-lsstsw-lsst_distrib:
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
   - <<: *ventura-conda
+  - <<: *macarm64-conda
 scipipe-lsstsw-ci_imsim:
   - <<: *el7-conda
   - <<: *ventura-conda
+  - <<: *macarm64-conda
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
