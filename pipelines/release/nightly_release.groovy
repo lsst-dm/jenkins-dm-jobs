@@ -31,7 +31,7 @@ notify.wrap {
   def manifestId   = null
   def stackResults = null
 
-  def lsstswConfig = scipipe.canonical.lsstsw_config
+  def lsstswConfigs = scipipe.canonical.lsstsw_config
 
   def run = {
     stage('format nightly tag') {
@@ -46,7 +46,7 @@ notify.wrap {
         manifestId = util.runRebuild(
           parameters: [
             PRODUCTS: products,
-            BUILD_DOCS: true,
+            BUILD_DOCS: false,
           ],
         )
       } // retry
@@ -64,6 +64,7 @@ notify.wrap {
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
                 PRODUCTS: products,
+                BUILD_DOCS: false,
               ],
             )
           } // retry
@@ -134,7 +135,7 @@ notify.wrap {
             EUPS_TAG: eupsTag,
             DOCKER_TAGS: extraDockerTags,
             MANIFEST_ID: manifestId,
-            LSST_COMPILER: lsstswConfig.compiler,
+            LSST_COMPILER: lsstswConfig.compiler[0],
           ],
         )
       } // retry
