@@ -81,6 +81,7 @@ canonical:
     - <<: *el7-conda
       label: snowflake-0
     - <<: *linux-9-arm
+      label: arm64 # need to move to snowflake-aarch64
   workspace: snowflake/release
 #
 # eups distrib tarball configuration -- used by
