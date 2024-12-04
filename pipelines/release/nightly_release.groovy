@@ -46,7 +46,7 @@ notify.wrap {
         manifestId = util.runRebuild(
           parameters: [
             PRODUCTS: products,
-            BUILD_DOCS: true,
+            BUILD_DOCS: false,
           ],
         )
       } // retry
@@ -64,6 +64,7 @@ notify.wrap {
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
                 PRODUCTS: products,
+                BUILD_DOCS: false,
               ],
             )
           } // retry
