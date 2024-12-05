@@ -347,7 +347,7 @@ def lsstswBuild(
   def run = {
     withCredentials([[
       $class: 'StringBinding',
-      credentialsId: 'github-api-token-sqreadmin-dev',
+      credentialsId: 'github-api-token-checks',
       variable: 'GITHUB_TOKEN'
     ]]) {
       jenkinsWrapper(buildParams)
