@@ -349,6 +349,14 @@ def lsstswBuild(
       $class: 'StringBinding',
       credentialsId: 'github-api-token-checks',
       variable: 'GITHUB_TOKEN'
+    ],
+      $class: 'StringBinding',
+      credentialsId: 'client-id-lsst',
+      variable: 'GITHUB_APP_ID'                    
+    ],
+      $class: 'StringBinding',
+      credentialsId: 'key-lsst',
+      variable: 'GITHUB_APP_KEY'     
     ]]) {
       jenkinsWrapper(buildParams)
     } // withCredentials
