@@ -293,6 +293,7 @@ def void linuxBuild(
       "DISTDIR_CONTAINER=${distDirContainer}",
       "CIDIR=${ciDir}",
       "CIDIR_CONTAINER=${ciDirContainer}",
+      "LSST_MINICONDA_BASE_URL=https://github.com/conda-forge/miniforge/releases/tag/24.9.2-0/download"
     ]) {
       // XXX refactor to use util.insideDockerWrap
       util.bash '''
@@ -596,7 +597,7 @@ def void s3PushConda(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
   def buildDir = "${cwd}/build"
-  
+
   def env = [
     "EUPS_PKGROOT=${cwd}/distrib",
     "EUPS_S3_OBJECT_PREFIX=${objectPrefix}",
@@ -606,7 +607,7 @@ def void s3PushConda(String ... parts) {
 
   withEnv(env) {
     withEupsBucketEnv {
-      timeout(time: 10, unit: 'MINUTES') { 
+      timeout(time: 10, unit: 'MINUTES') {
         if (osfamily != "osx") {
           docker.image(util.defaultAwscliImage()).inside {
             util.posixSh(s3PushCmd())
@@ -626,7 +627,7 @@ def void s3PushConda(String ... parts) {
         ${s3PushCmd()}
         conda deactivate
         """)
-        
+
       }
     } //withEupsBucketEnv
   } // withEnv
