@@ -293,7 +293,6 @@ def void linuxBuild(
       "DISTDIR_CONTAINER=${distDirContainer}",
       "CIDIR=${ciDir}",
       "CIDIR_CONTAINER=${ciDirContainer}",
-      "LSST_MINICONDA_BASE_URL=https://github.com/conda-forge/miniforge/releases/tag/24.9.2-0/download"
     ]) {
       // XXX refactor to use util.insideDockerWrap
       util.bash '''
@@ -731,6 +730,7 @@ def String buildScript(
   ) +
   util.dedent("""
     curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
+    echo "Running loadlsst"
     . ./loadLSST.bash
 
     for prod in ${products}; do
@@ -867,6 +867,11 @@ def String scriptPreamble(
     # isolate conda config
     export CONDARC="\${PWD}/.condarc"
     touch "\$CONDARC"
+    echo "
+    channel:
+      - conda-forge
+      - nodefaults
+    " > "\$CONDARC"
 
     if [[ \$(uname -s) == Darwin* ]]; then
       export MACOSX_DEPLOYMENT_TARGET="${macosx_deployment_target}"
