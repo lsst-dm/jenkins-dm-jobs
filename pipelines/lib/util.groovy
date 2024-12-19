@@ -1389,7 +1389,6 @@ def String runRebuild(Map p) {
   )
   nodeTiny {
 
-    println("This is the output")
     
     step([$class: 'CopyArtifact',
           projectName: useP.job,
