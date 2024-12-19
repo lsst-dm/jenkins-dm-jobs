@@ -698,7 +698,7 @@ def void getManifest(String rebuildId, String filename) {
           buildNumber: rebuildId // wants a string
           ],
         ])
-    def manifest = readFile('buildmanifest/linux-9-x86/lsstsw/build/manifest.txt')
+    def manifest = readFile('buildmanifest/lsstsw/build/manifest.txt')
     writeFile(file: filename, text: manifest)
 } // getManifest
 
@@ -1387,8 +1387,6 @@ def String runRebuild(Map p) {
   )
   nodeTiny {
 
-    println("This is the output")
-    
     step([$class: 'CopyArtifact',
           projectName: useP.job,
           filter: "**/lsstsw/build/manifest.txt",
@@ -1400,6 +1398,7 @@ def String runRebuild(Map p) {
           ],
         ])
     def manifestId = parseManifestId(readFile('buildmanifest/linux-9-x86/lsstsw/build/manifest.txt'))
+   echo sh(returnStdout: true, script: 'env|sort') 
 
     echo "parsed manifest id: ${manifestId}"
     return manifestId
