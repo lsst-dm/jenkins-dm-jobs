@@ -157,7 +157,7 @@ newinstall:
     repo: ghcr.io/lsst-dm/docker-newinstall
     tag: 9-latest
   github_repo: lsst/lsst
-  git_ref: main
+  git_ref: tickets/DM-48154
 eups:
   base_url: https://eups.lsst.codes/stack_test
   s3_bucket: eups.lsst.codes
