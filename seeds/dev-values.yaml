@@ -514,6 +514,7 @@ controller:
     - scm-api:698.v8e3b_c788f0a_6
     - script-security:1367.vdf2fc45f229c
     - snakeyaml-api:2.3-123.v13484c65210a_
+    - sonar:2.17.3
     - sse-gateway:1.27
     - ssh-agent:376.v8933585c69d3
     - ssh-credentials:343.v884f71d78167
