@@ -46,11 +46,6 @@ notify.wrap {
 
   def canonical    = scipipe.canonical
   def lsstswConfigs = canonical.lsstsw_config
-  def splenvRef = lsstswConfigs.splenv_ref
-  println("This is the env ref: " + splenvRef)
-  if (params.SPLENV_REF) {
-    splenvRef = params.SPLENV_REF
-  }
 
   def matrix = [:]
   lsstswConfigs.each{ lsstswConfig ->

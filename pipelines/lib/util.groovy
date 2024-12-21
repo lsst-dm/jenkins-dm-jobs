@@ -1397,8 +1397,8 @@ def String runRebuild(Map p) {
             buildNumber: result.id,
           ],
         ])
-    def manifestId = parseManifestId(readFile('buildmanifest/linux-9-x86/lsstsw/build/manifest.txt'))
-   echo sh(returnStdout: true, script: 'env|sort') 
+    def manifestId = parseManifestId(readFile('buildmanifest/lsstsw/build/manifest.txt'))
+  //  echo sh(returnStdout: true, script: 'env|sort') 
 
     echo "parsed manifest id: ${manifestId}"
     return manifestId
