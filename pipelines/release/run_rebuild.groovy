@@ -45,18 +45,20 @@ notify.wrap {
   }
 
   def canonical    = scipipe.canonical
-  def lsstswConfig = canonical.lsstsw_config
+  def lsstswConfigs = canonical.lsstsw_config
 
-  def splenvRef = lsstswConfig.splenv_ref
-  if (params.SPLENV_REF) {
-    splenvRef = params.SPLENV_REF
-  }
-
-  def slug = util.lsstswConfigSlug(lsstswConfig)
-
-  def run = {
-    ws(canonical.workspace) {
+  def matrix = [:]
+  lsstswConfigs.each{ lsstswConfig ->
+    def slug = util.lsstswConfigSlug(lsstswConfig)
+    matrix[slug] ={
+    def run = {
+      def workingDir = canonical.workspace + "/${lsstswConfig.display_name}"
+      ws(workingDir) {
       def cwd = pwd()
+      splenvRef = lsstswConfig.splenv_ref
+      if (params.SPLENV_REF) {
+        splenvRef = params.SPLENV_REF
+      }
 
       def buildParams = [
         EUPS_PKGROOT:        "${cwd}/distrib",
@@ -70,8 +72,8 @@ notify.wrap {
         LSST_PYTHON_VERSION: lsstswConfig.python,
         LSST_SPLENV_REF:     splenvRef,
         LSST_REFS:           refs,
-        VERSIONDB_PUSH:      versiondbPush,
-        VERSIONDB_REPO:      versiondbRepo,
+        // VERSIONDB_PUSH:      versiondbPush,
+        // VERSIONDB_REPO:      versiondbRepo,
       ]
 
       def runJW = {
@@ -136,17 +138,21 @@ notify.wrap {
                     "${DOC_PUSH_PATH}/" \
                     "s3://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
                 '''
-              } // util.insideDockerWrap
-            } // withEnv
-          } // withCredentials
-        }
-      } // stage('push docs')
-    } // ws
-  } // run
+                } // util.insideDockerWrap
+              } // withEnv
+            } // withCredentials
+          }
+        } // stage('push docs')
+      } // ws
+    } // run
 
-  util.nodeWrap(lsstswConfig.label) {
+    util.nodeWrap(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
+      }
     }
   }
+}
+parallel matrix
+
 } // notify.wrap

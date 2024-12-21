@@ -297,7 +297,8 @@ def void runPublish(Map p) {
     'PRODUCTS',
   ])
   useP.parameters = [
-    TIMEOUT: '1' // should be string
+    TIMEOUT: '1', // should be string
+    NO_PUSH: true
   ] + p.parameters
 
   def jobParameters = [
@@ -626,7 +627,7 @@ def void requireEnvVars(List rev) {
   // note that `env` isn't a map and #get doesn't work as expected
   rev.each { it ->
     if (env."${it}" == null) {
-      error "${it} envirnoment variable is required"
+      error "${it} environment variable is required"
     }
   }
 }
@@ -686,20 +687,19 @@ def void createDirs(List eds) {
  * @param filename String Output filename.
  */
 def void getManifest(String rebuildId, String filename) {
-  def manifest_artifact = 'lsstsw/build/manifest.txt'
   def buildJob          = 'release/run-rebuild'
 
-  step([$class: 'CopyArtifact',
+    step([$class: 'CopyArtifact',
         projectName: buildJob,
-        filter: manifest_artifact,
-        selector: [
-          $class: 'SpecificBuildSelector',
+          filter: "**/lsstsw/build/manifest.txt",
+          target: 'buildmanifest',
+          selector: [
+            $class: 'SpecificBuildSelector',
           buildNumber: rebuildId // wants a string
-        ],
-      ])
-
-  def manifest = readFile manifest_artifact
-  writeFile(file: filename, text: manifest)
+          ],
+        ])
+    def manifest = readFile('buildmanifest/lsstsw/build/manifest.txt')
+    writeFile(file: filename, text: manifest)
 } // getManifest
 
 /**
@@ -1385,20 +1385,21 @@ def String runRebuild(Map p) {
     parameters: jobParameters,
     wait: true,
   )
-
   nodeTiny {
-    manifestArtifact = 'lsstsw/build/manifest.txt'
 
     step([$class: 'CopyArtifact',
           projectName: useP.job,
-          filter: manifestArtifact,
+          filter: "**/lsstsw/build/manifest.txt",
+          //target: manifestArtifact,
+          target: 'buildmanifest',
           selector: [
             $class: 'SpecificBuildSelector',
             buildNumber: result.id,
           ],
         ])
+    def manifestId = parseManifestId(readFile('buildmanifest/lsstsw/build/manifest.txt'))
+  //  echo sh(returnStdout: true, script: 'env|sort') 
 
-    def manifestId = parseManifestId(readFile(manifestArtifact))
     echo "parsed manifest id: ${manifestId}"
     return manifestId
   } // nodeTiny
@@ -2299,5 +2300,6 @@ def void nodeWrap(String label, Closure run) {
     run()
   }
 }
+
 
 return this;

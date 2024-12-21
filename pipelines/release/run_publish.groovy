@@ -33,9 +33,9 @@ notify.wrap {
   Boolean pushS3 = (! params.NO_PUSH?.toBoolean())
 
   def canonical    = scipipe.canonical
-  def lsstswConfig = canonical.lsstsw_config
+  def lsstswConfigs = canonical.lsstsw_config
 
-  def splenvRef = lsstswConfig.splenv_ref
+  def splenvRef = lsstswConfigs.splenv_ref
   if (params.SPLENV_REF) {
     splenvRef = params.SPLENV_REF
   }
@@ -43,11 +43,13 @@ notify.wrap {
   if (params.RUBINENV_VER) {
     rubinEnvVer = params.RUBINENV_VER
   }
-
-  def slug = util.lsstswConfigSlug(lsstswConfig)
-
-  def run = {
-    ws(canonical.workspace) {
+  def matrix = [:]
+  lsstswConfigs.each{ lsstswConfig ->
+    def slug = util.lsstswConfigSlug(lsstswConfig)
+    matrix[slug] ={
+    def run = {
+    def workingDir = canonical.workspace + "/${lsstswConfig.display_name}"
+    ws(workingDir) {
       def cwd = pwd()
       def pkgroot = "${cwd}/distrib"
 
@@ -98,7 +100,6 @@ notify.wrap {
               #   this can be retrived using the -b option.
               # (note: bin/setup.sh is now deprecated)
               source ./lsstsw/bin/envconfig -n "lsst-scipipe-$LSST_SPLENV_REF"
-
               publish "${ARGS[@]}"
             '''
           }
@@ -106,7 +107,7 @@ notify.wrap {
       } // stage('publish')
 
       stage('push packages') {
-        if (pushS3) {
+        if (false) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-eups-push',
@@ -142,10 +143,12 @@ notify.wrap {
       } // stage('push packages')
     } // ws
   } // run
-
-  util.nodeWrap(lsstswConfig.label) {
+   util.nodeWrap(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }
   }
+  }
+  }
+  parallel matrix
 } // notify.wrap
