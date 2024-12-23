@@ -81,7 +81,7 @@ canonical:
     - <<: *el7-conda
       label: snowflake-0
     - <<: *linux-9-arm
-      label: arm64 # need to move to snowflake-aarch64
+      label: snowflake-arch-0
   splenv_ref: *splenv_ref
   workspace: snowflake/release
 #

@@ -36,6 +36,9 @@ notify.wrap {
   String manifestId   = params.MANIFEST_ID ?: ''
   String lsstCompiler = params.LSST_COMPILER ?: ''
 
+
+  def canonical    = scipipe.canonical
+  def lsstswConfigs = canonical.lsstsw_config
   def release        = scipipe.scipipe_release
   def dockerfile     = release.dockerfile
   def dockerRegistry = release.docker_registry
@@ -49,9 +52,14 @@ notify.wrap {
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
   def shebangtronUrl = util.shebangtronUrl()
 
+  def matrix = [:]
+  lsstswConfigs.each{ lsstswConfig ->
+    def slug = util.lsstswConfigSlug(lsstswConfig)
+    matrix[slug] ={
+
   def newinstallImage = newinstall.docker_registry.repo
   def newinstallTagBase = newinstall.docker_registry.tag
-  def splenvRef       = scipipe.canonical.lsstsw_config.splenv_ref
+  def splenvRef       = lsstswConfig.splenv_ref
   if (params.SPLENV_REF) {
     splenvRef = params.SPLENV_REF
   }
@@ -139,7 +147,7 @@ notify.wrap {
     } // push
   } // run
 
-  util.nodeWrap('docker') {
+  util.nodeWrap(lsstswConfig.label) {
     try {
       timeout(time: timelimit, unit: 'HOURS') {
         run()
@@ -164,4 +172,8 @@ notify.wrap {
       } // stage
     } // try
   } // util.nodeWrap
+    }
+}
+parallel matrix
+
 } // notify.wrap

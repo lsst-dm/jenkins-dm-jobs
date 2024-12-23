@@ -76,7 +76,7 @@ notify.wrap {
       parallel pub
     } // stage
 
-    util.waitForS3()
+    // util.waitForS3()
 
     // NOOP / DRY_RUN
     // stage('git tag eups products') {
@@ -113,19 +113,19 @@ notify.wrap {
     //   } // retry
     // } // stage
 
-    stage('build eups tarballs') {
-      util.buildTarballMatrix(
-        tarballConfigs: scipipe.tarball.build_config,
-        parameters: [
-          PRODUCTS: tarballProducts,
-          EUPS_TAG: eupsTag,
-          SMOKE: true,
-          RUN_SCONS_CHECK: true,
-          PUBLISH: false,
-        ],
-        retries: retries,
-      )
-    } // stage
+    // stage('build eups tarballs') {
+    //   util.buildTarballMatrix(
+    //     tarballConfigs: scipipe.tarball.build_config,
+    //     parameters: [
+    //       PRODUCTS: tarballProducts,
+    //       EUPS_TAG: eupsTag,
+    //       SMOKE: true,
+    //       RUN_SCONS_CHECK: true,
+    //       PUBLISH: false,
+    //     ],
+    //     retries: retries,
+    //   )
+    // } // stage
 
     // util.waitForS3()
 
