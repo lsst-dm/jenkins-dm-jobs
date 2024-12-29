@@ -142,7 +142,7 @@ def void linuxTarballs(
     } // util.withEupsEnv
   } // run()
 
-  util.nodeWrap('docker') {
+  util.nodeWrap(label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }

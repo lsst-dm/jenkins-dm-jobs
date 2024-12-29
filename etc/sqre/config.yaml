@@ -4,13 +4,13 @@
 #
 awscli:
   pypi:
-    version: &awscli_ver '1.25.21'
+    version: &awscli_ver '1.36.39'
   dockerfile:
-    github_repo: lsst-sqre/docker-awscli
+    github_repo: lsst-dm/docker-awscli
     git_ref: master
     dir: ''
   docker_registry:
-    repo: lsstsqre/awscli
+    repo: ghcr.io/lsst-dm/docker-awscli
     tag: *awscli_ver
 codekit:
   pypi:

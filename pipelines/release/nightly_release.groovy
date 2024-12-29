@@ -35,8 +35,10 @@ notify.wrap {
 
   def run = {
     stage('format nightly tag') {
-      gitTag  = "d.${year}.${month}.${day}"
-      eupsTag = util.sanitizeEupsTag(gitTag)
+      // gitTag  = "d.${year}.${month}.${day}"
+      gitTag = "test.${year}"
+      // eupsTag = util.sanitizeEupsTag(gitTag)
+      eupsTag = gitTag
       echo "generated [git] tag: ${gitTag}"
       echo "generated [eups] tag: ${eupsTag}"
     } // stage
@@ -55,7 +57,7 @@ notify.wrap {
     stage('eups publish') {
       def pub = [:]
 
-      [eupsTag, 
+      [eupsTag,
       //'d_latest'
       ].each { tagName ->
         pub[tagName] = {
@@ -66,7 +68,7 @@ notify.wrap {
                 MANIFEST_ID: manifestId,
                 EUPS_TAG: tagName,
                 PRODUCTS: products,
-                BUILD_DOCS: false,
+                BUILD_DOCS: true,
               ],
             )
           } // retry
@@ -76,58 +78,58 @@ notify.wrap {
       parallel pub
     } // stage
 
-    // util.waitForS3()
+    util.waitForS3()
 
     // NOOP / DRY_RUN
-    // stage('git tag eups products') {
-    //   retry(retries) {
-    //     util.nodeWrap('docker') {
-    //       // needs eups distrib tag to be sync'd from s3 -> k8s volume
-    //       util.githubTagRelease(
-    //         options: [
-    //           '--dry-run': true,
-    //           '--org': scipipe.release_tag_org,
-    //           '--manifest': manifestId,
-    //           '--eups-tag': eupsTag,
-    //         ],
-    //         args: [gitTag],
-    //       )
-    //     } // util.nodeWrap
-    //   } // retry
-    // } // stage
+    stage('git tag eups products') {
+      retry(retries) {
+        util.nodeWrap('docker') {
+          // needs eups distrib tag to be sync'd from s3 -> k8s volume
+          util.githubTagRelease(
+            options: [
+              '--dry-run': true,
+              '--org': scipipe.release_tag_org,
+              '--manifest': manifestId,
+              '--eups-tag': eupsTag,
+            ],
+            args: [gitTag],
+          )
+        } // util.nodeWrap
+      } // retry
+    } // stage
 
     // add aux repo tags *after* tagging eups product repos so as to avoid a
     // trainwreck if an aux repo has been pulled into the build (without
     // first being removed from the aux team).
-    // stage('git tag auxilliaries') {
-    //   retry(retries) {
-    //     util.nodeWrap('docker') {
-    //       util.githubTagTeams(
-    //         options: [
-    //           '--dry-run': true,
-    //           '--org': scipipe.release_tag_org,
-    //           '--tag': gitTag,
-    //         ],
-    //       )
-    //     } // util.nodeWrap
-    //   } // retry
-    // } // stage
+    stage('git tag auxilliaries') {
+      retry(retries) {
+        util.nodeWrap('docker') {
+          util.githubTagTeams(
+            options: [
+              '--dry-run': true,
+              '--org': scipipe.release_tag_org,
+              '--tag': gitTag,
+            ],
+          )
+        } // util.nodeWrap
+      } // retry
+    } // stage
 
-    // stage('build eups tarballs') {
-    //   util.buildTarballMatrix(
-    //     tarballConfigs: scipipe.tarball.build_config,
-    //     parameters: [
-    //       PRODUCTS: tarballProducts,
-    //       EUPS_TAG: eupsTag,
-    //       SMOKE: true,
-    //       RUN_SCONS_CHECK: true,
-    //       PUBLISH: false,
-    //     ],
-    //     retries: retries,
-    //   )
-    // } // stage
+    stage('build eups tarballs') {
+      util.buildTarballMatrix(
+        tarballConfigs: scipipe.tarball.build_config,
+        parameters: [
+          PRODUCTS: tarballProducts,
+          EUPS_TAG: eupsTag,
+          SMOKE: true,
+          RUN_SCONS_CHECK: true,
+          PUBLISH: true,
+        ],
+        retries: retries,
+      )
+    } // stage
 
-    // util.waitForS3()
+    util.waitForS3()
 
     stage('build stack image') {
       retry(retries) {

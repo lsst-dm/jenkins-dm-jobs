@@ -107,7 +107,7 @@ notify.wrap {
       } // stage('publish')
 
       stage('push packages') {
-        if (false) {
+        if (pushS3) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-eups-push',

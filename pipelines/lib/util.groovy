@@ -297,8 +297,7 @@ def void runPublish(Map p) {
     'PRODUCTS',
   ])
   useP.parameters = [
-    TIMEOUT: '1', // should be string
-    NO_PUSH: true
+    TIMEOUT: '1' // should be string
   ] + p.parameters
 
   def jobParameters = [

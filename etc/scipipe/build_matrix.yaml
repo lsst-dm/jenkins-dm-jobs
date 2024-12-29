@@ -82,7 +82,6 @@ canonical:
       label: snowflake-0
     - <<: *linux-9-arm
       label: snowflake-arch-0
-  splenv_ref: *splenv_ref
   workspace: snowflake/release
 #
 # eups distrib tarball configuration -- used by
@@ -102,6 +101,16 @@ tarball:
     - <<: *tarball_defaults
       <<: *ventura-conda
       platform: '10.9'
+      osfamily: osx
+      timelimit: 8
+      allow_fail: true
+    - <<: *tarball_defaults
+      <<: *linux-9-arm
+      platform: el8-arm
+      osfamily: redhat
+    - <<: *tarball_defaults
+      <<: *macarm64-conda
+      platform: 14-arm
       osfamily: osx
       timelimit: 8
       allow_fail: true
@@ -129,7 +138,7 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: main
+  git_ref: tickets/DM-46554
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: main
@@ -157,7 +166,7 @@ newinstall:
     repo: ghcr.io/lsst-dm/docker-newinstall
     tag: 9-latest
   github_repo: lsst/lsst
-  git_ref: tickets/DM-48154
+  git_ref: tickets/DM-46554
 eups:
   base_url: https://eups.lsst.codes/stack_test
   s3_bucket: eups.lsst.codes

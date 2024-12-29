@@ -72,9 +72,13 @@ notify.wrap {
         LSST_PYTHON_VERSION: lsstswConfig.python,
         LSST_SPLENV_REF:     splenvRef,
         LSST_REFS:           refs,
-        // VERSIONDB_PUSH:      versiondbPush,
-        // VERSIONDB_REPO:      versiondbRepo,
       ]
+      if(lsstswConfig.arch == "main"){
+        buildParams = [
+       VERSIONDB_PUSH:      versiondbPush,
+        VERSIONDB_REPO:      versiondbRepo,
+        ] + buildParams
+      }
 
       def runJW = {
         // note that util.jenkinsWrapper() clones the ci-scripts repo, which is
