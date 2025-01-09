@@ -39,8 +39,8 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
-  - <<: *linux-9-arm
-  - <<: *macarm64-conda
+#  - <<: *linux-9-arm
+#  - <<: *macarm64-conda
   - <<: *ventura-conda
     # allow builds on monterey and ventura
     label: osx-12||osx-13
