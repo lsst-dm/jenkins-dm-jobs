@@ -31,14 +31,13 @@ notify.wrap {
   def manifestId   = null
   def stackResults = null
 
-  def lsstswConfigs = scipipe.canonical.lsstsw_config
+  def lsstswConfig = scipipe.canonical.lsstsw_config
 
   def run = {
     stage('format nightly tag') {
-      // gitTag  = "d.${year}.${month}.${day}"
-      gitTag = "test.${year}"
-      // eupsTag = util.sanitizeEupsTag(gitTag)
-      eupsTag = gitTag
+      //gitTag  = "d.${year}.${month}.${day}"
+      gitTag = "test.${year}.${month}"
+      eupsTag = util.sanitizeEupsTag(gitTag)
       echo "generated [git] tag: ${gitTag}"
       echo "generated [eups] tag: ${eupsTag}"
     } // stage
@@ -139,7 +138,7 @@ notify.wrap {
             EUPS_TAG: eupsTag,
             DOCKER_TAGS: extraDockerTags,
             MANIFEST_ID: manifestId,
-            LSST_COMPILER: lsstswConfigs.compiler[0],
+            LSST_COMPILER: lsstswConfig.compiler[0],
           ],
         )
       } // retry

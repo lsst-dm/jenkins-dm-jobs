@@ -33,9 +33,9 @@ notify.wrap {
   Boolean pushS3 = (! params.NO_PUSH?.toBoolean())
 
   def canonical    = scipipe.canonical
-  def lsstswConfigs = canonical.lsstsw_config
+  def lsstswConfig = canonical.lsstsw_config
 
-  def splenvRef = lsstswConfigs.splenv_ref
+  def splenvRef = lsstswConfig.splenv_ref
   if (params.SPLENV_REF) {
     splenvRef = params.SPLENV_REF
   }
@@ -43,12 +43,9 @@ notify.wrap {
   if (params.RUBINENV_VER) {
     rubinEnvVer = params.RUBINENV_VER
   }
-  def matrix = [:]
-  lsstswConfigs.each{ lsstswConfig ->
-    def slug = util.lsstswConfigSlug(lsstswConfig)
-    matrix[slug] ={
+  def slug = util.lsstswConfigSlug(lsstswConfig)
     def run = {
-    def workingDir = canonical.workspace + "/${lsstswConfig.display_name}"
+    def workingDir = canonical.workspace
     ws(workingDir) {
       def cwd = pwd()
       def pkgroot = "${cwd}/distrib"
@@ -148,7 +145,4 @@ notify.wrap {
       run()
     }
   }
-  }
-  }
-  parallel matrix
 } // notify.wrap

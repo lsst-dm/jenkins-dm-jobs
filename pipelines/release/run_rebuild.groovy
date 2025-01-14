@@ -45,14 +45,11 @@ notify.wrap {
   }
 
   def canonical    = scipipe.canonical
-  def lsstswConfigs = canonical.lsstsw_config
+  def lsstswConfig = canonical.lsstsw_config
+  def slug = util.lsstswConfigSlug(lsstswConfig)
 
-  def matrix = [:]
-  lsstswConfigs.each{ lsstswConfig ->
-    def slug = util.lsstswConfigSlug(lsstswConfig)
-    matrix[slug] ={
     def run = {
-      def workingDir = canonical.workspace + "/${lsstswConfig.display_name}"
+      def workingDir = canonical.workspace
       ws(workingDir) {
       def cwd = pwd()
       splenvRef = lsstswConfig.splenv_ref
@@ -72,13 +69,9 @@ notify.wrap {
         LSST_PYTHON_VERSION: lsstswConfig.python,
         LSST_SPLENV_REF:     splenvRef,
         LSST_REFS:           refs,
-      ]
-      if(lsstswConfig.arch == "main"){
-        buildParams = [
        VERSIONDB_PUSH:      versiondbPush,
         VERSIONDB_REPO:      versiondbRepo,
-        ] + buildParams
-      }
+      ]
 
       def runJW = {
         // note that util.jenkinsWrapper() clones the ci-scripts repo, which is
@@ -155,8 +148,4 @@ notify.wrap {
       run()
       }
     }
-  }
-}
-parallel matrix
-
 } // notify.wrap

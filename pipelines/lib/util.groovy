@@ -1385,20 +1385,19 @@ def String runRebuild(Map p) {
     wait: true,
   )
   nodeTiny {
+          manifestArtifact = 'lsstsw/build/manifest.txt'
 
     step([$class: 'CopyArtifact',
           projectName: useP.job,
-          filter: "**/lsstsw/build/manifest.txt",
-          //target: manifestArtifact,
-          target: 'buildmanifest',
+          filter: manifestArtifact,
           selector: [
             $class: 'SpecificBuildSelector',
             buildNumber: result.id,
           ],
         ])
-    def manifestId = parseManifestId(readFile('buildmanifest/lsstsw/build/manifest.txt'))
-  //  echo sh(returnStdout: true, script: 'env|sort') 
 
+    def manifestId = parseManifestId(readFile(manifestArtifact))
+  //  echo sh(returnStdout: true, script: 'env|sort')
     echo "parsed manifest id: ${manifestId}"
     return manifestId
   } // nodeTiny
