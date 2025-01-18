@@ -37,8 +37,8 @@ notify.wrap {
   String lsstCompiler = params.LSST_COMPILER ?: ''
 
 
-  def canonical    = scipipe.canonical
-  def lsstswConfigs = canonical.lsstsw_config
+  def build_stack    = scipipe.build_stack
+  def lsstswConfigs  = build_stack.lsstsw_config
   def release        = scipipe.scipipe_release
   def dockerfile     = release.dockerfile
   def dockerRegistry = release.docker_registry
@@ -153,27 +153,27 @@ notify.wrap {
         run()
       }
     } finally {
-      stage('archive') {
-        def resultsFile = 'results.json'
+        stage('archive') {
+          def resultsFile = 'results.json'
 
-        util.dumpJson(resultsFile,  [
-          base_image: baseImage ?: null,
-          image: "${dockerRepo}:${dockerTag}",
-          docker_registry: [
-            repo: dockerRepo,
-            tag: dockerTag
-          ],
-        ])
+          util.dumpJson(resultsFile,  [
+            base_image: baseImage ?: null,
+            image: "${dockerRepo}:${dockerTag}",
+            docker_registry: [
+              repo: dockerRepo,
+              tag: dockerTag
+            ],
+          ])
 
-        archiveArtifacts([
-          artifacts: resultsFile,
-          fingerprint: true
-        ])
-      } // stage
-    } // try
-  } // util.nodeWrap
-    }
-}
-parallel matrix
+          archiveArtifacts([
+            artifacts: resultsFile,
+            fingerprint: true
+          ])
+        } // stage
+     } // try
+   } // util.nodeWrap
+   }
+  }
+  parallel matrix
 
 } // notify.wrap

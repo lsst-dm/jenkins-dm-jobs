@@ -49,8 +49,7 @@ notify.wrap {
   def slug = util.lsstswConfigSlug(lsstswConfig)
 
     def run = {
-      def workingDir = canonical.workspace
-      ws(workingDir) {
+      ws(canonical.workspace) {
       def cwd = pwd()
       splenvRef = lsstswConfig.splenv_ref
       if (params.SPLENV_REF) {
@@ -69,7 +68,7 @@ notify.wrap {
         LSST_PYTHON_VERSION: lsstswConfig.python,
         LSST_SPLENV_REF:     splenvRef,
         LSST_REFS:           refs,
-       VERSIONDB_PUSH:      versiondbPush,
+        VERSIONDB_PUSH:      versiondbPush,
         VERSIONDB_REPO:      versiondbRepo,
       ]
 

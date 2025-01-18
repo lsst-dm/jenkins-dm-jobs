@@ -45,8 +45,7 @@ notify.wrap {
   }
   def slug = util.lsstswConfigSlug(lsstswConfig)
     def run = {
-    def workingDir = canonical.workspace
-    ws(workingDir) {
+    ws(canonical.workspace) {
       def cwd = pwd()
       def pkgroot = "${cwd}/distrib"
 

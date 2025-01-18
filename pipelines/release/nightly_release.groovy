@@ -47,7 +47,7 @@ notify.wrap {
         manifestId = util.runRebuild(
           parameters: [
             PRODUCTS: products,
-            BUILD_DOCS: false,
+            BUILD_DOCS: true,
           ],
         )
       } // retry
@@ -138,7 +138,7 @@ notify.wrap {
             EUPS_TAG: eupsTag,
             DOCKER_TAGS: extraDockerTags,
             MANIFEST_ID: manifestId,
-            LSST_COMPILER: lsstswConfig.compiler[0],
+            LSST_COMPILER: lsstswConfig.compiler,
           ],
         )
       } // retry
@@ -146,72 +146,72 @@ notify.wrap {
 
     def triggerMe = [:]
 
-    // triggerMe['build Science Platform Notebook Aspect Lab image'] = {
-    //   retry(retries) {
-    //     // based on lsstsqre/stack image
-    //     build(
-    //       job: 'sqre/infra/build-sciplatlab',
-    //       parameters: [
-    //         string(name: 'TAG', value: eupsTag),
-    //       ],
-    //       wait: false,
-    //     )
-    //   } // retry
-    // }
+    triggerMe['build Science Platform Notebook Aspect Lab image'] = {
+      retry(retries) {
+        // based on lsstsqre/stack image
+        build(
+          job: 'sqre/infra/build-sciplatlab',
+          parameters: [
+            string(name: 'TAG', value: eupsTag),
+          ],
+          wait: false,
+        )
+      } // retry
+    }
 
-    // triggerMe['verify_drp_metrics'] = {
-    //   retry(1) {
-    //     // based on lsstsqre/stack image
-    //     build(
-    //       job: 'sqre/verify_drp_metrics',
-    //       parameters: [
-    //         string(name: 'DOCKER_IMAGE', value: stackResults.image),
-    //         booleanParam(
-    //           name: 'NO_PUSH',
-    //           value: scipipe.release.step.verify_drp_metrics.no_push,
-    //         ),
-    //         booleanParam(name: 'WIPEOUT', value: false),
-    //         string(name: 'GIT_REF', value: 'main'),
-    //       ],
-    //       wait: false,
-    //     )
-    //   } // retry
-    // }
+    triggerMe['verify_drp_metrics'] = {
+      retry(1) {
+        // based on lsstsqre/stack image
+        build(
+          job: 'sqre/verify_drp_metrics',
+          parameters: [
+            string(name: 'DOCKER_IMAGE', value: stackResults.image),
+            booleanParam(
+              name: 'NO_PUSH',
+              value: scipipe.release.step.verify_drp_metrics.no_push,
+            ),
+            booleanParam(name: 'WIPEOUT', value: false),
+            string(name: 'GIT_REF', value: 'main'),
+          ],
+          wait: false,
+        )
+      } // retry
+    }
 
-    // triggerMe['doc build'] = {
-    //   retry(retries) {
-    //     build(
-    //       job: 'sqre/infra/documenteer',
-    //       parameters: [
-    //         string(name: 'EUPS_TAG', value: eupsTag),
-    //         string(name: 'LTD_SLUG', value: eupsTag),
-    //         string(name: 'RELEASE_IMAGE', value: stackResults.image),
-    //         booleanParam(
-    //           name: 'PUBLISH',
-    //           value: scipipe.release.step.documenteer.publish,
-    //         ),
-    //       ],
-    //       wait: false,
-    //     )
-    //   } // retry
-    // }
+    triggerMe['doc build'] = {
+      retry(retries) {
+        build(
+          job: 'sqre/infra/documenteer',
+          parameters: [
+            string(name: 'EUPS_TAG', value: eupsTag),
+            string(name: 'LTD_SLUG', value: eupsTag),
+            string(name: 'RELEASE_IMAGE', value: stackResults.image),
+            booleanParam(
+              name: 'PUBLISH',
+              value: scipipe.release.step.documenteer.publish,
+            ),
+          ],
+          wait: false,
+        )
+      } // retry
+    }
 
-    // triggerMe['ap_verify'] = {
-    //   retry(retries) {
-    //     build(
-    //       job: 'scipipe/ap_verify',
-    //       parameters: [
-    //         string(name: 'DOCKER_IMAGE', value: stackResults.image),
-    //         booleanParam(
-    //           name: 'NO_PUSH',
-    //           value: scipipe.release.step.ap_verify.no_push,
-    //         ),
-    //         booleanParam(name: 'WIPEOUT', value: false),
-    //       ],
-    //       wait: false,
-    //     )
-    //   } // retry
-    // }
+    triggerMe['ap_verify'] = {
+      retry(retries) {
+        build(
+          job: 'scipipe/ap_verify',
+          parameters: [
+            string(name: 'DOCKER_IMAGE', value: stackResults.image),
+            booleanParam(
+              name: 'NO_PUSH',
+              value: scipipe.release.step.ap_verify.no_push,
+            ),
+            booleanParam(name: 'WIPEOUT', value: false),
+          ],
+          wait: false,
+        )
+      } // retry
+    }
 
     stage('triggered jobs') {
       parallel triggerMe

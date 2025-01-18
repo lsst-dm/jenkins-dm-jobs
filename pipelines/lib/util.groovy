@@ -687,18 +687,17 @@ def void createDirs(List eds) {
  */
 def void getManifest(String rebuildId, String filename) {
   def buildJob          = 'release/run-rebuild'
-
-    step([$class: 'CopyArtifact',
+  def manifest_artifact = 'lsstsw/build/manifest.txt'
+  step([$class: 'CopyArtifact',
         projectName: buildJob,
-          filter: "**/lsstsw/build/manifest.txt",
-          target: 'buildmanifest',
+          filter: manifest_artifact,
           selector: [
             $class: 'SpecificBuildSelector',
           buildNumber: rebuildId // wants a string
           ],
         ])
-    def manifest = readFile('buildmanifest/lsstsw/build/manifest.txt')
-    writeFile(file: filename, text: manifest)
+  def manifest = readFile manifest_artifact
+  writeFile(file: filename, text: manifest)
 } // getManifest
 
 /**
@@ -1385,7 +1384,7 @@ def String runRebuild(Map p) {
     wait: true,
   )
   nodeTiny {
-          manifestArtifact = 'lsstsw/build/manifest.txt'
+    manifestArtifact = 'lsstsw/build/manifest.txt'
 
     step([$class: 'CopyArtifact',
           projectName: useP.job,
@@ -1397,7 +1396,6 @@ def String runRebuild(Map p) {
         ])
 
     def manifestId = parseManifestId(readFile(manifestArtifact))
-  //  echo sh(returnStdout: true, script: 'env|sort')
     echo "parsed manifest id: ${manifestId}"
     return manifestId
   } // nodeTiny

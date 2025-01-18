@@ -82,6 +82,13 @@ canonical:
     label: snowflake-0
   workspace: snowflake/release
 #
+# build stack env -- used by release/docker/{build-stack}
+#
+build_stack:
+  lsstsw_config:
+    - <<: *el7-conda
+    - <<: *linux-9-arm
+#
 # eups distrib tarball configuration -- used by
 # release/{*-release,tarball-matrix}
 #
@@ -164,7 +171,7 @@ newinstall:
     repo: ghcr.io/lsst-dm/docker-newinstall
     tag: 9-latest
   github_repo: lsst/lsst
-  git_ref: tickets/DM-46554
+  git_ref: main
 eups:
-  base_url: https://eups.lsst.codes/stack_test
+  base_url: https://eups.lsst.codes/stack
   s3_bucket: eups.lsst.codes
