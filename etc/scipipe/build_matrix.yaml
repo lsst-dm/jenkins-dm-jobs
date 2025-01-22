@@ -104,12 +104,6 @@ tarball:
       platform: el7
       osfamily: redhat
     - <<: *tarball_defaults
-      <<: *ventura-conda
-      platform: '10.9'
-      osfamily: osx
-      timelimit: 8
-      allow_fail: true
-    - <<: *tarball_defaults
       <<: *linux-9-arm
       platform: el8-arm
       osfamily: redhat

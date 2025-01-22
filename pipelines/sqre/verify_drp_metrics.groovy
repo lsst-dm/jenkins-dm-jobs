@@ -22,6 +22,7 @@ node('jenkins-manager') {
 notify.wrap {
   util.requireParams([
     'DOCKER_IMAGE',
+    'ARCHITECTURE',
     'DATASET_REF',
     'NO_PUSH',
     'WIPEOUT',
@@ -29,6 +30,7 @@ notify.wrap {
   ])
 
   String dockerImage = params.DOCKER_IMAGE
+  String architecture = params.ARCHITECTURE
   String datasetRef  = params.DATASET_REF
   Boolean noPush     = params.NO_PUSH
   Boolean wipeout    = params.WIPEOUT
@@ -58,6 +60,7 @@ notify.wrap {
       verifyDataset(
         config: conf,
         dockerImage: dockerImage,
+        architecture: architecture,
         // only push if build param & yaml config == true
         squashPush: (!noPush) && conf.squash_push,
         slug: runSlug,
@@ -120,6 +123,7 @@ def String displayName(Map m) {
  * @param p Map
  * @param p.config Map
  * @param p.dockerImage String
+ * @param p.architecture String
  * @param p.squashPush Boolean
  * @param p.slug String Name of dataset.
  * @param p.wipeout Boolean
@@ -129,6 +133,7 @@ def void verifyDataset(Map p) {
   util.requireMapKeys(p, [
     'config',
     'dockerImage',
+    'architecture',
     'slug',
     'squashPush',
     'wipeout',
@@ -280,7 +285,7 @@ def void verifyDataset(Map p) {
   // fill the disk up
   retry(conf.retries) {
     try {
-      util.nodeWrap('docker') {
+      util.nodeWrap(architecture) {
         timeout(time: conf.run_timelimit, unit: 'MINUTES') {
           if (p.wipeout) {
             deleteDir()
