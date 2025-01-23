@@ -51,6 +51,24 @@ notify.wrap {
   def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
   def shebangtronUrl = util.shebangtronUrl()
+  def dockerdigest = []
+
+  def registryTags = [
+    dockerTag,
+    "${dockerTag}-${timestamp}",
+  ]
+
+  if (extraDockerTags) {
+    // manual constructor is needed "because java"
+    registryTags += Arrays.asList(extraDockerTags.split())
+  }
+
+  def newRegistryTags = []
+  registryTags.each { name ->
+    fixOSVersion = name.replaceFirst("7", "9")
+    fixDistribName = fixOSVersion.replace("stack-lsst_distrib", "lsst_sitcom")
+    newRegistryTags += fixDistribName
+  }
 
   def matrix = [:]
   lsstswConfigs.each{ lsstswConfig ->
@@ -69,22 +87,6 @@ notify.wrap {
   def image = null
   def repo  = null
 
-  def registryTags = [
-    dockerTag,
-    "${dockerTag}-${timestamp}",
-  ]
-
-  if (extraDockerTags) {
-    // manual constructor is needed "because java"
-    registryTags += Arrays.asList(extraDockerTags.split())
-  }
-
-  def newRegistryTags = []
-  registryTags.each { name ->
-    fixOSVersion = name.replaceFirst("7", "9")
-    fixDistribName = fixOSVersion.replace("stack-lsst_distrib", "lsst_sitcom")
-    newRegistryTags += fixDistribName
-  }
 
   def run = {
     stage('checkout') {
@@ -115,17 +117,14 @@ notify.wrap {
       opt << "--load"
       opt << '.'
 
-      sh("docker buildx version")
-
       dir(buildDir) {
         image = docker.build("${dockerRepo}", opt.join(' '))
         image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
         image3 = docker.build("lsstsqre/almalinux", opt.join(' '))
       }
-      def digest = sh (script:"docker image ls --digests",returnStdout:true).trim()
-      println(digest)
     }
     stage('push') {
+      def digest = null
       if (!noPush) {
         docker.withRegistry(
           'https://index.docker.io/v1/',
@@ -146,10 +145,14 @@ notify.wrap {
             image2.push(name)
           }
         }
-        def digest = sh "docker image ls --digests"
-        println(digest)
+        digest = sh(
+          script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}",
+          returnStdout: true
+        ).trim()
 
       }
+      println(digest)
+          dockerdigest.add(digest)
     } // push
 
   } // run
@@ -165,7 +168,6 @@ notify.wrap {
 
           util.dumpJson(resultsFile,  [
             base_image: baseImage ?: null,
-            digest: "0",
             image: "${dockerRepo}:${dockerTag}",
             docker_registry: [
               repo: dockerRepo,
@@ -186,7 +188,47 @@ notify.wrap {
 
   def merge = {
     stage('digest'){
+        def digest = dockerdigest.join(' ')
+        docker.withRegistry(
+          'https://index.docker.io/v1/',
+          'dockerhub-sqreadmin'
+        ) {
+            println(digest)
 
+        registryTags.each { name ->
+          sh(script: """ \
+            docker buildx imagetools create -t $dockerRepo:$name \
+            $digest
+            """,
+            returnStdout: true)
+        }
+
+        newRegistryTags.each { name ->
+          sh(script: """ \
+            docker buildx imagetools create -t lsstsqre/almalinux:$name \
+            $digest
+            """,
+            returnStdout: true)
+          }
+
+        sh(script: """ \
+          docker buildx imagetools create -t $dockerRepo:$dockerTag \
+          $digest
+          """,
+          returnStdout: true)
+        }
+        docker.withRegistry(
+          'https://us-central1-docker.pkg.dev/',
+          'google_archive_registry_sa'
+        ) {
+          registryTags.each { name ->
+            sh(script: """ \
+              docker buildx imagetools create -t us-central1-docker.pkg.dev/panda-dev-1a74/$dockerRepo:$name \
+              $digest
+              """,
+              returnStdout: true)
+          }
+        }
     }
 
   } // merge
