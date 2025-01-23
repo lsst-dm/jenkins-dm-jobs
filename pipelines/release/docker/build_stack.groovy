@@ -115,13 +115,16 @@ notify.wrap {
       opt << "--load"
       opt << '.'
 
+      sh("docker buildx version")
+
       dir(buildDir) {
         image = docker.build("${dockerRepo}", opt.join(' '))
         image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
         image3 = docker.build("lsstsqre/almalinux", opt.join(' '))
       }
+      def digest = sh (script:"docker image ls --digests",returnStdout:true).trim()
+      println(digest)
     }
-
     stage('push') {
       if (!noPush) {
         docker.withRegistry(
@@ -143,8 +146,12 @@ notify.wrap {
             image2.push(name)
           }
         }
+        def digest = sh "docker image ls --digests"
+        println(digest)
+
       }
     } // push
+
   } // run
 
   util.nodeWrap(lsstswConfig.label) {
@@ -154,10 +161,11 @@ notify.wrap {
       }
     } finally {
         stage('archive') {
-          def resultsFile = 'results.json'
+          def resultsFile = lsstswConfig.displayname + 'results.json'
 
           util.dumpJson(resultsFile,  [
             base_image: baseImage ?: null,
+            digest: "0",
             image: "${dockerRepo}:${dockerTag}",
             docker_registry: [
               repo: dockerRepo,
@@ -175,5 +183,17 @@ notify.wrap {
    }
   }
   parallel matrix
+
+  def merge = {
+    stage('digest'){
+
+    }
+
+  } // merge
+  util.nodeWrap('docker') {
+      timeout(time: timelimit, unit: 'HOURS') {
+        merge()
+      }
+    } // nodeWrap
 
 } // notify.wrap
