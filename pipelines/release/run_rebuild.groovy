@@ -46,15 +46,17 @@ notify.wrap {
 
   def canonical    = scipipe.canonical
   def lsstswConfig = canonical.lsstsw_config
+
+  def splenvRef = lsstswConfig.splenv_ref
+  if (params.SPLENV_REF) {
+    splenvRef = params.SPLENV_REF
+  }
+
   def slug = util.lsstswConfigSlug(lsstswConfig)
 
-    def run = {
-      ws(canonical.workspace) {
+  def run = {
+    ws(canonical.workspace) {
       def cwd = pwd()
-      splenvRef = lsstswConfig.splenv_ref
-      if (params.SPLENV_REF) {
-        splenvRef = params.SPLENV_REF
-      }
 
       def buildParams = [
         EUPS_PKGROOT:        "${cwd}/distrib",
@@ -134,17 +136,17 @@ notify.wrap {
                     "${DOC_PUSH_PATH}/" \
                     "s3://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
                 '''
-                } // util.insideDockerWrap
-              } // withEnv
-            } // withCredentials
-          }
-        } // stage('push docs')
-      } // ws
-    } // run
+              } // util.insideDockerWrap
+            } // withEnv
+          } // withCredentials
+        }
+      } // stage('push docs')
+    } // ws
+  } // run
 
-    util.nodeWrap(lsstswConfig.label) {
+  util.nodeWrap(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
-      }
     }
+  }
 } // notify.wrap

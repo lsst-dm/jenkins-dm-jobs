@@ -43,8 +43,10 @@ notify.wrap {
   if (params.RUBINENV_VER) {
     rubinEnvVer = params.RUBINENV_VER
   }
+
   def slug = util.lsstswConfigSlug(lsstswConfig)
-    def run = {
+
+  def run = {
     ws(canonical.workspace) {
       def cwd = pwd()
       def pkgroot = "${cwd}/distrib"
@@ -96,6 +98,7 @@ notify.wrap {
               #   this can be retrived using the -b option.
               # (note: bin/setup.sh is now deprecated)
               source ./lsstsw/bin/envconfig -n "lsst-scipipe-$LSST_SPLENV_REF"
+
               publish "${ARGS[@]}"
             '''
           }
@@ -139,7 +142,7 @@ notify.wrap {
       } // stage('push packages')
     } // ws
   } // run
-   util.nodeWrap(lsstswConfig.label) {
+  util.nodeWrap(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }

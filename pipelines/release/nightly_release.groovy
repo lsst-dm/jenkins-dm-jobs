@@ -24,7 +24,7 @@ notify.wrap {
   def products        = scipipe.canonical.products
   def tarballProducts = scipipe.tarball.products
   def retries         = 3
-  def extraDockerTags = null //'7-stack-lsst_distrib-d_latest d_latest'
+  def extraDockerTags = '7-stack-lsst_distrib-d_latest d_latest'
 
   def gitTag       = null
   def eupsTag      = null
@@ -34,102 +34,97 @@ notify.wrap {
   def lsstswConfig = scipipe.canonical.lsstsw_config
 
   def run = {
-    //stage('format nightly tag') {
-    //  gitTag  = "exp.d.${year}.${month}.${day}"
-    //  eupsTag = util.sanitizeEupsTag(gitTag)
-    //  echo "generated [git] tag: ${gitTag}"
-    //  echo "generated [eups] tag: ${eupsTag}"
-    //} // stage
+    stage('format nightly tag') {
+      gitTag  = "d.${year}.${month}.${day}"
+      eupsTag = util.sanitizeEupsTag(gitTag)
+      echo "generated [git] tag: ${gitTag}"
+      echo "generated [eups] tag: ${eupsTag}"
+    } // stage
 
-    //stage('build') {
-    //  retry(retries) {
-    //    manifestId = util.runRebuild(
-    //      parameters: [
-    //        PRODUCTS: products,
-    //        BUILD_DOCS: true,
-    //      ],
-    //    )
-    //  } // retry
-    //} // stage
+    stage('build') {
+      retry(retries) {
+        manifestId = util.runRebuild(
+          parameters: [
+            PRODUCTS: products,
+            BUILD_DOCS: true,
+          ],
+        )
+      } // retry
+    } // stage
 
-    //stage('eups publish') {
-    //  def pub = [:]
+    stage('eups publish') {
+      def pub = [:]
 
-    //  [eupsTag,
-    //  //'d_latest'
-    //  ].each { tagName ->
-    //    pub[tagName] = {
-    //      retry(retries) {
-    //        util.runPublish(
-    //          parameters: [
-    //            EUPSPKG_SOURCE: 'git',
-    //            MANIFEST_ID: manifestId,
-    //            EUPS_TAG: tagName,
-    //            PRODUCTS: products,
-    //            BUILD_DOCS: true,
-    //          ],
-    //        )
-    //      } // retry
-    //    } // pub
-    //  } // each
+      [eupsTag,'d_latest'].each { tagName ->
+        pub[tagName] = {
+          retry(retries) {
+            util.runPublish(
+              parameters: [
+                EUPSPKG_SOURCE: 'git',
+                MANIFEST_ID: manifestId,
+                EUPS_TAG: tagName,
+                PRODUCTS: products,
+              ],
+            )
+          } // retry
+        } // pub
+      } // each
 
-    //  parallel pub
-    //} // stage
+      parallel pub
+    } // stage
 
-    //util.waitForS3()
+    util.waitForS3()
 
-    //// NOOP / DRY_RUN
-    //stage('git tag eups products') {
-    //  retry(retries) {
-    //    util.nodeWrap('docker') {
-    //      // needs eups distrib tag to be sync'd from s3 -> k8s volume
-    //      util.githubTagRelease(
-    //        options: [
-    //          '--dry-run': true,
-    //          '--org': scipipe.release_tag_org,
-    //          '--manifest': manifestId,
-    //          '--eups-tag': eupsTag,
-    //        ],
-    //        args: [gitTag],
-    //      )
-    //    } // util.nodeWrap
-    //  } // retry
-    //} // stage
+    // NOOP / DRY_RUN
+    stage('git tag eups products') {
+      retry(retries) {
+        util.nodeWrap('docker') {
+          // needs eups distrib tag to be sync'd from s3 -> k8s volume
+          util.githubTagRelease(
+            options: [
+              '--dry-run': true,
+              '--org': scipipe.release_tag_org,
+              '--manifest': manifestId,
+              '--eups-tag': eupsTag,
+            ],
+            args: [gitTag],
+          )
+        } // util.nodeWrap
+      } // retry
+    } // stage
 
-    //// add aux repo tags *after* tagging eups product repos so as to avoid a
-    //// trainwreck if an aux repo has been pulled into the build (without
-    //// first being removed from the aux team).
-    //stage('git tag auxilliaries') {
-    //  retry(retries) {
-    //    util.nodeWrap('docker') {
-    //      util.githubTagTeams(
-    //        options: [
-    //          '--dry-run': true,
-    //          '--org': scipipe.release_tag_org,
-    //          '--tag': gitTag,
-    //        ],
-    //      )
-    //    } // util.nodeWrap
-    //  } // retry
-    //} // stage
+    // add aux repo tags *after* tagging eups product repos so as to avoid a
+    // trainwreck if an aux repo has been pulled into the build (without
+    // first being removed from the aux team).
+    stage('git tag auxilliaries') {
+      retry(retries) {
+        util.nodeWrap('docker') {
+          util.githubTagTeams(
+            options: [
+              '--dry-run': true,
+              '--org': scipipe.release_tag_org,
+              '--tag': gitTag,
+            ],
+          )
+        } // util.nodeWrap
+      } // retry
+    } // stage
 
-    //stage('build eups tarballs') {
-    //  util.buildTarballMatrix(
-    //    tarballConfigs: scipipe.tarball.build_config,
-    //    parameters: [
-    //      PRODUCTS: tarballProducts,
-    //      EUPS_TAG: eupsTag,
-    //      SMOKE: true,
-    //      RUN_SCONS_CHECK: true,
-    //      PUBLISH: true,
-    //    ],
-    //    retries: retries,
-    //  )
-    //} // stage
+    stage('build eups tarballs') {
+      util.buildTarballMatrix(
+        tarballConfigs: scipipe.tarball.build_config,
+        parameters: [
+          PRODUCTS: tarballProducts,
+          EUPS_TAG: eupsTag,
+          SMOKE: true,
+          RUN_SCONS_CHECK: true,
+          PUBLISH: true,
+        ],
+        retries: retries,
+      )
+    } // stage
 
-    //util.waitForS3()
-    manifestId = 'b7498'
-    eupsTag = 'exp_d_2025_01_22'
+    util.waitForS3()
 
     stage('build stack image') {
       retry(retries) {
@@ -147,18 +142,18 @@ notify.wrap {
 
     def triggerMe = [:]
 
-    //triggerMe['build Science Platform Notebook Aspect Lab image'] = {
-    //  retry(retries) {
-    //    // based on lsstsqre/stack image
-    //    build(
-    //      job: 'sqre/infra/build-sciplatlab',
-    //      parameters: [
-    //        string(name: 'TAG', value: eupsTag),
-    //      ],
-    //      wait: false,
-    //    )
-    //  } // retry
-    //}
+    triggerMe['build Science Platform Notebook Aspect Lab image'] = {
+      retry(retries) {
+        // based on lsstsqre/stack image
+        build(
+          job: 'sqre/infra/build-sciplatlab',
+          parameters: [
+            string(name: 'TAG', value: eupsTag),
+          ],
+          wait: false,
+        )
+      } // retry
+    }
 
     triggerMe['verify_drp_metrics x86'] = {
       retry(1) {
@@ -255,7 +250,7 @@ notify.wrap {
     }
 
     stage('triggered jobs') {
-    //  parallel triggerMe
+      parallel triggerMe
     } // stage
   } // run
 

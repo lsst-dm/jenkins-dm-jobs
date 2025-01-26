@@ -75,85 +75,85 @@ notify.wrap {
     def slug = util.lsstswConfigSlug(lsstswConfig)
     matrix[slug] ={
 
-  def newinstallImage = newinstall.docker_registry.repo
-  def newinstallTagBase = newinstall.docker_registry.tag
-  def splenvRef       = lsstswConfig.splenv_ref
-  if (params.SPLENV_REF) {
-    splenvRef = params.SPLENV_REF
-  }
-
-  def baseImage       = "${newinstallImage}:${newinstallTagBase}-${splenvRef}"
-
-  def image = null
-  def repo  = null
-
-
-  def run = {
-    stage('checkout') {
-      repo = git([
-        url: githubRepo,
-        branch: gitRef,
-      ])
+    def newinstallImage = newinstall.docker_registry.repo
+    def newinstallTagBase = newinstall.docker_registry.tag
+    def splenvRef       = lsstswConfig.splenv_ref
+    if (params.SPLENV_REF) {
+      splenvRef = params.SPLENV_REF
     }
 
-    stage('build') {
-      def opt = []
-      // ensure base image is always up to date
-      opt << '--pull=true'
-      opt << '--no-cache'
-      opt << "--build-arg EUPS_PRODUCTS=\"${products}\""
-      opt << "--build-arg EUPS_TAG=\"${eupsTag}\""
-      opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\""
-      opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\""
-      opt << "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\""
-      opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
-      opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
-      opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
-      opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
-      opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
-      opt << "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\""
-      opt << "--build-arg LSST_COMPILER=\"${lsstCompiler}\""
-      opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
-      opt << "--load"
-      opt << '.'
+    def baseImage       = "${newinstallImage}:${newinstallTagBase}-${splenvRef}"
 
-      dir(buildDir) {
-        image = docker.build("${dockerRepo}", opt.join(' '))
-        image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
-        image3 = docker.build("lsstsqre/almalinux", opt.join(' '))
-      }
-    }
-    stage('push') {
-      def digest = null
-      if (!noPush) {
-        docker.withRegistry(
-          'https://index.docker.io/v1/',
-          'dockerhub-sqreadmin'
-        ) {
-          registryTags.each { name ->
-            image.push(name)
-          }
-          newRegistryTags.each { name ->
-            image3.push(name)
-          }
-        }
-        docker.withRegistry(
-          'https://us-central1-docker.pkg.dev/',
-          'google_archive_registry_sa'
-        ) {
-          registryTags.each { name ->
-            image2.push(name)
-          }
-        }
-        digest = sh(
-          script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}",
-          returnStdout: true
-        ).trim()
+    def image = null
+    def repo  = null
 
+
+    def run = {
+      stage('checkout') {
+        repo = git([
+          url: githubRepo,
+          branch: gitRef,
+        ])
       }
-      println(digest)
+
+      stage('build') {
+        def opt = []
+        // ensure base image is always up to date
+        opt << '--pull=true'
+        opt << '--no-cache'
+        opt << "--build-arg EUPS_PRODUCTS=\"${products}\""
+        opt << "--build-arg EUPS_TAG=\"${eupsTag}\""
+        opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\""
+        opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\""
+        opt << "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\""
+        opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
+        opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
+        opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
+        opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
+        opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
+        opt << "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\""
+        opt << "--build-arg LSST_COMPILER=\"${lsstCompiler}\""
+        opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
+        opt << "--load"
+        opt << '.'
+
+        dir(buildDir) {
+          image = docker.build("${dockerRepo}", opt.join(' '))
+          image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
+          image3 = docker.build("lsstsqre/almalinux", opt.join(' '))
+        }
+      }
+      stage('push') {
+        def digest = null
+        def arch = lsstswConfig.display_name.tokenize('-').last()
+        if (!noPush) {
+          docker.withRegistry(
+            'https://index.docker.io/v1/',
+            'dockerhub-sqreadmin'
+          ) {
+            registryTags.each { name ->
+              image.push(name+"_"+arch)
+            }
+            newRegistryTags.each { name ->
+              image3.push(name+"_"+arch)
+            }
+          }
+          docker.withRegistry(
+            'https://us-central1-docker.pkg.dev/',
+            'google_archive_registry_sa'
+          ) {
+            registryTags.each { name ->
+              image2.push(name+"_"+arch)
+            }
+          }
+          digest = sh(
+            script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}_${arch}",
+            returnStdout: true
+          ).trim()
+
+        }
           dockerdigest.add(digest)
-    } // push
+      } // push
 
   } // run
 
@@ -163,26 +163,26 @@ notify.wrap {
         run()
       }
     } finally {
-        stage('archive') {
-          def resultsFile = lsstswConfig.displayname + 'results.json'
+      stage('archive') {
+        def resultsFile = 'results.json'
 
-          util.dumpJson(resultsFile,  [
-            base_image: baseImage ?: null,
-            image: "${dockerRepo}:${dockerTag}",
-            docker_registry: [
-              repo: dockerRepo,
-              tag: dockerTag
-            ],
-          ])
+        util.dumpJson(resultsFile,  [
+          base_image: baseImage ?: null,
+          image: "${dockerRepo}:${dockerTag}",
+          docker_registry: [
+            repo: dockerRepo,
+            tag: dockerTag
+          ],
+        ])
 
-          archiveArtifacts([
-            artifacts: resultsFile,
-            fingerprint: true
-          ])
-        } // stage
-     } // try
-   } // util.nodeWrap
-   }
+        archiveArtifacts([
+          artifacts: resultsFile,
+          fingerprint: true
+        ])
+      } // stage
+    } // try
+  } // util.nodeWrap
+  }
   }
   parallel matrix
 
@@ -193,7 +193,6 @@ notify.wrap {
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
         ) {
-            println(digest)
 
         registryTags.each { name ->
           sh(script: """ \
@@ -211,11 +210,6 @@ notify.wrap {
             returnStdout: true)
           }
 
-        sh(script: """ \
-          docker buildx imagetools create -t $dockerRepo:$dockerTag \
-          $digest
-          """,
-          returnStdout: true)
         }
         docker.withRegistry(
           'https://us-central1-docker.pkg.dev/',

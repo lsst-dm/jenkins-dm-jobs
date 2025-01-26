@@ -686,16 +686,18 @@ def void createDirs(List eds) {
  * @param filename String Output filename.
  */
 def void getManifest(String rebuildId, String filename) {
-  def buildJob          = 'release/run-rebuild'
   def manifest_artifact = 'lsstsw/build/manifest.txt'
+  def buildJob          = 'release/run-rebuild'
+
   step([$class: 'CopyArtifact',
         projectName: buildJob,
-          filter: manifest_artifact,
-          selector: [
-            $class: 'SpecificBuildSelector',
+        filter: manifest_artifact,
+        selector: [
+          $class: 'SpecificBuildSelector',
           buildNumber: rebuildId // wants a string
-          ],
-        ])
+        ],
+      ])
+
   def manifest = readFile manifest_artifact
   writeFile(file: filename, text: manifest)
 } // getManifest
@@ -1383,6 +1385,7 @@ def String runRebuild(Map p) {
     parameters: jobParameters,
     wait: true,
   )
+
   nodeTiny {
     manifestArtifact = 'lsstsw/build/manifest.txt'
 
@@ -1755,7 +1758,7 @@ def void checkoutLFS(Map p) {
 
   def gitRepo = githubSlugToUrl(p.githubSlug)
 
-  def lfsImage = 'lsstsqre/gitlfs'
+  def lfsImage = 'ghcr.io/lsst-dm/docker-newinstall'
 
   // running a git clone in a docker.inside block is broken
   git([
@@ -1770,7 +1773,11 @@ def void checkoutLFS(Map p) {
       image: lfsImage,
       pull: true,
     ) {
-      bash('git lfs pull origin')
+      bash("""
+      source /opt/lsst/software/stack/loadLSST.bash
+      git lfs install --skip-repo
+      git lfs pull origin
+      """)
     }
   } finally {
     // try not to break jenkins clone mangement
@@ -2296,6 +2303,5 @@ def void nodeWrap(String label, Closure run) {
     run()
   }
 }
-
 
 return this;
