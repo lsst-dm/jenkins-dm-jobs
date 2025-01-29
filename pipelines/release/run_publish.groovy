@@ -142,7 +142,6 @@ notify.wrap {
       } // stage('push packages')
     } // ws
   } // run
-
   util.nodeWrap(lsstswConfig.label) {
     timeout(time: timelimit, unit: 'HOURS') {
       run()

@@ -55,7 +55,7 @@ notify.wrap {
     stage('eups publish') {
       def pub = [:]
 
-      [eupsTag, 'd_latest'].each { tagName ->
+      [eupsTag,'d_latest'].each { tagName ->
         pub[tagName] = {
           retry(retries) {
             util.runPublish(
@@ -155,13 +155,34 @@ notify.wrap {
       } // retry
     }
 
-    triggerMe['verify_drp_metrics'] = {
+    triggerMe['verify_drp_metrics x86'] = {
       retry(1) {
         // based on lsstsqre/stack image
         build(
           job: 'sqre/verify_drp_metrics',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
+            string(name: 'ARCHITECTURE', value: 'docker'),
+            booleanParam(
+              name: 'NO_PUSH',
+              value: scipipe.release.step.verify_drp_metrics.no_push,
+            ),
+            booleanParam(name: 'WIPEOUT', value: false),
+            string(name: 'GIT_REF', value: 'main'),
+          ],
+          wait: false,
+        )
+      } // retry
+    }
+
+    triggerMe['verify_drp_metrics aarch64'] = {
+      retry(1) {
+        // based on lsstsqre/stack image
+        build(
+          job: 'sqre/verify_drp_metrics',
+          parameters: [
+            string(name: 'DOCKER_IMAGE', value: stackResults.image),
+            string(name: 'ARCHITECTURE', value: 'arm64'),
             booleanParam(
               name: 'NO_PUSH',
               value: scipipe.release.step.verify_drp_metrics.no_push,
@@ -192,12 +213,31 @@ notify.wrap {
       } // retry
     }
 
-    triggerMe['ap_verify'] = {
+    triggerMe['ap_verify x86'] = {
       retry(retries) {
         build(
           job: 'scipipe/ap_verify',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
+            string(name: 'ARCHITECTURE', value: 'docker'),
+            booleanParam(
+              name: 'NO_PUSH',
+              value: scipipe.release.step.ap_verify.no_push,
+            ),
+            booleanParam(name: 'WIPEOUT', value: false),
+          ],
+          wait: false,
+        )
+      } // retry
+    }
+
+    triggerMe['ap_verify aarch64'] = {
+      retry(retries) {
+        build(
+          job: 'scipipe/ap_verify',
+          parameters: [
+            string(name: 'DOCKER_IMAGE', value: stackResults.image),
+            string(name: 'ARCHITECTURE', value: 'arm64'),
             booleanParam(
               name: 'NO_PUSH',
               value: scipipe.release.step.ap_verify.no_push,

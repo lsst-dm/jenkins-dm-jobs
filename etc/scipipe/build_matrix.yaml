@@ -80,8 +80,14 @@ canonical:
   lsstsw_config:
     <<: *el7-conda
     label: snowflake-0
-    display_name: centos-7
   workspace: snowflake/release
+#
+# build stack env -- used by release/docker/{build-stack}
+#
+build_stack:
+  lsstsw_config:
+    - <<: *el7-conda
+    - <<: *linux-9-arm
 #
 # eups distrib tarball configuration -- used by
 # release/{*-release,tarball-matrix}
@@ -98,8 +104,12 @@ tarball:
       platform: el7
       osfamily: redhat
     - <<: *tarball_defaults
-      <<: *ventura-conda
-      platform: '10.9'
+      <<: *linux-9-arm
+      platform: el8-arm
+      osfamily: redhat
+    - <<: *tarball_defaults
+      <<: *macarm64-conda
+      platform: 14-arm
       osfamily: osx
       timelimit: 8
       allow_fail: true

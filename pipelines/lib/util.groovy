@@ -626,7 +626,7 @@ def void requireEnvVars(List rev) {
   // note that `env` isn't a map and #get doesn't work as expected
   rev.each { it ->
     if (env."${it}" == null) {
-      error "${it} envirnoment variable is required"
+      error "${it} environment variable is required"
     }
   }
 }
@@ -1758,7 +1758,7 @@ def void checkoutLFS(Map p) {
 
   def gitRepo = githubSlugToUrl(p.githubSlug)
 
-  def lfsImage = 'lsstsqre/gitlfs'
+  def lfsImage = 'ghcr.io/lsst-dm/docker-newinstall'
 
   // running a git clone in a docker.inside block is broken
   git([
@@ -1773,7 +1773,11 @@ def void checkoutLFS(Map p) {
       image: lfsImage,
       pull: true,
     ) {
-      bash('git lfs pull origin')
+      bash("""
+      source /opt/lsst/software/stack/loadLSST.bash
+      git lfs install --skip-repo
+      git lfs pull origin
+      """)
     }
   } finally {
     // try not to break jenkins clone mangement
