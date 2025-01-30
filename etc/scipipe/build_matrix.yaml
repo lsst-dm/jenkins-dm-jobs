@@ -61,15 +61,17 @@ scipipe-lsstsw-matrix:
     display_name: macos-x86
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
-  - <<: *monterey-conda
+  - <<: *linux-9-arm
   - <<: *ventura-conda
   - <<: *macarm64-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
+  - <<: *linux-9-arm
   - <<: *ventura-conda
   - <<: *macarm64-conda
 scipipe-lsstsw-ci_imsim:
   - <<: *el7-conda
+  - <<: *linux-9-arm
   - <<: *ventura-conda
   - <<: *macarm64-conda
 #
