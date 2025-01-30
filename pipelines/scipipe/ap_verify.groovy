@@ -277,6 +277,8 @@ def void verifyDataset(Map p) {
         homeDir: homeDir,
         archiveDir: jobDir,
         codeDir: codeDir,
+        namespace: p.squashPush ?  "lsst.verify.ap" : "",
+        restProxyUrl: p.squashPush ? sqre.sasquatch.url : "",
       )
 
       // push results to squash
@@ -405,6 +407,8 @@ def void runApVerify(Map p) {
     'homeDir',
     'archiveDir',
     'codeDir',
+    'namespace',
+    'restProxyUrl',
   ])
 
   def run = {
@@ -424,7 +428,7 @@ def void runApVerify(Map p) {
 
       cd ${RUN_DIR}
       # -p ignored if not -g 3
-      run_ci_dataset.sh -d ${DATASET_NAME} -g ${DATASET_GEN} -p ${DATASET_PIPE}
+      run_ci_dataset.sh -d ${DATASET_NAME} -g ${DATASET_GEN} -p ${DATASET_PIPE} -n ${NAMESPACE} -u ${REST_PROXY_URL}
     '''
   }
 
@@ -434,6 +438,8 @@ def void runApVerify(Map p) {
     "DATASET_NAME=${p.dataset.name}",
     "DATASET_GEN=${p.gen}",
     "DATASET_PIPE=${p.dataset.gen3_pipeline}",
+    "NAMESPACE=${p.namespace}",
+    "REST_PROXY_URL=${p.restProxyUrl}",
     "DATASET_DIR=${p.datasetDir}",
     "HOME=${p.homeDir}",
     "CODE_DIR=${p.codeDir}",
