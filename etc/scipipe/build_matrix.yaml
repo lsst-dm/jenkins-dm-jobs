@@ -27,6 +27,13 @@ template:
       display_name: linux-9-aarch64
       compiler: conda-system
       python: '3'
+    - &c4a-9-aarch64
+      <<: *platform_defaults
+      image: ghcr.io/lsst-dm/docker-scipipe:9-latest
+      label: aarch64
+      display_name: c4a-9-aarch64
+      compiler: conda-system
+      python: '3'
     - &monterey-conda
       <<: *platform_defaults
       image: null
@@ -55,6 +62,7 @@ scipipe-lsstsw-matrix:
   - <<: *el7-conda
   - <<: *linux-9-arm
   - <<: *macarm64-conda
+  - <<: *c4a-9-aarch64
   - <<: *ventura-conda
     # allow builds on monterey and ventura
     label: osx-12||osx-13
@@ -139,7 +147,7 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: main
+  git_ref: tickets/DM-48687
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: main
