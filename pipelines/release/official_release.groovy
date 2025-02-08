@@ -110,7 +110,7 @@ notify.wrap {
 
     stage('git tag eups products') {
       retry(retries) {
-        util.nodeWrap('docker') {
+        util.nodeWrap('linux-64') {
           util.githubTagRelease(
             options: [
               '--dry-run': false,
@@ -131,7 +131,7 @@ notify.wrap {
     // first being removed from the aux team).
     stage('git tag auxilliaries') {
       retry(retries) {
-        util.nodeWrap('docker') {
+        util.nodeWrap('linux-64') {
           util.githubTagTeams(
             options: [
               '--dry-run': false,
@@ -239,7 +239,7 @@ notify.wrap {
           job: 'sqre/verify_drp_metrics',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            string(name: 'ARCHITECTURE', value: 'docker'),
+            string(name: 'ARCHITECTURE', value: 'linux-64'),
             string(name: 'DATASET_REF', value: "refs/tags/" + gitTag),
             booleanParam(
               name: 'NO_PUSH',
@@ -259,7 +259,7 @@ notify.wrap {
           job: 'sqre/verify_drp_metrics',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            string(name: 'ARCHITECTURE', value: 'arm64'),
+            string(name: 'ARCHITECTURE', value: 'linux-aarch64'),
             string(name: 'DATASET_REF', value: "refs/tags/" + gitTag),
             booleanParam(
               name: 'NO_PUSH',
@@ -296,7 +296,7 @@ notify.wrap {
           job: 'scipipe/ap_verify',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            string(name: 'ARCHITECTURE', value: 'docker'),
+            string(name: 'ARCHITECTURE', value: 'linux-64'),
             string(name: 'DATASET_REF', value: "refs/tags/" + gitTag),
             booleanParam(
               name: 'NO_PUSH',
@@ -315,7 +315,7 @@ notify.wrap {
           job: 'scipipe/ap_verify',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            string(name: 'ARCHITECTURE', value: 'arm64'),
+            string(name: 'ARCHITECTURE', value: 'linux-aarch64'),
             string(name: 'DATASET_REF', value: "refs/tags/" + gitTag),
             booleanParam(
               name: 'NO_PUSH',

@@ -2292,7 +2292,7 @@ def void nodeWrap(Closure run) {
  *
  * Example:
  *
- *     util.nodeWrap('docker') { ... }
+ *     util.nodeWrap('linux-64') { ... }
  *
  * @param label String Label expression
  * @param run Closure Invoked inside of node step

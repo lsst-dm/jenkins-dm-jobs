@@ -17,34 +17,27 @@ template:
       <<: *platform_defaults
       image: docker.io/lsstdm/scipipe-base:7
       display_name: linux-9-x86
-      label: docker
+      label: linux-64
       compiler: conda-system
       python: '3'
-    - &linux-9-arm
+    - &linux-9-aarch64
       <<: *platform_defaults
       image: ghcr.io/lsst-dm/docker-scipipe:9-latest
-      label: arm64
+      label: linux-aarch64
       display_name: linux-9-aarch64
-      compiler: conda-system
-      python: '3'
-    - &monterey-conda
-      <<: *platform_defaults
-      image: null
-      label: osx-12
-      display_name: macos-12
       compiler: conda-system
       python: '3'
     - &ventura-conda
       <<: *platform_defaults
       image: null
-      label: osx-13
-      display_name: macos-13
+      label: osx-64
+      display_name: macos-x86
       compiler: conda-system
       python: '3'
     - &macarm64-conda
       <<: *platform_defaults
       image: null
-      label: mini
+      label: osx-arm64
       display_name: macos-arm64
       compiler: conda-system
       python: '3'
@@ -53,25 +46,22 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
-  - <<: *linux-9-arm
+  - <<: *linux-9-aarch64
   - <<: *macarm64-conda
   - <<: *ventura-conda
-    # allow builds on monterey and ventura
-    label: osx-12||osx-13
-    display_name: macos-x86
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
-  - <<: *linux-9-arm
+  - <<: *linux-9-aarch64
   - <<: *ventura-conda
   - <<: *macarm64-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
-  - <<: *linux-9-arm
+  - <<: *linux-9-aarch64
   - <<: *ventura-conda
   - <<: *macarm64-conda
 scipipe-lsstsw-ci_imsim:
   - <<: *el7-conda
-  - <<: *linux-9-arm
+  - <<: *linux-9-aarch64
   - <<: *ventura-conda
   - <<: *macarm64-conda
 #
@@ -89,7 +79,7 @@ canonical:
 build_stack:
   lsstsw_config:
     - <<: *el7-conda
-    - <<: *linux-9-arm
+    - <<: *linux-9-aarch64
 #
 # eups distrib tarball configuration -- used by
 # release/{*-release,tarball-matrix}
@@ -106,7 +96,7 @@ tarball:
       platform: el7
       osfamily: redhat
     - <<: *tarball_defaults
-      <<: *linux-9-arm
+      <<: *linux-9-aarch64
       platform: el8-arm
       osfamily: redhat
     - <<: *tarball_defaults
