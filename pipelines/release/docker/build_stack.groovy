@@ -226,7 +226,7 @@ notify.wrap {
     }
 
   } // merge
-  util.nodeWrap('docker') {
+  util.nodeWrap('linux-64') {
       timeout(time: timelimit, unit: 'HOURS') {
         merge()
       }

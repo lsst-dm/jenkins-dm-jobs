@@ -76,7 +76,7 @@ notify.wrap {
 
     stage('git tag eups products') {
       retry(retries) {
-        util.nodeWrap('docker') {
+        util.nodeWrap('linux-64') {
           // needs eups distrib tag to be sync'd from s3 -> k8s volume
           util.githubTagRelease(
             options: [
@@ -96,7 +96,7 @@ notify.wrap {
     // first being removed from the aux team).
     stage('git tag auxilliaries') {
       retry(retries) {
-        util.nodeWrap('docker') {
+        util.nodeWrap('linux-64') {
           util.githubTagTeams(
             options: [
               '--dry-run': false,
@@ -178,7 +178,7 @@ notify.wrap {
           job: 'sqre/verify_drp_metrics',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            string(name: 'ARCHITECTURE', value: 'docker'),
+            string(name: 'ARCHITECTURE', value: 'linux-64'),
             booleanParam(
               name: 'NO_PUSH',
               value: scipipe.release.step.verify_drp_metrics.no_push,
@@ -197,7 +197,7 @@ notify.wrap {
           job: 'sqre/verify_drp_metrics',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            string(name: 'ARCHITECTURE', value: 'arm64'),
+            string(name: 'ARCHITECTURE', value: 'linux-aarch64'),
             booleanParam(
               name: 'NO_PUSH',
               value: scipipe.release.step.verify_drp_metrics.no_push,
@@ -234,7 +234,7 @@ notify.wrap {
           job: 'scipipe/ap_verify',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            string(name: 'ARCHITECTURE', value: 'docker'),
+            string(name: 'ARCHITECTURE', value: 'linux-64'),
             booleanParam(
               name: 'NO_PUSH',
               value: scipipe.release.step.ap_verify.no_push,
@@ -251,7 +251,7 @@ notify.wrap {
           job: 'scipipe/ap_verify',
           parameters: [
             string(name: 'DOCKER_IMAGE', value: stackResults.image),
-            string(name: 'ARCHITECTURE', value: 'arm64'),
+            string(name: 'ARCHITECTURE', value: 'linux-aarch64'),
             booleanParam(
               name: 'NO_PUSH',
               value: scipipe.release.step.ap_verify.no_push,

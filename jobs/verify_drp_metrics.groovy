@@ -6,7 +6,7 @@ p.pipeline().with {
 
   parameters {
     stringParam('DOCKER_IMAGE', null, 'Explicit name of release docker image including tag.')
-    stringParam('ARCHITECTURE', 'docker', 'Architecture to run metric.')
+    stringParam('ARCHITECTURE', 'linux-64', 'Architecture to run metric.')
     stringParam('DATASET_REF', null, 'Override git ref used for dataset repos.  Default uses ref from verify_drp_metrics.yaml config file.')
     booleanParam('NO_PUSH', true, 'Do not push results to squash.')
     booleanParam('WIPEOUT', false, 'Completely wipe out workspace(s) before starting build.')
