@@ -89,7 +89,7 @@ notify.wrap {
     } // dir
   } // run
 
-  util.nodeWrap('docker') {
+  util.nodeWrap('linux-64') {
     timeout(time: 120, unit: 'MINUTES') {
       run()
     }
