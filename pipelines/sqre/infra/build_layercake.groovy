@@ -124,7 +124,7 @@ notify.wrap {
   } // run
 
   timeout(time: 23, unit: 'HOURS') {
-    util.nodeWrap('docker') {
+    util.nodeWrap('linux-64') {
       timeout(time: 30, unit: 'MINUTES') {
         run()
       }

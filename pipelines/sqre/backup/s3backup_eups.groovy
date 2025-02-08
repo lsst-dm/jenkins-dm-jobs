@@ -73,7 +73,7 @@ notify.wrap {
     } // stage('backup')
   } // pull
 
-  util.nodeWrap('docker') {
+  util.nodeWrap('linux-64') {
     timeout(time: 4, unit: 'HOURS') {
       run()
     }
