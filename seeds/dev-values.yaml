@@ -960,7 +960,7 @@ controller:
         jenkins:
           nodes:
             - permanent:
-                labelString: "osx-12"
+                labelString: "osx-12 osx-64"
                 launcher:
                   ssh:
                     credentialsId: "sqre-osx"
@@ -978,7 +978,7 @@ controller:
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "osx-12"
+                labelString: "osx-12 osx-64"
                 launcher:
                   ssh:
                     credentialsId: "sqre-osx"
@@ -996,7 +996,7 @@ controller:
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "osx-13"
+                labelString: "osx-13 osx-64"
                 launcher:
                   ssh:
                     credentialsId: "sqre-osx"
@@ -1014,7 +1014,7 @@ controller:
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "osx-13"
+                labelString: "osx-13 osx-64"
                 launcher:
                   ssh:
                     credentialsId: "sqre-osx"
@@ -1032,7 +1032,7 @@ controller:
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "osx-13"
+                labelString: "osx-13 osx-64"
                 launcher:
                   ssh:
                     credentialsId: "sqre-osx"
@@ -1050,7 +1050,7 @@ controller:
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "osx-13"
+                labelString: "osx-13 osx-64"
                 launcher:
                   ssh:
                     credentialsId: "sqre-osx"
@@ -1068,7 +1068,7 @@ controller:
                 remoteFS: "/Users/squaredev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "mini"
+                labelString: "mini osx-arm64"
                 name: "mini01-dev"
                 launcher:
                   ssh:
@@ -1087,7 +1087,7 @@ controller:
                 remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "mini"
+                labelString: "mini osx-arm64"
                 name: "mini02-dev"
                 launcher:
                   ssh:
@@ -1106,7 +1106,7 @@ controller:
                 remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "mini"
+                labelString: "mini osx-arm64"
                 name: "mini03-dev"
                 launcher:
                   ssh:
@@ -1125,7 +1125,7 @@ controller:
                 remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "mini"
+                labelString: "mini osx-arm64"
                 name: "mini04-dev"
                 launcher:
                   ssh:
@@ -1144,7 +1144,7 @@ controller:
                 remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "mini"
+                labelString: "mini osx-arm64"
                 name: "mini05-dev"
                 launcher:
                   ssh:
@@ -1163,7 +1163,7 @@ controller:
                 remoteFS: "/Users/jenkinsdev/j"
                 retentionStrategy: "always"
             - permanent:
-                labelString: "mini"
+                labelString: "mini osx-arm64"
                 name: "mini06-dev"
                 launcher:
                   ssh:
