@@ -15,7 +15,7 @@ template:
   platforms:
     - &el7-conda
       <<: *platform_defaults
-      image: docker.io/lsstdm/scipipe-base:7
+      image: ghcr.io/lsst-dm/docker-scipipe:9-latest
       display_name: linux-9-x86
       label: linux-64
       compiler: conda-system
