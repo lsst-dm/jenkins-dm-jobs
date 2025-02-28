@@ -53,6 +53,10 @@ notify.wrap {
   def shebangtronUrl = util.shebangtronUrl()
   def dockerdigest = []
 
+  dockerRepo = "ghcr.io/lsst/scipipe"
+  eupsTag = "d_2025_02_28"
+  products = "lsst_distrib pipelines_check lsst_sitcom"
+  manifestId = "b7560"
   def registryTags = [
     dockerTag,
     "${dockerTag}-${timestamp}",
@@ -119,28 +123,28 @@ notify.wrap {
 
         dir(buildDir) {
           image = docker.build("${dockerRepo}", opt.join(' '))
-          image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
-          image3 = docker.build("lsstsqre/almalinux", opt.join(' '))
+          //image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
+          //image3 = docker.build("lsstsqre/almalinux", opt.join(' '))
         }
       }
       stage('push') {
         def digest = null
         def arch = lsstswConfig.display_name.tokenize('-').last()
         if (!noPush) {
-          docker.withRegistry(
-            'https://index.docker.io/v1/',
-            'dockerhub-sqreadmin'
-          ) {
-            registryTags.each { name ->
-              image.push(name+"_"+arch)
-            }
-            newRegistryTags.each { name ->
-              image3.push(name+"_"+arch)
-            }
-          }
+        //  docker.withRegistry(
+        //    'https://index.docker.io/v1/',
+        //    'dockerhub-sqreadmin'
+        //  ) {
+        //    registryTags.each { name ->
+        //      image.push(name+"_"+arch)
+        //    }
+        //    newRegistryTags.each { name ->
+        //      image3.push(name+"_"+arch)
+        //    }
+        //  }
           docker.withRegistry(
             'https://ghcr.io',
-            'github-api-token-sqreadmin'
+            'ross-gh-user'
           ) {
             registryTags.each { name ->
               image.push(name+"_"+arch)
@@ -149,14 +153,14 @@ notify.wrap {
               image3.push(name+"_"+arch)
             }
           }
-          docker.withRegistry(
-            'https://us-central1-docker.pkg.dev/',
-            'google_archive_registry_sa'
-          ) {
-            registryTags.each { name ->
-              image2.push(name+"_"+arch)
-            }
-          }
+        //  docker.withRegistry(
+        //    'https://us-central1-docker.pkg.dev/',
+        //    'google_archive_registry_sa'
+        //  ) {
+        //    registryTags.each { name ->
+        //      image2.push(name+"_"+arch)
+        //    }
+        //  }
           digest = sh(
             script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}_${arch}",
             returnStdout: true
@@ -200,9 +204,21 @@ notify.wrap {
   def merge = {
     stage('digest'){
         def digest = dockerdigest.join(' ')
+       // docker.withRegistry(
+       //   'https://index.docker.io/v1/',
+       //   'dockerhub-sqreadmin'
+       // ) {
+
+       // registryTags.each { name ->
+       //   sh(script: """ \
+       //     docker buildx imagetools create -t $dockerRepo:$name \
+       //     $digest
+       //     """,
+       //     returnStdout: true)
+       // }
         docker.withRegistry(
-          'https://index.docker.io/v1/',
-          'dockerhub-sqreadmin'
+          'https://ghcr.io',
+          'github-api-token-sqreadmin'
         ) {
 
         registryTags.each { name ->
@@ -213,26 +229,26 @@ notify.wrap {
             returnStdout: true)
         }
 
-        newRegistryTags.each { name ->
-          sh(script: """ \
-            docker buildx imagetools create -t lsstsqre/almalinux:$name \
-            $digest
-            """,
-            returnStdout: true)
-          }
+       // newRegistryTags.each { name ->
+       //   sh(script: """ \
+       //     docker buildx imagetools create -t lsstsqre/almalinux:$name \
+       //     $digest
+       //     """,
+       //     returnStdout: true)
+       //   }
 
-        }
-        docker.withRegistry(
-          'https://us-central1-docker.pkg.dev/',
-          'google_archive_registry_sa'
-        ) {
-          registryTags.each { name ->
-            sh(script: """ \
-              docker buildx imagetools create -t us-central1-docker.pkg.dev/panda-dev-1a74/$dockerRepo:$name \
-              $digest
-              """,
-              returnStdout: true)
-          }
+       // }
+       // docker.withRegistry(
+       //   'https://us-central1-docker.pkg.dev/',
+       //   'google_archive_registry_sa'
+       // ) {
+       //   registryTags.each { name ->
+       //     sh(script: """ \
+       //       docker buildx imagetools create -t us-central1-docker.pkg.dev/panda-dev-1a74/$dockerRepo:$name \
+       //       $digest
+       //       """,
+       //       returnStdout: true)
+       //   }
         }
     }
 
