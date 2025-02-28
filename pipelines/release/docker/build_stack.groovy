@@ -48,7 +48,7 @@ notify.wrap {
   def gitRef         = dockerfile.git_ref
   def buildDir       = dockerfile.dir
   def dockerRepo     = dockerRegistry.repo
-  def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
+  def dockerTag      = "9-stack-lsst_distrib-${eupsTag}"
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
   def shebangtronUrl = util.shebangtronUrl()
   def dockerdigest = []
@@ -130,6 +130,17 @@ notify.wrap {
           docker.withRegistry(
             'https://index.docker.io/v1/',
             'dockerhub-sqreadmin'
+          ) {
+            registryTags.each { name ->
+              image.push(name+"_"+arch)
+            }
+            newRegistryTags.each { name ->
+              image3.push(name+"_"+arch)
+            }
+          }
+          docker.withRegistry(
+            'https://ghcr.io',
+            'github-api-token-sqreadmin'
           ) {
             registryTags.each { name ->
               image.push(name+"_"+arch)

@@ -136,7 +136,7 @@ scipipe_release:
     git_ref: main
     dir: ''
   docker_registry:
-    repo: lsstsqre/centos
+    repo: lsst/scipipe
 newinstall:
   dockerfile:
     github_repo: lsst-dm/docker-newinstall
