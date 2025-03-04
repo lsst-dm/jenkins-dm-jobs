@@ -137,6 +137,8 @@ scipipe_release:
     dir: ''
   docker_registry:
     repo: lsstsqre/centos
+    # We should switch to this repo once we drop docker hub
+    # repo: lsst/scipipe
 newinstall:
   dockerfile:
     github_repo: lsst-dm/docker-newinstall

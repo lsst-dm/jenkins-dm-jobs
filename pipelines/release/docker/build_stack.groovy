@@ -48,11 +48,12 @@ notify.wrap {
   def gitRef         = dockerfile.git_ref
   def buildDir       = dockerfile.dir
   def dockerRepo     = dockerRegistry.repo
-  def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
+  def dockerTag      = "9-stack-lsst_distrib-${eupsTag}"
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
   def shebangtronUrl = util.shebangtronUrl()
   def dockerdigest = []
 
+  def ghdockerRepo = "ghcr.io/lsst/scipipe"
   def registryTags = [
     dockerTag,
     "${dockerTag}-${timestamp}",
@@ -119,6 +120,10 @@ notify.wrap {
 
         dir(buildDir) {
           image = docker.build("${dockerRepo}", opt.join(' '))
+          // This is temp til we move away from Dockerhub officially
+          // ghimage should be dropped and we should move it all to
+          // work like the others
+          ghimage = docker.build("${ghdockerRepo}", opt.join(' '))
           image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
           image3 = docker.build("lsstsqre/almalinux", opt.join(' '))
         }
@@ -136,6 +141,14 @@ notify.wrap {
             }
             newRegistryTags.each { name ->
               image3.push(name+"_"+arch)
+            }
+          }
+          docker.withRegistry(
+            'https://ghcr.io',
+            'rubinobs-dm'
+          ) {
+            registryTags.each { name ->
+              ghimage.push(name+"_"+arch)
             }
           }
           docker.withRegistry(
@@ -197,6 +210,18 @@ notify.wrap {
         registryTags.each { name ->
           sh(script: """ \
             docker buildx imagetools create -t $dockerRepo:$name \
+            $digest
+            """,
+            returnStdout: true)
+        }
+        docker.withRegistry(
+          'https://ghcr.io',
+          'rubinobs-dm'
+        ) {
+
+        registryTags.each { name ->
+          sh(script: """ \
+            docker buildx imagetools create -t $ghdockerRepo:$name \
             $digest
             """,
             returnStdout: true)
