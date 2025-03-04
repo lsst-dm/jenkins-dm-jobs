@@ -27,13 +27,6 @@ template:
       display_name: linux-9-aarch64
       compiler: conda-system
       python: '3'
-    - &ventura-conda
-      <<: *platform_defaults
-      image: null
-      label: osx-64
-      display_name: macos-x86
-      compiler: conda-system
-      python: '3'
     - &macarm64-conda
       <<: *platform_defaults
       image: null
@@ -48,21 +41,17 @@ scipipe-lsstsw-matrix:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
   - <<: *macarm64-conda
-  - <<: *ventura-conda
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
-  - <<: *ventura-conda
   - <<: *macarm64-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
-  - <<: *ventura-conda
   - <<: *macarm64-conda
 scipipe-lsstsw-ci_imsim:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
-  - <<: *ventura-conda
   - <<: *macarm64-conda
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
