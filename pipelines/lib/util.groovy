@@ -1245,7 +1245,7 @@ def runDocumenteer(Map p) {
     'eupsTag',
   ])
   p = [
-    docImage: 'lsstsqre/documenteer-base',
+    docImage: null,
     docPull: false,
   ] + p
 
@@ -1269,8 +1269,14 @@ def runDocumenteer(Map p) {
       dir(p.docTemplateDir) {
         bash '''
           source /opt/lsst/software/stack/loadLSST.bash
-          export PATH="${HOME}/.local/bin:${PATH}"
+          if ! command -v dot &>/dev/null; then
+              mamba create -y --prefix=${HOME}/graphviz graphviz
+              mamba activate ${HOME}/graphviz
+              mamba activate --stack ${LSST_CONDA_ENV_NAME}
+          fi
+          dot -V
           pip install --upgrade --user -r requirements.txt
+          export PATH="${HOME}/.local/bin:${PATH}"
           setup -r . -t "$EUPS_TAG"
           build-stack-docs -d . -v
         '''
