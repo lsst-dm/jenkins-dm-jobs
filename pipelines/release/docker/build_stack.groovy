@@ -48,20 +48,35 @@ notify.wrap {
   def gitRef         = dockerfile.git_ref
   def buildDir       = dockerfile.dir
   def dockerRepo     = dockerRegistry.repo
-  def dockerTag      = "9-stack-lsst_distrib-${eupsTag}"
+  def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
+  def ghdockerTag    = "al9-${eupsTag}"
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
   def shebangtronUrl = util.shebangtronUrl()
-  def dockerdigest = []
+  def dockerdigest   = []
+  // should be removed after dropping support for dockerhub
+  def ghdockerdigest   = []
 
+  // should be removed after dropping support for dockerhub
   def ghdockerRepo = "ghcr.io/lsst/scipipe"
   def registryTags = [
     dockerTag,
     "${dockerTag}-${timestamp}",
   ]
+  // should be removed after dropping support for dockerhub
+  def ghregistryTags = [
+    ghdockerTag,
+    "${ghdockerTag}-${timestamp}",
+  ]
 
   if (extraDockerTags) {
     // manual constructor is needed "because java"
     registryTags += Arrays.asList(extraDockerTags.split())
+  }
+
+    // should be removed after dropping support for dockerhub
+  if (extraDockerTags) {
+    // manual constructor is needed "because java"
+    ghregistryTags += Arrays.asList(extraDockerTags.split())
   }
 
   def newRegistryTags = []
@@ -130,6 +145,8 @@ notify.wrap {
       }
       stage('push') {
         def digest = null
+        // Should be removed once we drop dockerhub support
+        def digest2 = null
         def arch = lsstswConfig.display_name.tokenize('-').last()
         if (!noPush) {
           docker.withRegistry(
@@ -147,8 +164,8 @@ notify.wrap {
             'https://ghcr.io',
             'rubinobs-dm'
           ) {
-            registryTags.each { name ->
-              ghimage.push(name+"_"+arch)
+            ghregistryTags.each { name ->
+              ghimage.push(name + "_" + arch)
             }
           }
           docker.withRegistry(
@@ -163,9 +180,14 @@ notify.wrap {
             script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}_${arch}",
             returnStdout: true
           ).trim()
+          digest2 = sh(
+            script: "docker inspect --format='{{index .RepoDigests 0}}' ${ghdockerRepo}:${ghdockerTag}_${arch}",
+            returnStdout: true
+          ).trim()
 
         }
           dockerdigest.add(digest)
+          ghdockerdigest.add(digest2)
       } // push
 
   } // run
@@ -202,6 +224,8 @@ notify.wrap {
   def merge = {
     stage('digest'){
         def digest = dockerdigest.join(' ')
+        // should be removed after dropping support for dockerhub
+        def ghdigest = ghdockerdigest.join(' ')
         docker.withRegistry(
           'https://index.docker.io/v1/',
           'dockerhub-sqreadmin'
@@ -222,7 +246,7 @@ notify.wrap {
         registryTags.each { name ->
           sh(script: """ \
             docker buildx imagetools create -t $ghdockerRepo:$name \
-            $digest
+            $ghdigest
             """,
             returnStdout: true)
         }
