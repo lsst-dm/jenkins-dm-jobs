@@ -238,6 +238,13 @@ notify.wrap {
             """,
             returnStdout: true)
         }
+        newRegistryTags.each { name ->
+          sh(script: """ \
+            docker buildx imagetools create -t lsstsqre/almalinux:$name \
+            $digest
+            """,
+            returnStdout: true)
+          }
         }
         docker.withRegistry(
           'https://ghcr.io',
@@ -252,13 +259,6 @@ notify.wrap {
             returnStdout: true)
         }
 
-        newRegistryTags.each { name ->
-          sh(script: """ \
-            docker buildx imagetools create -t lsstsqre/almalinux:$name \
-            $digest
-            """,
-            returnStdout: true)
-          }
 
         }
         docker.withRegistry(
