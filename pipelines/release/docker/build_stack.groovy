@@ -238,6 +238,7 @@ notify.wrap {
             """,
             returnStdout: true)
         }
+        }
         docker.withRegistry(
           'https://ghcr.io',
           'rubinobs-dm'
