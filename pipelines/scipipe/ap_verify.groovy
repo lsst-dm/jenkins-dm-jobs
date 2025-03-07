@@ -279,6 +279,7 @@ def void verifyDataset(Map p) {
         codeDir: codeDir,
         namespace: p.squashPush ?  "lsst.verify.ap" : "",
         restProxyUrl: p.squashPush ? sqre.sasquatch.url : "",
+        pipeline: Path.of(ds.gen3_pipeline.trim()).getFileName().toString()
       )
 
       // push results to squash
@@ -397,6 +398,14 @@ def void buildAp(Map p) {
  * @param p.datasetDir String path to validation dataset
  * @param p.homemDir String path to $HOME -- where to put dotfiles
  * @param p.archiveDir String path from which to archive artifacts
+ * @param p.codeDir String path to ap_verify (code)
+ * @param p.namespace String Sasquatch namespace
+ * @param p.restProxyUrl String Sasquatch REST proxy URL
+
+   These are already present under pipeline:
+  - BUILD_ID
+  - BUILD_URL
+  - JOB_NAME
  */
 def void runApVerify(Map p) {
   util.requireMapKeys(p, [
@@ -409,6 +418,7 @@ def void runApVerify(Map p) {
     'codeDir',
     'namespace',
     'restProxyUrl',
+    'pipeline'
   ])
 
   def run = {
@@ -428,7 +438,16 @@ def void runApVerify(Map p) {
 
       cd ${RUN_DIR}
       # -p ignored if not -g 3
-      run_ci_dataset.sh -d ${DATASET_NAME} -g ${DATASET_GEN} -p ${DATASET_PIPE} -n ${NAMESPACE} -u ${REST_PROXY_URL}
+      run_ci_dataset.sh -d ${DATASET_NAME} \
+                        -g ${DATASET_GEN} \
+                        -p ${DATASET_PIPE} \
+                        -n ${NAMESPACE} \
+                        -u ${REST_PROXY_URL} \
+                        -e ci_id=$BUILD_ID \
+                        -e ci_url=$BUILD_URL \
+                        -e ci_name=$JOB_NAME \
+                        -e ci_refs=$JOB_REFS \
+                        -e pipeline=$JOB_PIPELINE
     '''
   }
 
@@ -443,6 +462,8 @@ def void runApVerify(Map p) {
     "DATASET_DIR=${p.datasetDir}",
     "HOME=${p.homeDir}",
     "CODE_DIR=${p.codeDir}",
+    "JOB_REFS=${p.dataset.refs}",
+    "JOB_PIPELINE=${p.pipeline}",
   ]) {
     try {
       dir(p.runDir) {
