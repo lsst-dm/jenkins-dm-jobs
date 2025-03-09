@@ -76,7 +76,13 @@ notify.wrap {
     // should be removed after dropping support for dockerhub
   if (extraDockerTags) {
     // manual constructor is needed "because java"
+    // since we no longer need some of the current extraDockerTags,
+    // manually adding the only one needed. After dropping docker,
+    // we should switch to using extraDockerTags
     ghregistryTags += Arrays.asList(extraDockerTags.split())
+    ghregistryTags -= "7-stack-lsst_distrib-d_latest"
+    ghregistryTags -= "7-stack-lsst_distrib-w_latest"
+    ghregistryTags -= "7-stack-lsst_distrib-o_latest"
   }
 
   def newRegistryTags = []
@@ -251,7 +257,7 @@ notify.wrap {
           'rubinobs-dm'
         ) {
 
-        registryTags.each { name ->
+        ghregistryTags.each { name ->
           sh(script: """ \
             docker buildx imagetools create -t $ghdockerRepo:$name \
             $ghdigest
