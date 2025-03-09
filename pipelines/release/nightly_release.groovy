@@ -24,7 +24,7 @@ notify.wrap {
   def products        = scipipe.canonical.products
   def tarballProducts = scipipe.tarball.products
   def retries         = 3
-  def extraDockerTags = '7-stack-lsst_distrib-d_latest d_latest'
+  def extraDockerTags = 'd_latest'
 
   def gitTag       = null
   def eupsTag      = null

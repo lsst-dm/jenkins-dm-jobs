@@ -71,13 +71,14 @@ notify.wrap {
   if (extraDockerTags) {
     // manual constructor is needed "because java"
     registryTags += Arrays.asList(extraDockerTags.split())
+    // should be removed after dropping support for dockerhub
+    def extraTagList = Arrays.asList(extraDockerTags.split())
+    registryTags += extraTagList
+    extraTagList.each { tag ->
+    registryTags += "7-stack-lsst_distrib-${tag}"
+    }
   }
 
-    // should be removed after dropping support for dockerhub
-  if (extraDockerTags) {
-    // manual constructor is needed "because java"
-    ghregistryTags += Arrays.asList(extraDockerTags.split())
-  }
 
   def newRegistryTags = []
   registryTags.each { name ->
@@ -251,7 +252,7 @@ notify.wrap {
           'rubinobs-dm'
         ) {
 
-        registryTags.each { name ->
+        ghregistryTags.each { name ->
           sh(script: """ \
             docker buildx imagetools create -t $ghdockerRepo:$name \
             $ghdigest
