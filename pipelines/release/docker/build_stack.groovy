@@ -141,7 +141,6 @@ notify.wrap {
           // work like the others
           ghimage = docker.build("${ghdockerRepo}", opt.join(' '))
           image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
-          image3 = docker.build("lsstsqre/almalinux", opt.join(' '))
         }
       }
       stage('push') {
@@ -156,9 +155,6 @@ notify.wrap {
           ) {
             registryTags.each { name ->
               image.push(name+"_"+arch)
-            }
-            newRegistryTags.each { name ->
-              image3.push(name+"_"+arch)
             }
           }
           docker.withRegistry(
