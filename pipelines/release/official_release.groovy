@@ -86,7 +86,7 @@ notify.wrap {
   def extraDockerTags = ''
 
   if (dockerLatest) {
-    extraDockerTags = '7-stack-lsst_distrib-o_latest o_latest'
+    extraDockerTags = 'o_latest'
   }
 
   def gitTagOnlyManifestId = null
