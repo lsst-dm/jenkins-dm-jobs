@@ -200,10 +200,10 @@ notify.wrap {
 
         util.dumpJson(resultsFile,  [
           base_image: baseImage ?: null,
-          image: "${dockerRepo}:${dockerTag}",
+          image: "${ghdockerRepo}:${ghdockerTag}",
           docker_registry: [
-            repo: dockerRepo,
-            tag: dockerTag
+            repo: ghdockerRepo,
+            tag: ghdockerTag
           ],
         ])
 
