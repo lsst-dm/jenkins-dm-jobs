@@ -73,7 +73,7 @@ notify.wrap {
     registryTags += Arrays.asList(extraDockerTags.split())
     // should be removed after dropping support for dockerhub
     def extraTagList = Arrays.asList(extraDockerTags.split())
-    registryTags += extraTagList
+    ghregistryTags += extraTagList
     extraTagList.each { tag ->
     registryTags += "7-stack-lsst_distrib-${tag}"
     }
