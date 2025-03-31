@@ -148,6 +148,9 @@ notify.wrap {
           println("#{$loop_idx}: id = ${run_id}; status=${status}; conclusion=${conclusion}")
         } // openConnection.with()
       } // while
+      if (conclusion != "success") {
+          currentBuild.result = 'FAILURE'
+      }
       assert conclusion == "success": "Build for id ${run_id} failed: conclusion=${conclusion}"
     } // stage
   } // run
