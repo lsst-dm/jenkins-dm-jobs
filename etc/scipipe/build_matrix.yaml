@@ -41,7 +41,6 @@ scipipe-lsstsw-matrix:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
   - <<: *macarm64-conda
-  - <<: *ventura-conda
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
