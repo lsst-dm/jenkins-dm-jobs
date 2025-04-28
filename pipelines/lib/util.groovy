@@ -471,9 +471,6 @@ def void jenkinsWrapper(Map buildParams) {
 
     // Check if NODE_LABELS is set in the environment
     def nodeLabels = env.NODE_LABELS
-    if (nodeLabels == null) {
-        nodeLabels = "unknown" // Setting a default value if NODE_LABELS is not found, Ask Ross about this.
-    }
 
     def buildEnv = [
       "WORKSPACE=${cwd}",
