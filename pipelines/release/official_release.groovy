@@ -151,6 +151,7 @@ notify.wrap {
             PRODUCTS: products,
             SPLENV_REF: splenvRef,
             BUILD_DOCS: true,
+            NO_BINARY_FETCH: true,
           ],
         )
       } // retry

@@ -31,6 +31,7 @@ notify.wrap {
   Boolean prepOnly  = params.PREP_ONLY
   String products   = params.PRODUCTS
   Boolean buildDocs = params.BUILD_DOCS
+  Boolean nobinary  = params.NO_BINARY_FETCH
   Integer timelimit = Integer.parseInt(params.TIMEOUT)
 
   // not a normally exposed job param
@@ -59,19 +60,20 @@ notify.wrap {
       def cwd = pwd()
 
       def buildParams = [
-        EUPS_PKGROOT:        "${cwd}/distrib",
-        GIT_SSH_COMMAND:     'ssh -o StrictHostKeyChecking=no',
-        K8S_DIND_LIMITS_CPU: "4",
-        LSST_BUILD_DOCS:     buildDocs,
-        LSST_COMPILER:       lsstswConfig.compiler,
-        LSST_JUNIT_PREFIX:   slug,
-        LSST_PREP_ONLY:      prepOnly,
-        LSST_PRODUCTS:       products,
-        LSST_PYTHON_VERSION: lsstswConfig.python,
-        LSST_SPLENV_REF:     splenvRef,
-        LSST_REFS:           refs,
-        VERSIONDB_PUSH:      versiondbPush,
-        VERSIONDB_REPO:      versiondbRepo,
+        EUPS_PKGROOT:          "${cwd}/distrib",
+        GIT_SSH_COMMAND:       'ssh -o StrictHostKeyChecking=no',
+        K8S_DIND_LIMITS_CPU:   "4",
+        LSST_BUILD_DOCS:       buildDocs,
+        LSST_COMPILER:         lsstswConfig.compiler,
+        LSST_JUNIT_PREFIX:     slug,
+        LSST_PREP_ONLY:        prepOnly,
+        LSST_NO_BINARY_FETCH:  nobinary,
+        LSST_PRODUCTS:         products,
+        LSST_PYTHON_VERSION:   lsstswConfig.python,
+        LSST_SPLENV_REF:       splenvRef,
+        LSST_REFS:             refs,
+        VERSIONDB_PUSH:        versiondbPush,
+        VERSIONDB_REPO:        versiondbRepo,
       ]
 
       def runJW = {

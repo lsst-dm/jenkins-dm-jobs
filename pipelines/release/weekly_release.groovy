@@ -46,6 +46,7 @@ notify.wrap {
           parameters: [
             PRODUCTS: products,
             BUILD_DOCS: true,
+            NO_BINARY_FETCH: true,
           ],
         )
       } // retry
