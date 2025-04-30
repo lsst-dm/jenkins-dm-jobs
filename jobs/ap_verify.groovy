@@ -6,7 +6,7 @@ p.pipeline().with {
 
   parameters {
     stringParam('REF', null, 'Git "ref" of ap_verify to attempt to build.  Default uses version in release docker image.')
-    stringParam('DOCKER_IMAGE', 'ghcr.io/lsst/scipipe', 'Explicit name of release docker image including tag.')
+    stringParam('DOCKER_IMAGE', 'ghcr.io/lsst/scipipe:d_latest', 'Explicit name of release docker image including tag.')
     stringParam('ARCHITECTURE', 'linux-64', 'Architecture to run against.')
     stringParam('DATASET_REF', null, 'Override git ref used for dataset repos.  Default uses ref from ap_verify.yaml config file.')
     booleanParam('NO_PUSH', true, 'Do not push results to squash.')
