@@ -76,6 +76,7 @@ notify.wrap {
     ghregistryTags += extraTagList
     extraTagList.each { tag ->
     registryTags += "7-stack-lsst_distrib-${tag}"
+    ghregistryTags += "al9-${tag}"
     }
   }
 
