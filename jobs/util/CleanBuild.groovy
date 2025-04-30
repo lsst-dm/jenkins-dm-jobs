@@ -38,6 +38,7 @@ class CleanBuild {
         BUILD_DOCS: buildDocs,
         WIPEOUT: true,
         BUILD_CONFIG: buildConfig,
+        NO_BINARY_FETCH: true,
       )
 
       def repo = seedJob.scm.userRemoteConfigs.get(0).getUrl()
