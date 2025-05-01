@@ -263,10 +263,14 @@ There are two places where `JSWARM_VERSION` must be edited in this file.
 
 ## Debugging
 
-Sometimes, JCASC will store an cache of a broken values file and updating the values file
-and upgrading the helm chart will not remove the cache. In these instances, Jenkins will
-fail to spin up, making it impossible to `exec` into the container and manually clear
-the cache. In this case, spin up a `customInitContainer` by adding this to the values.yaml:
+Sometimes, JCASC will store an cache of a broken values
+file and updating the values file
+and upgrading the helm chart will not remove the cache.
+In these instances, Jenkins will
+fail to spin up, making it impossible to `exec` into the
+container and manually clear
+the cache. In this case, spin up a `customInitContainer`
+by adding this to the values.yaml:
 
 ```
 customInitContainers:
@@ -278,6 +282,8 @@ customInitContainers:
           mountPath: /var/jenkins_home
 ```
 
-This init container will remove all of the JCASC cached yaml files and rebuild them from scratch,
-before the container has a chance to `CRASHLOOPBACKOFF`. If you only need one file removed,
+This init container will remove all of the JCASC cached
+yaml files and rebuild them from scratch,
+before the container has a chance to `CRASHLOOPBACKOFF`.
+If you only need one file removed,
 look up the name of the file and replace *.
