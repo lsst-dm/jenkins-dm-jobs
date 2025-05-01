@@ -47,7 +47,8 @@ notify.wrap {
   def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
   def gitRef         = dockerfile.git_ref
   def buildDir       = dockerfile.dir
-  def dockerRepo     = dockerRegistry.repo
+  def ghdockerRepo = dockerRegistry.repo
+  def dockerRepo     = "lsstsqre/centos"
   def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
   def ghdockerTag    = "al9-${eupsTag}"
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
@@ -57,7 +58,6 @@ notify.wrap {
   def ghdockerdigest   = []
 
   // should be removed after dropping support for dockerhub
-  def ghdockerRepo = "ghcr.io/lsst/scipipe"
   def registryTags = [
     dockerTag,
     "${dockerTag}-${timestamp}",
