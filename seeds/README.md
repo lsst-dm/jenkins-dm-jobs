@@ -260,3 +260,17 @@ There are two places where `JSWARM_VERSION` must be edited in this file.
 * __!! Ensure the Swarm Client version matches the Swarm Server__
    __version on the Jenkins plugin page.__
    * If they do not match, this could cause connection problems.
+
+## Debugging
+
+Sometimes, JCASC will store an cache of a broken values file and updating the values file and upgrading the helm chart will not remove the cache. In these instances, Jenkins will fail to spin up, making it impossible to `exec` into the container and manually clear the cache. In this case, spin up a `customInitContainer` by adding this to the values.yaml:
+```
+customInitContainers:
+    - name: cleanup-old-casc
+      image: busybox
+      command: ["/bin/sh","-c","rm -f /var/jenkins_home/casc_configs/* || true"]
+      volumeMounts:
+        - name: jenkins-home
+          mountPath: /var/jenkins_home
+```
+This init container will remove all of the JCASC cached yaml files and rebuild them from scratch, before the container has a chance to `CRASHLOOPBACKOFF`. If you only need one file removed, look up the name of the file and replace *.
