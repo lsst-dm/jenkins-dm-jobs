@@ -27,9 +27,9 @@ notify.wrap {
   ])
 
   def buildParams = [
-    LSST_REFS:      REFS,
-    LSST_PRODUCTS:  PRODUCTS,
-    LSST_BUILD_DOCS: BUILD_DOCS,
+    LSST_REFS:              REFS,
+    LSST_PRODUCTS:          PRODUCTS,
+    LSST_BUILD_DOCS:        BUILD_DOCS,
   ]
 
   // override conda env ref from build_matrix.yaml
