@@ -20,6 +20,6 @@ p.pipeline().with {
     BUILD_CONFIG: 'scipipe-lsstsw-matrix',
     BUILD_DOCS: false,
     WIPEOUT: false,
-    NO_BINARY_FETCH: true,
+    NO_BINARY_FETCH: false,
   )
 }
