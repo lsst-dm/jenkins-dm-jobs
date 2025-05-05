@@ -479,6 +479,7 @@ void slackSendBuild(Map args) {
   // required keys:
   // color
   // detail
+  return
   requiredParams(['color', 'detail'], args)
 
   defaultChannel = defaultChannel ?: defaultChannel()
