@@ -15,7 +15,7 @@ node('jenkins-manager') {
 }
 
 notify.wrap {
-  util.nodeWrap('docker') {
+  util.nodeWrap('linux-64') {
     util.githubGetRatelimit()
   } // util.nodeWrap
 } // notify.wrap
