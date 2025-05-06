@@ -477,7 +477,7 @@ def void jenkinsWrapper(Map buildParams) {
       "HOME=${homeDir}",
       "EUPS_USERDATA=${homeDir}/.eups_userdata",
       "EUPSPKG_NJOBS=${njobs}",
-      "NODE_LABELS=${nodeLabels}" 
+      "NODE_LABELS=${nodeLabels}"
     ]
 
     // Map -> List
@@ -1381,12 +1381,14 @@ def String runRebuild(Map p) {
     BUILD_DOCS: false,
     TIMEOUT: '12', // should be String
     PREP_ONLY: false,
+    NO_BINARY_FETCH: true,
   ] + p.parameters
 
   def jobParameters = [
           string(name: 'REFS', value: useP.parameters.REFS),
           string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
           booleanParam(name: 'BUILD_DOCS', value: useP.parameters.BUILD_DOCS),
+          booleanParam(name: 'NO_BINARY_FETCH', value: useP.parameters.NO_BINARY_FETCH),
           string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
           booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),
   ]
