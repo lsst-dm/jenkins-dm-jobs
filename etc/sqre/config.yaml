@@ -19,7 +19,7 @@ codekit:
     dir: docker
   docker_registry:
     repo: ghcr.io/lsst-dm/codekit
-    tag: 'latest'
+    tag: 'pr-92-tickets-DM-50741'
 dind:
   dockerfile:
     github_repo: lsst-sqre/docker-dind
