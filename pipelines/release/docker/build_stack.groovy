@@ -47,36 +47,23 @@ notify.wrap {
   def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
   def gitRef         = dockerfile.git_ref
   def buildDir       = dockerfile.dir
-  def ghdockerRepo = dockerRegistry.repo
-  def dockerRepo     = "lsstsqre/centos"
-  def dockerTag      = "7-stack-lsst_distrib-${eupsTag}"
-  def ghdockerTag    = "al9-${eupsTag}"
+  def dockerRepo     = dockerRegistry.repo
+  def dockerTag      = "al9-${eupsTag}"
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
   def shebangtronUrl = util.shebangtronUrl()
   def dockerdigest   = []
-  // should be removed after dropping support for dockerhub
-  def ghdockerdigest   = []
 
-  // should be removed after dropping support for dockerhub
   def registryTags = [
     dockerTag,
     "${dockerTag}-${timestamp}",
-  ]
-  // should be removed after dropping support for dockerhub
-  def ghregistryTags = [
-    ghdockerTag,
-    "${ghdockerTag}-${timestamp}",
   ]
 
   if (extraDockerTags) {
     // manual constructor is needed "because java"
     registryTags += Arrays.asList(extraDockerTags.split())
-    // should be removed after dropping support for dockerhub
     def extraTagList = Arrays.asList(extraDockerTags.split())
-    ghregistryTags += extraTagList
     extraTagList.each { tag ->
-    registryTags += "7-stack-lsst_distrib-${tag}"
-    ghregistryTags += "al9-${tag}"
+    registryTags += "al9-${tag}"
     }
   }
 
@@ -137,33 +124,20 @@ notify.wrap {
 
         dir(buildDir) {
           image = docker.build("${dockerRepo}", opt.join(' '))
-          // This is temp til we move away from Dockerhub officially
-          // ghimage should be dropped and we should move it all to
-          // work like the others
-          ghimage = docker.build("${ghdockerRepo}", opt.join(' '))
           image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
         }
       }
       stage('push') {
         def digest = null
         // Should be removed once we drop dockerhub support
-        def digest2 = null
         def arch = lsstswConfig.display_name.tokenize('-').last()
         if (!noPush) {
-          docker.withRegistry(
-            'https://index.docker.io/v1/',
-            'dockerhub-sqreadmin'
-          ) {
-            registryTags.each { name ->
-              image.push(name+"_"+arch)
-            }
-          }
           docker.withRegistry(
             'https://ghcr.io',
             'rubinobs-dm'
           ) {
-            ghregistryTags.each { name ->
-              ghimage.push(name + "_" + arch)
+            registryTags.each { name ->
+              image.push(name + "_" + arch)
             }
           }
           docker.withRegistry(
@@ -178,14 +152,9 @@ notify.wrap {
             script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}_${arch}",
             returnStdout: true
           ).trim()
-          digest2 = sh(
-            script: "docker inspect --format='{{index .RepoDigests 0}}' ${ghdockerRepo}:${ghdockerTag}_${arch}",
-            returnStdout: true
-          ).trim()
 
         }
           dockerdigest.add(digest)
-          ghdockerdigest.add(digest2)
       } // push
 
   } // run
@@ -222,13 +191,10 @@ notify.wrap {
   def merge = {
     stage('digest'){
         def digest = dockerdigest.join(' ')
-        // should be removed after dropping support for dockerhub
-        def ghdigest = ghdockerdigest.join(' ')
         docker.withRegistry(
-          'https://index.docker.io/v1/',
-          'dockerhub-sqreadmin'
+          'https://ghcr.io',
+          'rubinobs-dm'
         ) {
-
         registryTags.each { name ->
           sh(script: """ \
             docker buildx imagetools create -t $dockerRepo:$name \
@@ -236,27 +202,6 @@ notify.wrap {
             """,
             returnStdout: true)
         }
-        newRegistryTags.each { name ->
-          sh(script: """ \
-            docker buildx imagetools create -t lsstsqre/almalinux:$name \
-            $digest
-            """,
-            returnStdout: true)
-          }
-        }
-        docker.withRegistry(
-          'https://ghcr.io',
-          'rubinobs-dm'
-        ) {
-
-        ghregistryTags.each { name ->
-          sh(script: """ \
-            docker buildx imagetools create -t $ghdockerRepo:$name \
-            $ghdigest
-            """,
-            returnStdout: true)
-        }
-
 
         }
         docker.withRegistry(
