@@ -20,6 +20,12 @@ notify.wrap {
   String year  = params.YEAR.padLeft(4, "0")
   String month = params.MONTH.padLeft(2, "0")
   String day   = params.DAY.padLeft(2, "0")
+  if (year == "0000"){
+      def now = new Date()
+      year = now.format("YYYY")
+      month = now.format("MM")
+      day = now.format("dd")
+  }
 
   def products        = scipipe.canonical.products
   def tarballProducts = scipipe.tarball.products

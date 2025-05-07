@@ -20,6 +20,12 @@ notify.wrap {
   String year = params.YEAR.padLeft(4, "0")
   String week = params.WEEK.padLeft(2, "0")
 
+  if (year == "0000"){
+      def now = new Date()
+      year = now.format("YYYY")
+      week = now.format("ww")
+  }
+
   def products        = scipipe.canonical.products
   def tarballProducts = scipipe.tarball.products
   def retries         = 3
