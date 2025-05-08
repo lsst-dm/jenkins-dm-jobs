@@ -341,7 +341,7 @@ def lsstswBuild(
     LSST_COMPILER:       lsstswConfig.compiler,
     LSST_JUNIT_PREFIX:   slug,
     LSST_PYTHON_VERSION: lsstswConfig.python,
-    LSST_SPLENV_REF:     lsstswConfig.splenv_ref
+    LSST_SPLENV_REF:     lsstswConfig.splenv_ref,
   ] + buildParams
 
   def run = {

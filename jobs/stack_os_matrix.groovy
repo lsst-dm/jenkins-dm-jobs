@@ -14,12 +14,12 @@ p.pipeline().with {
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
     // XXX testing only
     //booleanParam('NO_FETCH', false, 'Do not pull from git remote if branch is already the current ref. (This should generally be false outside of testing the CI system)')
+    booleanParam('NO_BINARY_FETCH', false, 'if enable, will build all binaries from scratch')
   }
 
   environmentVariables(
     BUILD_CONFIG: 'scipipe-lsstsw-matrix',
     BUILD_DOCS: false,
     WIPEOUT: false,
-    NO_BINARY_FETCH: false,
   )
 }
