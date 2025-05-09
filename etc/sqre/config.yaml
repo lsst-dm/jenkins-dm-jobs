@@ -13,15 +13,13 @@ awscli:
     repo: ghcr.io/lsst-dm/docker-awscli
     tag: *awscli_ver
 codekit:
-  pypi:
-    version: &codekit_ver '7.5.0'
   dockerfile:
-    github_repo: lsst-sqre/sqre-codekit
-    git_ref: master
+    github_repo: lsst-dm/codekit
+    git_ref: main
     dir: docker
   docker_registry:
-    repo: lsstsqre/codekit
-    tag: *codekit_ver
+    repo: ghcr.io/lsst-dm/codekit
+    tag: 'latest'
 dind:
   dockerfile:
     github_repo: lsst-sqre/docker-dind
