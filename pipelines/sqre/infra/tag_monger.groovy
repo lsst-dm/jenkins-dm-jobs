@@ -15,7 +15,7 @@ node('jenkins-manager') {
 }
 
 notify.wrap {
-  def hub_repo = 'lsstsqre/tag-monger'
+  def hub_repo = 'ghcr.io/lsst-dm/tag-monger'
 
   def run = {
     def image = docker.image("${hub_repo}:latest")
