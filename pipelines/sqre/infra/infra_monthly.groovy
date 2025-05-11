@@ -74,12 +74,6 @@ notify.wrap {
         booleanParam(name: 'LATEST', value: true),
       ]
 
-    triggerJob trigger: tasks,
-      name: 'sqre/infra/build-codekit',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
 
     triggerJob trigger: tasks,
       name: 'sqre/infra/build-nginx-ssl-proxy',
@@ -93,12 +87,6 @@ notify.wrap {
         booleanParam(name: 'NO_PUSH', value: false),
       ]
 
-    triggerJob trigger: tasks,
-      name: 'sqre/infra/build-tag-monger',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
 
     triggerJob trigger: tasks,
       name: 'sqre/infra/build-s3sync',
