@@ -48,11 +48,15 @@ notify.wrap {
   def gitRef         = dockerfile.git_ref
   def buildDir       = dockerfile.dir
   def dockerRepo     = dockerRegistry.repo
+  def gcpRepo        = dockerRegistry.repo
   def dockerTag      = "al9-${eupsTag}"
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
   def shebangtronUrl = util.shebangtronUrl()
   def dockerdigest   = []
 
+  if (dockerRegistry.ghcr) {
+      dockerRepo = "ghcr.io/${dockerRepo}"
+  }
   def registryTags = [
     dockerTag,
     "${dockerTag}-${timestamp}",
@@ -124,7 +128,7 @@ notify.wrap {
 
         dir(buildDir) {
           image = docker.build("${dockerRepo}", opt.join(' '))
-          image2 = docker.build("panda-dev-1a74/${dockerRepo}", opt.join(' '))
+          image2 = docker.build("prompt-proto/${gcpRepo}", opt.join(' '))
         }
       }
       stage('push') {
@@ -170,10 +174,10 @@ notify.wrap {
 
         util.dumpJson(resultsFile,  [
           base_image: baseImage ?: null,
-          image: "${ghdockerRepo}:${ghdockerTag}",
+          image: "${dockerRepo}:${dockerTag}",
           docker_registry: [
-            repo: ghdockerRepo,
-            tag: ghdockerTag
+            repo: dockerRepo,
+            tag: dockerTag
           ],
         ])
 
@@ -210,7 +214,7 @@ notify.wrap {
         ) {
           registryTags.each { name ->
             sh(script: """ \
-              docker buildx imagetools create -t us-central1-docker.pkg.dev/panda-dev-1a74/$dockerRepo:$name \
+              docker buildx imagetools create -t us-central1-docker.pkg.dev/prompt-proto/$gcpRepo:$name \
               $digest
               """,
               returnStdout: true)
