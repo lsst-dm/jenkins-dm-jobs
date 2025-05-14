@@ -132,7 +132,7 @@ notify.wrap {
   } // timeout
 } // notify.wrap
 
-def String packIt(String templateFile, List options, String tag = '1.4.0') {
+String packIt(String templateFile, List options, String tag = '1.4.0') {
   def dockerSetup = "-e HOME=${pwd()} --network host -e DOCKER_HOST=$DOCKER_HOST"
   def docImage    = "lsstsqre/cakepacker:${tag}"
   def args        = options.join(' ')
@@ -154,7 +154,7 @@ def String packIt(String templateFile, List options, String tag = '1.4.0') {
   build
 }
 
-def void shipIt(Map build, String tag) {
+void shipIt(Map build, String tag) {
   def sha2      = build['artifact_id']
   def timestamp = util.epochToUtc((build['build_time']))
 
@@ -166,11 +166,11 @@ def void shipIt(Map build, String tag) {
 }
 
 // image.push() screws up with docker.image("sha:...")
-def void tagIt(String id, String tag) {
+void tagIt(String id, String tag) {
   util.bash "docker tag ${id} ${tag}"
 }
 
-def void pushIt(String tag) {
+void pushIt(String tag) {
   docker.withRegistry(
     'https://index.docker.io/v1/',
     'dockerhub-sqreadmin'

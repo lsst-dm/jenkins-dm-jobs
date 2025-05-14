@@ -98,7 +98,7 @@ notify.wrap {
  *
  * @param conf Map
  */
-def String datasetSlug(Map conf) {
+String datasetSlug(Map conf) {
   def ds = conf.dataset
   def slug = "${ds.display_name}-${ds.git_ref.tr('/', '_')}"
   return slug.toLowerCase()
@@ -109,7 +109,7 @@ def String datasetSlug(Map conf) {
  *
  * @param c Map
  */
-def String genSlug(Map conf) {
+String genSlug(Map conf) {
   def slug = "gen${conf.gen}"
   return slug.toLowerCase()
 }
@@ -119,7 +119,7 @@ def String genSlug(Map conf) {
  *
  * @param c Map
  */
-def String codeSlug(Map conf) {
+String codeSlug(Map conf) {
   def code = conf.code
 
   def name = 'ap_verify'
@@ -141,7 +141,7 @@ def String codeSlug(Map conf) {
  *
  * @param m Map
  */
-def String displayName(Map m) {
+String displayName(Map m) {
   m.display_name ?: m.name
 }
 
@@ -156,7 +156,7 @@ def String displayName(Map m) {
  * @param p.slug String Name of dataset.
  * @param p.wipeout Boolean
  */
-def void verifyDataset(Map p) {
+void verifyDataset(Map p) {
   util.requireMapKeys(p, [
     'config',
     'dockerImage',
@@ -336,7 +336,7 @@ def void verifyDataset(Map p) {
  * @param p.lsstCompiler String
  * @param p.archiveDir String path from which to archive artifacts
  */
-def void buildAp(Map p) {
+void buildAp(Map p) {
   util.requireMapKeys(p, [
     'homeDir',
     'codeDir',
@@ -407,7 +407,7 @@ def void buildAp(Map p) {
   - BUILD_URL
   - JOB_NAME
  */
-def void runApVerify(Map p) {
+void runApVerify(Map p) {
   util.requireMapKeys(p, [
     'runDir',
     'dataset',
@@ -481,7 +481,7 @@ def void runApVerify(Map p) {
   } // withEnv
 } // runApVerify
 
-def void missingDockerLabel(String label) {
+void missingDockerLabel(String label) {
   error "docker ${label} label is missing"
 }
 
@@ -493,7 +493,7 @@ def void missingDockerLabel(String label) {
  * @param p.manifestId String versiondb manifest id
  * @param p.archiveDir String path from which to archive artifacts
  */
-def void stageFakeLsstsw(Map p) {
+void stageFakeLsstsw(Map p) {
   util.requireMapKeys(p, [
     'fakeLsstswDir',
     'manifestId',

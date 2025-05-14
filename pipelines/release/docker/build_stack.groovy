@@ -1,6 +1,6 @@
 properties([
   copyArtifactPermission('/release/*'),
-]);
+])
 
 node('jenkins-manager') {
   dir('jenkins-dm-jobs') {

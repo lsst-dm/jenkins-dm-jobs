@@ -80,7 +80,7 @@ notify.wrap {
  *
  * @param conf Map
  */
-def String datasetSlug(Map conf) {
+String datasetSlug(Map conf) {
   def ds = conf.dataset
   def slug = "${ds.display_name}-${ds.git_ref.tr('/', '_')}"
   return slug.toLowerCase()
@@ -91,7 +91,7 @@ def String datasetSlug(Map conf) {
  *
  * @param c Map
  */
-def String codeSlug(Map conf, String gitRef) {
+String codeSlug(Map conf, String gitRef) {
   def code = conf.code
 
   def name = 'verify_drp_metrics'
@@ -113,7 +113,7 @@ def String codeSlug(Map conf, String gitRef) {
  *
  * @param m Map
  */
-def String displayName(Map m) {
+String displayName(Map m) {
   m.display_name ?: m.name
 }
 
@@ -129,7 +129,7 @@ def String displayName(Map m) {
  * @param p.wipeout Boolean
  * @param p.gitRef String Git reference to checkout in faro repo.
  */
-def void verifyDataset(Map p) {
+void verifyDataset(Map p) {
   util.requireMapKeys(p, [
     'config',
     'dockerImage',
@@ -304,7 +304,7 @@ def void verifyDataset(Map p) {
 /**
  * Trigger jenkins-node-cleanup (disk space) and wait for it to complete.
  */
-def void runNodeCleanup() {
+void runNodeCleanup() {
   build job: 'sqre/infra/jenkins-node-cleanup',
     wait: true
 }
@@ -320,7 +320,7 @@ def void runNodeCleanup() {
  * @param p.lsstCompiler String
  * @param p.archiveDir String path from which to archive artifacts
  */
-def void buildDrp(Map p) {
+void buildDrp(Map p) {
   util.requireMapKeys(p, [
     'homeDir',
     'codeDir',
@@ -382,7 +382,7 @@ def void buildDrp(Map p) {
  * @param p.codeDir (Optional) String path to the DRP metrics code
  * @param p.archiveDir String path from which to archive artifacts
  */
-def void runDrpMetrics(Map p) {
+void runDrpMetrics(Map p) {
   util.requireMapKeys(p, [
     'runDir',
     'codeDir',
@@ -421,7 +421,7 @@ def void runDrpMetrics(Map p) {
   } // withEnv
 } // runVerifyMetrics
 
-def void missingDockerLabel(String label) {
+void missingDockerLabel(String label) {
   error "docker ${label} label is missing"
 }
 
@@ -433,7 +433,7 @@ def void missingDockerLabel(String label) {
  * @param p.manifestId String versiondb manifest id
  * @param p.archiveDir String path from which to archive artifacts
  */
-def void stageFakeLsstsw(Map p) {
+void stageFakeLsstsw(Map p) {
   util.requireMapKeys(p, [
     'fakeLsstswDir',
     'manifestId',

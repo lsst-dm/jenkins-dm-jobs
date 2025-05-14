@@ -98,7 +98,7 @@ notify.wrap {
  * @param wipeout Boolean
  * @param publish Boolean
  */
-def void linuxTarballs(
+void linuxTarballs(
   String imageName,
   String platform,
   String compiler,
@@ -109,7 +109,7 @@ def void linuxTarballs(
   Boolean wipeout = false,
   Boolean publish = false
 ) {
-  def String slug = menv.slug()
+  String slug = menv.slug()
   def envId = util.joinPath('redhat', platform, compiler, slug)
   def buildDirHash = util.hashpath(envId)
 
@@ -165,7 +165,7 @@ def void linuxTarballs(
  * @param wipeout Boolean
  * @param publish Boolean
  */
-def void osxTarballs(
+void osxTarballs(
   String label,
   String macosx_deployment_target,
   String compiler,
@@ -176,7 +176,7 @@ def void osxTarballs(
   Boolean wipeout = false,
   Boolean publish = false
 ) {
-  def String slug = menv.slug()
+  String slug = menv.slug()
   def envId = util.joinPath('osx', macosx_deployment_target, compiler, slug)
   def buildDirHash = util.hashpath(envId)
 
@@ -232,7 +232,7 @@ def void osxTarballs(
  * @param buildTarget.products String
  * @param buildTarget.eups_tag String
  */
-def void linuxBuild(
+void linuxBuild(
   String imageName,
   String compiler,
   MinicondaEnv menv,
@@ -323,7 +323,7 @@ def void linuxBuild(
  * @param buildTarget.products String
  * @param buildTarget.eups_tag String
  */
-def void osxBuild(
+void osxBuild(
   String macosx_deployment_target,
   String compiler,
   MinicondaEnv menv,
@@ -384,7 +384,7 @@ def void osxBuild(
  * @param smoke Map
  * @param smoke.run_scons_check Boolean
  */
-def void linuxSmoke(
+void linuxSmoke(
   String imageName,
   String compiler,
   MinicondaEnv menv,
@@ -474,7 +474,7 @@ def void linuxSmoke(
  * @param smoke Map
  * @param smoke.run_scons_check Boolean
  */
-def void osxSmoke(
+void osxSmoke(
   String macosx_deployment_target,
   String compiler,
   MinicondaEnv menv,
@@ -524,7 +524,7 @@ def void osxSmoke(
 /**
  * Generate + write build script.
  */
-def void prepareBuild(
+void prepareBuild(
   String products,
   String eupsTag,
   String shName,
@@ -550,7 +550,7 @@ def void prepareBuild(
 /**
  * Generate + write smoke test script.
  */
-def void prepareSmoke(
+void prepareSmoke(
   String products,
   String eupsTag,
   String shName,
@@ -580,7 +580,7 @@ def void prepareSmoke(
  * @param p.file String name of script file to write
  * @param p.text String script text
  */
-def void writeScript(Map p) {
+void writeScript(Map p) {
   echo "creating script ${p.file}:"
   echo p.text
 
@@ -592,7 +592,7 @@ def void writeScript(Map p) {
  * Push {@code ./distrib} dir to an s3 bucket under the "path" formed by
  * joining the {@code parts} parameters.
  */
-def void s3PushConda(String ... parts) {
+void s3PushConda(String ... parts) {
   def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
   def buildDir = "${cwd}/build"
@@ -637,7 +637,7 @@ def void s3PushConda(String ... parts) {
  *
  * @return String cmd
  */
-def String s3PushCmd() {
+String s3PushCmd() {
   // do not interpolate now -- all values should come from the shell env.
   return util.dedent('''
     aws s3 cp \
@@ -654,7 +654,7 @@ def String s3PushCmd() {
  * - AWS_SECRET_ACCESS_KEY
  * - EUPS_S3_BUCKET
  */
-def void withEupsBucketEnv(Closure run) {
+void withEupsBucketEnv(Closure run) {
   withCredentials([[
     $class: 'UsernamePasswordMultiBinding',
     credentialsId: 'aws-eups-push',
@@ -670,7 +670,7 @@ def void withEupsBucketEnv(Closure run) {
 /**
  *  Record logs
  */
-def void record(String buildDir, MinicondaEnv menv) {
+void record(String buildDir, MinicondaEnv menv) {
   def eupsBuildDir = eupsBuildDir(buildDir, menv)
 
   def archive = [
@@ -699,7 +699,7 @@ def void record(String buildDir, MinicondaEnv menv) {
 /**
  * Cleanup after a build attempt.
  */
-def void cleanup(String buildDir) {
+void cleanup(String buildDir) {
   dir("${buildDir}/.lockDir") {
     deleteDir()
   }
@@ -712,7 +712,7 @@ def void cleanup(String buildDir) {
 // nested steps and this may be difficult to comprehend in the future.
 // Consider moving all of this logic into an external driver script that is
 // called with parameters.
-def String buildScript(
+String buildScript(
   String products,
   String tag,
   String eupsPkgroot,
@@ -760,7 +760,7 @@ def String buildScript(
 /**
  * Generate shellscript to execute a "smoke" install test.
  */
-def String smokeScript(
+String smokeScript(
   String products,
   String tag,
   String eupsPkgroot,
@@ -843,7 +843,7 @@ for line in sys.stdin:
 /**
  * Generate common shellscript boilerplate.
  */
-def String scriptPreamble(
+String scriptPreamble(
   String compiler,
   String macosx_deployment_target='10.9',
   MinicondaEnv menv,
@@ -923,7 +923,7 @@ class MinicondaEnv implements Serializable {
  *
  * @param path String path to dir to empty, if it exists
  */
-def void emptyExistingDir(String path) {
+void emptyExistingDir(String path) {
   if (fileExists(path)) {
     dir(path) {
       deleteDir()
@@ -938,6 +938,6 @@ def void emptyExistingDir(String path) {
  * @param menv MinicondaEnv
  * @return String path to EupsBuildDir
  */
-def String eupsBuildDir(String buildDir, MinicondaEnv menv) {
+String eupsBuildDir(String buildDir, MinicondaEnv menv) {
   return "${buildDir}/stack/${menv.slug()}/EupsBuildDir"
 }

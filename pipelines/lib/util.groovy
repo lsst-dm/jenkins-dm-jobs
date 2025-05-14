@@ -9,7 +9,7 @@ import java.security.MessageDigest
  * Remove leading whitespace from a multi-line String (probably a shellscript).
  */
 @NonCPS
-def String dedent(String text) {
+String dedent(String text) {
   if (text == null) {
     return null
   }
@@ -19,7 +19,7 @@ def String dedent(String text) {
 /**
  * Thin wrapper around {@code sh} step that strips leading whitspace.
  */
-def void posixSh(script) {
+void posixSh(script) {
   script = dedent(script)
   sh shebangerize(script, '/bin/sh -xe')
 }
@@ -27,7 +27,7 @@ def void posixSh(script) {
 /**
  * Thin wrapper around {@code sh} step that strips leading whitspace.
  */
-def void bash(script) {
+void bash(script) {
   script = dedent(script)
   sh shebangerize(script, '/bin/bash -xe')
 }
@@ -39,7 +39,7 @@ def void bash(script) {
  * @return shebangerized String
  */
 @NonCPS
-def String shebangerize(String script, String prog = '/bin/sh -xe') {
+String shebangerize(String script, String prog = '/bin/sh -xe') {
   if (!script.startsWith('#!')) {
     script = "#!${prog}\n${script}"
   }
@@ -54,7 +54,7 @@ def String shebangerize(String script, String prog = '/bin/sh -xe') {
  * @return hashed path String
  */
 @NonCPS
-def String hashpath(String path) {
+String hashpath(String path) {
   def digest = MessageDigest.getInstance('SHA-1')
   digest.update(path.bytes)
   def hashpathstr = digest.digest().encodeHex().toString()
@@ -78,7 +78,7 @@ def String hashpath(String path) {
  * @param p.tag String name of tag to apply to generated image (required)
  * @param p.pull Boolean always pull docker base image (optional)
  */
-def void buildImage(Map p) {
+void buildImage(Map p) {
   requireMapKeys(p, [
     'config',
     'tag',
@@ -119,7 +119,7 @@ def void buildImage(Map p) {
  * @param p.tag String name of tag to apply to generated image
  * @param p.pull Boolean always pull docker base image. Defaults to `false`
  */
-def void wrapDockerImage(Map p) {
+void wrapDockerImage(Map p) {
   requireMapKeys(p, [
     'image',
     'tag',
@@ -204,7 +204,7 @@ def insideDockerWrap(Map p, Closure run) {
 // The groovy String#join method is not working under the security sandbox
 // https://issues.jenkins-ci.org/browse/JENKINS-43484
 @NonCPS
-def String joinPath(String ... parts) {
+String joinPath(String ... parts) {
   String text = null
 
   def n = parts.size()
@@ -282,7 +282,7 @@ def shJson(String script) {
  * @param p.parameters.TIMEOUT String Defaults to `'1'`.
  * @param p.parameters.SPLENV_REF String Optional
  */
-def void runPublish(Map p) {
+void runPublish(Map p) {
   requireMapKeys(p, [
     'parameters',
   ])
@@ -415,7 +415,7 @@ def lsstswBuild(
  * @param buildParams.LSST_REFS String
  * @param buildParams.LSST_SPLENV_REF String
  */
-def void jenkinsWrapper(Map buildParams) {
+void jenkinsWrapper(Map buildParams) {
   // minimum set of required keys -- additional are allowed
   requireMapKeys(buildParams, [
     'LSST_COMPILER',
@@ -607,7 +607,7 @@ def jenkinsWrapperPost(String baseDir = null, boolean prepOnly = false) {
  * @return manifestId String
  */
 @NonCPS
-def String parseManifestId(String manifest) {
+String parseManifestId(String manifest) {
   def m = manifest =~ /(?m)^BUILD=(b.*)/
   m ? m[0][1] : null
 }
@@ -618,7 +618,7 @@ def String parseManifestId(String manifest) {
  *
  * @param rps List of required job parameters
  */
-def void requireParams(List rps) {
+void requireParams(List rps) {
   rps.each { it ->
     if (params.get(it) == null) {
       error "${it} parameter is required"
@@ -632,7 +632,7 @@ def void requireParams(List rps) {
  *
  * @param rev List of required env vars
  */
-def void requireEnvVars(List rev) {
+void requireEnvVars(List rev) {
   // note that `env` isn't a map and #get doesn't work as expected
   rev.each { it ->
     if (env."${it}" == null) {
@@ -648,7 +648,7 @@ def void requireEnvVars(List rev) {
  * @param check Map object to inspect
  * @param key List of required map keys
  */
-def void requireMapKeys(Map check, List keys) {
+void requireMapKeys(Map check, List keys) {
   keys.each { k ->
     if (! check.containsKey(k)) {
       error "${k} key is missing from Map"
@@ -661,7 +661,7 @@ def void requireMapKeys(Map check, List keys) {
  *
  * @param dirs List of directories to empty
 */
-def void emptyDirs(List eds) {
+void emptyDirs(List eds) {
   eds.each { d ->
     dir(d) {
       deleteDir()
@@ -676,7 +676,7 @@ def void emptyDirs(List eds) {
  *
  * @param dirs List of directories to ensure/create
 */
-def void createDirs(List eds) {
+void createDirs(List eds) {
   eds.each { d ->
     dir(d) {
       // a file operation is needed to cause the dir() step to recreate the dir
@@ -695,7 +695,7 @@ def void createDirs(List eds) {
  * @param rebuildId String `run-rebuild` build id.
  * @param filename String Output filename.
  */
-def void getManifest(String rebuildId, String filename) {
+void getManifest(String rebuildId, String filename) {
   def manifest_artifact = 'lsstsw/build/manifest.txt'
   def buildJob          = 'release/run-rebuild'
 
@@ -734,7 +734,7 @@ def void getManifest(String rebuildId, String filename) {
  * @param p.options.'--eups-tag' String Required.
  * @param p.args List Eg., `[<git tag>]` Required.
  */
-def void githubTagRelease(Map p) {
+void githubTagRelease(Map p) {
   requireMapKeys(p, [
     'args',
     'options',
@@ -797,7 +797,7 @@ def void githubTagRelease(Map p) {
  * @param p.options.'--org' String Required.
  * @param p.options.'--tag' String|List Required.
  */
-def void githubTagTeams(Map p) {
+void githubTagTeams(Map p) {
   requireMapKeys(p, [
     'options',
   ])
@@ -824,7 +824,7 @@ def void githubTagTeams(Map p) {
  * Run the `github-get-ratelimit` script from `sqre-codekit`.
  *
  */
-def void githubGetRatelimit() {
+void githubGetRatelimit() {
   def prog = 'github-get-ratelimit'
   def defaultOptions = [
     '--token': '$GITHUB_TOKEN',
@@ -841,7 +841,7 @@ def void githubGetRatelimit() {
  * @param options Map see `makeCliCmd`
  * @param args List see `makeCliCmd`
  */
-def void runCodekitCmd(
+void runCodekitCmd(
   String prog,
   Map defaultOptions,
   Map options,
@@ -871,7 +871,7 @@ def void runCodekitCmd(
  * @param args List verbatium arguments to pass to command.
  * @return String complete cli command
  */
-def String makeCliCmd(
+String makeCliCmd(
   String prog,
   Map defaultOptions,
   Map options,
@@ -904,7 +904,7 @@ def String makeCliCmd(
  *
  * @param run Closure Invoked inside of node step
  */
-def void insideCodekit(Closure run) {
+void insideCodekit(Closure run) {
   insideDockerWrap(
     image: defaultCodekitImage(),
     pull: true,
@@ -921,7 +921,7 @@ def void insideCodekit(Closure run) {
  *
  * @param opt Map script option flags
  */
-def String mapToCliFlags(Map opt) {
+String mapToCliFlags(Map opt) {
   def flags = []
 
   opt.each { k,v ->
@@ -954,7 +954,7 @@ def String mapToCliFlags(Map opt) {
  * @param args List of command arguments
  * @return String of arguments
  */
-def String listToCliArgs(List args) {
+String listToCliArgs(List args) {
   return args.collect { "\"${it}\"" }.join(' ')
 }
 
@@ -963,7 +963,7 @@ def String listToCliArgs(List args) {
  *
  * @param run Closure Invoked inside of node step
  */
-def void withGithubAdminCredentials(Closure run) {
+void withGithubAdminCredentials(Closure run) {
   withCredentials([[
     $class: 'StringBinding',
     credentialsId: 'github-api-token-sqreadmin',
@@ -978,7 +978,7 @@ def void withGithubAdminCredentials(Closure run) {
  *
  * @param run Closure Invoked inside of node step
  */
-def void nodeTiny(Closure run) {
+void nodeTiny(Closure run) {
   nodeWrap('jenkins-manager') {
     timeout(time: 5, unit: 'MINUTES') {
       run()
@@ -1019,7 +1019,7 @@ def lsstswBuildMatrix(
 /**
  * Clone lsstsw git repo
  */
-def void cloneLsstsw() {
+void cloneLsstsw() {
   def scipipe = scipipeConfig()
 
   gitNoNoise(
@@ -1031,7 +1031,7 @@ def void cloneLsstsw() {
 /**
  * Clone ci-scripts git repo
  */
-def void cloneCiScripts() {
+void cloneCiScripts() {
   def scipipe = scipipeConfig()
 
   gitNoNoise(
@@ -1043,7 +1043,7 @@ def void cloneCiScripts() {
 /**
  * Clone git repo without generating a jenkins build changelog
  */
-def void gitNoNoise(Map args) {
+void gitNoNoise(Map args) {
   git([
     url: args.url,
     branch: args.branch,
@@ -1061,7 +1061,8 @@ def void gitNoNoise(Map args) {
 // The @Memoized decorator seems to break pipeline serialization and this
 // method can not be labeled as @NonCPS.
 @Field Map yamlCache = [:]
-def Object readYamlFile(String file) {
+
+Object readYamlFile(String file) {
   def yaml = yamlCache[file] ?: readYaml(text: readFile(file))
   yamlCache[file] = yaml
   return yaml
@@ -1089,7 +1090,7 @@ def Object readYamlFile(String file) {
  * @param p.parameters.EUPS_TAG String
  * @param p.retries Integer Defaults to `1`.
  */
-def void buildTarballMatrix(Map p) {
+void buildTarballMatrix(Map p) {
   requireMapKeys(p, [
     'tarballConfigs',
     'parameters',
@@ -1171,7 +1172,7 @@ def void buildTarballMatrix(Map p) {
  * @param s String string to process
  */
 @NonCPS
-def String nullToEmpty(String s) {
+String nullToEmpty(String s) {
   if (!s) { s = '' }
   s
 }
@@ -1182,7 +1183,7 @@ def String nullToEmpty(String s) {
  * @param s String string to process
  */
 @NonCPS
-def String emptyToNull(String s) {
+String emptyToNull(String s) {
   if (s == '') { s = null }
   s
 }
@@ -1193,7 +1194,7 @@ def String emptyToNull(String s) {
  * @return String UTC formatted date/time string
  */
 @NonCPS
-def String epochToUtc(Integer epoch) {
+String epochToUtc(Integer epoch) {
   def unixTime = Instant.ofEpochSecond(epoch)
   instantToUtc(unixTime)
 }
@@ -1204,7 +1205,7 @@ def String epochToUtc(Integer epoch) {
  * @return String UTC formatted date/time string
  */
 @NonCPS
-def String epochMilliToUtc(Long epoch) {
+String epochMilliToUtc(Long epoch) {
   def unixTime = Instant.ofEpochMilli(epoch)
   instantToUtc(unixTime)
 }
@@ -1215,7 +1216,7 @@ def String epochMilliToUtc(Long epoch) {
  * @return String UTC formatted date/time string
  */
 @NonCPS
-def String instantToUtc(Instant moment) {
+String instantToUtc(Instant moment) {
   def utcFormat = DateTimeFormatter
                     .ofPattern("yyyyMMdd'T'hhmmssX")
                     .withZone(ZoneId.of('UTC') )
@@ -1229,7 +1230,7 @@ def String instantToUtc(Instant moment) {
  * @param cmd String librarian-puppet arguments; defaults to 'install'
  * @param tag String tag of docker image to use.
  */
-def void librarianPuppet(String cmd='install', String tag='2.2.3') {
+void librarianPuppet(String cmd='install', String tag='2.2.3') {
   insideDockerWrap(
     image: "lsstsqre/cakepan:${tag}",
     args: "-e HOME=${pwd()}",
@@ -1370,7 +1371,7 @@ def ltdPush(Map p) {
  * @param p.parameters.SPLENV_REF String Optional
  * @return manifestId String
  */
-def String runRebuild(Map p) {
+String runRebuild(Map p) {
   def useP = [
     job: 'release/run-rebuild',
   ] + p
@@ -1430,7 +1431,7 @@ def String runRebuild(Map p) {
  * @return url String
  */
 @NonCPS
-def String githubSlugToUrl(String slug, String scheme = 'https') {
+String githubSlugToUrl(String slug, String scheme = 'https') {
   switch (scheme) {
     case 'https':
       return "https://github.com/${slug}"
@@ -1451,7 +1452,8 @@ def String githubSlugToUrl(String slug, String scheme = 'https') {
  * @param p.ref String Defaults to 'main'
  * @return url String
  */
-def String githubRawUrl(Map p) {
+
+String githubRawUrl(Map p) {
   requireMapKeys(p, [
     'slug',
     'path',
@@ -1470,7 +1472,8 @@ def String githubRawUrl(Map p) {
  * @param manifestId String
  * @return url String
  */
-def String versiondbManifestUrl(String manifestId) {
+
+String versiondbManifestUrl(String manifestId) {
   def scipipe = scipipeConfig()
   return githubRawUrl(
     slug: scipipe.versiondb.github_repo,
@@ -1483,7 +1486,8 @@ def String versiondbManifestUrl(String manifestId) {
  *
  * @return url String
  */
-def String reposUrl() {
+
+String reposUrl() {
   def scipipe = scipipeConfig()
   return githubRawUrl(
     slug: scipipe.repos.github_repo,
@@ -1497,7 +1501,8 @@ def String reposUrl() {
  *
  * @return url String
  */
-def String newinstallUrl() {
+
+String newinstallUrl() {
   def scipipe = scipipeConfig()
   return githubRawUrl(
     slug: scipipe.newinstall.github_repo,
@@ -1511,7 +1516,8 @@ def String newinstallUrl() {
  *
  * @return url String
  */
-def String shebangtronUrl() {
+
+String shebangtronUrl() {
   def scipipe = scipipeConfig()
   return githubRawUrl(
     slug: scipipe.shebangtron.github_repo,
@@ -1527,7 +1533,7 @@ def String shebangtronUrl() {
  * @return tag String
  */
 @NonCPS
-def String sanitizeDockerTag(String tag) {
+String sanitizeDockerTag(String tag) {
   // is there a canonical reference for the tag format?
   // convert / to -
   tag.tr('/', '_')
@@ -1540,7 +1546,7 @@ def String sanitizeDockerTag(String tag) {
  * @return slug String
  */
 @NonCPS
-def String lsstswConfigSlug(Map lsstswConfig) {
+String lsstswConfigSlug(Map lsstswConfig) {
   def lc = lsstswConfig
   def displayName = lc.display_name ?: lc.label
   def displayCompiler = lc.display_compiler ?: lc.compiler
@@ -1557,7 +1563,7 @@ def String lsstswConfigSlug(Map lsstswConfig) {
  * @return tag String
  */
 @NonCPS
-def String sanitizeEupsTag(String tag) {
+String sanitizeEupsTag(String tag) {
   // if the git tag is an official version, starts with a number
   // but eups tag need still to have 'v' in front
   char c = tag.charAt(0)
@@ -1575,7 +1581,8 @@ def String sanitizeEupsTag(String tag) {
  *
  * @return config Object
  */
-def Object scipipeConfig() {
+
+Object scipipeConfig() {
   readYamlFile('etc/scipipe/build_matrix.yaml')
 }
 
@@ -1584,7 +1591,8 @@ def Object scipipeConfig() {
  *
  * @return config Object
  */
-def Object sqreConfig() {
+
+Object sqreConfig() {
   readYamlFile('etc/sqre/config.yaml')
 }
 
@@ -1593,7 +1601,8 @@ def Object sqreConfig() {
  *
  * @return config Object
  */
-def Object apVerifyConfig() {
+
+Object apVerifyConfig() {
   readYamlFile('etc/scipipe/ap_verify.yaml')
 }
 
@@ -1602,7 +1611,8 @@ def Object apVerifyConfig() {
  *
  * @return config Object
  */
-def Object simsConfig() {
+
+Object simsConfig() {
   readYamlFile('etc/sims/config.yaml')
 }
 
@@ -1611,7 +1621,8 @@ def Object simsConfig() {
  *
  * @return config Object
  */
-def Object verifyDrpMetricsConfig() {
+
+Object verifyDrpMetricsConfig() {
   readYamlFile('etc/scipipe/verify_drp_metrics.yaml')
 }
 
@@ -1620,7 +1631,8 @@ def Object verifyDrpMetricsConfig() {
  *
  * @return awscliImage String
  */
-def String defaultAwscliImage() {
+
+String defaultAwscliImage() {
   def dockerRegistry = sqreConfig().awscli.docker_registry
   "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
@@ -1630,7 +1642,8 @@ def String defaultAwscliImage() {
  *
  * @return codekitImage String
  */
-def String defaultCodekitImage() {
+
+String defaultCodekitImage() {
   def dockerRegistry = sqreConfig().codekit.docker_registry
   "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
@@ -1649,7 +1662,7 @@ def String defaultCodekitImage() {
  * @param p.parameters.SPLENV_REF String Optional
  * @return json Object
  */
-def Object runBuildStack(Map p) {
+Object runBuildStack(Map p) {
   // validate p Map
   requireMapKeys(p, [
     'parameters',
@@ -1719,7 +1732,7 @@ def Object runBuildStack(Map p) {
  *
  *     util.waitForS3()
  */
-def void waitForS3() {
+void waitForS3() {
   def scipipe = scipipeConfig()
 
   stage('wait for s3 sync') {
@@ -1738,7 +1751,7 @@ def void waitForS3() {
  *
  * @param run Closure Invoked inside of wrapper container
  */
-def void withEupsEnv(Closure run) {
+void withEupsEnv(Closure run) {
   def scipipe = scipipeConfig()
 
   def baseUrl = scipipe.eups.base_url
@@ -1765,7 +1778,7 @@ def void withEupsEnv(Closure run) {
  * @param p.gitRepo String github repo slug
  * @param p.gitRef String git ref to checkout. Defaults to `main`
  */
-def void checkoutLFS(Map p) {
+void checkoutLFS(Map p) {
   requireMapKeys(p, [
     'githubSlug',
     'gitRef',
@@ -1817,7 +1830,7 @@ def void checkoutLFS(Map p) {
  * @param p.url String URL to fetch
  * @param p.destFile String path to write downloaded file
  */
-def void downloadFile(Map p) {
+void downloadFile(Map p) {
   requireMapKeys(p, [
     'url',
     'destFile',
@@ -1840,7 +1853,7 @@ def void downloadFile(Map p) {
  * @param p.destFile String path to write downloaded file
  * @param p.manifestId String manifest build id aka bNNNN
  */
-def void downloadManifest(Map p) {
+void downloadManifest(Map p) {
   requireMapKeys(p, [
     'destFile',
     'manifestId',
@@ -1865,7 +1878,7 @@ def void downloadManifest(Map p) {
  * @param p Map
  * @param p.destFile String path to write downloaded file
  */
-def void downloadRepos(Map p) {
+void downloadRepos(Map p) {
   requireMapKeys(p, [
     'destFile',
   ])
@@ -1891,7 +1904,7 @@ def void downloadRepos(Map p) {
  *
  * @param archiveDirs List paths to be collected.
  */
-def void record(List archiveDirs) {
+void record(List archiveDirs) {
   archiveDirs = relPath(pwd(), archiveDirs)
 
   archiveArtifacts([
@@ -1916,7 +1929,7 @@ def void record(List archiveDirs) {
  * @param path List paths to be relativized
  * @return List of relativized paths
  */
-def List relPath(String relativeToDir, List paths) {
+List relPath(String relativeToDir, List paths) {
   // convert to relative paths
   // https://gist.github.com/ysb33r/5804364
   def rootPath = Path.of(relativeToDir)
@@ -1940,7 +1953,7 @@ def List relPath(String relativeToDir, List paths) {
  * @param patterns List of file patterns to compress
  * @return List of compressed files
  */
-def List xz(List patterns) {
+List xz(List patterns) {
   patterns = relPath(pwd(), patterns)
   def files = patterns.collect { g -> findFiles(glob: g) }.flatten()
   def targetFile = 'compress_files.txt'
@@ -1970,7 +1983,7 @@ def List xz(List patterns) {
  *
  * @param testResults List paths to be collected.
  */
-def void junit(List testResults) {
+void junit(List testResults) {
   testResults = relPath(pwd(), testResults)
 
   junit([
@@ -1997,7 +2010,7 @@ def void junit(List testResults) {
  * @param p.datasetName String The dataset name. Eg., validation_data_cfht
  * @param p.resultFile String [JSON] file to push to squash.
  */
-def void runDispatchVerify(Map p) {
+void runDispatchVerify(Map p) {
   util.requireMapKeys(p, [
     'runDir',
     'lsstswDir',
@@ -2073,7 +2086,7 @@ def void runDispatchVerify(Map p) {
  * @param p.namespace String The metrics namespace to filter by, e.g. validate_drp, or "" for all metrics.
  * @param p.datasetName String The dataset name. Eg., validation_data_cfht
  */
-def void runGen3ToJob(Map p) {
+void runGen3ToJob(Map p) {
   util.requireMapKeys(p, [
     'gen3Dir',
     'collectionName',
@@ -2146,7 +2159,7 @@ def void runGen3ToJob(Map p) {
  * @param p.branchRefs String The branch(es) used in the run, as a space-delimited string (optional).
  * @param p.pipeline String The pipeline used in the run (optional).
  */
-def void runVerifyToSasquatch(Map p) {
+void runVerifyToSasquatch(Map p) {
   util.requireMapKeys(p, [
     'runDir',
     'gen3Dir',
@@ -2226,7 +2239,7 @@ def void runVerifyToSasquatch(Map p) {
  * @param p.fakeLsstswDir String dir path
  * @param p.manifestId String versiondb manifest id
  */
-def void createFakeLsstswClone(Map p) {
+void createFakeLsstswClone(Map p) {
   requireMapKeys(p, [
     'fakeLsstswDir',
     'manifestId',
@@ -2260,7 +2273,7 @@ def void createFakeLsstswClone(Map p) {
  *
  * @param p Map
  */
-def void validateLsstswConfig(Map conf) {
+void validateLsstswConfig(Map conf) {
   requireMapKeys(conf, [
     'compiler',
     'image',
@@ -2278,7 +2291,7 @@ def void validateLsstswConfig(Map conf) {
  *     util.printK8sVars()
  *
  */
-def void printK8sVars() {
+void printK8sVars() {
   // env.getEnvronment() returns vars groovy will set but not the current node env
   // System.getenv() returns the manager's env
   // env.<foo> works as this uses magic to check the actual env
@@ -2301,7 +2314,7 @@ def void printK8sVars() {
  *
  * @param run Closure Invoked inside of node step
  */
-def void nodeWrap(Closure run) {
+void nodeWrap(Closure run) {
   nodeWrap(null) { run() }
 }
 
@@ -2315,11 +2328,11 @@ def void nodeWrap(Closure run) {
  * @param label String Label expression
  * @param run Closure Invoked inside of node step
  */
-def void nodeWrap(String label, Closure run) {
+void nodeWrap(String label, Closure run) {
   node(label) {
     printK8sVars()
     run()
   }
 }
 
-return this;
+return this

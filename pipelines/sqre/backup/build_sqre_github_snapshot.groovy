@@ -80,7 +80,7 @@ notify.wrap {
 } // notify.wrap
 
 @NonCPS
-def String tagBasename(String ref) {
+String tagBasename(String ref) {
   // docker tags may not include slashes, so mangle explicit tag refs back to
   // <tagName>
   def m = ref =~ '^refs/tags/(.*)'
