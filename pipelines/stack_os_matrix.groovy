@@ -24,6 +24,7 @@ notify.wrap {
     'PRODUCTS',
     'BUILD_DOCS',
     'WIPEOUT',
+    'NO_BINARY_FETCH',
   ])
 
   def buildParams = [
