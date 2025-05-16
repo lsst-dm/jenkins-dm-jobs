@@ -31,7 +31,7 @@ notify.wrap {
   Boolean prepOnly  = params.PREP_ONLY
   String products   = params.PRODUCTS
   Boolean buildDocs = params.BUILD_DOCS
-  Boolean nobinary  = params.NO_BINARY_FETCH?.toBoolean()
+  Boolean nobinary = params.NO_BINARY_FETCH
   Integer timelimit = Integer.parseInt(params.TIMEOUT)
 
   // not a normally exposed job param
