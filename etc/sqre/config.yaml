@@ -11,12 +11,8 @@ codekit:
     repo: ghcr.io/lsst-dm/codekit
     tag: 'latest'
 docker_gc:
-  dockerfile:
-    github_repo: lsst-sqre/docker-docker-gc
-    git_ref: master
-    dir: ''
   docker_registry:
-    repo: lsstsqre/docker-gc
+    repo: ghcr.io/lsst-dm/docker-gc
 squash:
   url: https://squash-restful-api.lsst.codes/
   sandbox_url: https://squash-restful-api-sandbox.lsst.codes
