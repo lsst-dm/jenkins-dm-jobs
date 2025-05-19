@@ -13,10 +13,6 @@ awscli:
     repo: ghcr.io/lsst-dm/docker-awscli
     tag: *awscli_ver
 codekit:
-  dockerfile:
-    github_repo: lsst-dm/codekit
-    git_ref: main
-    dir: docker
   docker_registry:
     repo: ghcr.io/lsst-dm/codekit
     tag: 'latest'

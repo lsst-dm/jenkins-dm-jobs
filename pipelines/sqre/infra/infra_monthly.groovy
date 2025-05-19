@@ -75,13 +75,6 @@ notify.wrap {
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infra/build-codekit',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
       name: 'sqre/infra/build-nginx-ssl-proxy',
       parameters: [
         booleanParam(name: 'PUSH', value: true),
