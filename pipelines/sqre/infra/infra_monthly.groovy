@@ -20,11 +20,6 @@ notify.wrap {
   def run = {
     def tasks = [:]
 
-    triggerJob trigger: tasks,
-      name: 'sqre/infra/build-layercake',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-      ]
 
     triggerJob trigger: tasks,
       name: 'sqre/infra/build-gitlfs-server',
