@@ -39,10 +39,6 @@ s3sync:
   docker_registry:
     repo: lsstsqre/s3sync
     tag: latest
-wget:
-  docker_registry:
-    repo: lsstsqre/wget
-    tag: latest
 squash:
   url: https://squash-restful-api.lsst.codes/
   sandbox_url: https://squash-restful-api-sandbox.lsst.codes
