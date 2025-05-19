@@ -27,13 +27,6 @@ notify.wrap {
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infra/build-awscli',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
       name: 'sqre/infra/build-gitlfs-server',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),

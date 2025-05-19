@@ -3,15 +3,9 @@
 # general config values
 #
 awscli:
-  pypi:
-    version: &awscli_ver '1.36.39'
-  dockerfile:
-    github_repo: lsst-dm/docker-awscli
-    git_ref: master
-    dir: ''
   docker_registry:
     repo: ghcr.io/lsst-dm/docker-awscli
-    tag: *awscli_ver
+    tag: '1.36.39'
 codekit:
   docker_registry:
     repo: ghcr.io/lsst-dm/codekit
