@@ -84,13 +84,6 @@ notify.wrap {
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infra/build-s3sync',
-      parameters: [
-        booleanParam(name: 'PUBLISH', value: true),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
       name: 'sqre/backup/build-mysqldump-to-s3'
 
     triggerJob trigger: tasks,

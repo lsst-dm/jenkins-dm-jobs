@@ -25,14 +25,6 @@ docker_gc:
     dir: ''
   docker_registry:
     repo: lsstsqre/docker-gc
-s3sync:
-  dockerfile:
-    github_repo: lsst-sqre/deploy-publish-release
-    git_ref: master
-    dir: s3sync
-  docker_registry:
-    repo: lsstsqre/s3sync
-    tag: latest
 squash:
   url: https://squash-restful-api.lsst.codes/
   sandbox_url: https://squash-restful-api-sandbox.lsst.codes
