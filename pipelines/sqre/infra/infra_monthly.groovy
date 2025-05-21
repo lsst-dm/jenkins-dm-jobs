@@ -45,13 +45,6 @@ notify.wrap {
       ]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infra/build-gitlfs',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
       name: 'sqre/infra/build-postqa',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),
