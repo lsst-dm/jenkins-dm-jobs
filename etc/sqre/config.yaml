@@ -3,50 +3,16 @@
 # general config values
 #
 awscli:
-  pypi:
-    version: &awscli_ver '1.36.39'
-  dockerfile:
-    github_repo: lsst-dm/docker-awscli
-    git_ref: master
-    dir: ''
   docker_registry:
     repo: ghcr.io/lsst-dm/docker-awscli
-    tag: *awscli_ver
+    tag: '1.36.39'
 codekit:
-  dockerfile:
-    github_repo: lsst-dm/codekit
-    git_ref: main
-    dir: docker
   docker_registry:
     repo: ghcr.io/lsst-dm/codekit
     tag: 'latest'
-dind:
-  dockerfile:
-    github_repo: lsst-sqre/docker-dind
-    git_ref: master
-    dir: ''
-  docker_registry:
-    repo: lsstsqre/dind
-    tag: '18.09.5'
 docker_gc:
-  dockerfile:
-    github_repo: lsst-sqre/docker-docker-gc
-    git_ref: master
-    dir: ''
   docker_registry:
-    repo: lsstsqre/docker-gc
-s3sync:
-  dockerfile:
-    github_repo: lsst-sqre/deploy-publish-release
-    git_ref: master
-    dir: s3sync
-  docker_registry:
-    repo: lsstsqre/s3sync
-    tag: latest
-wget:
-  docker_registry:
-    repo: lsstsqre/wget
-    tag: latest
+    repo: ghcr.io/lsst-dm/docker-gc
 squash:
   url: https://squash-restful-api.lsst.codes/
   sandbox_url: https://squash-restful-api-sandbox.lsst.codes
