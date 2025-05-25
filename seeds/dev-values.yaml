@@ -443,6 +443,7 @@ controller:
     - github-checks:602.v264a_83610da_6
     - github-oauth:651.v135e939e8b_60
     - git-server:137.ve0060b_432302
+    - google-oauth-credentials-plugin:1.335.ve6de40e2db_18
     #deprecated    - greenballs:1.15.1
     - groovy:497.v7b_061a_a_de65d
     - gson-api:2.12.1-113.v347686d6729f
