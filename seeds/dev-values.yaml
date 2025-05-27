@@ -435,6 +435,7 @@ controller:
     - external-monitor-job:223.vb_fddcf42c9b_3
     - favorite:2.225.v68765b_b_a_1fa_3
     - font-awesome-api:6.7.2-1
+    - gcloud-sdk:0.0.3
     - git:5.7.0
     - git-client:6.1.2
     - github:1.43.0
