@@ -789,6 +789,7 @@ def void githubTagRelease(Map p) {
  *         '--dry-run': true,
  *         '--org': 'myorg',
  *         '--tag': '999.0.0',
+ *         '--ref': 'v999.0.0.rc1'
  *       ],
  *     )
  *
@@ -796,6 +797,7 @@ def void githubTagRelease(Map p) {
  * @param p.options Map CLI --<options>. Required. See `makeCliCmd`
  * @param p.options.'--org' String Required.
  * @param p.options.'--tag' String|List Required.
+ * @param p.options.'--ref' String|List Optional.
  */
 def void githubTagTeams(Map p) {
   requireMapKeys(p, [
