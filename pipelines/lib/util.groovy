@@ -790,12 +790,14 @@ def void githubTagRelease(Map p) {
  *         '--org': 'myorg',
  *         '--tag': '999.0.0',
  *       ],
+ *       args: ['-r', 'v998.0.0.rc1']
  *     )
  *
  * @param p Map
  * @param p.options Map CLI --<options>. Required. See `makeCliCmd`
  * @param p.options.'--org' String Required.
  * @param p.options.'--tag' String|List Required.
+ * @param p.args List Eg., `['-r', '<git refs>']` Optional.
  */
 def void githubTagTeams(Map p) {
   requireMapKeys(p, [
@@ -817,7 +819,7 @@ def void githubTagTeams(Map p) {
     '--ignore-existing-tag': true,
   ]
 
-  runCodekitCmd(prog, defaultOptions, p.options, null)
+  runCodekitCmd(prog, defaultOptions, p.options, p.containsKey('args') ? p.args : null)
 } // githubTagTeams
 
 /**
