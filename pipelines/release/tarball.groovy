@@ -209,7 +209,7 @@ def void osxTarballs(
 
         stage('publish') {
           if (publish) {
-            s3PushConda(envId)
+            //s3PushConda(envId)
             gsPushConda(envId)
           }
         }
@@ -664,9 +664,10 @@ def void gsPushConda(String ... parts) {
         eval "\$(${BUILDDIR}/conda/miniconda3-py38_4.9.2/bin/conda shell.bash hook)"
         if conda env list | grep gsutil-env > /dev/null 2>&1; then
             conda activate gsutil-env
-            conda update gsutil
+            conda update gsutil gcloud-aio-auth gcloud-aio-storage
+
         else
-            conda create -y --name gsutil-env gsutil
+            conda create -y --name gsutil-env gsutil gcloud-aio-auth gcloud-aio-storage
             conda activate gsutil-env
         fi
         ${gsPushCmd()}
@@ -687,7 +688,8 @@ def void gsPushConda(String ... parts) {
 def String gsPushCmd() {
   // do not interpolate now -- all values should come from the shell env.
   return util.dedent('''
-    gsutil cp \
+      gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+      gcloud storage cp \
       --recursive \
       "${EUPS_PKGROOT}/" \
       "gs://${EUPS_GS_BUCKET}/${EUPS_GS_OBJECT_PREFIX}"
@@ -717,11 +719,11 @@ def String s3PushCmd() {
  * - EUPS_GS_BUCKET
  */
 def void withGSEupsBucketEnv(Closure run) {
-  withCredentials([[
-    $class: 'StringBinding',
+  withCredentials([
+  file(
     credentialsId: 'gs-eups-push',
     variable: 'GOOGLE_APPLICATION_CREDENTIALS'
-  ]]) {
+  )]) {
     util.withEupsEnv {
       run()
     }
