@@ -34,6 +34,7 @@ notify.wrap {
   String exclude_tarballs = params.EXCLUDE_FROM_TARBALLS
 
   // define source git refs for tagging auxilliaries
+  def refs = params.SOURCE_GIT_REFS
   def refArgs = refs?.trim() ? refs.split().collect { "-r ${it}" } : []
 
   // generate eups tag from git tag
