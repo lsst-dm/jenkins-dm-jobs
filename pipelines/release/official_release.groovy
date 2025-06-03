@@ -116,17 +116,6 @@ notify.wrap {
     stage('git tag eups products') {
       retry(retries) {
         util.nodeWrap('linux-64') {
-          util.githubTagRelease(
-            options: [
-              '--dry-run': true,
-              '--org': scipipe.release_tag_org,
-              '--manifest': gitTagOnlyManifestId,
-              '--manifest-only': true,
-              '--ignore-git-message': true,
-              '--ignore-git-tagger': true,
-            ],
-            args: [gitTag],
-          )
         } // util.nodeWrap
       } // retry
     } // stage
