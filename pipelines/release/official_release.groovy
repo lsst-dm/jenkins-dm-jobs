@@ -35,7 +35,7 @@ notify.wrap {
 
   // define source git refs for tagging auxilliaries
   def refs = params.SOURCE_GIT_REFS
-  def refArgs = refs?.trim() ? refs.split().collect { "-r ${it}" } : []
+  def refArgs = refs?.trim() ? refs.split().collectMany { ["-r", it] } : []
 
   // generate eups tag from git tag
   String eupsTag = util.sanitizeEupsTag(gitTag)
