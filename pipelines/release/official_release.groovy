@@ -98,7 +98,7 @@ notify.wrap {
   def stackResults         = null
 
   def run = {
-/*
+
     stage('generate manifest') {
       retry(retries) {
           gitTagOnlyManifestId = util.runRebuild(
@@ -112,7 +112,7 @@ notify.wrap {
         )
       } // retry
     } // stage
-
+/*
     stage('git tag eups products') {
       retry(retries) {
         util.nodeWrap('linux-64') {
