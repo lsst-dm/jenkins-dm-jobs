@@ -131,7 +131,8 @@ notify.wrap {
               '--dry-run': true,
               '--org': scipipe.release_tag_org,
               '--tag': gitTag,
-            ] + refArgs,
+            ],
+            args: refArgs,
           )
         } // util.nodeWrap
       } // retry
