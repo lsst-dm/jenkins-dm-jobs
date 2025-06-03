@@ -139,7 +139,7 @@ notify.wrap {
         util.nodeWrap('linux-64') {
           util.githubTagTeams(
             options: [
-              '--dry-run': false,
+              '--dry-run': true,
               '--org': scipipe.release_tag_org,
               '--tag': gitTag,
             ] + refArgs,
