@@ -98,6 +98,7 @@ notify.wrap {
   def stackResults         = null
 
   def run = {
+/*
     stage('generate manifest') {
       retry(retries) {
           gitTagOnlyManifestId = util.runRebuild(
@@ -129,7 +130,7 @@ notify.wrap {
         } // util.nodeWrap
       } // retry
     } // stage
-
+*/
     // add aux repo tags *after* tagging eups product repos so as to avoid a
     // trainwreck if an aux repo has been pulled into the build (without
     // first being removed from the aux team).
