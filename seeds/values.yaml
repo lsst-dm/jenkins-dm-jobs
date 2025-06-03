@@ -159,7 +159,7 @@ controller:
     - name: CASC_VAULT_URL
       value: https://vault.slac.stanford.edu
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-checks,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini
+      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-checks,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini,secret/rubin/rubin-jenkins-control/gs-eups-push
     - name: HTTP_PROXY
       value: http://sdfproxy.sdf.slac.stanford.edu:3128
     - name: HTTPS_PROXY
@@ -427,7 +427,6 @@ controller:
     - external-monitor-job:223.vb_fddcf42c9b_3
     - favorite:2.225.v68765b_b_a_1fa_3
     - font-awesome-api:6.7.2-1
-    - gcloud-sdk:0.0.3
     - git:5.7.0
     - git-client:6.1.2
     - github:1.43.0
@@ -436,7 +435,6 @@ controller:
     - github-checks:602.v264a_83610da_6
     - github-oauth:651.v135e939e8b_60
     - git-server:137.ve0060b_432302
-    - google-oauth-credentials-plugin:1.335.ve6de40e2db_18
     #deprecated    - greenballs:1.15.1
     - groovy:497.v7b_061a_a_de65d
     - gson-api:2.12.1-113.v347686d6729f
@@ -797,6 +795,11 @@ controller:
                   id: "eups-push-bucket"
                   scope: GLOBAL
                   secret: "${secret/rubin/rubin-jenkins-control/common/eups-push-bucket}"
+              - file:
+                  description: "credentials for gcp bucket"
+                  id: "gs-eups-push"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/gs-eups-push}"
               - string:
                   description: "URL of eups site"
                   id: "eups-url"
