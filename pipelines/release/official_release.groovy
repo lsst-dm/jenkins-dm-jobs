@@ -112,13 +112,13 @@ notify.wrap {
         )
       } // retry
     } // stage
-/*
+
     stage('git tag eups products') {
       retry(retries) {
         util.nodeWrap('linux-64') {
           util.githubTagRelease(
             options: [
-              '--dry-run': false,
+              '--dry-run': true,
               '--org': scipipe.release_tag_org,
               '--manifest': gitTagOnlyManifestId,
               '--manifest-only': true,
@@ -130,7 +130,7 @@ notify.wrap {
         } // util.nodeWrap
       } // retry
     } // stage
-*/
+    
     // add aux repo tags *after* tagging eups product repos so as to avoid a
     // trainwreck if an aux repo has been pulled into the build (without
     // first being removed from the aux team).
