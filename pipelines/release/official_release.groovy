@@ -33,6 +33,10 @@ notify.wrap {
   String exclude_builds   = params.EXCLUDE_FROM_BUILDS
   String exclude_tarballs = params.EXCLUDE_FROM_TARBALLS
 
+  // define source git refs for tagging auxilliaries
+  def refs = params.SOURCE_GIT_REFS
+  def refArgs = refs?.trim() ? refs.split().collectMany { ["-r", it] } : []
+
   // generate eups tag from git tag
   String eupsTag = util.sanitizeEupsTag(gitTag)
 
@@ -138,6 +142,7 @@ notify.wrap {
               '--org': scipipe.release_tag_org,
               '--tag': gitTag,
             ],
+            args: refArgs,
           )
         } // util.nodeWrap
       } // retry
