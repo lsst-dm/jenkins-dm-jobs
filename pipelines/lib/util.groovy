@@ -1628,6 +1628,16 @@ def String defaultAwscliImage() {
 }
 
 /*
+ * Get default gcloud docker image string
+ *
+ * @return gcloudImage String
+ */
+def String defaultGsutilImage() {
+  def dockerRegistry = sqreConfig().gcloud.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
+}
+
+/*
  * Get default codekit docker image string
  *
  * @return codekitImage String
@@ -1745,8 +1755,10 @@ def void withEupsEnv(Closure run) {
 
   def baseUrl = scipipe.eups.base_url
   def s3Bucket = scipipe.eups.s3_bucket
+  def gsBucket = scipipe.eups.gs_bucket
   withEnv([
     "EUPS_S3_BUCKET=${s3Bucket}",
+    "EUPS_GS_BUCKET=${gsBucket}",
     "EUPS_BASE_URL=${baseUrl}",
   ]) {
     run()

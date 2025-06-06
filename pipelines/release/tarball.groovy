@@ -136,6 +136,7 @@ def void linuxTarballs(
         stage('publish') {
           if (publish) {
             s3PushConda(envId)
+            gsPushConda(envId)
           }
         }
       }
@@ -209,6 +210,7 @@ def void osxTarballs(
         stage('publish') {
           if (publish) {
             s3PushConda(envId)
+            gsPushConda(envId)
           }
         }
       } // dir
@@ -633,6 +635,67 @@ def void s3PushConda(String ... parts) {
 } // s3PushConda
 
 /**
+ * Push {@code ./distrib} dir to an gs bucket under the "path" formed by
+ * joining the {@code parts} parameters.
+ */
+def void gsPushConda(String ... parts) {
+  def objectPrefix = "stack/" + util.joinPath(parts)
+  def cwd = pwd()
+  def buildDir = "${cwd}/build"
+  
+  def env = [
+    "EUPS_PKGROOT=${cwd}/distrib",
+    "EUPS_GS_OBJECT_PREFIX=${objectPrefix}",
+    "HOME=${cwd}/home",
+    "BUILDDIR=${buildDir}",
+  ]
+
+  withEnv(env) {
+    withGSEupsBucketEnv {
+      timeout(time: 10, unit: 'MINUTES') { 
+        if (osfamily != "osx") {
+          docker.image(util.defaultGsutilImage()).inside {
+            util.posixSh(gsPushCmd())
+          }
+          return
+        }
+          // alpine does not include bash by default
+        util.posixSh("""
+        eval "\$(${BUILDDIR}/conda/miniconda3-py38_4.9.2/bin/conda shell.bash hook)"
+        if conda env list | grep gcloud-env > /dev/null 2>&1; then
+            conda activate gcloud-env
+            conda update google-cloud-sdk
+
+        else
+            conda create -y --name gcloud-env google-cloud-sdk
+            conda activate gcloud-env
+        fi
+        ${gsPushCmd()}
+        conda deactivate
+        """)
+        
+      }
+    } //withGSEupsBucketEnv
+  } // withEnv
+} // gsPushConda
+
+
+/**
+ * Returns a shell command string for pushing the EUPS_PKGROOT to gs.
+ *
+ * @return String cmd
+ */
+def String gsPushCmd() {
+  // do not interpolate now -- all values should come from the shell env.
+  return util.dedent('''
+      gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+      gcloud storage cp \
+      "${EUPS_PKGROOT}/*" \
+      "gs://${EUPS_GS_BUCKET}/${EUPS_GS_OBJECT_PREFIX}"
+  ''')
+}
+
+/**
  * Returns a shell command string for pushing the EUPS_PKGROOT to s3.
  *
  * @return String cmd
@@ -648,6 +711,22 @@ def String s3PushCmd() {
   ''')
 }
 
+/**
+ * Declares the following env vars from credentials:
+ * - GS_ACCESS_KEY_ID
+ * - GS_SECRET_ACCESS_KEY
+ * - EUPS_GS_BUCKET
+ */
+def void withGSEupsBucketEnv(Closure run) {
+  withCredentials([file(
+    credentialsId: 'gs-eups-push',
+    variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+  )]) {
+    util.withEupsEnv {
+      run()
+    }
+  } // withCredentials
+}
 /**
  * Declares the following env vars from credentials:
  * - AWS_ACCESS_KEY_ID

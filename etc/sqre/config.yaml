@@ -6,6 +6,10 @@ awscli:
   docker_registry:
     repo: ghcr.io/lsst-dm/docker-awscli
     tag: '1.36.39'
+gcloud:
+  docker_registry:
+    repo: gcr.io/google.com/cloudsdktool/google-cloud-cli
+    tag: '523.0.1-alpine'
 codekit:
   docker_registry:
     repo: ghcr.io/lsst-dm/codekit
