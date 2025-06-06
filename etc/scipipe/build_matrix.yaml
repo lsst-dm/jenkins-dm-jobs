@@ -122,7 +122,7 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: main
+  git_ref: tickets/DM-51290
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
   git_ref: main
@@ -151,6 +151,6 @@ newinstall:
   github_repo: lsst/lsst
   git_ref: main
 eups:
-  base_url: https://eups.lsst.codes/stack
+  base_url: https://eups.lsst.cloud/stack
   s3_bucket: eups.lsst.codes
   gs_bucket: eups-prod
