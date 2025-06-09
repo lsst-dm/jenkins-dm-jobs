@@ -30,7 +30,7 @@ notify.wrap {
   Integer timelimit    = Integer.parseInt(params.TIMEOUT)
 
   // not a normally exposed job param
-  Boolean pushS3 = (! params.NO_PUSH?.toBoolean())
+  Boolean pushToBucket = (! params.NO_PUSH?.toBoolean())
 
   def canonical    = scipipe.canonical
   def lsstswConfig = canonical.lsstsw_config
@@ -106,7 +106,13 @@ notify.wrap {
       } // stage('publish')
 
       stage('push packages') {
-        if (pushS3) {
+        if (pushToBucket) {
+          def env = [
+          "EUPS_PKGROOT=${pkgroot}",
+          "HOME=${cwd}/home",
+          'EUPS_BUCKET_OBJECT_PREFIX=stack/src/',
+          'EUPS_GCS_BUCKET=eups-prod'
+            ]
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-eups-push',
@@ -118,11 +124,6 @@ notify.wrap {
             credentialsId: 'eups-push-bucket',
             variable: 'EUPS_S3_BUCKET'
           ]]) {
-            def env = [
-              "EUPS_PKGROOT=${pkgroot}",
-              "HOME=${cwd}/home",
-              "EUPS_S3_OBJECT_PREFIX=stack/src/"
-            ]
             withEnv(env) {
               docker.image(util.defaultAwscliImage()).inside {
                 // alpine does not include bash by default
@@ -131,13 +132,31 @@ notify.wrap {
                     --only-show-errors \
                     --recursive \
                     "${EUPS_PKGROOT}/" \
-                    "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
+                    "s3://${EUPS_S3_BUCKET}/${EUPS_BUCKET_OBJECT_PREFIX}"
                 '''
               } // .inside
             } // withEnv
           } // withCredentials
+          withCredentials([file(
+            credentialsId: 'gs-eups-push',
+            variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+          )]) {
+            withEnv(env) {
+              docker.image(util.defaultGcloudImage()).inside {
+                // alpine does not include bash by default
+                util.posixSh '''
+                    gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+                    gcloud storage cp \
+                    --recursive \
+                    "${EUPS_PKGROOT}/*" \
+                    "gs://${EUPS_GCS_BUCKET}/${EUPS_BUCKET_OBJECT_PREFIX}";
+                    
+                '''
+              } // inside
+            } // withEnv
+          } // withCredentials
         } else {
-          echo "skipping s3 push."
+          echo 'skipping bucket push.'
         }
       } // stage('push packages')
     } // ws
