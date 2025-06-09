@@ -1055,6 +1055,24 @@ def void gitNoNoise(Map args) {
 }
 
 /**
+ * Checkout a git ref (branch, tag or SHA)
+*/
+def checkoutGitRef(String url, String ref) {
+  checkout([
+    $class: 'GitSCM',
+    branches: [[name: ref]],
+    userRemoteConfigs: [[url: url]],
+    doGenerateSubmoduleConfigurations: false,
+    submoduleCfg: [],
+      extensions: [
+          [$class: 'CloneOption', noTags: false, shallow: false]
+        ],
+    changelog: false,
+    poll: false
+  ])
+}
+
+/**
  * Parse yaml file into object -- parsed files are memoized.
  *
  * @param file String file to parse
@@ -1793,12 +1811,7 @@ def void checkoutLFS(Map p) {
   def lfsImage = 'ghcr.io/lsst-dm/docker-newinstall'
 
   // running a git clone in a docker.inside block is broken
-  git([
-    url: gitRepo,
-    branch: p.gitRef,
-    changelog: false,
-    poll: false
-  ])
+  checkoutGitRef(gitRepo, p.gitRef)
 
   try {
     insideDockerWrap(
