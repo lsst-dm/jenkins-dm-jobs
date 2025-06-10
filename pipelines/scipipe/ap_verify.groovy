@@ -438,11 +438,14 @@ def void runApVerify(Map p) {
 
       cd ${RUN_DIR}
       # -p ignored if not -g 3
+      extra_args=""
+      # deal with NAMESPACE and REST_PROXY_URL being empty strings
+      [[ -n "$NAMESPACE" ]] && extra_args+=" -n ${NAMESPACE}"
+      [[ -n "$REST_PROXY_URL" ]] && extra_args+=" -u ${REST_PROXY_URL}"
       run_ci_dataset.sh -d ${DATASET_NAME} \
                         -g ${DATASET_GEN} \
                         -p ${DATASET_PIPE} \
-                        -n ${NAMESPACE} \
-                        -u ${REST_PROXY_URL} \
+                        "${extra_args} " \
                         -e ci_id=$BUILD_ID \
                         -e ci_url=$BUILD_URL \
                         -e ci_name=$JOB_NAME \
