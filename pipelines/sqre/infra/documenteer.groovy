@@ -38,8 +38,12 @@ notify.wrap {
   // optional
   String relImage = params.RELEASE_IMAGE
 
-  def dockerRepo = scipipe.scipipe_release.docker_registry.repo
-  relImage = relImage ?: "${dockerRepo}:7-stack-lsst_distrib-${eupsTag}"
+  def dockerRegistry = scipipe.scipipe_release.docker_registry
+  def dockerRepo = dockerRegistry.repo
+  if (dockerRegistry.ghcr) {
+    dockerRepo = "ghcr.io/${dockerRepo}"
+  }
+  relImage = relImage ?: "${dockerRepo}:al9-${eupsTag}"
 
   def run = {
     def docTemplateDir = "${pwd()}/doc_template"
