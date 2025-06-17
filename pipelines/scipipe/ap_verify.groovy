@@ -445,12 +445,12 @@ def void runApVerify(Map p) {
       run_ci_dataset.sh -d ${DATASET_NAME} \
                         -g ${DATASET_GEN} \
                         -p ${DATASET_PIPE} \
-                        "${extra_args} " \
                         -e ci_id=$BUILD_ID \
                         -e ci_url=$BUILD_URL \
                         -e ci_name=$JOB_NAME \
                         -e ci_refs=$JOB_REFS \
-                        -e pipeline=$JOB_PIPELINE
+                        -e pipeline=$JOB_PIPELINE \
+                        ${extra_args}
     '''
   }
 
