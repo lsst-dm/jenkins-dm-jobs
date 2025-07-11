@@ -1650,7 +1650,7 @@ def String defaultAwscliImage() {
  *
  * @return gcloudImage String
  */
-def String defaultGsutilImage() {
+def String defaultGcloudImage() {
   def dockerRegistry = sqreConfig().gcloud.docker_registry
   "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
