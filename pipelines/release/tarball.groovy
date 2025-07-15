@@ -689,9 +689,9 @@ def String gsPushCmd() {
   // do not interpolate now -- all values should come from the shell env.
   return util.dedent('''
       gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-      ls ${EUPS_PKGROOT}/ ;
       gcloud storage cp \
-      "${EUPS_PKGROOT}/**/*" \
+      --recursive \
+      "${EUPS_PKGROOT}/*" \
       "gs://${EUPS_GS_BUCKET}/${EUPS_GS_OBJECT_PREFIX}"
   ''')
 }

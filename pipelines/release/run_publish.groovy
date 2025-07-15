@@ -105,14 +105,37 @@ notify.wrap {
         } // util.insideDockerWrap
       } // stage('publish')
 
-      stage('push packages') {
+      stage('push packages gcp') {
         if (pushToBucket) {
-          def env = [
-          "EUPS_PKGROOT=${pkgroot}",
-          "HOME=${cwd}/home",
-          'EUPS_BUCKET_OBJECT_PREFIX=stack/src/',
-          'EUPS_GCS_BUCKET=eups-prod'
+          withCredentials([file(
+            credentialsId: 'gs-eups-push',
+            variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+          )]) {
+            def env = [
+              "EUPS_PKGROOT=${pkgroot}",
+              "HOME=${cwd}/home",
+              "EUPS_GS_OBJECT_PREFIX=stack/src/",
+              "EUPS_GS_BUCKET=eups-prod"
             ]
+            withEnv(env) {
+              docker.image(util.defaultGsutilImage()).inside {
+                // alpine does not include bash by default
+                util.posixSh '''
+                 gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+                 gcloud storage cp \
+                 --recursive \
+                 "${EUPS_PKGROOT}/*" \
+                 "gs://${EUPS_GS_BUCKET}/${EUPS_GS_OBJECT_PREFIX}"
+                '''
+              } // .inside
+            } // withEnv
+          } // withCredentials
+        } else {
+          echo "skipping gcp push."
+        }
+      } // stage('push packages')
+      stage('push packages aws') {
+        if (pushToBucket) {
           withCredentials([[
             $class: 'UsernamePasswordMultiBinding',
             credentialsId: 'aws-eups-push',
@@ -135,24 +158,6 @@ notify.wrap {
                     "s3://${EUPS_S3_BUCKET}/${EUPS_BUCKET_OBJECT_PREFIX}"
                 '''
               } // .inside
-            } // withEnv
-          } // withCredentials
-          withCredentials([file(
-            credentialsId: 'gs-eups-push',
-            variable: 'GOOGLE_APPLICATION_CREDENTIALS'
-          )]) {
-            withEnv(env) {
-              docker.image(util.defaultGcloudImage()).inside {
-                // alpine does not include bash by default
-                util.posixSh '''
-                    gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-                    gcloud storage cp \
-                    --recursive \
-                    "${EUPS_PKGROOT}/*" \
-                    "gs://${EUPS_GCS_BUCKET}/${EUPS_BUCKET_OBJECT_PREFIX}";
-                    
-                '''
-              } // inside
             } // withEnv
           } // withCredentials
         } else {
