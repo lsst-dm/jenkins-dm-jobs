@@ -690,7 +690,8 @@ def String gsPushCmd() {
   return util.dedent('''
       gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
       gcloud storage cp \
-      "${EUPS_PKGROOT}/**" \
+      --recursive \
+      "${EUPS_PKGROOT}/*" \
       "gs://${EUPS_GS_BUCKET}/${EUPS_GS_OBJECT_PREFIX}"
   ''')
 }
