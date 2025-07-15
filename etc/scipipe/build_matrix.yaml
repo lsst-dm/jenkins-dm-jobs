@@ -107,6 +107,8 @@ release:
       publish: true
     ap_verify:
       no_push: false
+    update_indexjson:
+      no_push: false
 #
 # low-level build parameters
 #
