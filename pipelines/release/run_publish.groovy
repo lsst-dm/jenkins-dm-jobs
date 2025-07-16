@@ -118,7 +118,7 @@ notify.wrap {
               "EUPS_GS_BUCKET=eups-prod"
             ]
             withEnv(env) {
-              docker.image(util.defaultGsutilImage()).inside {
+              docker.image(util.defaultGcloudImage()).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
                  gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
