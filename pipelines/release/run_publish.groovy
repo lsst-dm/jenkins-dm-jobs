@@ -147,6 +147,11 @@ notify.wrap {
             credentialsId: 'eups-push-bucket',
             variable: 'EUPS_S3_BUCKET'
           ]]) {
+            def env = [
+              "EUPS_PKGROOT=${pkgroot}",
+              "HOME=${cwd}/home",
+              "EUPS_S3_OBJECT_PREFIX=stack/src/"
+            ]
             withEnv(env) {
               docker.image(util.defaultAwscliImage()).inside {
                 // alpine does not include bash by default
