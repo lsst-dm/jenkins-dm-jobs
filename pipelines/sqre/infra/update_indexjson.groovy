@@ -15,6 +15,14 @@ node('jenkins-manager') {
 }
 
 notify.wrap {
+  util.requireParams([
+    'ARCHITECTURE',
+    'NO_PUSH',
+    ])
+
+  String architecture = params.ARCHITECTURE
+  Boolean noPush         = params.NO_PUSH
+
   def hub_repo = 'gcr.io/google.com/googlesdktool/google-cloud-cli'
 
   def run = {
@@ -30,26 +38,28 @@ notify.wrap {
     }
 
     stage('update index file') {
-      withCredentials([file(
-        credentialsId: 'gs-eups-push',
-        variable: 'GOOGLE_APPLICATION_CREDENTIALS'
-      )]) {
-        withEnv([
-          "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
-        ]) {
-          image.inside {
-              util.dedent('''
-              gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-              python3 $ciDir/update_indexjson.py
-              ''')
+      if (!noPush) {
+        withCredentials([file(
+          credentialsId: 'gs-eups-push',
+          variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+        )]) {
+          withEnv([
+            "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
+          ]) {
+            image.inside {
+                util.dedent('''
+                gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+                python3 $ciDir/update_indexjson.py
+                ''')
+            }
           }
-        }
-      } // withCredentials
+        } // withCredentials
+      }
     } // stage
   } // run
 
-  util.nodeWrap('linux-64') {
-    timeout(time: 4, unit: 'HOURS') {
+  util.nodeWrap(architecture) {
+    timeout(time: 1, unit: 'HOURS') {
       run()
     }
   } // util.nodeWrap('linux-64')
