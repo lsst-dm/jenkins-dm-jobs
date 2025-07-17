@@ -104,7 +104,6 @@ notify.wrap {
           }
         } // util.insideDockerWrap
       } // stage('publish')
-
       stage('push packages gcp') {
         if (pushToBucket) {
           withCredentials([file(
@@ -160,7 +159,7 @@ notify.wrap {
                     --only-show-errors \
                     --recursive \
                     "${EUPS_PKGROOT}/" \
-                    "s3://${EUPS_S3_BUCKET}/${EUPS_BUCKET_OBJECT_PREFIX}"
+                    "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
                 '''
               } // .inside
             } // withEnv

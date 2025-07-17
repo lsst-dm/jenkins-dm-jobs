@@ -654,7 +654,7 @@ def void gsPushConda(String ... parts) {
     withGSEupsBucketEnv {
       timeout(time: 10, unit: 'MINUTES') { 
         if (osfamily != "osx") {
-          docker.image(util.defaultGsutilImage()).inside {
+          docker.image(util.defaultGcloudImage()).inside {
             util.posixSh(gsPushCmd())
           }
           return
