@@ -225,6 +225,22 @@ notify.wrap {
 
     def triggerMe = [:]
 
+    triggerMe['Update index files'] = {
+    retry(retries){
+        build(
+          job: 'sqre/infra/update-indexjson',
+          parameters:[
+            string(name: 'ARCHITECTURE', value: 'linux-64'),
+          booleanParam(
+            name: 'NO_PUSH',
+            value: scipipe.release.step.update_indexjson.no_push,
+          ),
+          ],
+          wait: true,
+        )
+      } // retry
+    }
+
     triggerMe['build Science Platform Notebook Aspect Lab image'] = {
       retry(retries) {
         // based on lsstsqre/stack image
