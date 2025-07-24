@@ -23,21 +23,18 @@ notify.wrap {
   String architecture = params.ARCHITECTURE
   Boolean noPush         = params.NO_PUSH
 
-  def hub_repo = 'gcr.io/google.com/googlesdktool/google-cloud-cli'
+  def hub_repo = 'gcr.io/google.com/cloudsdktool/google-cloud-cli'
 
   def run = {
-    def image = docker.image("${hub_repo}:latest")
+    // def image = docker.image("${hub_repo}:latest")
     def cwd      = pwd()
     def ciDir    = "${cwd}/ci-scripts"
     dir('ci-scripts') {
       util.cloneCiScripts()
     }
 
-    stage('pull') {
-      image.pull()
-    }
-
     stage('update index file') {
+      // image.pull()
       if (!noPush) {
         withCredentials([file(
           credentialsId: 'gs-eups-push',
@@ -46,16 +43,17 @@ notify.wrap {
           withEnv([
             "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
           ]) {
-            image.inside {
-                util.dedent('''
+            docker.image("$hub_repo:alpine").inside {
+                util.posixSh '''
                 gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-                python3 $ciDir/update_indexjson.py
-                ''')
+                python3 ci-scripts/updateindexfile.py
+                '''
             }
           }
         } // withCredentials
       }
-    } // stage
+    }
+
   } // run
 
   util.nodeWrap(architecture) {
