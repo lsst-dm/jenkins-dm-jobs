@@ -152,7 +152,7 @@ notify.wrap {
     triggerMe['Update index files'] = {
     retry(retries){
         build(
-          job: 'sqre/infra/update-indexjson',
+          job: 'sqre/infra/update_indexjson',
           parameters:[
             string(name: 'ARCHITECTURE', value: 'linux-64'),
             booleanParam(
