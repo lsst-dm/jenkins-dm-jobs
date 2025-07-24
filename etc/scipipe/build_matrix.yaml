@@ -151,4 +151,4 @@ newinstall:
 eups:
   base_url: https://eups.lsst.codes/stack
   s3_bucket: eups.lsst.codes
-  gs_bucket: eups
+  gs_bucket: eups-prod
