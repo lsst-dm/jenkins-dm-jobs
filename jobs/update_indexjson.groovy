@@ -1,6 +1,6 @@
 import util.Plumber
 
-def p = new Plumber(name: 'sqre/update_indexjson', dsl: this)
+def p = new Plumber(name: 'sqre/infra/update_indexjson', dsl: this)
 p.pipeline().with {
   description('Update index.json file for gcp bucket')
 
