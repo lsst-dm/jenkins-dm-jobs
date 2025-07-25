@@ -141,8 +141,8 @@ def void wrapDockerImage(Map p) {
 
     USER    root
     RUN     mkdir -p "\$(dirname \$D_HOME)"
-    RUN     groupadd -o -g \$D_GID \$D_GROUP
-    RUN     useradd -o -d \$D_HOME -g \$D_GROUP -u \$D_UID \$D_USER
+    #RUN     groupadd -g \$D_GID \$D_GROUP
+    #RUN     useradd -d \$D_HOME -g \$D_GROUP -u \$D_UID \$D_USER
 
     USER    \$D_USER
     WORKDIR \$D_HOME
