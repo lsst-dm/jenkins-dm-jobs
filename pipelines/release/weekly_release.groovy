@@ -147,6 +147,40 @@ notify.wrap {
 
     def triggerMe = [:]
 
+    triggerMe['Update cache x86'] = {
+    retry(retries){
+        build(
+          job: 'sqre/infra/cache_lsstsw',
+          parameters:[
+          string(name: 'ARCHITECTURE', value: 'linux-64'),
+          booleanParam(
+            name: 'NO_PUSH',
+            value: scipipe.release.step.update_cache.no_push,
+          ),
+          string(name: 'DATE_TAG', value: eupsTag),
+          ],
+          wait: false,
+        )
+      }
+    }
+
+    triggerMe['Update cache aarch64'] = {
+    retry(retries){
+        build(
+          job: 'sqre/infra/cache_lsstsw',
+          parameters:[
+          string(name: 'ARCHITECTURE', value: 'linux-aarch64'),
+          booleanParam(
+            name: 'NO_PUSH',
+            value: scipipe.release.step.update_cache.no_push,
+          ),
+          string(name: 'DATE_TAG', value: eupsTag),
+          ],
+          wait: false,
+        )
+      }
+    }
+
     triggerMe['Update index files'] = {
     retry(retries){
         build(

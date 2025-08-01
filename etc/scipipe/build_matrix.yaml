@@ -109,6 +109,8 @@ release:
       no_push: false
     update_indexjson:
       no_push: false
+    update_cache:
+      no_push: false
 #
 # low-level build parameters
 #

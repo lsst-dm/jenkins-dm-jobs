@@ -21,24 +21,33 @@ notify.wrap {
     ])
 
   String architecture = params.ARCHITECTURE
-  Boolean noPush         = params.NO_PUSH
-
-  def hub_repo = 'gcr.io/google.com/cloudsdktool/google-cloud-cli'
+  Boolean noPush      = params.NO_PUSH
+  Boolean nobinary    = params.NO_BINARY_FETCH
+  String date_tag     = params.DATE_TAG
 
   def run = {
-    // def image = docker.image("${hub_repo}:latest")
     def cwd      = pwd()
     def ciDir    = "${cwd}/ci-scripts"
     def homeDir = "${cwd}/home"
-    dir('ci-scripts') {
-      util.cloneCiScripts()
-    }
-    dir('lsstsw') {
-      cloneLsstsw()
-    }
+    def canonical    = scipipe.canonical
+    def lsstswConfig = canonical.lsstsw_config
 
+    def splenvRef = lsstswConfig.splenv_ref
+    def buildParams = [
+      EUPS_PKGROOT:          "${cwd}/distrib",
+      GIT_SSH_COMMAND:       'ssh -o StrictHostKeyChecking=no',
+      K8S_DIND_LIMITS_CPU:   "4",
+      LSST_COMPILER:         lsstswConfig.compiler,
+      LSST_NO_BINARY_FETCH:  true,
+      LSST_PYTHON_VERSION:   lsstswConfig.python,
+      LSST_SPLENV_REF:       splenvRef,
+    ]
+
+    stage('build') {
+      util.jenkinsWrapper(buildParams)
+
+    }
     stage('update index file') {
-      // image.pull()
       if (!noPush) {
         withCredentials([file(
           credentialsId: 'gs-eups-push',
@@ -56,16 +65,22 @@ notify.wrap {
              def buildEnv = [
                "WORKSPACE=${cwd}",
                "HOME=${homeDir}",
-               "EUPS_USERDATA=${homeDir}/.eups_userdata",
-               "NODE_LABELS=${nodeLabels}"
+               "BUILDDIR=${buildDir}",
+               "DATE_TAG=${date_tag}"
              ]
 
-             // Map -> List
-             buildParams.each { pair ->
-               buildEnv += pair.toString()
-             }
              withEnv(buildEnv) {
-               bash './ci-scripts/backuplsststack.sh'
+               util.posixSh("""
+               eval "\$(${BUILDDIR}/conda/miniconda3-py38_4.9.2/bin/conda shell.bash hook)"
+               if conda env list | grep gcloud-env > /dev/null 2>&1; then
+                 conda activate gcloud-env
+                 conda update google-cloud-sdk
+               else
+                 conda create -y --name gcloud-env google-cloud-sdk
+                 conda activate gcloud-env
+               fi
+               bash './ci-scripts/backuplsststack.sh $DATE_TAG'
+               """
              }
         }
       }

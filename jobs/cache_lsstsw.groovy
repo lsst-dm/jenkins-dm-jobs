@@ -5,5 +5,7 @@ p.pipeline().with {
   parameters {
     stringParam('ARCHITECTURE', 'linux-64', 'Architecture to run script.')
     booleanParam('NO_PUSH', false, 'Do not push to gcp')
+    stringParam('DATE_TAG', 'w_latest', 'What eups tag should we use to bachup lsstsw')
+    stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
   }
 }
