@@ -53,6 +53,8 @@ notify.wrap {
             PRODUCTS: products,
             BUILD_DOCS: true,
             NO_BINARY_FETCH: true,
+            DATE_TAG: eupsTag,
+            CREATE_CACHE: true,
           ],
         )
       } // retry

@@ -27,12 +27,14 @@ notify.wrap {
     'TIMEOUT',
   ])
 
-  String refs       = params.REFS
-  Boolean prepOnly  = params.PREP_ONLY
-  String products   = params.PRODUCTS
-  Boolean buildDocs = params.BUILD_DOCS
-  Boolean nobinary = params.NO_BINARY_FETCH
-  Integer timelimit = Integer.parseInt(params.TIMEOUT)
+  String refs         = params.REFS
+  Boolean prepOnly    = params.PREP_ONLY
+  String products     = params.PRODUCTS
+  Boolean buildDocs   = params.BUILD_DOCS
+  Boolean nobinary    = params.NO_BINARY_FETCH
+  Boolean createCache = params.CREATE_CACHE
+  String date_tag     = params.DATE_TAG
+  Integer timelimit   = Integer.parseInt(params.TIMEOUT)
 
   // not a normally exposed job param
   Boolean versiondbPush = (! params.NO_VERSIONDB_PUSH?.toBoolean())
@@ -74,6 +76,8 @@ notify.wrap {
         LSST_REFS:             refs,
         VERSIONDB_PUSH:        versiondbPush,
         VERSIONDB_REPO:        versiondbRepo,
+        CREATECACHE:           createCache,
+        DATE_TAG:              date_tag,
       ]
 
       def runJW = {

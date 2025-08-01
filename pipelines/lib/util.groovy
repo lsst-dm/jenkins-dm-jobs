@@ -472,12 +472,13 @@ def void jenkinsWrapper(Map buildParams) {
     // Check if NODE_LABELS is set in the environment
     def nodeLabels = env.NODE_LABELS
 
+
     def buildEnv = [
       "WORKSPACE=${cwd}",
       "HOME=${homeDir}",
       "EUPS_USERDATA=${homeDir}/.eups_userdata",
       "EUPSPKG_NJOBS=${njobs}",
-      "NODE_LABELS=${nodeLabels}"
+      "NODE_LABELS=${nodeLabels}",
     ]
 
     // Map -> List
@@ -487,6 +488,21 @@ def void jenkinsWrapper(Map buildParams) {
 
     withEnv(buildEnv) {
       bash './ci-scripts/jenkins_wrapper.sh'
+      if (buildParams.CREATECACHE) {
+        withCredentials([file(
+          credentialsId: 'gs-eups-push',
+          variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+        )]) {
+          withEnv([
+            "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
+          ]) {
+              bash '''
+               gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+               ./ci-scripts/backuplsststack.sh $DATE_TAG
+              '''
+          }
+        }
+      }
     }
   } finally {
     withEnv(["WORKSPACE=${cwd}"]) {
