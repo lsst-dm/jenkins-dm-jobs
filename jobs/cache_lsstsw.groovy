@@ -1,4 +1,7 @@
 import util.Plumber
+import org.yaml.snakeyaml.Yaml
+
+def scipipe = new Yaml().load(readFileFromWorkspace('etc/scipipe/build_matrix.yaml'))
 
 def p = new Plumber(name: 'sqre/infra/cache_lsstsw', dsl: this)
 p.pipeline().with {
