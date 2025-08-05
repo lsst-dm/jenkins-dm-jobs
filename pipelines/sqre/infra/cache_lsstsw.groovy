@@ -22,8 +22,8 @@ notify.wrap {
 
   String architecture = params.ARCHITECTURE
   Boolean noPush      = params.NO_PUSH
-  Boolean nobinary    = params.NO_BINARY_FETCH
   String date_tag     = params.DATE_TAG
+  String splenvRef    = params.SPLENV_REF
 
   def run = {
     def cwd      = pwd()
@@ -32,7 +32,6 @@ notify.wrap {
     def canonical    = scipipe.canonical
     def lsstswConfig = canonical.lsstsw_config
 
-    def splenvRef = lsstswConfig.splenv_ref
     def buildParams = [
       EUPS_PKGROOT:          "${cwd}/distrib",
       GIT_SSH_COMMAND:       'ssh -o StrictHostKeyChecking=no',
@@ -47,7 +46,7 @@ notify.wrap {
       util.jenkinsWrapper(buildParams)
 
     }
-    stage('update index file') {
+    stage('update lsstsw cache tarball') {
       if (!noPush) {
         withCredentials([file(
           credentialsId: 'gs-eups-push',
