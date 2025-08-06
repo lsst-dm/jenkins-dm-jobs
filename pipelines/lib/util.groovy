@@ -323,6 +323,42 @@ def void runPublish(Map p) {
 } // runPublish
 
 /**
+ * Loads Cache
+ * @param tag Which eups tag to load
+ */
+def loadCache(
+  String tag="w_latest",
+) {
+  def cwd = pwd()
+  def ciDir = "${cwd}/ci-scripts"
+  def gcp_repo = 'gcr.io/google.com/cloudsdktool/google-cloud-cli'
+  dir(ciDir){
+    cloneCiScripts()
+  }
+  withCredentials([file(
+    credentialsId: 'gs-eups-push',
+    variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+  )]) {
+    withEnv([
+      "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
+      "DATE_TAG=${tag}",
+    ]) {
+        insideDockerWrap(
+          image: "${gcp_repo}:debian_component_based",
+          pull: true,
+          args: "-v ${cwd}:/home",
+        ) {
+           bash """
+           gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+           cd /home/ci-scripts
+           ./loadlsststack.sh $DATE_TAG
+           """
+      }
+    }
+  }
+}
+
+/**
  * Run a lsstsw build.
  *
  * @param lsstswConfig Map
@@ -333,6 +369,7 @@ def lsstswBuild(
   Map lsstswConfig,
   Map buildParams,
   Boolean wipeout=false
+  Boolean fetchCache=true
 ) {
   validateLsstswConfig(lsstswConfig)
   def slug = lsstswConfigSlug(lsstswConfig)
@@ -343,13 +380,15 @@ def lsstswBuild(
     LSST_PYTHON_VERSION: lsstswConfig.python,
     LSST_SPLENV_REF:     lsstswConfig.splenv_ref,
   ] + buildParams
-
   def run = {
     withCredentials([[
       $class: 'StringBinding',
       credentialsId: 'github-api-token-checks',
       variable: 'GITHUB_TOKEN'
     ]]) {
+      if (fetchCache){
+        loadCache("w_latest")
+      }
       jenkinsWrapper(buildParams)
     } // withCredentials
   } // run
