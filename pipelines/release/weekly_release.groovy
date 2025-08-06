@@ -157,7 +157,7 @@ notify.wrap {
             name: 'NO_PUSH',
             value: scipipe.release.step.update_cache.no_push,
           ),
-          string(name: 'DATE_TAG', value: eupsTag),
+          string(name: 'DATE_TAG', value: "w_latest"),
           ],
           wait: false,
         )
@@ -174,7 +174,7 @@ notify.wrap {
             name: 'NO_PUSH',
             value: scipipe.release.step.update_cache.no_push,
           ),
-          string(name: 'DATE_TAG', value: eupsTag),
+          string(name: 'DATE_TAG', value: "w_latest"),
           ],
           wait: false,
         )

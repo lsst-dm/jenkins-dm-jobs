@@ -29,23 +29,42 @@ notify.wrap {
     def cwd      = pwd()
     def ciDir    = "${cwd}/ci-scripts"
     def homeDir = "${cwd}/home"
+    def lsstswDir = "${cwd}/lsstsw"
     def canonical    = scipipe.canonical
     def lsstswConfig = canonical.lsstsw_config
+    def products        = scipipe.canonical.products
 
     def buildParams = [
       EUPS_PKGROOT:          "${cwd}/distrib",
       GIT_SSH_COMMAND:       'ssh -o StrictHostKeyChecking=no',
-      K8S_DIND_LIMITS_CPU:   "4",
+      K8S_DIND_LIMITS_CPU:   "8",
       LSST_COMPILER:         lsstswConfig.compiler,
       LSST_NO_BINARY_FETCH:  true,
       LSST_PYTHON_VERSION:   lsstswConfig.python,
       LSST_SPLENV_REF:       splenvRef,
+      LSST_PRODUCTS:         products,
+      LSST_REFS:             "",
     ]
 
-    stage('build') {
-      util.jenkinsWrapper(buildParams)
-
+    stage('Prep dir'){
+      dir(ciDir) {
+        util.cloneCiScripts()
+      }
+      dir(lsstswDir){
+        util.cloneLsstsw()
+      }
     }
+
+    stage('build') {
+        util.insideDockerWrap(
+          image: lsstswConfig.image,
+          pull: true,
+          args: "-v ${lsstswDir}:${lsstswDir} -v ${ciDir}:${ciDir}",
+        ) {
+      util.jenkinsWrapper(buildParams)
+      }
+    }
+
     stage('update lsstsw cache tarball') {
       if (!noPush) {
         withCredentials([file(
@@ -55,12 +74,16 @@ notify.wrap {
           withEnv([
             "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
           ]) {
-
-             bash '''
-               mkdir -p lsstsw/miniconda/conda-meta
-               touch lsstsw/miniconda/conda-meta/history
-               gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+             util.insideDockerWrap(
+               image: lsstswConfig.image,
+               pull: true,
+               args: "-v ${lsstswDir}:${lsstswDir} -v ${ciDir}:${ciDir}",
+             ) {
+             util.bash '''
+               source lsstsw/bin/envconfig
+               conda install google-cloud-sdk
              '''
+
              def buildEnv = [
                "WORKSPACE=${cwd}",
                "HOME=${homeDir}",
@@ -70,24 +93,21 @@ notify.wrap {
 
              withEnv(buildEnv) {
                util.posixSh("""
-               eval "\$(${BUILDDIR}/conda/miniconda3-py38_4.9.2/bin/conda shell.bash hook)"
-               if conda env list | grep gcloud-env > /dev/null 2>&1; then
-                 conda activate gcloud-env
-                 conda update google-cloud-sdk
-               else
-                 conda create -y --name gcloud-env google-cloud-sdk
-                 conda activate gcloud-env
-               fi
-               bash './ci-scripts/backuplsststack.sh $DATE_TAG'
-               """
-             }
+                 source lsstsw/bin/envconfig
+                 gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+                 cd ci-scripts
+                 ./backuplsststack.sh $DATE_TAG
+               """)
+              }
+            }
+          }
         }
-      }
-    } // if
+      } // if
+    } // stage
   } // run
   util.nodeWrap(architecture) {
-    timeout(time: 1, unit: 'HOURS') {
+    timeout(time: 6, unit: 'HOURS') {
       run()
     }
-  } // util.nodeWrap('linux-64')
+  } // util.nodeWrap('architecture')
 } // notify.wrap
