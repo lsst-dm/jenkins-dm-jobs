@@ -1513,16 +1513,16 @@ def String reposUrl() {
 }
 
 /*
- * Generate URL to newinstall.sh
+ * Generate URL to lsstinstall
  *
  * @return url String
  */
-def String newinstallUrl() {
+def String lsstinstallUrl() {
   def scipipe = scipipeConfig()
   return githubRawUrl(
     slug: scipipe.newinstall.github_repo,
     ref: scipipe.newinstall.git_ref,
-    path: 'scripts/newinstall.sh',
+    path: 'scripts/lsstinstall',
   )
 }
 
