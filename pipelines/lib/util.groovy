@@ -1299,11 +1299,6 @@ def runDocumenteer(Map p) {
       dir(p.docTemplateDir) {
         bash '''
           source /opt/lsst/software/stack/loadLSST.bash
-          if ! command -v dot &>/dev/null; then
-              mamba create -y --prefix=${HOME}/graphviz graphviz
-              mamba activate ${HOME}/graphviz
-              mamba activate --stack ${LSST_CONDA_ENV_NAME}
-          fi
           dot -V
           pip install --upgrade --user -r requirements.txt
           export PATH="${HOME}/.local/bin:${PATH}"
