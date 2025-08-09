@@ -1299,11 +1299,6 @@ def runDocumenteer(Map p) {
       dir(p.docTemplateDir) {
         bash '''
           source /opt/lsst/software/stack/loadLSST.bash
-          if ! command -v dot &>/dev/null; then
-              mamba create -y --prefix=${HOME}/graphviz graphviz
-              mamba activate ${HOME}/graphviz
-              mamba activate --stack ${LSST_CONDA_ENV_NAME}
-          fi
           dot -V
           pip install --upgrade --user -r requirements.txt
           export PATH="${HOME}/.local/bin:${PATH}"
@@ -1513,16 +1508,16 @@ def String reposUrl() {
 }
 
 /*
- * Generate URL to newinstall.sh
+ * Generate URL to lsstinstall
  *
  * @return url String
  */
-def String newinstallUrl() {
+def String lsstinstallUrl() {
   def scipipe = scipipeConfig()
   return githubRawUrl(
     slug: scipipe.newinstall.github_repo,
     ref: scipipe.newinstall.git_ref,
-    path: 'scripts/newinstall.sh',
+    path: 'scripts/lsstinstall',
   )
 }
 
