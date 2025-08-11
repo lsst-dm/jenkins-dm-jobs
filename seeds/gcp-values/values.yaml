@@ -26,7 +26,7 @@ controller:
   image:
     registry: "docker.io"
     repository: "jenkins/jenkins"
-    tag: "2.504.3-lts-jdk21"
+    tag: "2.516.1-lts-jdk21"
     #tagLabel: jdk11
     pullPolicy: "Always"
   imagePullSecretName:
@@ -108,34 +108,33 @@ controller:
           name: vault-approle
           key: APPROLE_SECRET
     - name: CASC_VAULT_URL
-      value: https://vault.slac.stanford.edu
+      value: https://vault-ci.lsst.cloud
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-checks,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini,secret/rubin/rubin-jenkins-control/rubinobs-dm,secret/rubin/rubin-jenkins-control/gs-eups-push
-    - name: HTTP_PROXY
-      value: http://sdfproxy.sdf.slac.stanford.edu:3128
-    - name: HTTPS_PROXY
-      value: http://sdfproxy.sdf.slac.stanford.edu:3128
-    - name: http_proxy
-      value: http://sdfproxy.sdf.slac.stanford.edu:3128
-    - name: https_proxy
-      value: http://sdfproxy.sdf.slac.stanford.edu:3128
-    - name: no_proxy
-      value: "*.slac.stanford.edu"
-    - name: NO_PROXY
-      value: "*.slac.stanford.edu"
-    - name: JAVA_TOOL_OPTIONS
-      value:
-        "-Dhttp.nonProxyHosts='*.slac.stanford.edu'
-        -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128
-        -Dhttps.nonProxyHosts='*.slac.stanford.edu'
-        -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128
-        -Duser.timezone=America/Los_Angeles"
+      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-checks,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini,secret/rubin/rubin-jenkins-control/rubinobs-dm,secret/rubin/rubin-jenkins-control/approle,secret/rubin/rubin-jenkins-control/gs-eups-push
     #- name: JAVA_OPTS
     #  value: --add-opens=java.base/java.lang=ALL-UNNAMED,--add-opens=java.base/java.lang.reflect=ALL-UNNAMED
     #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
+    - name: JAVA_TOOL_OPTIONS
+      value:
+        "-Duser.timezone=America/Los_Angeles"
     - name: TZ
       value: America/Los_Angeles
   containerEnv:
+    - name: JAVA_TOOL_OPTIONS
+      value:
+        "-Duser.timezone=America/Los_Angeles"
+    - name: TZ
+      value: America/Los_Angeles
+    - name: GITHUB_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: github-oauth
+          key: client-id
+    - name: GITHUB_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: github-oauth
+          key: client-secret
     - name: CASC_VAULT_APPROLE
       valueFrom:
         secretKeyRef:
@@ -147,36 +146,9 @@ controller:
           name: vault-approle
           key: APPROLE_SECRET
     - name: CASC_VAULT_URL
-      value: https://vault.slac.stanford.edu
+      value: https://ci-vault.lsst.cloud
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-checks,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini,secret/rubin/rubin-jenkins-control/rubinobs-dm,secret/rubin/rubin-jenkins-control/gs-eups-push
-    - name: HTTP_PROXY
-      value: http://sdfproxy.sdf.slac.stanford.edu:3128
-    - name: HTTPS_PROXY
-      value: http://sdfproxy.sdf.slac.stanford.edu:3128
-    - name: http_proxy
-      value: http://sdfproxy.sdf.slac.stanford.edu:3128
-    - name: https_proxy
-      value: http://sdfproxy.sdf.slac.stanford.edu:3128
-    - name: no_proxy
-      value: "*.slac.stanford.edu"
-    - name: NO_PROXY
-      value: "*.slac.stanford.edu"
-    - name: TZ
-      value: America/Los_Angeles
-    - name: JAVA_TOOL_OPTIONS
-      value:
-        "-Dhttp.nonProxyHosts='*.slac.stanford.edu'
-        -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128
-        -Dhttps.nonProxyHosts='*.slac.stanford.edu'
-        -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128
-        -Duser.timezone=America/Los_Angeles"
-      #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
-  #- name: VAULT_TOKEN_LEASE_DURATION
-  #  valueFrom:
-  #    secretKeyRef:
-  #      name: vault-secrets-operator
-  #      key: VAULT_TOKEN_LEASE_DURATION
+      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control/aws-eups-push,secret/rubin/rubin-jenkins-control/aws-eups-backup,secret/rubin/rubin-jenkins-control/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control/aws-doxygen-push,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-checks,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/aws-cmirror-push,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-mason-aws,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini,secret/rubin/rubin-jenkins-control/rubinobs-dm,secret/rubin/rubin-jenkins-control/approle,secret/rubin/rubin-jenkins-control/gs-eups-push
   # Set min/max heap here if needed with:
   javaOpts: "--add-opens=java.base/java.lang=ALL-UNNAMED"
   # jenkinsOpts: ""
@@ -225,17 +197,26 @@ controller:
     runAsGroup: 1000
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
-  servicePort: 8080
-  targetPort: 8080
   # For minikube, set this to NodePort, elsewhere use LoadBalancer
   # Use ClusterIP if your setup includes ingress controller
   serviceType: ClusterIP
+  # -- k8s service clusterIP. Only used if serviceType is ClusterIP
+  clusterIp:
+  # -- k8s service port
+  servicePort: 8080
+  # -- k8s target port
+  targetPort: 8080
+  # -- k8s node port. Only used if serviceType is NodePort
+  nodePort:
   # Use Local to preserve the client source IP and avoids a second hop for
   # LoadBalancer and Nodeport type services,
   # but risks potentially imbalanced traffic spreading.
   serviceExternalTrafficPolicy:
-  # Jenkins controller service annotations
-  serviceAnnotations: {}
+  # If enabled, the controller is available through its service before its pods reports ready. Makes startup screen and
+  # auto-reload on restart feature possible.
+  publishNotReadyAddresses:
+  serviceAnnotations:
+    #cloud.google.com/load-balancer-type: "External"
   # Jenkins controller custom labels
   statefulSetLabels: {}
   #   foo: bar
@@ -313,12 +294,12 @@ controller:
   # Note if you set this to 'LoadBalancer', you *must* define annotations to secure it. By default
   # this will be an external load balancer and allowing inbound 0.0.0.0/0, a HUGE
   # security risk:  https://github.com/kubernetes/charts/issues/1341
-  agentListenerServiceType: "LoadBalancer"
+  agentListenerServiceType: "ClusterIP"
   # Optionally assign an IP to the LoadBalancer agentListenerService LoadBalancer
   # GKE users: only regional static IPs will work for Service Load balancer.
   agentListenerLoadBalancerIP:
-  agentListenerServiceAnnotations:
-    metallb.universe.tf/address-pool: sdf-dmz
+  agentListenerServiceAnnotations: {}
+  #  metallb.universe.tf/address-pool: sdf-dmz
 
   # Example of 'LoadBalancer' type of agent listener with annotations securing it
   # agentListenerServiceType: LoadBalancer
@@ -326,19 +307,26 @@ controller:
   #   service.beta.kubernetes.io/aws-load-balancer-internal: "True"
   #   service.beta.kubernetes.io/load-balancer-source-ranges: "172.0.0.0/8, 10.0.0.0/8"
 
+  # Optionally, assign an IP to the LoadBalancer agentListenerService LoadBalancer
+  # GKE users: only regional static IPs will work for Service Load balancer.
+  # -- Static IP for the agentListener LoadBalancer
+
+  # -- Whether legacy remoting security should be enabled
+  legacyRemotingSecurityEnabled: false
+
   # LoadBalancerSourcesRange is a list of allowed CIDR values, which are combined with ServicePort to
   # set allowed inbound rules on the security group assigned to the controller load balancer
   loadBalancerSourceRanges:
-  #  - 0.0.0.0/0
-  # Optionally assign a known public LB IP
-  # loadBalancerIP: 1.2.3.4
-  # Optionally configure a JMX port
-  # requires additional javaOpts, ie
+  loadBalancerIP:
+
+  # Optionally configure a JMX port. This requires additional javaOpts, for example,
   # javaOpts: >
   #   -Dcom.sun.management.jmxremote.port=4000
   #   -Dcom.sun.management.jmxremote.authenticate=false
   #   -Dcom.sun.management.jmxremote.ssl=false
   # jmxPort: 4000
+  # -- Open a port, for JMX stats
+  jmxPort:
   # Optionally configure other ports to expose in the controller container
   extraPorts: []
   # - name: BuildInfoProxy
@@ -350,7 +338,7 @@ controller:
     - workflow-aggregator:608.v67378e9d3db_1
     - job-dsl:1.93
     - blueocean:1.27.21
-    - configuration-as-code:1971.vf9280461ea_89
+    - configuration-as-code:1985.vdda_32d0c4ea_b_
     - matrix-auth:3.2.6
     - hashicorp-vault-plugin:371.v884a_4dd60fb_6
 
@@ -366,7 +354,7 @@ controller:
     - antisamy-markup-formatter:173.v680e3a_b_69ff3
     - apache-httpcomponents-client-4-api:4.5.14-269.vfa_2321039a_83
     - apache-httpcomponents-client-5-api:5.5-150.veb_76e719855b_
-    - asm-api:9.8-135.vb_2239d08ee90
+    - asm-api:9.8-163.vb_2a_96d3f9c3c
     #depreciated    - async-http-client:1.9.40.0
     - authentication-tokens:1.131.v7199556c3004
     - blueocean-autofavorite:1.2.5
@@ -388,41 +376,41 @@ controller:
     - blueocean-rest:1.27.21
     - blueocean-rest-impl:1.27.21
     - blueocean-web:1.27.21
-    - bootstrap5-api:5.3.7-1
-    - bouncycastle-api:2.30.1.80-261.v00c0e2618ec3
-    - branch-api:2.1233.vfb_6b_2b_3ed499
+    - bootstrap5-api:5.3.7-2
+    - bouncycastle-api:2.30.1.81-264.v95c79c0e772c
+    - branch-api:2.1235.v04e86c7ce54c
     - build-timeout:1.38
     - build-user-vars-plugin:195.v8c35f9d5c3dc
-    - caffeine-api:3.2.0-166.v72a_6d74b_870f
+    - caffeine-api:3.2.2-178.v353b_8428ed56
     - checks-api:373.vfe7645102093
-    - cloudbees-bitbucket-branch-source:936.4.3
+    - cloudbees-bitbucket-branch-source:936.4.4
     - cloudbees-disk-usage-simple:241.v0ea_d9a_a_96ee8
-    - cloudbees-folder:6.1036.vb_94fd035b_287
+    - cloudbees-folder:6.1037.v4cb_8573b_72a_a_
     - command-launcher:123.v37cfdc92ef67
-    - commons-compress-api:1.27.1-3
-    - commons-lang3-api:3.17.0-87.v5cf526e63b_8b_
-    - commons-text-api:1.13.1-176.v74d88f22034b_
+    - commons-compress-api:1.28.0-1
+    - commons-lang3-api:3.18.0-98.v3a_674c06072d
+    - commons-text-api:1.14.0-194.v804a_dc3a_1b_d8
     - copyartifact:770.va_6c69e063442
-    - credentials:1415.v831096eb_5534
-    - credentials-binding:696.v256688029804
+    - credentials:1419.v2337d1ceceef
+    - credentials-binding:702.vfe613e537e88
     - data-tables-api:2.3.2-3
-    - display-url-api:2.209.v582ed814ff2f
+    - display-url-api:2.217.va_6b_de84cc74b_
     - docker-commons:457.v0f62a_94f11a_3
     - dockerhub-notification:222.v483263f10718
     - docker-workflow:621.va_73f881d9232
-    - durable-task:587.v84b_877235b_45
-    - echarts-api:5.6.0-5
+    - durable-task:595.ve87b_f1318d67
+    - echarts-api:6.0.0-1
     - eddsa-api:0.3.0.1-19.vc432d923e5ee
     - envinject:2.926.v69c9b_3896a_96
     - envinject-api:1.235.va_14c74f8f487
     - external-monitor-job:223.vb_fddcf42c9b_3
     - favorite:2.237.v79163ca_8b_892
-    - font-awesome-api:6.7.2-1
+    - font-awesome-api:7.0.0-1
     - git:5.7.0
-    - git-client:6.2.0
-    - github:1.43.0
+    - git-client:6.3.0
+    - github:1.44.0
     - github-api:1.321-488.v9b_c0da_9533f8
-    - github-branch-source:1824.v046257273408
+    - github-branch-source:1834.v857721ea_74c6
     - github-checks:602.v264a_83610da_6
     - github-oauth:651.v135e939e8b_60
     - git-server:137.ve0060b_432302
@@ -434,11 +422,11 @@ controller:
     - htmlpublisher:427
     #deprecated    - icon-shim:3.0.0
     - instance-identity:203.v15e81a_1b_7a_38
-    - ionicons-api:88.va_4187cb_eddf1
-    - jackson2-api:2.19.0-404.vb_b_0fd2fea_e10
+    - ionicons-api:94.vcc3065403257
+    - jackson2-api:2.19.2-408.v18248a_324cfe
     - jakarta-activation-api:2.1.3-2
     - jakarta-mail-api:2.1.3-2
-    - javadoc:327.vdfe586651ee0
+    - javadoc:354.vee1a_660b_4990
     - javax-activation-api:1.2.0-8
     - javax-mail-api:1.6.2-11
     - jaxb:2.3.9-133.vb_ec76a_73f706
@@ -447,24 +435,24 @@ controller:
     - jersey2-api:2.47-165.ve7809a_3e87e0
     - jira:3.18
     - jjwt-api:0.11.5-120.v0268cf544b_89
-    - joda-time-api:2.14.0-127.v7d9da_295a_d51
+    - joda-time-api:2.14.0-149.v1c3ce991d1b_9
     - jquery:1.12.4-3
     #deprecated    - jquery-detached:1.2.1
     - jquery3-api:3.7.1-3
     - jsch:0.2.16-95.v3eecb_55fa_b_78
-    - json-api:20250517-153.vc8a_a_d87c0ce3
-    - json-path-api:2.9.0-148.v22a_7ffe323ce
+    - json-api:20250517-163.v1c5da_e99c775
+    - json-path-api:2.9.0-178.vca_b_c71881321
     - junit:1335.v6b_a_a_e18534e1
     - kubernetes-client-api:7.3.1-256.v788a_0b_787114
     - kubernetes-credentials:203.v85b_9836a_f44b_
-    - lockable-resources:1349.v8b_ccb_c5487f7
+    - lockable-resources:1408.vb_7d1f371781d
     - log-parser:2.5.0
-    - mailer:509.vc54d23fc427e
+    - mailer:515.vd788654779b_1
     - matrix-project:849.v0cd64ed7e531
     - mercurial:1309.v6802b_f0efb_b_9
     - mina-sshd-api-common:2.15.0-161.vb_200831a_c15b_
     - mina-sshd-api-core:2.15.0-161.vb_200831a_c15b_
-    - metrics:4.2.32-476.v5042e1c1edd7
+    - metrics:4.2.32-481.v75f035fdc894
     #deprecated    - momentjs:1.1.1
     #deprecated - need alternative?    - multiple-scms:0.8
     - nodelabelparameter:759.vb_b_e95db_f3251
@@ -473,15 +461,15 @@ controller:
     - pipeline-build-step:571.v08a_fffd4b_0ce
     - pipeline-graph-analysis:241.vc3d48fb_b_2582
     - pipeline-groovy-lib:752.vdddedf804e72
-    - pipeline-input-step:527.vd61b_1d3c5078
+    - pipeline-input-step:532.v9e7466cb_4406
     - pipeline-milestone-step:138.v78ca_76831a_43
-    - pipeline-model-api:2.2255.v56a_15e805f12
+    - pipeline-model-api:2.2258.v4e96d2b_da_f9b_
     #deprecated    - pipeline-model-declarative-agent:1.1.1
-    - pipeline-model-definition:2.2255.v56a_15e805f12
-    - pipeline-model-extensions:2.2255.v56a_15e805f12
+    - pipeline-model-definition:2.2258.v4e96d2b_da_f9b_
+    - pipeline-model-extensions:2.2258.v4e96d2b_da_f9b_
     - pipeline-rest-api:2.38
     - pipeline-stage-step:322.vecffa_99f371c
-    - pipeline-stage-tags-metadata:2.2255.v56a_15e805f12
+    - pipeline-stage-tags-metadata:2.2258.v4e96d2b_da_f9b_
     - pipeline-stage-view:2.38
     - pipeline-utility-steps:2.19.0
     - plain-credentials:199.v9f8e1f741799
@@ -495,31 +483,32 @@ controller:
     - rebuild:338.va_0a_b_50e29397
     - run-condition:243.v3c3f94e46a_8b_
     - saferestart:102.v4dc1b_9636a_ee
-    - scm-api:704.v3ce5c542825a_
-    - script-security:1373.vb_b_4a_a_c26fa_00
+    - scm-api:707.v749f968369d4
+    - script-security:1378.vf25626395f49
     - snakeyaml-api:2.3-125.v4d77857a_b_402
     - sonar:2.18
     - sse-gateway:1.28
     - ssh-agent:386.v36cc0c7582f0
-    - ssh-credentials:359.v2191c4cf635f
+    - ssh-credentials:361.vb_f6760818e8c
     - sshd:3.372.v5d04a_e92d8cf
-    - ssh-slaves:3.1031.v72c6b_883b_869
-    - structs:350.v3b_30f09f2363
-    - swarm:3.49
-    - token-macro:444.v52de7e9c573d
+    - ssh-slaves:3.1071.v0d059c7b_c555
+    - structs:353.v261ea_40a_80fb_
+    - swarm:3.50
+    - timestamper:1.30
+    - token-macro:477.vd4f0dc3cb_cf1
     - trilead-api:2.209.v0e69b_c43c245
     - variant:70.va_d9f17f859e0
     #depreciated     - windows-slaves:1.8.1  need to find alternative?
-    - workflow-api:1373.v7b_813f10efa_b_
+    - workflow-api:1382.veca_a_efe062fa_
     - workflow-basic-steps:1079.vce64b_a_929c5a_
-    - workflow-cps:4151.v5406e29e3c90
+    - workflow-cps:4175.ve65b_fa_663eed
     #depreciated    - workflow-cps-global-lib:609.vd95673f149b_b
-    - workflow-durable-task-step:1434.v1b_595c29ddd7
+    - workflow-durable-task-step:1446.v3efd13441220
     - workflow-job:1540.v295eccc9778f
-    - workflow-multibranch:806.vb_b_688f609ee9
+    - workflow-multibranch:810.v6b_6e77da_7058
     - workflow-scm-step:437.v05a_f66b_e5ef8
-    - workflow-step-api:704.ve4f0967e98fa_
-    - workflow-support:968.v8f17397e87b_8
+    - workflow-step-api:706.v518c5dcb_24c0
+    - workflow-support:976.vb_d9493c2eb_09
 
   # Enable to initialize the Jenkins controller only once on initial installation.
   # Without this, whenever the controller gets restarted (Evicted, etc.) it will fetch plugin updates which has the potential to cause breakage.
@@ -599,6 +588,7 @@ controller:
     - "method java.net.URL openConnection"
   # List of groovy init scripts to be executed during Jenkins controller start
   initScripts: {}
+  initConfigMap:
   #  - |
   #    print 'adding global pipeline libraries, register properties, bootstrap jobs...'
 
@@ -608,13 +598,14 @@ controller:
   # an existing secret "secret-credentials" and a key inside it named "github-password" should be used in Jcasc as ${secret-credentials-github-password}
   # 'name' and 'keyName' must be lowercase RFC 1123 label must consist of lower case alphanumeric characters or '-',
   # and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc')
+  existingSecret: ""
+
+
   additionalExistingSecrets: []
-  #  - name: github-oauth
   #    keyName: client-id
-  #  - name: github-oauth
   #    keyName: client-secret
 
-  additionalSecrets: []
+  additionalSecrets:
   #  - name: nameOfSecret
   #    value: secretText
 
@@ -630,7 +621,7 @@ controller:
   #   renew: 60               # optional
 
   # Name of default cloud configuration.
-  cloudName: "kubernetes"
+  #cloudName: "kubernetes"
 
   # Below is the implementation of Jenkins Configuration as Code.  Add a key under configScripts for each configuration area,
   # where each corresponds to a plugin or section of the UI.  Each key (prior to | character) is just a label, and can be any value.
@@ -651,10 +642,10 @@ controller:
       #    name: "Jenkins Admin"
       #    password: "${chart-admin-password}"
       github:
+        clientID: "${GITHUB_CLIENT_ID}"
+        clientSecret: "${GITHUB_CLIENT_SECRET}"
         githubWebUri: "https://github.com"
         githubApiUri: "https://api.github.com"
-        clientID: "${secret/rubin/rubin-jenkins-control/github-oauth/client-id}"
-        clientSecret: "${secret/rubin/rubin-jenkins-control/github-oauth/client-secret}"
         oauthScopes: "read:org"
     # Uses matrix-auth plugin to configure user and group permissions
     authorizationStrategy: |-
@@ -754,13 +745,18 @@ controller:
     configScripts:
       welcome-message: |
         jenkins:
-          systemMessage: Welcome to our CI\CD server.  This Jenkins is configured and managed 'as code'.
-
+          systemMessage: This is the Production GCP instance of Jenkins.
+      # Connects to specified vault paths and variables to provide all credentials
       systemCredentials: |-
         credentials:
           system:
             domainCredentials:
             - credentials:
+              - string:
+                  description: "name of conda channel bucket"
+                  id: "approle"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control/approle/role_id}"
               - string:
                   description: "name of conda channel bucket"
                   id: "cmirror-s3-bucket"
@@ -786,11 +782,6 @@ controller:
                   id: "eups-push-bucket"
                   scope: GLOBAL
                   secret: "${secret/rubin/rubin-jenkins-control/common/eups-push-bucket}"
-              - file:
-                  description: "credentials for gcp bucket"
-                  id: "gs-eups-push"
-                  scope: GLOBAL
-                  secret: "${secret/rubin/rubin-jenkins-control/gs-eups-push}"
               - string:
                   description: "URL of eups site"
                   id: "eups-url"
@@ -866,12 +857,18 @@ controller:
                   description: "github jenkins-dm app client ID in lsst repo"
                   id: "client-id-lsst"
                   scope: GLOBAL
-                  secret: "${rubin/rubin-jenkins-control-dev/github-jenkins/client-id-lsst}"
+                  secret: "${rubin/rubin-jenkins-control/github-jenkins/client-id-lsst}"
+              # - file:
+              #     description: "credentials for gcp bucket"
+              #     id: "gs-eups-push"
+              #     scope: GLOBAL
+              #     fileName: "cred.json"
+              #     secretBytes: "${secret/rubin/rubin-jenkins-control/gs-eups-push}"
               - string:
                   description: "github jenkins-dm app key in lsst repo"
                   id: "key-lsst"
                   scope: GLOBAL
-                  secret: "${rubin/rubin-jenkins-control-dev/github-jenkins/key-lsst}"
+                  secret: "${rubin/rubin-jenkins-control/github-jenkins/key-lsst}"
               - basicSSHUserPrivateKey:
                   description: "github lsst/versiondb deploy key"
                   id: "github-jenkins-versiondb"
@@ -943,7 +940,10 @@ controller:
                   id: "rubinobs-dm"
                   password: "${secret/rubin/rubin-jenkins-control/rubinobs-dm/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control/rubinobs-dm/password}"
+                  username: "${secret/rubin/rubin-jenkins-control/rubinobs-dm/username}"
+              - fileSystemServiceAccountCredential:
+                  id: "db18c256-5c3e-4f94-aada-45def5734db7"
+                  scope: GLOBAL
 
       add-seed-job: |
         jobs:
@@ -951,145 +951,747 @@ controller:
         security:
           globaljobdslsecurityconfiguration:
             useScriptSecurity: false
+
+      cloud_config: |
+        jenkins:
+          clouds:
+          - kubernetes:
+              containerCap: 10
+              containerCapStr: "10"
+              credentialsId: "db18c256-5c3e-4f94-aada-45def5734db7"
+              garbageCollection:
+                timeout: 180
+              jenkinsTunnel: "jenkins-agent.jenkins.svc.cluster.local:20000"
+              jenkinsUrl: "http://jenkins.jenkins.svc.cluster.local:8080"
+              maxRequestsPerHost: 100
+              maxRequestsPerHostStr: "100"
+              name: "gke"
+              namespace: "jenkins"
+              serverCertificate: |
+                -----BEGIN CERTIFICATE-----
+                MIIELDCCApSgAwIBAgIQICQW7ydozN/v4/4rg+fm+zANBgkqhkiG9w0BAQsFADAv
+                MS0wKwYDVQQDEyRjZTBkN2YyNy0zOTVmLTQ4MWQtOGE3NS1hNmJhZTEzMWUxOTAw
+                IBcNMjIwODE0MTEzODU1WhgPMjA1MjA4MDYxMjM4NTVaMC8xLTArBgNVBAMTJGNl
+                MGQ3ZjI3LTM5NWYtNDgxZC04YTc1LWE2YmFlMTMxZTE5MDCCAaIwDQYJKoZIhvcN
+                AQEBBQADggGPADCCAYoCggGBALzAq3TXjP8UGSlIpSPZlkTgLKNwXTI9ijEqOc5v
+                TNNETKfWp0mKziS6iZREzsTnSAdWJZXx++4zWSfQ7dHMieHJ/7bZS64J3Pm7NzWl
+                FOzCt+EM6TLz+seNTIBG84kIC6atJG8DYUULk1SuQdeoNLeT2FIQUbjcoIiV5DXq
+                CMQsV0aOtUF7MoTWXJsc0p2wHzabmBv5AZNiYeycRkzSCmWmlt/AqAp/1QZT/8gh
+                0YA+H943Pohu1aEdyobX0pquxDJPXoA30LQlWeogFce2MQx4rBZ7Qh29O8HdGyxc
+                FXVUUt+WBsksEWU8il85xIYKNOeHyBgKB9ZUzGnzUSjCNJ9KAT0ehTpYEAQPjm5/
+                o1gEnptlk490LwtSrZ8GXUvSgaIlwgevZyiOkuNV193SYouJar3XwH7vUWXRE+K+
+                HUnrLOPu6nJZG16g40b/G3RS76ubBfvtCt3Iz6XKpcYOEPn71YC5nIc5g5Q+4Ro5
+                5aU+/Fla1LaPVdTQMXJ9x5V0TQIDAQABo0IwQDAOBgNVHQ8BAf8EBAMCAgQwDwYD
+                VR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUZLrqgbF4IawuRlW1RenkAIg2/VkwDQYJ
+                KoZIhvcNAQELBQADggGBAJzOw89uUq3ArzSuy+NMn6jgLwIWJP9fVyZOgmCs4Eff
+                Ky1p4LpG6yJtO/GvldV3Kro6cJ/51posKIr8uZtoKs2e7uScw0kyvy3AMSYaIr50
+                Rf20wQ3jJVnt2IZb8cWfKyzi4G5KsgfM845iEgv5JiPvKJSgf0e/dPu+5eilr5OW
+                J/yypIULk7zjrbhzo8Bgd2TVk4OTzj/bLqeNCNXiAmCT1ymuC/DLbd8mzCULxKUW
+                +rdjjFkxn9PsdAu8Fb+8yyRSjeX7BJjpTe8bi7s51zbIfGDZiWCqMdR6XF3S1ad6
+                REzqNfHw1JKLGvcIDw6So76TgfHlcfkU0OHS58UPLysgOaAjGDcLg8QzwVYLAdDg
+                Kcv9aLCYS3iQPZ4tNrmhmk3Gn3c/xu4+R/hXXl98KfNdD+9UU+yOzmWrmkm6Bt3v
+                a6KPVQH5DCpYEy3LkCfR8mqcBs8uADF5ZrLEO1/8OJgFV1Y1mfOr/hAeqYFqTHOD
+                OEDrlY6S0hlzwHS+VNgCQA==
+                -----END CERTIFICATE-----
+              serverUrl: "https://kubernetes.default"
+              templates:
+              - id: "ed2f09fb-cc0e-47ae-a34d-d7541c3ebb1a"
+                label: "linux-64"
+                name: "idf-agent-ldfc"
+                nodeUsageMode: "NORMAL"
+                yaml: |-
+                  apiVersion: v1
+                  kind: Pod
+                  metadata:
+                    annotations:
+                    labels:
+                      app: idf-agent-ldfc
+                    name: idf-agent-ldfc
+                    namespace: jenkins
+                  spec:
+                    containers:
+                    - name: jnlp
+                      image: ghcr.io/lsst-dm/jenkins-jnlp-client:latest
+                      workingDir: /j
+                      args: ["$(JENKINS_SECRET)", "$(JENKINS_NAME)"]
+                      env:
+                        - name: DOCKER_HOST
+                          value: tcp://localhost:2375
+                        - name: K8S_NODE_NAME
+                          valueFrom:
+                            fieldRef:
+                              apiVersion: v1
+                              fieldPath: spec.nodeName
+                        - name: K8S_POD_NAMESPACE
+                          valueFrom:
+                            fieldRef:
+                              apiVersion: v1
+                              fieldPath: metadata.namespace
+                        - name: K8S_POD_IP
+                          valueFrom:
+                            fieldRef:
+                              apiVersion: v1
+                              fieldPath: status.podIP
+                        - name: AGENT_WORKDIR
+                          value: /j
+                      tty: true
+                      volumeMounts:
+                        - name: docker-graph-storage
+                          mountPath: /var/lib/docker
+                        - name: ws
+                          mountPath: /j
+                      securityContext:
+                        allowPrivilegeEscalation: true
+                        privileged: false
+                        readOnlyRootFilesystem: false
+                        runAsGroup: 1000
+                        runAsNonRoot: false
+                        runAsUser: 1000
+                      resources:
+                        limits:
+                          cpu: "8"
+                          memory: 64Gi
+                        requests:
+                          cpu: "8"
+                          memory: 64Gi
+                      terminationMessagePath: /dev/termination-log
+                      terminationMessagePolicy: File
+                    - args:
+                      - --host=tcp://localhost:2375
+                      - --mtu=1376
+                      command:
+                      - /usr/local/bin/dockerd
+                      env:
+                      - name: DOCKER_HOST
+                        value: tcp://localhost:2375
+                      image: docker:27.1.1-dind
+                      imagePullPolicy: Always
+                      livenessProbe:
+                        exec:
+                          command:
+                          - wget
+                          - --spider
+                          - -q
+                          - http://localhost:2375/_ping
+                        failureThreshold: 2
+                        initialDelaySeconds: 5
+                        periodSeconds: 5
+                        successThreshold: 1
+                        timeoutSeconds: 1
+                      name: dind
+                      readinessProbe:
+                        exec:
+                          command:
+                          - wget
+                          - --spider
+                          - -q
+                          - http://localhost:2375/_ping
+                        failureThreshold: 2
+                        initialDelaySeconds: 5
+                        periodSeconds: 5
+                        successThreshold: 1
+                        timeoutSeconds: 1
+                      resources:
+                        limits:
+                          cpu: "12"
+                          memory: 64Gi
+                        requests:
+                          cpu: "12"
+                          memory: 64Gi
+                          ephemeral-storage: 150Gi
+                      securityContext:
+                        allowPrivilegeEscalation: true
+                        privileged: true
+                        readOnlyRootFilesystem: false
+                        runAsGroup: 0
+                        runAsNonRoot: false
+                        runAsUser: 0
+                      terminationMessagePath: /dev/termination-log
+                      terminationMessagePolicy: File
+                      volumeMounts:
+                      - mountPath: /var/lib/docker
+                        name: docker-graph-storage
+                      - mountPath: /j
+                        name: ws
+                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+                        name: kube-api-access-kf6wr
+                        readOnly: true
+                    - command:
+                      - sh
+                      - -c
+                      - while true; do /usr/local/bin/docker-gc; sleep $GRACE_PERIOD_SECONDS; done
+                      env:
+                      - name: DOCKER_HOST
+                        value: tcp://localhost:2375
+                      - name: GRACE_PERIOD_SECONDS
+                        value: "3600"
+                      - name: MINIMUM_IMAGES_TO_SAVE
+                        value: "5"
+                      - name: REMOVE_VOLUMES
+                        value: "1"
+                      - name: FORCE_CONTAINER_REMOVAL
+                        value: "1"
+                      - name: FORCE_IMAGE_REMOVAL
+                        value: "1"
+                      image: lsstsqre/docker-gc:latest
+                      imagePullPolicy: Always
+                      name: docker-gc
+                      resources:
+                        limits:
+                          cpu: 500m
+                          memory: 512Mi
+                        requests:
+                          cpu: 500m
+                          memory: 512Mi
+                      securityContext:
+                        allowPrivilegeEscalation: true
+                        privileged: false
+                        readOnlyRootFilesystem: false
+                        runAsGroup: 0
+                        runAsNonRoot: false
+                        runAsUser: 0
+                      terminationMessagePath: /dev/termination-log
+                      terminationMessagePolicy: File
+                      volumeMounts:
+                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+                        name: kube-api-access-kf6wr
+                        readOnly: true
+                    dnsPolicy: ClusterFirst
+                    enableServiceLinks: true
+                    preemptionPolicy: PreemptLowerPriority
+                    priority: 0
+                    restartPolicy: Never
+                    schedulerName: default-scheduler
+                    securityContext:
+                      fsGroup: 4085
+                      runAsGroup: 0
+                      runAsNonRoot: false
+                      runAsUser: 0
+                    serviceAccount: default
+                    serviceAccountName: default
+                    shareProcessNamespace: false
+                    terminationGracePeriodSeconds: 30
+                    tolerations:
+                    - effect: NoExecute
+                      key: node.kubernetes.io/not-ready
+                      operator: Exists
+                      tolerationSeconds: 300
+                    - effect: NoExecute
+                      key: node.kubernetes.io/unreachable
+                      operator: Exists
+                      tolerationSeconds: 300
+                    volumes:
+                    - name: ws
+                      emptyDir:
+                        #sizeLimit: 70Gi
+                    - emptyDir: {}
+                      name: docker-graph-storage
+                    - name: kube-api-access-kf6wr
+                      projected:
+                        defaultMode: 420
+                        sources:
+                        - serviceAccountToken:
+                            expirationSeconds: 3607
+                            path: token
+                        - configMap:
+                            items:
+                            - key: ca.crt
+                              path: ca.crt
+                            name: kube-root-ca.crt
+                        - downwardAPI:
+                            items:
+                            - fieldRef:
+                                apiVersion: v1
+                                fieldPath: metadata.namespace
+                              path: namespace
+              - id: "02b0f99e-189e-4a86-9e90-54a810d9df8a"
+                label: "aarch64 linux-aarch64"
+                name: "idf-agent-ldfc-arch"
+                namespace: "jenkins"
+                yaml: |-
+                  apiVersion: v1
+                  kind: Pod
+                  metadata:
+                    annotations:
+                    labels:
+                      app: idf-agent-ldfc-arch-c4a
+                    name: idf-agent-ldfc-arch-c4a
+                    namespace: jenkins
+                    ownerReferences:
+                  spec:
+                    containers:
+                    - args:
+                      - --host=tcp://localhost:2375
+                      - --mtu=1376
+                      command:
+                      - /usr/local/bin/dockerd
+                      env:
+                      - name: DOCKER_HOST
+                        value: tcp://localhost:2375
+                      image: docker:27.1.1-dind
+                      imagePullPolicy: Always
+                      livenessProbe:
+                        exec:
+                          command:
+                          - wget
+                          - --spider
+                          - -q
+                          - http://localhost:2375/_ping
+                        failureThreshold: 2
+                        initialDelaySeconds: 5
+                        periodSeconds: 5
+                        successThreshold: 1
+                        timeoutSeconds: 1
+                      name: dind
+                      readinessProbe:
+                        exec:
+                          command:
+                          - wget
+                          - --spider
+                          - -q
+                          - http://localhost:2375/_ping
+                        failureThreshold: 2
+                        initialDelaySeconds: 5
+                        periodSeconds: 5
+                        successThreshold: 1
+                        timeoutSeconds: 1
+                      resources:
+                        limits:
+                          cpu: "12"
+                          memory: 64Gi
+                        requests:
+                          cpu: "12"
+                          memory: 64Gi
+                          ephemeral-storage: 150Gi
+                      securityContext:
+                        allowPrivilegeEscalation: true
+                        privileged: true
+                        readOnlyRootFilesystem: false
+                        runAsGroup: 0
+                        runAsNonRoot: false
+                        runAsUser: 0
+                      terminationMessagePath: /dev/termination-log
+                      terminationMessagePolicy: File
+                      volumeMounts:
+                      - mountPath: /var/lib/docker
+                        name: docker-graph-storage
+                      - mountPath: /j
+                        name: volume-aarch
+                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+                        name: kube-api-access-p9jsc
+                        readOnly: true
+                    - command:
+                      - sh
+                      - -c
+                      - while true; do /usr/local/bin/docker-gc; sleep $GRACE_PERIOD_SECONDS; done
+                      env:
+                      - name: DOCKER_HOST
+                        value: tcp://localhost:2375
+                      - name: GRACE_PERIOD_SECONDS
+                        value: "3600"
+                      - name: MINIMUM_IMAGES_TO_SAVE
+                        value: "5"
+                      - name: REMOVE_VOLUMES
+                        value: "1"
+                      - name: FORCE_CONTAINER_REMOVAL
+                        value: "1"
+                      - name: FORCE_IMAGE_REMOVAL
+                        value: "1"
+                      image: ghcr.io/lsst-dm/docker-docker-gc:latest
+                      imagePullPolicy: Always
+                      name: docker-gc
+                      resources:
+                        limits:
+                          cpu: 500m
+                          memory: 512Mi
+                        requests:
+                          cpu: 500m
+                          memory: 512Mi
+                      securityContext:
+                        allowPrivilegeEscalation: true
+                        privileged: false
+                        readOnlyRootFilesystem: false
+                        runAsGroup: 0
+                        runAsNonRoot: false
+                        runAsUser: 0
+                      terminationMessagePath: /dev/termination-log
+                      terminationMessagePolicy: File
+                      volumeMounts:
+                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+                        name: kube-api-access-p9jsc
+                        readOnly: true
+                    - name: jnlp
+                      image: ghcr.io/lsst-dm/jenkins-jnlp-client:latest
+                      workingDir: /j
+                      args: ["$(JENKINS_SECRET)", "$(JENKINS_NAME)"]
+                      env:
+                        - name: DOCKER_HOST
+                          value: tcp://localhost:2375
+                        - name: K8S_NODE_NAME
+                          valueFrom:
+                            fieldRef:
+                              apiVersion: v1
+                              fieldPath: spec.nodeName
+                        - name: K8S_POD_NAMESPACE
+                          valueFrom:
+                            fieldRef:
+                              apiVersion: v1
+                              fieldPath: metadata.namespace
+                        - name: K8S_POD_IP
+                          valueFrom:
+                            fieldRef:
+                              apiVersion: v1
+                              fieldPath: status.podIP
+                        - name: AGENT_WORKDIR
+                          value: /j
+                      tty: true
+                      volumeMounts:
+                        - name: docker-graph-storage
+                          mountPath: /var/lib/docker
+                        - name: volume-aarch
+                          mountPath: /j
+                      securityContext:
+                        allowPrivilegeEscalation: true
+                        privileged: false
+                        readOnlyRootFilesystem: false
+                        runAsGroup: 1000
+                        runAsNonRoot: false
+                        runAsUser: 1000
+                      resources:
+                        limits:
+                          cpu: "8"
+                          memory: 64Gi
+                        requests:
+                          cpu: "8"
+                          memory: 64Gi
+                      terminationMessagePath: /dev/termination-log
+                      terminationMessagePolicy: File
+                    dnsPolicy: ClusterFirst
+                    enableServiceLinks: true
+                    nodeSelector:
+                      cloud.google.com/gke-nodepool: jenkins-workers-multiarch-c4a
+                      kubernetes.io/arch: arm64
+                    preemptionPolicy: PreemptLowerPriority
+                    priority: 0
+                    restartPolicy: Always
+                    schedulerName: default-scheduler
+                    securityContext:
+                      fsGroup: 4085
+                      runAsGroup: 0
+                      runAsNonRoot: false
+                      runAsUser: 0
+                    serviceAccount: default
+                    serviceAccountName: default
+                    shareProcessNamespace: false
+                    terminationGracePeriodSeconds: 30
+                    tolerations:
+                    - effect: NoExecute
+                      key: node.kubernetes.io/not-ready
+                      operator: Exists
+                      tolerationSeconds: 300
+                    - effect: NoExecute
+                      key: node.kubernetes.io/unreachable
+                      operator: Exists
+                      tolerationSeconds: 300
+                    - effect: NoSchedule
+                      key: kubernetes.io/arch
+                      operator: Equal
+                      value: arm64
+                    volumes:
+                    - name: volume-aarch
+                      emptyDir:
+                        #sizeLimit: 70Gi
+                    - emptyDir: {}
+                      name: docker-graph-storage
+                    - name: kube-api-access-p9jsc
+                      projected:
+                        defaultMode: 420
+                        sources:
+                        - serviceAccountToken:
+                            expirationSeconds: 3607
+                            path: token
+                        - configMap:
+                            items:
+                            - key: ca.crt
+                              path: ca.crt
+                            name: kube-root-ca.crt
+                        - downwardAPI:
+                            items:
+                            - fieldRef:
+                                apiVersion: v1
+                                fieldPath: metadata.namespace
+                              path: namespace
+              - id: "64e840bf-0f62-474f-b8f6-a039e4e9cfdb"
+                #label: "snowflake-0"
+                name: "snowflake"
+                yaml: |-
+                  apiVersion: v1
+                  kind: Pod
+                  metadata:
+                    labels:
+                      app: snowflake-0
+                    name: snowflake
+                    namespace: jenkins
+                  spec:
+                    nodeSelector:
+                      cloud.google.com/gke-nodepool: jenkins-workers-multiarch-snowflake
+                      kubernetes.io/arch: arm64
+                    tolerations:
+                      - key: "workload"
+                        operator: "Equal"
+                        value: "snowflake"
+                        effect: "NoExecute"
+                      - effect: NoSchedule
+                        key: kubernetes.io/arch
+                        operator: Equal
+                        value: arm64
+                    containers:
+                    - args:
+                      - --host=tcp://localhost:2375
+                      - --mtu=1376
+                      command:
+                      - /usr/local/bin/dockerd
+                      env:
+                      - name: DOCKER_HOST
+                        value: tcp://localhost:2375
+                      image: docker:27.1.1-dind
+                      imagePullPolicy: Always
+                      livenessProbe:
+                        exec:
+                          command:
+                          - wget
+                          - --spider
+                          - -q
+                          - http://localhost:2375/_ping
+                        failureThreshold: 2
+                        initialDelaySeconds: 5
+                        periodSeconds: 5
+                        successThreshold: 1
+                        timeoutSeconds: 1
+                      name: dind
+                      readinessProbe:
+                        exec:
+                          command:
+                          - wget
+                          - --spider
+                          - -q
+                          - http://localhost:2375/_ping
+                        failureThreshold: 2
+                        initialDelaySeconds: 5
+                        periodSeconds: 5
+                        successThreshold: 1
+                        timeoutSeconds: 1
+                      resources:
+                        limits:
+                          cpu: "12"
+                          memory: 64Gi
+                        requests:
+                          cpu: "12"
+                          memory: 64Gi
+                          ephemeral-storage: 150Gi
+                      securityContext:
+                        allowPrivilegeEscalation: true
+                        privileged: true
+                        readOnlyRootFilesystem: false
+                        runAsGroup: 0
+                        runAsNonRoot: false
+                        runAsUser: 0
+                      terminationMessagePath: /dev/termination-log
+                      terminationMessagePolicy: File
+                      volumeMounts:
+                      - mountPath: /var/lib/docker
+                        name: docker-graph-storage
+                      - mountPath: /j
+                        name: ws-snowflake
+                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+                        name: kube-api-access-p9jsc
+                        readOnly: true
+                    - command:
+                      - sh
+                      - -c
+                      - while true; do /usr/local/bin/docker-gc; sleep $GRACE_PERIOD_SECONDS; done
+                      env:
+                      - name: DOCKER_HOST
+                        value: tcp://localhost:2375
+                      - name: GRACE_PERIOD_SECONDS
+                        value: "3600"
+                      - name: MINIMUM_IMAGES_TO_SAVE
+                        value: "5"
+                      - name: REMOVE_VOLUMES
+                        value: "1"
+                      - name: FORCE_CONTAINER_REMOVAL
+                        value: "1"
+                      - name: FORCE_IMAGE_REMOVAL
+                        value: "1"
+                      image: ghcr.io/lsst-dm/docker-docker-gc:latest
+                      imagePullPolicy: Always
+                      name: docker-gc
+                      resources:
+                        limits:
+                          cpu: 500m
+                          memory: 512Mi
+                        requests:
+                          cpu: 500m
+                          memory: 512Mi
+                      securityContext:
+                        allowPrivilegeEscalation: true
+                        privileged: false
+                        readOnlyRootFilesystem: false
+                        runAsGroup: 0
+                        runAsNonRoot: false
+                        runAsUser: 0
+                      terminationMessagePath: /dev/termination-log
+                      terminationMessagePolicy: File
+                      volumeMounts:
+                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+                        name: kube-api-access-p9jsc
+                        readOnly: true
+                    - name: jnlp
+                      image: ghcr.io/lsst-dm/jenkins-jnlp-client:latest
+                      workingDir: /j
+                      args: ["$(JENKINS_SECRET)", "$(JENKINS_NAME)"]
+                      env:
+                        - name: DOCKER_HOST
+                          value: tcp://localhost:2375
+                        - name: K8S_NODE_NAME
+                          valueFrom:
+                            fieldRef:
+                              apiVersion: v1
+                              fieldPath: spec.nodeName
+                        - name: K8S_POD_NAMESPACE
+                          valueFrom:
+                            fieldRef:
+                              apiVersion: v1
+                              fieldPath: metadata.namespace
+                        - name: K8S_POD_IP
+                          valueFrom:
+                            fieldRef:
+                              apiVersion: v1
+                              fieldPath: status.podIP
+                        - name: AGENT_WORKDIR
+                          value: /j
+                      tty: true
+                      volumeMounts:
+                        - name: docker-graph-storage
+                          mountPath: /var/lib/docker
+                        - name: ws-snowflake
+                          mountPath: /j
+                      securityContext:
+                        allowPrivilegeEscalation: true
+                        privileged: false
+                        readOnlyRootFilesystem: false
+                        runAsGroup: 1000
+                        runAsNonRoot: false
+                        runAsUser: 1000
+                      resources:
+                        limits:
+                          cpu: "8"
+                          memory: 64Gi
+                        requests:
+                          cpu: "8"
+                          memory: 64Gi
+                      terminationMessagePath: /dev/termination-log
+                      terminationMessagePolicy: File
+                    dnsPolicy: ClusterFirst
+                    enableServiceLinks: true
+                    preemptionPolicy: PreemptLowerPriority
+                    priority: 0
+                    restartPolicy: Always
+                    schedulerName: default-scheduler
+                    securityContext:
+                      fsGroup: 4085
+                      runAsGroup: 0
+                      runAsNonRoot: false
+                      runAsUser: 0
+                    serviceAccount: default
+                    serviceAccountName: default
+                    shareProcessNamespace: false
+                    terminationGracePeriodSeconds: 30
+                    volumes:
+                    - name: ws-snowflake
+                      emptyDir:
+                        #sizeLimit: 70Gi
+                    - emptyDir: {}
+                      name: docker-graph-storage
+                    - name: kube-api-access-p9jsc
+                      projected:
+                        defaultMode: 420
+                        sources:
+                        - serviceAccountToken:
+                            expirationSeconds: 3607
+                            path: token
+                        - configMap:
+                            items:
+                            - key: ca.crt
+                              path: ca.crt
+                            name: kube-root-ca.crt
+                        - downwardAPI:
+                            items:
+                            - fieldRef:
+                                apiVersion: v1
+                                fieldPath: metadata.namespace
+                              path: namespace
       # Connects mac agents to jenkins controller
       permanent-nodes: |
         jenkins:
           nodes:
-            # - permanent:
-            #     labelString: "osx-12 osx-64"
-            #     launcher:
-            #       ssh:
-            #         credentialsId: "sqre-osx"
-            #         host: "mac1.lsst.cloud"
-            #         javaPath: "/Users/Shared/jdk21/jdk-21.0.2.jdk/Contents/Home/bin/java"
-            #         launchTimeoutSeconds: 210
-            #         maxNumRetries: 10
-            #         port: 22
-            #         retryWaitTime: 15
-            #         sshHostKeyVerificationStrategy:
-            #           manuallyTrustedKeyVerificationStrategy:
-            #             requireInitialManualTrust: false
-            #     name: "mac1"
-            #     numExecutors: 1
-            #     remoteFS: "/Users/square/j"
-            #     retentionStrategy: "always"
+            - permanent:
+                labelString: "jenkins-manager"
+                launcher: "inbound"
+                name: "manager-0"
+                remoteFS: "/j"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "snowflake-0"
+                launcher: "inbound"
+                name: "snowflake-0"
+                remoteFS: "/j"
+                retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
+                launcher: "inbound"
                 name: "mini01"
-                launcher:
-                  ssh:
-                    credentialsId: "mini-osx"
-                    host: "mac01.ls.lsst.org"
-                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
-                    jvmOptions: "-Djava.awt.headless=true"
-                    launchTimeoutSeconds: 210
-                    maxNumRetries: 10
-                    port: 22
-                    retryWaitTime: 15
-                    sshHostKeyVerificationStrategy:
-                      manuallyTrustedKeyVerificationStrategy:
-                        requireInitialManualTrust: false
-                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
+                launcher: "inbound"
                 name: "mini02"
-                launcher:
-                  ssh:
-                    credentialsId: "mini-osx"
-                    host: "mac02.ls.lsst.org"
-                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
-                    jvmOptions: "-Djava.awt.headless=true"
-                    launchTimeoutSeconds: 210
-                    maxNumRetries: 10
-                    port: 22
-                    retryWaitTime: 15
-                    sshHostKeyVerificationStrategy:
-                      manuallyTrustedKeyVerificationStrategy:
-                        requireInitialManualTrust: false
-                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
+                launcher: "inbound"
                 name: "mini03"
-                launcher:
-                  ssh:
-                    credentialsId: "mini-osx"
-                    host: "mac03.ls.lsst.org"
-                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
-                    jvmOptions: "-Djava.awt.headless=true"
-                    launchTimeoutSeconds: 210
-                    maxNumRetries: 10
-                    port: 22
-                    retryWaitTime: 15
-                    sshHostKeyVerificationStrategy:
-                      manuallyTrustedKeyVerificationStrategy:
-                        requireInitialManualTrust: false
-                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
+                launcher: "inbound"
                 name: "mini04"
-                launcher:
-                  ssh:
-                    credentialsId: "mini-osx"
-                    host: "mac04.ls.lsst.org"
-                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
-                    jvmOptions: "-Djava.awt.headless=true"
-                    launchTimeoutSeconds: 210
-                    maxNumRetries: 10
-                    port: 22
-                    retryWaitTime: 15
-                    sshHostKeyVerificationStrategy:
-                      manuallyTrustedKeyVerificationStrategy:
-                        requireInitialManualTrust: false
-                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
+                launcher: "inbound"
                 name: "mini05"
-                launcher:
-                  ssh:
-                    credentialsId: "mini-osx"
-                    host: "mac05.ls.lsst.org"
-                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
-                    jvmOptions: "-Djava.awt.headless=true"
-                    launchTimeoutSeconds: 210
-                    maxNumRetries: 10
-                    port: 22
-                    retryWaitTime: 15
-                    sshHostKeyVerificationStrategy:
-                      manuallyTrustedKeyVerificationStrategy:
-                        requireInitialManualTrust: false
-                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
+                launcher: "inbound"
                 name: "mini06"
-                launcher:
-                  ssh:
-                    credentialsId: "mini-osx"
-                    host: "mac06.ls.lsst.org"
-                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
-                    jvmOptions: "-Djava.awt.headless=true"
-                    launchTimeoutSeconds: 210
-                    maxNumRetries: 10
-                    port: 22
-                    retryWaitTime: 15
-                    sshHostKeyVerificationStrategy:
-                      manuallyTrustedKeyVerificationStrategy:
-                        requireInitialManualTrust: false
-                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
 
   # Optionally specify additional init-containers
-  customInitContainers: []
+  customInitContainers:
+    - name: cleanup-old-casc
+      image: busybox:1.36
+      command: ["/bin/sh", "-c", "rm -f /var/jenkins_home/casc_configs/* || true"]
+      volumeMounts:
+        - name: jenkins-home
+          mountPath: /var/jenkins_home
 
   sidecars:
     configAutoReload:
@@ -1167,7 +1769,8 @@ controller:
   # ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
   priorityClassName:
 
-  podAnnotations: {}
+  podAnnotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
   # Add StatefulSet annotations
   statefulSetAnnotations: {}
 
@@ -1191,7 +1794,18 @@ controller:
     # For Kubernetes v1.19+, use 'networking.k8s.io/v1'
     apiVersion: "networking.k8s.io/v1"
     labels: {}
-    annotations: {}
+    annotations:
+      acme.cert-manager.io/http01-edit-in-place: "true"
+      kubernetes.io/ingress.class: "gce"
+      kubernetes.io/ingress.allow-http: "true"
+
+      # Global static IP for GCE Ingress:
+      kubernetes.io/ingress.global-static-ip-name: "jenkins"
+
+      # cert-manager annotation pointing to the ClusterIssuer:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
     # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
@@ -1200,12 +1814,13 @@ controller:
     # Set this path to jenkinsUriPrefix above or use annotations to rewrite path
     # path: "/jenkins"
     # configures the hostname e.g. jenkins.example.com
-    #hostName: jenkins26.lsst.test
-    hostName: rubin-ci.slac.stanford.edu
+    path:
+    hostName: ci.lsst.cloud
+    resourceRootUrl:
     tls:
-    # - secretName: jenkins.cluster.local
-    #   hosts:
-    #     - jenkins.cluster.local
+      - secretName: jenkins-tls
+        hosts:
+          - ci.lsst.cloud
 
   # often you want to have your controller all locked down and private
   # but you still want to get webhooks from your SCM
@@ -1308,7 +1923,7 @@ agent:
   image:
     repository: "jenkins/inbound-agent"
     tag: "4.11.2-4"
-  workingDir: "/home/jenkins/agent"
+  workingDir: "/j"
   nodeUsageMode: "NORMAL"
   customJenkinsLabels: []
   # name of the secret to be used for image pulling
@@ -1495,12 +2110,7 @@ persistence:
   accessMode: "ReadWriteOnce"
   size: "800Gi"
   volumes:
-  #  - name: nothing
-  #    emptyDir: {}
   mounts:
-  #  - mountPath: /var/nothing
-  #    name: nothing
-  #    readOnly: true
 
 networkPolicy:
   # Enable creation of NetworkPolicy resources.
@@ -1528,8 +2138,9 @@ rbac:
 serviceAccount:
   create: true
   # The name of the service account is autogenerated by default
-  name:
+  name: jenkins
   annotations: {}
+    #iam.gke.io/gcp-service-account: jenkins-secrets@prompt-proto.iam.gserviceaccount.com
   imagePullSecretName:
 
 serviceAccountAgent:
