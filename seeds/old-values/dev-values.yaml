@@ -956,7 +956,7 @@ controller:
                   id: "rubinobs-dm"
                   password: "${secret/rubin/rubin-jenkins-control-dev/rubinobs-dm/password}"
                   scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control-dev/rubinobs-dm/password}"
+                  username: "${secret/rubin/rubin-jenkins-control-dev/rubinobs-dm/username}"
 
       add-seed-job: |
         jobs:
