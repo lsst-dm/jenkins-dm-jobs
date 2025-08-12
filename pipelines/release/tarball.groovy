@@ -809,7 +809,7 @@ def String buildScript(
     ciDir
   ) +
   util.dedent("""
-    curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
+    curl -sSL ${util.lsstinstallUrl()} | bash -s
     . ./loadLSST.bash
 
     for prod in ${products}; do
@@ -862,10 +862,10 @@ def String smokeScript(
     export EUPS_PKGROOT="${eupsPkgroot}"
     export BASE_URL="${baseUrl}"
 
-    curl -sSL ${util.newinstallUrl()} | bash -s -- -cb
+    curl -sSL ${util.lsstinstallUrl()} | bash -s
     . ./loadLSST.bash
 
-    # override newinstall.sh configured EUPS_PKGROOT
+    # override lsstinstall configured EUPS_PKGROOT
     export EUPS_PKGROOT="${eupsPkgroot}"
 
     for prod in ${products}; do
@@ -1014,7 +1014,7 @@ def void emptyExistingDir(String path) {
 /**
  * Calculate EupsBuildDir path
  *
- * @param buildDir String root path to newinstall.sh env
+ * @param buildDir String root path to lsstnstall env
  * @param menv MinicondaEnv
  * @return String path to EupsBuildDir
  */
