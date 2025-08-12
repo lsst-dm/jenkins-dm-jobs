@@ -617,7 +617,7 @@ def void s3PushConda(String ... parts) {
         }
           // alpine does not include bash by default
         util.posixSh("""
-        eval "\$(${BUILDDIR}/conda/miniconda3-py38_4.9.2/bin/conda shell.bash hook)"
+        eval "\$(${BUILDDIR}/conda/bin/conda shell.bash hook)"
         if conda env list | grep aws-cli-env > /dev/null 2>&1; then
             conda activate aws-cli-env
             mamba update awscli
@@ -661,7 +661,7 @@ def void gsPushConda(String ... parts) {
         }
           // alpine does not include bash by default
         util.posixSh("""
-        eval "\$(${BUILDDIR}/conda/miniconda3-py38_4.9.2/bin/conda shell.bash hook)"
+        eval "\$(${BUILDDIR}/conda/bin/conda shell.bash hook)"
         if conda env list | grep gcloud-env > /dev/null 2>&1; then
             conda activate gcloud-env
             conda update google-cloud-sdk
