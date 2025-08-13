@@ -44,6 +44,7 @@ notify.wrap {
       LSST_SPLENV_REF:       splenvRef,
       LSST_PRODUCTS:         products,
       LSST_REFS:             "",
+      SCONSFLAGS:            "--no-tests",
     ]
 
     stage('Prep dir'){
@@ -85,9 +86,6 @@ notify.wrap {
              '''
 
              def buildEnv = [
-               "WORKSPACE=${cwd}",
-               "HOME=${homeDir}",
-               "BUILDDIR=${buildDir}",
                "DATE_TAG=${date_tag}"
              ]
 
