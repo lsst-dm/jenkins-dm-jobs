@@ -353,17 +353,52 @@ def loadCache(
             args: "-v ${cwd}:/home",
           ) {
              bash """
+             apt update && apt -y install zstd
              gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
              cd /home/ci-scripts
              ./loadlsststack.sh $DATE_TAG
              cd /home/lsstsw
-             rm -rf miniconda
              """
         }
       }
     }
   }
 }
+/**
+ * Save Cache
+ * @param buildDir where to place the loaded file 
+ * @param tag Which eups tag to load
+ */
+def saveCache(
+  String buildDir,
+  String tag="w_latest"
+) {
+  def cwd = pwd()
+  bash '''
+    cd lsstsw
+    source bin/envconfig
+    conda install google-cloud-sdk
+  '''
+  withCredentials([file(
+    credentialsId: 'gs-eups-push',
+    variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+  )]) {
+    withEnv([
+      "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
+      "DATE_TAG=${tag}",
+    ]) {
+        bash """
+        pwd
+        cd lsstsw
+        source bin/envconfig
+        gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+        cd ../ci-scripts
+        ./backuplsststack.sh $DATE_TAG
+        """
+    }
+  }
+}
+
 
 /**
  * Run a lsstsw build.
@@ -376,7 +411,8 @@ def lsstswBuild(
   Map lsstswConfig,
   Map buildParams,
   Boolean wipeout=false,
-  Boolean fetchCache=true
+  Boolean fetchCache=true,
+  Boolean cachelsstsw=false
 ) {
   validateLsstswConfig(lsstswConfig)
   def slug = lsstswConfigSlug(lsstswConfig)
@@ -395,18 +431,36 @@ def lsstswBuild(
       credentialsId: 'github-api-token-checks',
       variable: 'GITHUB_TOKEN'
     ]]) {
+      bash 'ls -al'
+      bash 'pwd'
       jenkinsWrapper(buildParams)
     } // withCredentials
   } // run
+  def saveCacheRun = {
+    withCredentials([[
+      $class: 'StringBinding',
+      credentialsId: 'github-api-token-checks',
+      variable: 'GITHUB_TOKEN'
+    ]]) {
+      buildParams = [SCONSFLAGS: "--no-tests"] + buildParams
+      jenkinsWrapper(buildParams)
+      saveCache(slug,"w_latest")
+    } // withCredentials
+  } // saveCacheRun
 
   def runDocker = {
     def cwd = pwd()
     insideDockerWrap(
       image: lsstswConfig.image,
       pull: true,
-      args: "-v ${cwd}:/home",
+      // args: "-v ${cwd}:/home",
     ) {
-      run()
+      if (cachelsstsw){
+        saveCacheRun()
+      }
+      else {
+        run()
+      }
     }
   } // runDocker
 
@@ -497,17 +551,17 @@ def void jenkinsWrapper(Map buildParams) {
 
     // workspace relative dir for dot files to prevent bleed through between
     // jobs and subsequent builds.
-    emptyDirs([homeDir])
+    // emptyDirs([homeDir])
 
     // cleanup *all* conda cached package info
-    [
-      'lsstsw/miniconda/conda-meta',
-      'lsstsw/miniconda/pkgs',
-    ].each { it ->
-      dir(it) {
-        deleteDir()
-      }
-    }
+    // [
+    //   'lsstsw/miniconda/conda-meta',
+    //   'lsstsw/miniconda/pkgs',
+    // ].each { it ->
+    //   dir(it) {
+    //     deleteDir()
+    //   }
+    // }
 
     // This file is needed for conda to know it has a base environment.
     bash '''
@@ -1051,7 +1105,8 @@ def lsstswBuildMatrix(
   List matrixConfig,
   Map buildParams,
   Boolean wipeout=false,
-  Boolean loadCache=false
+  Boolean loadCache=false,
+  Boolean saveCache=false
 ) {
   def matrix = [:]
 
@@ -1064,7 +1119,8 @@ def lsstswBuildMatrix(
         lsstswConfig,
         buildParams,
         wipeout,
-        loadCache
+        loadCache,
+        saveCache
       )
     }
   }

@@ -125,7 +125,7 @@ lsstsw:
   git_ref: main
 ciscripts:
   github_repo: lsst-sqre/ci-scripts
-  git_ref: main
+  git_ref: u/roceb/changeCompressionToZstd
 shebangtron:
   github_repo: lsst/shebangtron
   git_ref: main
