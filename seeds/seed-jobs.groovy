@@ -1,5 +1,8 @@
 freeStyleJob('seed-job') {
-    node('jenkins-manager') 
+    label('jenkins-manager') 
+    configure { project ->
+        project / canRoam(false)
+    }
     scm {
         git {
             remote {
