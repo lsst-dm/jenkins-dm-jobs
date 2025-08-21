@@ -331,9 +331,8 @@ def loadCache(
   String buildDir,
   String tag="w_latest"
 ) {
-  def buildDirHash = buildDir
-  def gcp_repo = 'gcr.io/google.com/cloudsdktool/google-cloud-cli'
-  dir(buildDirHash) {
+  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
+  dir(buildDir) {
     def cwd = pwd()
     def ciDir = "${cwd}/ci-scripts"
     dir(ciDir){
@@ -348,16 +347,14 @@ def loadCache(
         "DATE_TAG=${tag}",
       ]) {
           insideDockerWrap(
-            image: "${gcp_repo}:debian_component_based",
+            image: "${gcp_repo}:latest",
             pull: true,
             args: "-v ${cwd}:/home",
           ) {
              bash """
-             apt update && apt -y install zstd
              gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
              cd /home/ci-scripts
              ./loadlsststack.sh $DATE_TAG
-             cd /home/lsstsw
              """
         }
       }
@@ -370,7 +367,6 @@ def loadCache(
  * @param tag Which eups tag to load
  */
 def saveCache(
-  String buildDir,
   String tag="w_latest"
 ) {
   def cwd = pwd()
@@ -388,7 +384,6 @@ def saveCache(
       "DATE_TAG=${tag}",
     ]) {
         bash """
-        pwd
         cd lsstsw
         source bin/envconfig
         gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
@@ -411,7 +406,7 @@ def lsstswBuild(
   Map lsstswConfig,
   Map buildParams,
   Boolean wipeout=false,
-  Boolean fetchCache=true,
+  Boolean fetchCache=false,
   Boolean cachelsstsw=false
 ) {
   validateLsstswConfig(lsstswConfig)
@@ -426,41 +421,33 @@ def lsstswBuild(
 
 
   def run = {
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'github-api-token-checks',
-      variable: 'GITHUB_TOKEN'
-    ]]) {
-      bash 'ls -al'
-      bash 'pwd'
-      jenkinsWrapper(buildParams)
-    } // withCredentials
+    if (cachelsstsw){ // runs only if we want to cache the work
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'github-api-token-checks',
+        variable: 'GITHUB_TOKEN'
+      ]]) {
+        buildParams = [SCONSFLAGS: "--no-tests"] + buildParams
+        jenkinsWrapper(buildParams)
+        saveCache("w_latest")
+      } // withCredentials
+    } // if saveCacheRun
+    else {
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'github-api-token-checks',
+        variable: 'GITHUB_TOKEN'
+      ]]) {
+        jenkinsWrapper(buildParams)
+      } // withCredentials
+    } // else
   } // run
-  def saveCacheRun = {
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'github-api-token-checks',
-      variable: 'GITHUB_TOKEN'
-    ]]) {
-      buildParams = [SCONSFLAGS: "--no-tests"] + buildParams
-      jenkinsWrapper(buildParams)
-      saveCache(slug,"w_latest")
-    } // withCredentials
-  } // saveCacheRun
-
   def runDocker = {
-    def cwd = pwd()
     insideDockerWrap(
       image: lsstswConfig.image,
       pull: true,
-      // args: "-v ${cwd}:/home",
     ) {
-      if (cachelsstsw){
-        saveCacheRun()
-      }
-      else {
         run()
-      }
     }
   } // runDocker
 
@@ -502,7 +489,14 @@ def lsstswBuild(
       runEnv(runDocker) 
     }
   } else {
-    task = { runEnv(run) }
+    if (cachelsstsw){ 
+      // runs only if we are not running a caching job. Since this isn't on
+      // docker we do not need to store cache for them.
+      return
+    }
+    else {
+      task = { runEnv(run) }
+      }
   }
 
   nodeWrap(agent) {
@@ -551,17 +545,17 @@ def void jenkinsWrapper(Map buildParams) {
 
     // workspace relative dir for dot files to prevent bleed through between
     // jobs and subsequent builds.
-    // emptyDirs([homeDir])
+    emptyDirs([homeDir])
 
     // cleanup *all* conda cached package info
-    // [
-    //   'lsstsw/miniconda/conda-meta',
-    //   'lsstsw/miniconda/pkgs',
-    // ].each { it ->
-    //   dir(it) {
-    //     deleteDir()
-    //   }
-    // }
+    [
+      'lsstsw/miniconda/conda-meta',
+      'lsstsw/miniconda/pkgs',
+    ].each { it ->
+      dir(it) {
+        deleteDir()
+      }
+    }
 
     // This file is needed for conda to know it has a base environment.
     bash '''

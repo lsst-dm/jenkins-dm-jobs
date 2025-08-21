@@ -25,11 +25,11 @@ notify.wrap {
     'BUILD_DOCS',
     'WIPEOUT',
     'NO_BINARY_FETCH'
-    // 'LOAD_CACHE'
+    //'LOAD_CACHE'
   ])
-  def LOAD_CACHE = false
 
-  def SAVE_CACHE = false
+def LOAD_CACHE = false
+  def SAVE_CACHE = true
   if (params.SAVE_CACHE) {
     SAVE_CACHE = true
   }
