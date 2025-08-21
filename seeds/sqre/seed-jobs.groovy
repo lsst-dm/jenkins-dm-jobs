@@ -1,5 +1,5 @@
 freeStyleJob('seed-job') {
-    label('jenkins-manager')
+    node('jenkins-manager')
     scm {
         git {
             remote {
