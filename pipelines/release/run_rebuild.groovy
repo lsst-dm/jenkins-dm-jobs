@@ -134,6 +134,7 @@ notify.wrap {
                   . ./ci-scripts/settings.cfg.sh
 
                   aws s3 cp \
+                    --endpoint-url "$AWS_ENDPOINT_URL_S3" \ 
                     --only-show-errors \
                     --recursive \
                     "${DOC_PUSH_PATH}/" \
