@@ -122,7 +122,8 @@ notify.wrap {
             withEnv([
               "EUPS_PKGROOT=${cwd}/distrib",
               "HOME=${cwd}/home",
-              "AWS_ENDPOINT_URL_S3=https://s3dfrgw.slac.stanford.edu",          
+              "AWS_ENDPOINT_URL_S3=https://s3dfrgw.slac.stanford.edu",
+              "AWS_S3_FORCE_PATH_STYLE=true",
             ]) {
               // the current iteration of the awscli container is alpine based
               // and doesn't work with util.insideDockerWrap.  However, the aws
