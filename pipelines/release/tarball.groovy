@@ -688,7 +688,6 @@ def void gsPushConda(String ... parts) {
 def String gsPushCmd() {
   // do not interpolate now -- all values should come from the shell env.
   return util.dedent('''
-      gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
       gcloud storage cp \
       --recursive \
       "${EUPS_PKGROOT}/*" \
