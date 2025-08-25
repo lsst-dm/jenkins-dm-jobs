@@ -94,7 +94,6 @@ notify.wrap {
              withEnv(buildEnv) {
                util.posixSh("""
                  source lsstsw/bin/envconfig
-                 gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
                  cd ci-scripts
                  ./backuplsststack.sh $DATE_TAG
                """)
