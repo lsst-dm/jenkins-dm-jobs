@@ -120,7 +120,6 @@ notify.wrap {
               docker.image(util.defaultGcloudImage()).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
-                 gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
                  gcloud storage cp \
                  --recursive \
                  "${EUPS_PKGROOT}/*" \
