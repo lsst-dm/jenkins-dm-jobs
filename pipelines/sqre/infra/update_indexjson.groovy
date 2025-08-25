@@ -45,7 +45,6 @@ notify.wrap {
           ]) {
             docker.image("$hub_repo:alpine").inside {
                 util.posixSh '''
-                gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
                 python3 ci-scripts/updateindexfile.py
                 '''
             }
