@@ -28,6 +28,7 @@ notify.wrap {
     'LOAD_CACHE',
     'SAVE_CACHE'
   ])
+  println("This is the save: "+ SAVE_CACHE)
 
   def buildParams = [
     LSST_REFS:              REFS,
