@@ -329,7 +329,7 @@ def void runPublish(Map p) {
  */
 def loadCache(
   String buildDir,
-  String tag="w_latest"
+  String tag="d_latest"
 ) {
   def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
   dir(buildDir) {
@@ -367,7 +367,7 @@ def loadCache(
  * @param tag Which eups tag to load
  */
 def saveCache(
-  String tag="w_latest"
+  String tag="d_latest"
 ) {
   def cwd = pwd()
   bash '''
@@ -429,7 +429,7 @@ def lsstswBuild(
       ]]) {
         buildParams = [SCONSFLAGS: "--no-tests"] + buildParams
         jenkinsWrapper(buildParams)
-        saveCache("w_latest")
+        saveCache("d_latest")
       } // withCredentials
     } // if saveCacheRun
     else {
@@ -484,7 +484,7 @@ def lsstswBuild(
   if (lsstswConfig.image) {
     task = {
       if (fetchCache){
-        loadCache(slug,"w_latest")
+        loadCache(slug,"d_latest")
       }
       runEnv(runDocker) 
     }
