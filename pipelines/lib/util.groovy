@@ -323,6 +323,79 @@ def void runPublish(Map p) {
 } // runPublish
 
 /**
+ * Loads Cache
+ * @param buildDir where to place the loaded file 
+ * @param tag Which eups tag to load
+ */
+def loadCache(
+  String buildDir,
+  String tag="w_latest"
+) {
+  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
+  dir(buildDir) {
+    def cwd = pwd()
+    def ciDir = "${cwd}/ci-scripts"
+    dir(ciDir){
+      cloneCiScripts()
+    }
+    withCredentials([file(
+      credentialsId: 'gs-eups-push',
+      variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+    )]) {
+      withEnv([
+        "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
+        "DATE_TAG=${tag}",
+      ]) {
+          insideDockerWrap(
+            image: "${gcp_repo}:latest",
+            pull: true,
+            args: "-v ${cwd}:/home",
+          ) {
+             bash """
+             gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+             cd /home/ci-scripts
+             ./loadlsststack.sh $DATE_TAG
+             """
+        }
+      }
+    }
+  }
+}
+/**
+ * Save Cache
+ * @param buildDir where to place the loaded file 
+ * @param tag Which eups tag to load
+ */
+def saveCache(
+  String tag="w_latest"
+) {
+  def cwd = pwd()
+  bash '''
+    cd lsstsw
+    source bin/envconfig
+    conda install google-cloud-sdk
+  '''
+  withCredentials([file(
+    credentialsId: 'gs-eups-push',
+    variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+  )]) {
+    withEnv([
+      "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
+      "DATE_TAG=${tag}",
+    ]) {
+        bash """
+        cd lsstsw
+        source bin/envconfig
+        gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+        cd ../ci-scripts
+        ./backuplsststack.sh $DATE_TAG
+        """
+    }
+  }
+}
+
+
+/**
  * Run a lsstsw build.
  *
  * @param lsstswConfig Map
@@ -332,7 +405,9 @@ def void runPublish(Map p) {
 def lsstswBuild(
   Map lsstswConfig,
   Map buildParams,
-  Boolean wipeout=false
+  Boolean wipeout=false,
+  Boolean fetchCache=false,
+  Boolean cachelsstsw=false
 ) {
   validateLsstswConfig(lsstswConfig)
   def slug = lsstswConfigSlug(lsstswConfig)
@@ -344,22 +419,35 @@ def lsstswBuild(
     LSST_SPLENV_REF:     lsstswConfig.splenv_ref,
   ] + buildParams
 
-  def run = {
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'github-api-token-checks',
-      variable: 'GITHUB_TOKEN'
-    ]]) {
-      jenkinsWrapper(buildParams)
-    } // withCredentials
-  } // run
 
+  def run = {
+    if (cachelsstsw){ // runs only if we want to cache the work
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'github-api-token-checks',
+        variable: 'GITHUB_TOKEN'
+      ]]) {
+        buildParams = [SCONSFLAGS: "--no-tests"] + buildParams
+        jenkinsWrapper(buildParams)
+        saveCache("w_latest")
+      } // withCredentials
+    } // if saveCacheRun
+    else {
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'github-api-token-checks',
+        variable: 'GITHUB_TOKEN'
+      ]]) {
+        jenkinsWrapper(buildParams)
+      } // withCredentials
+    } // else
+  } // run
   def runDocker = {
     insideDockerWrap(
       image: lsstswConfig.image,
       pull: true,
     ) {
-      run()
+        run()
     }
   } // runDocker
 
@@ -394,9 +482,21 @@ def lsstswBuild(
   def agent = lsstswConfig.label
   def task = null
   if (lsstswConfig.image) {
-    task = { runEnv(runDocker) }
+    task = {
+      if (fetchCache){
+        loadCache(slug,"w_latest")
+      }
+      runEnv(runDocker) 
+    }
   } else {
-    task = { runEnv(run) }
+    if (cachelsstsw){ 
+      // runs only if we are not running a caching job. Since this isn't on
+      // docker we do not need to store cache for them.
+      return
+    }
+    else {
+      task = { runEnv(run) }
+      }
   }
 
   nodeWrap(agent) {
@@ -998,7 +1098,9 @@ def void nodeTiny(Closure run) {
 def lsstswBuildMatrix(
   List matrixConfig,
   Map buildParams,
-  Boolean wipeout=false
+  Boolean wipeout=false,
+  Boolean loadCache=false,
+  Boolean saveCache=false
 ) {
   def matrix = [:]
 
@@ -1010,7 +1112,9 @@ def lsstswBuildMatrix(
       lsstswBuild(
         lsstswConfig,
         buildParams,
-        wipeout
+        wipeout,
+        loadCache,
+        saveCache
       )
     }
   }

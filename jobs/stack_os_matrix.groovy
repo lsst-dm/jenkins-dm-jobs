@@ -15,6 +15,7 @@ p.pipeline().with {
     // XXX testing only
     //booleanParam('NO_FETCH', false, 'Do not pull from git remote if branch is already the current ref. (This should generally be false outside of testing the CI system)')
     booleanParam('NO_BINARY_FETCH', false, 'if enable, will build all binaries from scratch')
+    booleanParam('LOAD_CACHE', true, 'if enable, will load cache from gcp')
   }
 
   environmentVariables(

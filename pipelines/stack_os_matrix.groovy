@@ -25,7 +25,12 @@ notify.wrap {
     'BUILD_DOCS',
     'WIPEOUT',
     'NO_BINARY_FETCH',
+    'LOAD_CACHE'
   ])
+
+  if (params.SAVE_CACHE) {
+    SAVE_CACHE = true
+  }
 
   def buildParams = [
     LSST_REFS:              REFS,
@@ -46,7 +51,7 @@ notify.wrap {
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean())
+      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean() )
     }
   }
 } // notify.wrap
