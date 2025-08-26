@@ -25,12 +25,9 @@ notify.wrap {
     'BUILD_DOCS',
     'WIPEOUT',
     'NO_BINARY_FETCH',
-    'LOAD_CACHE'
+    'LOAD_CACHE',
+    'SAVE_CACHE'
   ])
-
-  if (params.SAVE_CACHE) {
-    SAVE_CACHE = true
-  }
 
   def buildParams = [
     LSST_REFS:              REFS,
