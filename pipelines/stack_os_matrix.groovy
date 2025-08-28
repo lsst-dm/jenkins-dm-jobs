@@ -41,6 +41,10 @@ notify.wrap {
     buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
   }
 
+  if (ALLOW_CACHING){
+      SAVE_CACHE = true
+  }
+
   def lsstswConfigs = scipipe[BUILD_CONFIG]
   if (lsstswConfigs == null) {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"

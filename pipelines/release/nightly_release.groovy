@@ -151,6 +151,7 @@ notify.wrap {
 
     triggerMe['Update cache'] = {
     retry(retries){
+      environment {ALLOW_CACHING = 'true'}
         build(
           job: 'stack-os-matrix',
           parameters:[
@@ -159,7 +160,6 @@ notify.wrap {
             string(name:'SPLENV_REF', value: scipipe.template.splenv_ref),
             booleanParam(name:'NO_BINARY_FETCH', value: true),
             booleanParam(name:'LOAD_CACHE', value: false),
-            booleanParam(name:'SAVE_CACHE', value: true),
           ],
           wait: true,
         )
