@@ -149,6 +149,22 @@ notify.wrap {
 
     def triggerMe = [:]
 
+    triggerMe['Update cache'] = {
+    retry(retries){
+        build(
+          job: 'stack-os-matrix',
+          parameters:[
+            string(name:'REFS', value:""),
+            string(name:'PRODUCTS', value: scipipe.canonical.products),
+            string(name:'SPLENV_REF', value: scipipe.template.splenv_ref),
+            booleanParam(name:'NO_BINARY_FETCH', value: true),
+            booleanParam(name:'LOAD_CACHE', value: false),
+            booleanParam(name:'SAVE_CACHE', value: true),
+          ],
+          wait: true,
+        )
+      }
+    }
     triggerMe['Update index files'] = {
     retry(retries){
         build(
