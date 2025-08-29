@@ -3,7 +3,12 @@ import util.Plumber
 def p = new Plumber(name: 'sqre/infra/documenteer', dsl: this)
 p.pipeline().with {
   description('Build and publish documenteer/sphinx based docs.')
-
+  
+  logRotator {
+    daysToKeep(60)
+    artifactDaysToKeep(60)
+  }
+  
   parameters {
     stringParam('EUPS_TAG', null, '(required) EUPS distrib tag name. Eg. w_9999_52')
     stringParam('LTD_SLUG', null, '(required) LTD edition slug')

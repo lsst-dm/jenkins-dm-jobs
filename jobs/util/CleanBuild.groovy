@@ -24,6 +24,11 @@ class CleanBuild {
         }
       }
 
+      logRotator {
+        daysToKeep(60)
+        artifactDaysToKeep(60)
+      }
+
       keepDependencies()
 
       if (cron) {
