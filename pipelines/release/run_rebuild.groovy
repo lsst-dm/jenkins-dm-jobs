@@ -128,8 +128,7 @@ notify.wrap {
               // the current iteration of the awscli container is alpine based
               // and doesn't work with util.insideDockerWrap.  However, the aws
               // cli seems to work OK without trying to lookup the username.
-              docker.image('gcr.io/google.com/cloudsdktool/google-cloud-cli:slim').inside {
-                // alpine does not include bash by default
+              docker.image(util.defaultGcloudImage()).inside {
                 util.posixSh '''
                   # provides DOC_PUSH_PATH
                   . ./ci-scripts/settings.cfg.sh
