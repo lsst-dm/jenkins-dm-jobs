@@ -122,24 +122,22 @@ notify.wrap {
             withEnv([
               "EUPS_PKGROOT=${cwd}/distrib",
               "HOME=${cwd}/home",
-              "AWS_ENDPOINT_URL_S3=https://s3dfrgw.slac.stanford.edu",
-              "AWS_S3_FORCE_PATH_STYLE=true",
+              "GCS_BUCKET=doxygen-dev",
+              "GCS_DEST_PREFIX=stack/doxygen/"
             ]) {
               // the current iteration of the awscli container is alpine based
               // and doesn't work with util.insideDockerWrap.  However, the aws
               // cli seems to work OK without trying to lookup the username.
-              docker.image(util.defaultAwscliImage()).inside {
+              docker.image('gcr.io/google.com/cloudsdktool/google-cloud-cli:slim').inside {
                 // alpine does not include bash by default
                 util.posixSh '''
                   # provides DOC_PUSH_PATH
                   . ./ci-scripts/settings.cfg.sh
 
-                  aws s3 cp \
-                    --endpoint-url "$AWS_ENDPOINT_URL_S3" \ 
-                    --only-show-errors \
-                    --recursive \
-                    "${DOC_PUSH_PATH}/" \
-                    "s3://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
+                  gcloud config set project prompt-proto
+                  gcloud storage rsync --recursive "${DOC_PUSH_PATH}/" "gs://${GCS_BUCKET}/${GCS_DEST_PREFIX}"
+
+
                 '''
               } // util.insideDockerWrap
             } // withEnv
