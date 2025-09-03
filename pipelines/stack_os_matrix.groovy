@@ -41,6 +41,12 @@ notify.wrap {
     buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
   }
 
+  // override env for SAVE_CACHE. Currently job override any env set by the build job
+  // in nightly. 
+  if (params.SAVE_CACHE) {
+    SAVE_CACHE = params.SAVE_CACHE
+  }
+
   def lsstswConfigs = scipipe[BUILD_CONFIG]
   if (lsstswConfigs == null) {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
