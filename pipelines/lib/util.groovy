@@ -1082,7 +1082,7 @@ def void withGithubAdminCredentials(Closure run) {
  */
 def void nodeTiny(Closure run) {
   nodeWrap('jenkins-manager') {
-    timeout(time: 5, unit: 'MINUTES') {
+    timeout(time: 30, unit: 'MINUTES') {
       run()
     }
   }
