@@ -66,4 +66,5 @@ notify.wrap {
                                SAVE_CACHE.toBoolean())
       }
     }
+  }
 } // notify.wrap
