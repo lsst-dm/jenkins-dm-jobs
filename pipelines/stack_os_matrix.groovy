@@ -54,17 +54,7 @@ notify.wrap {
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
-      wrap([$class: 'BuildTimeoutWrapper',
-            strategy: [$class: 'NoActivityTimeOutStrategy',
-                       timeout: 1200],  // 1200s = 20 minutes
-            operationList: [[ $class: 'FailOperation' ]],
-            writeDescription: true]) {
-        util.lsstswBuildMatrix(lsstswConfigs,
-                               buildParams,
-                               WIPEOUT.toBoolean(),
-                               LOAD_CACHE.toBoolean(),
-                               SAVE_CACHE.toBoolean())
-        }
-      }
+      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean() )
     }
+  }
 } // notify.wrap
