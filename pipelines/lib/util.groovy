@@ -1142,7 +1142,7 @@ def void cloneCiScripts() {
 
   gitNoNoise(
     url: githubSlugToUrl(scipipe.ciscripts.github_repo),
-    branch: scipipe.ciscripts.git_ref,
+    branch: "tickets/DM-52482",
   )
 }
 
