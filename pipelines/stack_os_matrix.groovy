@@ -64,7 +64,7 @@ notify.wrap {
                                WIPEOUT.toBoolean(),
                                LOAD_CACHE.toBoolean(),
                                SAVE_CACHE.toBoolean())
+        }
       }
     }
-  }
 } // notify.wrap
