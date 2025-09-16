@@ -41,7 +41,7 @@ ap_verify:
   defaults:
     squash_push: true
     retries: 3
-    run_timelimit: 60
+    run_timelimit: 120
   configs:
     - dataset:
         <<: *dataset_hits2015
