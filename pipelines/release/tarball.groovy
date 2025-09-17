@@ -809,7 +809,7 @@ def String buildScript(
     ciDir
   ) +
   util.dedent("""
-    curl -sSL ${util.lsstinstallUrl()} | bash -s
+    curl -sSL ${util.lsstinstallUrl()} | bash -s -- -v ${menv.rubinEnvVer}
     . ./loadLSST.bash
 
     for prod in ${products}; do
