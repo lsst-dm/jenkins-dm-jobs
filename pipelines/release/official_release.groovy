@@ -185,8 +185,6 @@ notify.wrap {
       parallel pub
     } // stage
 
-    util.waitForS3()
-
     stage('build eups tarballs') {
       util.buildTarballMatrix(
         tarballConfigs: scipipe.tarball.build_config,
@@ -202,8 +200,6 @@ notify.wrap {
         retries: retries,
       )
     } // stage
-
-    util.waitForS3()
 
     stage('build stack image') {
       retry(retries) {

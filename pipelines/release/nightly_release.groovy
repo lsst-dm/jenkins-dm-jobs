@@ -80,8 +80,6 @@ notify.wrap {
       parallel pub
     } // stage
 
-    util.waitForS3()
-
     // NOOP / DRY_RUN
     stage('git tag eups products') {
       retry(retries) {
@@ -130,8 +128,6 @@ notify.wrap {
         retries: retries,
       )
     } // stage
-
-    util.waitForS3()
 
     stage('build stack image') {
       retry(retries) {
