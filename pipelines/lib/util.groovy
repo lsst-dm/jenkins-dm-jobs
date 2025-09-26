@@ -852,14 +852,8 @@ def void githubTagRelease(Map p) {
   // are being generated from an existing eups tag.  If all workflows are
   // changed to git tag from a versiondb manifest prior to the build, it may be
   // removed.
-  def etbUrl
-  withCredentials([[
-    $class: 'StringBinding',
-    credentialsId: 'eups-url',
-    variable: 'EUPS_URL'
-  ]]) {
-    etbUrl = "${EUPS_URL}/stack/src/tags"
-  }
+  def eupsUrl = scipipe.eups.base_url
+  def etbUrl = "${eupsUrl}/stack/src/tags"
 
   def prog = 'github-tag-release'
   def defaultOptions = [
