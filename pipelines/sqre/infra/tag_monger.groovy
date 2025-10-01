@@ -25,29 +25,18 @@ notify.wrap {
     }
 
     stage('retire daily tags') {
-      withCredentials([
-        [
-          $class: 'UsernamePasswordMultiBinding',
-          credentialsId: 'aws-eups-tag-admin',
-          usernameVariable: 'AWS_ACCESS_KEY_ID',
-          passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-        ],
-        [
-          $class: 'StringBinding',
-          credentialsId: 'eups-push-bucket',
-          variable: 'S3_SRC_BUCKET'
-        ],
-      ]) {
+      withCredentials([file(
+          credentialsId: 'gs-eups-push',
+          variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+        )])  {
         withEnv([
           "IMAGE=${image.id}",
-          "AWS_REGION=us-east-1",
-          "TAG_MONGER_BUCKET=${S3_SRC_BUCKET}",
+          "TAG_MONGER_BUCKET=eups-prod",
           "TAG_MONGER_MAX=0",
-          "TAG_MONGER_PAGESIZE=500",
           "TAG_MONGER_VERBOSE=true",
         ]) {
           image.inside {
-            sh 'tag-monger'
+            sh 'tag-monger -g'
           }
         }
       } // withCredentials
