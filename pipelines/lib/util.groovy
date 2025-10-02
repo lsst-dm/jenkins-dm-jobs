@@ -853,7 +853,7 @@ def void githubTagRelease(Map p) {
   // changed to git tag from a versiondb manifest prior to the build, it may be
   // removed.
   def eupsUrl = scipipe.eups.base_url
-  def etbUrl = "${eupsUrl}/stack/src/tags"
+  def etbUrl = "${eupsUrl}/src/tags"
 
   def prog = 'github-tag-release'
   def defaultOptions = [
