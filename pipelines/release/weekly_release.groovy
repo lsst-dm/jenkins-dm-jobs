@@ -79,8 +79,6 @@ notify.wrap {
       parallel pub
     } // stage
 
-    util.waitForS3()
-
     stage('git tag eups products') {
       retry(retries) {
         util.nodeWrap('linux-64') {
@@ -128,8 +126,6 @@ notify.wrap {
         retries: retries,
       )
     } // stage
-
-    util.waitForS3()
 
     stage('build stack image') {
       retry(retries) {
