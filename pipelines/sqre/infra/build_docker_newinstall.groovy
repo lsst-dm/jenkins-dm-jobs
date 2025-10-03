@@ -18,28 +18,32 @@ notify.wrap {
   util.requireParams([
     'NO_PUSH',
   ])
-  def dockerRepo = 'ghcr.io/lsst-dm/docker-tarballs'
-  def dockerTag = 'latest'
   def build_stack    = scipipe.build_stack
   def lsstswConfigs  = build_stack.lsstsw_config
-  def release        = scipipe.scipipe_release
+  def release        = scipipe.newinstall
   def dockerfile     = release.dockerfile
   def githubRepo     = util.githubSlugToUrl(dockerfile.github_repo)
   def gitRef         = dockerfile.git_ref
   def buildDir       = dockerfile.dir
-  def eupsTag        = dockerfile.tag
-  Boolean noPush         = params.NO_PUSH
+  def dockerRepo     = release.docker_registry.repo
+  def dockerTag      = release.docker_registry.tag
   def dockerdigest   = []
 
+  Boolean noPush         = params.NO_PUSH
+
+
+
+  def splenvRef       = lsstswConfigs[0].splenv_ref
   def registryTags = [
     dockerTag,
+    "latest",
+    "$dockerTag-$splenvRef",
   ]
-
   def matrix = [:]
   lsstswConfigs.each{ lsstswConfig ->
     def slug = util.lsstswConfigSlug(lsstswConfig)
     matrix[slug] ={
-  def run = {
+    def run = {
       stage('checkout') {
         repo = git([
           url: githubRepo,
@@ -50,10 +54,12 @@ notify.wrap {
         def opt = []
         opt << '--pull=true'
         opt << '--no-cache'
-        opt << "--build-arg EUPS_TAG=\"${eupsTag}\""
+        opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
         opt << "--load"
         opt << '.'
         dir(buildDir) {
+          println("TEST")
+          println(dockerRepo)
           image = docker.build("${dockerRepo}", opt.join(' '))
         }
       }
@@ -101,10 +107,9 @@ notify.wrap {
             $digest
             """,
             returnStdout: true)
+          }
         }
-        }
-    }
-
+      }
   } // merge
   util.nodeWrap('linux-64') {
       timeout(time: 1, unit: 'HOURS') {

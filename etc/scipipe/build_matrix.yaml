@@ -139,12 +139,15 @@ scipipe_release:
     github_repo: lsst-dm/docker-tarballs
     git_ref: main
     dir: ''
+    tag: 'w_2025_40'
   docker_registry:
     repo: lsst/scipipe
     ghcr: true
-    # We should switch to this repo once we drop docker hub
-    # repo: lsst/scipipe
 newinstall:
+  dockerfile:
+    github_repo: lsst-dm/docker-newinstall
+    git_ref: main
+    dir: ''
   docker_registry:
     repo: ghcr.io/lsst-dm/docker-newinstall
     tag: 9-latest
