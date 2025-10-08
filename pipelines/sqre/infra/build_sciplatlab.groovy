@@ -21,20 +21,14 @@ notify.wrap {
     'TAG',
     'IMAGE',
     'SUPPLEMENTARY',
-    'NO_PUSH',
     'BRANCH',
   ])
 
   String tag              = params.TAG
   String supplementary    = params.SUPPLEMENTARY
   String image            = params.IMAGE
-  String push             = "true"
   String branch           = params.BRANCH
   Instant starttime = null
-
-  if (params.NO_PUSH) {
-    push = "false"
-  }
 
   def run = {
     stage('trigger GHA') {
@@ -44,7 +38,6 @@ notify.wrap {
           tag: tag,
           supplementary: supplementary,
           image: image,
-          push: push
         ]
       ]
       def json = new groovy.json.JsonBuilder(body)
