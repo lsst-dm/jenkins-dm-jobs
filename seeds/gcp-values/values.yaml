@@ -26,7 +26,7 @@ controller:
   image:
     registry: "docker.io"
     repository: "jenkins/jenkins"
-    tag: "2.516.1-lts-jdk21"
+    tag: "2.516.3-lts-jdk21"
     #tagLabel: jdk11
     pullPolicy: "Always"
   imagePullSecretName:
@@ -152,7 +152,10 @@ controller:
 
 
   # Set min/max heap here if needed with:
-  javaOpts: "--add-opens=java.base/java.lang=ALL-UNNAMED"
+  javaOpts: >
+    -Dorg.jenkinsci.plugins.docker.workflow.client.DockerClient.CLIENT_TIMEOUT=1200
+    -Dorg.csanchez.jenkins.plugins.kubernetes.ContainerExecTimeout=1200
+    -Dorg.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep.NO_ACTIVITY_TIMEOUT=1200
   # jenkinsOpts: ""
   # If you are using the ingress definitions provided by this chart via the
   # `controller.ingress` block the configured hostname will be the ingress
@@ -312,6 +315,7 @@ controller:
   # Optionally, assign an IP to the LoadBalancer agentListenerService LoadBalancer
   # GKE users: only regional static IPs will work for Service Load balancer.
   # -- Static IP for the agentListener LoadBalancer
+  agentListenerLoadBalancerIP:
 
   # -- Whether legacy remoting security should be enabled
   legacyRemotingSecurityEnabled: false
@@ -319,7 +323,7 @@ controller:
   # LoadBalancerSourcesRange is a list of allowed CIDR values, which are combined with ServicePort to
   # set allowed inbound rules on the security group assigned to the controller load balancer
   loadBalancerSourceRanges:
-  loadBalancerIP:
+  loadBalancerIP: 
 
   # Optionally configure a JMX port. This requires additional javaOpts, for example,
   # javaOpts: >
@@ -336,12 +340,12 @@ controller:
 
   # List of plugins to be install during Jenkins controller start
   installPlugins:
-    - kubernetes:4358.vcfd9c5a_0a_f51
+    - kubernetes:4371.vb_33b_086d54a_1
     - workflow-aggregator:608.v67378e9d3db_1
     - job-dsl:1.93
     - blueocean:1.27.21
-    - configuration-as-code:1985.vdda_32d0c4ea_b_
-    - matrix-auth:3.2.6
+    - configuration-as-code:1995.v540b_50a_eb_0c1
+    - matrix-auth:3.2.8
     - hashicorp-vault-plugin:371.v884a_4dd60fb_6
 
   # Set to false to download the minimum required version of all dependencies.
@@ -355,10 +359,10 @@ controller:
     #- ace-editor:1.1
     - antisamy-markup-formatter:173.v680e3a_b_69ff3
     - apache-httpcomponents-client-4-api:4.5.14-269.vfa_2321039a_83
-    - apache-httpcomponents-client-5-api:5.5-150.veb_76e719855b_
+    - apache-httpcomponents-client-5-api:5.5-170.v023de017ccd7
     - asm-api:9.8-163.vb_2a_96d3f9c3c
     #depreciated    - async-http-client:1.9.40.0
-    - authentication-tokens:1.131.v7199556c3004
+    - authentication-tokens:1.144.v5ff4a_5ec5c33
     - blueocean-autofavorite:1.2.5
     - blueocean-bitbucket-pipeline:1.27.21
     - blueocean-commons:1.27.21
@@ -378,56 +382,56 @@ controller:
     - blueocean-rest:1.27.21
     - blueocean-rest-impl:1.27.21
     - blueocean-web:1.27.21
-    - bootstrap5-api:5.3.7-2
+    - bootstrap5-api:5.3.8-895.v4d0d8e47fea_d
     - bouncycastle-api:2.30.1.81-264.v95c79c0e772c
-    - branch-api:2.1235.v04e86c7ce54c
+    - branch-api:2.1253.v6e7f7519f710
     - build-timeout:1.38
     - build-user-vars-plugin:195.v8c35f9d5c3dc
     - caffeine-api:3.2.2-178.v353b_8428ed56
     - checks-api:373.vfe7645102093
-    - cloudbees-bitbucket-branch-source:936.4.4
-    - cloudbees-disk-usage-simple:241.v0ea_d9a_a_96ee8
-    - cloudbees-folder:6.1037.v4cb_8573b_72a_a_
+    - cloudbees-bitbucket-branch-source:937.0.4
+    - cloudbees-disk-usage-simple:256.v20ec4eb_884f1
+    - cloudbees-folder:6.1045.vb_ddd55e2d03f
     - command-launcher:123.v37cfdc92ef67
     - commons-compress-api:1.28.0-1
     - commons-lang3-api:3.18.0-98.v3a_674c06072d
     - commons-text-api:1.14.0-194.v804a_dc3a_1b_d8
     - copyartifact:770.va_6c69e063442
-    - credentials:1419.v2337d1ceceef
+    - credentials:1447.v4cb_b_539b_5321
     - credentials-binding:702.vfe613e537e88
-    - data-tables-api:2.3.2-3
+    - data-tables-api:2.3.4-1413.va_57c35d0a_9ec
     - display-url-api:2.217.va_6b_de84cc74b_
     - docker-commons:457.v0f62a_94f11a_3
     - dockerhub-notification:222.v483263f10718
     - docker-workflow:621.va_73f881d9232
-    - durable-task:595.ve87b_f1318d67
-    - echarts-api:6.0.0-1
+    - durable-task:605.v9a_b_9040c9970
+    - echarts-api:6.0.0-1146.v5c8f3b_8f0573
     - eddsa-api:0.3.0.1-19.vc432d923e5ee
     - envinject:2.926.v69c9b_3896a_96
     - envinject-api:1.235.va_14c74f8f487
     - external-monitor-job:223.vb_fddcf42c9b_3
-    - favorite:2.237.v79163ca_8b_892
-    - font-awesome-api:7.0.0-1
+    - favorite:2.253.v9b_413168133b_
+    - font-awesome-api:7.0.1-872.vb_679b_2c95492
     - git:5.7.0
-    - git-client:6.3.0
-    - github:1.44.0
-    - github-api:1.321-488.v9b_c0da_9533f8
-    - github-branch-source:1834.v857721ea_74c6
-    - github-checks:602.v264a_83610da_6
+    - git-client:6.4.0
+    - github:1.45.0
+    - github-api:1.330-492.v3941a_032db_2a_
+    - github-branch-source:1864.v411feec5e78e
+    - github-checks:634.v371dc6d978a_3
     - github-oauth:651.v135e939e8b_60
     - git-server:137.ve0060b_432302
     #deprecated    - greenballs:1.15.1
     - groovy:497.v7b_061a_a_de65d
-    - gson-api:2.13.1-139.v4569c2ef303f
+    - gson-api:2.13.2-173.va_a_092315913c
     #deprecated    - handlebars:3.0.8
     - handy-uri-templates-2-api:2.1.8-36.v85e4cb_234a_13
     - htmlpublisher:427
     #deprecated    - icon-shim:3.0.0
     - instance-identity:203.v15e81a_1b_7a_38
     - ionicons-api:94.vcc3065403257
-    - jackson2-api:2.19.2-408.v18248a_324cfe
+    - jackson2-api:2.20.0-411.v6ef8fdee4fe9
     - jakarta-activation-api:2.1.3-2
-    - jakarta-mail-api:2.1.3-2
+    - jakarta-mail-api:2.1.3-3
     - javadoc:354.vee1a_660b_4990
     - javax-activation-api:1.2.0-8
     - javax-mail-api:1.6.2-11
@@ -435,82 +439,82 @@ controller:
     - jdk-tool:83.v417146707a_3d
     - jenkins-design-language:1.27.21
     - jersey2-api:2.47-165.ve7809a_3e87e0
-    - jira:3.18
+    - jira:3.19
     - jjwt-api:0.11.5-120.v0268cf544b_89
     - joda-time-api:2.14.0-149.v1c3ce991d1b_9
     - jquery:1.12.4-3
     #deprecated    - jquery-detached:1.2.1
-    - jquery3-api:3.7.1-3
+    - jquery3-api:3.7.1-594.vb_3864f326cf0
     - jsch:0.2.16-95.v3eecb_55fa_b_78
-    - json-api:20250517-163.v1c5da_e99c775
-    - json-path-api:2.9.0-178.vca_b_c71881321
-    - junit:1335.v6b_a_a_e18534e1
+    - json-api:20250517-173.v596efb_962a_31
+    - json-path-api:2.9.0-190.veefca_05d5477
+    - junit:1355.v45e2ea_65863c
     - kubernetes-client-api:7.3.1-256.v788a_0b_787114
-    - kubernetes-credentials:203.v85b_9836a_f44b_
-    - lockable-resources:1408.vb_7d1f371781d
+    - kubernetes-credentials:206.vde31a_b_0f71a_c
+    - lockable-resources:1412.v3f305a_fb_a_117
     - log-parser:2.5.0
-    - mailer:515.vd788654779b_1
-    - matrix-project:849.v0cd64ed7e531
-    - mercurial:1309.v6802b_f0efb_b_9
-    - mina-sshd-api-common:2.15.0-161.vb_200831a_c15b_
-    - mina-sshd-api-core:2.15.0-161.vb_200831a_c15b_
-    - metrics:4.2.32-481.v75f035fdc894
+    - mailer:522.va_995fa_cfb_8b_d
+    - matrix-project:858.vb_b_eb_9a_7ea_99e
+    - mercurial:1323.ve69d2a_db_8a_b_d
+    - mina-sshd-api-common:2.16.0-167.va_269f38cc024
+    - mina-sshd-api-core:2.16.0-167.va_269f38cc024
+    - metrics:4.2.33-484.v2fcd689980d1
     #deprecated    - momentjs:1.1.1
     #deprecated - need alternative?    - multiple-scms:0.8
     - nodelabelparameter:759.vb_b_e95db_f3251
-    - okhttp-api:4.11.0-189.v976fa_d3379d6
-    - parameterized-trigger:859.vb_e3907a_07a_16
+    - okhttp-api:4.12.0-195.vc02552c04ffd
+    - parameterized-trigger:873.v8b_e37dd8418f
     - pipeline-build-step:571.v08a_fffd4b_0ce
-    - pipeline-graph-analysis:241.vc3d48fb_b_2582
-    - pipeline-groovy-lib:752.vdddedf804e72
-    - pipeline-input-step:532.v9e7466cb_4406
+    - pipeline-graph-analysis:245.v88f03631a_b_21
+    - pipeline-groovy-lib:763.v13008816b_de7
+    - pipeline-input-step:534.v352f0a_e98918
     - pipeline-milestone-step:138.v78ca_76831a_43
-    - pipeline-model-api:2.2258.v4e96d2b_da_f9b_
+    - pipeline-model-api:2.2273.v643f36ed9e94
     #deprecated    - pipeline-model-declarative-agent:1.1.1
-    - pipeline-model-definition:2.2258.v4e96d2b_da_f9b_
-    - pipeline-model-extensions:2.2258.v4e96d2b_da_f9b_
+    - pipeline-model-definition:2.2273.v643f36ed9e94
+    - pipeline-model-extensions:2.2273.v643f36ed9e94
     - pipeline-rest-api:2.38
     - pipeline-stage-step:322.vecffa_99f371c
-    - pipeline-stage-tags-metadata:2.2258.v4e96d2b_da_f9b_
+    - pipeline-stage-tags-metadata:2.2273.v643f36ed9e94
     - pipeline-stage-view:2.38
-    - pipeline-utility-steps:2.19.0
+    - pipeline-utility-steps:2.20.0
     - plain-credentials:199.v9f8e1f741799
-    - plugin-util-api:6.1.0
+    - plugin-util-api:6.1167.v022176c7e0ca_
     - popper2-api:2.11.6-5 #deprecated but needed for bootstrap5-api
     - postbuildscript:3.4.1-695.vf6b_0b_8053979
-    - prism-api:1.30.0-1
+    - prism-api:1.30.0-609.vf0a_df102d9a_f
     - prometheus:819.v50953a_c560dd
     - pubsub-light:1.19
     - purge-build-queue-plugin:125.v09ee2147746f
     - rebuild:338.va_0a_b_50e29397
     - run-condition:243.v3c3f94e46a_8b_
     - saferestart:102.v4dc1b_9636a_ee
-    - scm-api:707.v749f968369d4
+    - scm-api:709.v6c27075a_b_1c7
     - script-security:1378.vf25626395f49
     - snakeyaml-api:2.3-125.v4d77857a_b_402
     - sonar:2.18
     - sse-gateway:1.28
     - ssh-agent:386.v36cc0c7582f0
     - ssh-credentials:361.vb_f6760818e8c
-    - sshd:3.372.v5d04a_e92d8cf
+    - sshd:3.374.v19b_d59ce6610
     - ssh-slaves:3.1071.v0d059c7b_c555
     - structs:353.v261ea_40a_80fb_
-    - swarm:3.50
+    - swarm:3.51
     - timestamper:1.30
     - token-macro:477.vd4f0dc3cb_cf1
     - trilead-api:2.209.v0e69b_c43c245
     - variant:70.va_d9f17f859e0
     #depreciated     - windows-slaves:1.8.1  need to find alternative?
-    - workflow-api:1382.veca_a_efe062fa_
-    - workflow-basic-steps:1079.vce64b_a_929c5a_
-    - workflow-cps:4175.ve65b_fa_663eed
+    - workflow-api:1384.vdc05a_48f535f
+    - workflow-basic-steps:1098.v808b_fd7f8cf4
+    - workflow-cps:4209.v83c4e257f1e9
     #depreciated    - workflow-cps-global-lib:609.vd95673f149b_b
-    - workflow-durable-task-step:1446.v3efd13441220
-    - workflow-job:1540.v295eccc9778f
-    - workflow-multibranch:810.v6b_6e77da_7058
-    - workflow-scm-step:437.v05a_f66b_e5ef8
+    - workflow-durable-task-step:1464.v2d3f5c68f84c
+    - workflow-job:1549.vc8d7f497b_22f
+    - workflow-multibranch:821.vc3b_4ea_780798
+    - workflow-scm-step:452.vdf1ca_c8d3a_87
     - workflow-step-api:706.v518c5dcb_24c0
-    - workflow-support:976.vb_d9493c2eb_09
+    - workflow-support:989.va_20a_1a_57710a_
 
   # Enable to initialize the Jenkins controller only once on initial installation.
   # Without this, whenever the controller gets restarted (Evicted, etc.) it will fetch plugin updates which has the potential to cause breakage.
@@ -865,7 +869,7 @@ controller:
               #     id: "gs-eups-push"
               #     scope: GLOBAL
               #     fileName: "cred.json"
-              #     secretBytes: "${secret/rubin/rubin-jenkins-control/gs-eups-push}"
+              #     secretBytes: "${secret/rubin/rubin-jenkins-control/gs-eups-push}"             
               - string:
                   description: "github jenkins-dm app key in lsst repo"
                   id: "key-lsst"
@@ -973,11 +977,11 @@ controller:
         jenkins:
           clouds:
           - kubernetes:
-              containerCap: 10
-              containerCapStr: "10"
+              containerCap: 15
+              containerCapStr: "15"
               credentialsId: "db18c256-5c3e-4f94-aada-45def5734db7"
               garbageCollection:
-                timeout: 180
+                timeout: 600
               jenkinsTunnel: "jenkins-agent.jenkins.svc.cluster.local:20000"
               jenkinsUrl: "http://jenkins.jenkins.svc.cluster.local:8080"
               maxRequestsPerHost: 100
@@ -1049,7 +1053,7 @@ controller:
                             fieldRef:
                               apiVersion: v1
                               fieldPath: status.podIP
-                        - name: AGENT_WORKDIR
+                        - name: AGENT_WORKDIR 
                           value: /j
                       tty: true
                       volumeMounts:
@@ -1174,6 +1178,8 @@ controller:
                         name: kube-api-access-kf6wr
                         readOnly: true
                     dnsPolicy: ClusterFirst
+                    nodeSelector:
+                      cloud.google.com/gke-nodepool: jenkins-workers-c4d
                     enableServiceLinks: true
                     preemptionPolicy: PreemptLowerPriority
                     priority: 0
@@ -1359,7 +1365,7 @@ controller:
                             fieldRef:
                               apiVersion: v1
                               fieldPath: status.podIP
-                        - name: AGENT_WORKDIR
+                        - name: AGENT_WORKDIR 
                           value: /j
                       tty: true
                       volumeMounts:
@@ -1439,7 +1445,7 @@ controller:
                                 fieldPath: metadata.namespace
                               path: namespace
               - id: "64e840bf-0f62-474f-b8f6-a039e4e9cfdb"
-                #label: "snowflake-0"
+                label: "snowflake-0"
                 name: "snowflake"
                 yaml: |-
                   apiVersion: v1
@@ -1451,7 +1457,7 @@ controller:
                     namespace: jenkins
                   spec:
                     nodeSelector:
-                      cloud.google.com/gke-nodepool: jenkins-workers-multiarch-snowflake
+                      cloud.google.com/gke-nodepool: jenkins-workers-multiarch-c4a
                       kubernetes.io/arch: arm64
                     tolerations:
                       - key: "workload"
@@ -1585,7 +1591,7 @@ controller:
                             fieldRef:
                               apiVersion: v1
                               fieldPath: status.podIP
-                        - name: AGENT_WORKDIR
+                        - name: AGENT_WORKDIR 
                           value: /j
                       tty: true
                       volumeMounts:
@@ -1626,8 +1632,8 @@ controller:
                     terminationGracePeriodSeconds: 30
                     volumes:
                     - name: ws-snowflake
-                      emptyDir:
-                        #sizeLimit: 70Gi
+                      persistentVolumeClaim:
+                        claimName: snowflake-pvc
                     - emptyDir: {}
                       name: docker-graph-storage
                     - name: kube-api-access-p9jsc
@@ -1664,48 +1670,163 @@ controller:
                 name: "snowflake-0"
                 remoteFS: "/j"
                 retentionStrategy: "always"
+            # - permanent:
+            #     labelString: "mini osx-arm64"
+            #     launcher: "inbound"
+            #     name: "mini01"
+            #     remoteFS: "/Users/jenkins/j"
+            #     retentionStrategy: "always"
+            # - permanent:
+            #     labelString: "mini osx-arm64"
+            #     launcher: "inbound"
+            #     name: "mini02"
+            #     remoteFS: "/Users/jenkins/j"
+            #     retentionStrategy: "always"
+            # - permanent:
+            #     labelString: "mini osx-arm64"
+            #     launcher: "inbound"
+            #     name: "mini03"
+            #     remoteFS: "/Users/jenkins/j"
+            #     retentionStrategy: "always"
+            # - permanent:
+            #     labelString: "mini osx-arm64"
+            #     launcher: "inbound"
+            #     name: "mini04"
+            #     remoteFS: "/Users/jenkins/j"
+            #     retentionStrategy: "always"
+            # - permanent:
+            #     labelString: "mini osx-arm64"
+            #     launcher: "inbound"
+            #     name: "mini05"
+            #     remoteFS: "/Users/jenkins/j"
+            #     retentionStrategy: "always"
+            # - permanent:
+            #     labelString: "mini osx-arm64"
+            #     launcher: "inbound"
+            #     name: "mini06"
+            #     remoteFS: "/Users/jenkins/j"
+            #     retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
-                launcher: "inbound"
                 name: "mini01"
+                launcher:
+                  ssh:
+                    credentialsId: "mini-osx"
+                    host: "mac01.ls.lsst.org"
+                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+                    jvmOptions: "-Djava.awt.headless=true"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
-                launcher: "inbound"
                 name: "mini02"
+                launcher:
+                  ssh:
+                    credentialsId: "mini-osx"
+                    host: "mac02.ls.lsst.org"
+                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+                    jvmOptions: "-Djava.awt.headless=true"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
-                launcher: "inbound"
                 name: "mini03"
+                launcher:
+                  ssh:
+                    credentialsId: "mini-osx"
+                    host: "mac03.ls.lsst.org"
+                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+                    jvmOptions: "-Djava.awt.headless=true"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
-                launcher: "inbound"
                 name: "mini04"
+                launcher:
+                  ssh:
+                    credentialsId: "mini-osx"
+                    host: "mac04.ls.lsst.org"
+                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+                    jvmOptions: "-Djava.awt.headless=true"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
-                launcher: "inbound"
                 name: "mini05"
+                launcher:
+                  ssh:
+                    credentialsId: "mini-osx"
+                    host: "mac05.ls.lsst.org"
+                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+                    jvmOptions: "-Djava.awt.headless=true"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "mini osx-arm64"
-                launcher: "inbound"
                 name: "mini06"
+                launcher:
+                  ssh:
+                    credentialsId: "mini-osx"
+                    host: "mac06.ls.lsst.org"
+                    javaPath: "~/jdk-21.0.2.jdk/Contents/Home/bin/java"
+                    jvmOptions: "-Djava.awt.headless=true"
+                    launchTimeoutSeconds: 210
+                    maxNumRetries: 10
+                    port: 22
+                    retryWaitTime: 15
+                    sshHostKeyVerificationStrategy:
+                      manuallyTrustedKeyVerificationStrategy:
+                        requireInitialManualTrust: false
+                numExecutors: 1
                 remoteFS: "/Users/jenkins/j"
                 retentionStrategy: "always"
+
 
   # Optionally specify additional init-containers
   customInitContainers:
     - name: cleanup-old-casc
       image: busybox:1.36
-      command: ["/bin/sh", "-c", "rm -f /var/jenkins_home/casc_configs/* || true"]
+      command: ["/bin/sh","-c","rm -f /var/jenkins_home/casc_configs/* || true"]
       volumeMounts:
         - name: jenkins-home
           mountPath: /var/jenkins_home
@@ -1772,8 +1893,8 @@ controller:
   # Node labels and tolerations for pod assignment
   # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
   # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#taints-and-tolerations-beta-feature
-  nodeSelector: {}
-
+  nodeSelector:
+    cloud.google.com/gke-nodepool: jenkins-controls-standard
   terminationGracePeriodSeconds:
 
   terminationMessagePath:
@@ -1786,7 +1907,7 @@ controller:
   # ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
   priorityClassName:
 
-  podAnnotations:
+  podAnnotations: 
     cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
   # Add StatefulSet annotations
   statefulSetAnnotations: {}
@@ -1811,7 +1932,7 @@ controller:
     # For Kubernetes v1.19+, use 'networking.k8s.io/v1'
     apiVersion: "networking.k8s.io/v1"
     labels: {}
-    annotations:
+    annotations: 
       acme.cert-manager.io/http01-edit-in-place: "true"
       kubernetes.io/ingress.class: "gce"
       kubernetes.io/ingress.allow-http: "true"
@@ -1835,9 +1956,9 @@ controller:
     hostName: ci.lsst.cloud
     resourceRootUrl:
     tls:
-      - secretName: jenkins-tls
-        hosts:
-          - ci.lsst.cloud
+     - secretName: jenkins-tls
+       hosts:
+         - ci.lsst.cloud
 
   # often you want to have your controller all locked down and private
   # but you still want to get webhooks from your SCM
@@ -2156,7 +2277,8 @@ serviceAccount:
   create: true
   # The name of the service account is autogenerated by default
   name: jenkins
-  annotations: {}
+  annotations:
+    iam.gke.io/gcp-service-account: eups-dev@prompt-proto.iam.gserviceaccount.com
     #iam.gke.io/gcp-service-account: jenkins-secrets@prompt-proto.iam.gserviceaccount.com
   imagePullSecretName:
 
