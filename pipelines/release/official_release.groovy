@@ -184,6 +184,9 @@ notify.wrap {
 
       parallel pub
     } // stage
+    stage('update index files'){
+      util.runIndexUpdate()
+    } // stage
 
     stage('build eups tarballs') {
       util.buildTarballMatrix(
@@ -199,6 +202,10 @@ notify.wrap {
         ],
         retries: retries,
       )
+    } // stage
+
+    stage('update index files'){
+      util.runIndexUpdate()
     } // stage
 
     stage('build stack image') {
@@ -220,22 +227,6 @@ notify.wrap {
     } // stage
 
     def triggerMe = [:]
-
-    triggerMe['Update index files'] = {
-    retry(retries){
-        build(
-          job: 'sqre/infra/update_indexjson',
-          parameters:[
-            string(name: 'ARCHITECTURE', value: 'linux-64'),
-          booleanParam(
-            name: 'NO_PUSH',
-            value: scipipe.release.step.update_indexjson.no_push,
-          ),
-          ],
-          wait: true,
-        )
-      } // retry
-    }
 
     triggerMe['build Science Platform Notebook Aspect Lab image'] = {
       retry(retries) {

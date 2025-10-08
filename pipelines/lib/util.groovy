@@ -324,7 +324,7 @@ def void runPublish(Map p) {
 
 /**
  * Loads Cache
- * @param buildDir where to place the loaded file 
+ * @param buildDir where to place the loaded file
  * @param tag Which eups tag to load
  */
 def loadCache(
@@ -363,7 +363,7 @@ def loadCache(
 }
 /**
  * Save Cache
- * @param buildDir where to place the loaded file 
+ * @param buildDir where to place the loaded file
  * @param tag Which eups tag to load
  */
 def saveCache(
@@ -486,10 +486,10 @@ def lsstswBuild(
       if (fetchCache){
         loadCache(slug,"d_latest")
       }
-      runEnv(runDocker) 
+      runEnv(runDocker)
     }
   } else {
-    if (cachelsstsw){ 
+    if (cachelsstsw){
       // runs only if we are not running a caching job. Since this isn't on
       // docker we do not need to store cache for them.
       return
@@ -1756,6 +1756,40 @@ def String defaultGcloudImage() {
 def String defaultCodekitImage() {
   def dockerRegistry = sqreConfig().codekit.docker_registry
   "${dockerRegistry.repo}:${dockerRegistry.tag}"
+}
+
+def Object runIndexUpdate(){
+  def job = 'sqre/infra/update_indexjson'
+  def result = build(
+    job: job,
+    parameters:[
+      string(name: 'ARCHITECTURE', value: 'linux-64'),
+      string(name:'SPLENV_REF', value: scipipe.template.splenv_ref),
+      string(name: 'MINI_VER', value: scipipe.template.tarball_defaults.miniver),
+      booleanParam(
+        name: 'NO_PUSH',
+        value: scipipe.release.step.update_indexjson.no_push,
+      ),],
+    wait: true,
+  ) // build
+
+  nodeTiny {
+    resultsArtifact = 'results.json'
+
+    step([
+      $class: 'CopyArtifact',
+      projectName: job,
+      filter: resultsArtifact,
+      selector: [
+        $class: 'SpecificBuildSelector',
+        buildNumber: result.id,
+      ],
+    ])
+
+    def json = readJSON(file: resultsArtifact)
+    echo "parsed ${resultsArtifact}: ${json}"
+    return json
+  } // nodeTiny
 }
 
 /**
