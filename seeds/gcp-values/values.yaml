@@ -302,7 +302,6 @@ controller:
   agentListenerServiceType: "ClusterIP"
   # Optionally assign an IP to the LoadBalancer agentListenerService LoadBalancer
   # GKE users: only regional static IPs will work for Service Load balancer.
-  agentListenerLoadBalancerIP:
   agentListenerServiceAnnotations: {}
   #  metallb.universe.tf/address-pool: sdf-dmz
 
@@ -323,7 +322,7 @@ controller:
   # LoadBalancerSourcesRange is a list of allowed CIDR values, which are combined with ServicePort to
   # set allowed inbound rules on the security group assigned to the controller load balancer
   loadBalancerSourceRanges:
-  loadBalancerIP: 
+  loadBalancerIP:
 
   # Optionally configure a JMX port. This requires additional javaOpts, for example,
   # javaOpts: >
@@ -869,7 +868,7 @@ controller:
               #     id: "gs-eups-push"
               #     scope: GLOBAL
               #     fileName: "cred.json"
-              #     secretBytes: "${secret/rubin/rubin-jenkins-control/gs-eups-push}"             
+              #     secretBytes: "${secret/rubin/rubin-jenkins-control/gs-eups-push}"
               - string:
                   description: "github jenkins-dm app key in lsst repo"
                   id: "key-lsst"
@@ -1053,7 +1052,7 @@ controller:
                             fieldRef:
                               apiVersion: v1
                               fieldPath: status.podIP
-                        - name: AGENT_WORKDIR 
+                        - name: AGENT_WORKDIR
                           value: /j
                       tty: true
                       volumeMounts:
@@ -1365,7 +1364,7 @@ controller:
                             fieldRef:
                               apiVersion: v1
                               fieldPath: status.podIP
-                        - name: AGENT_WORKDIR 
+                        - name: AGENT_WORKDIR
                           value: /j
                       tty: true
                       volumeMounts:
@@ -1591,7 +1590,7 @@ controller:
                             fieldRef:
                               apiVersion: v1
                               fieldPath: status.podIP
-                        - name: AGENT_WORKDIR 
+                        - name: AGENT_WORKDIR
                           value: /j
                       tty: true
                       volumeMounts:
@@ -1826,7 +1825,7 @@ controller:
   customInitContainers:
     - name: cleanup-old-casc
       image: busybox:1.36
-      command: ["/bin/sh","-c","rm -f /var/jenkins_home/casc_configs/* || true"]
+      command: ["/bin/sh", "-c", "rm -f /var/jenkins_home/casc_configs/* || true"]
       volumeMounts:
         - name: jenkins-home
           mountPath: /var/jenkins_home
@@ -1907,7 +1906,7 @@ controller:
   # ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
   priorityClassName:
 
-  podAnnotations: 
+  podAnnotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
   # Add StatefulSet annotations
   statefulSetAnnotations: {}
@@ -1932,7 +1931,7 @@ controller:
     # For Kubernetes v1.19+, use 'networking.k8s.io/v1'
     apiVersion: "networking.k8s.io/v1"
     labels: {}
-    annotations: 
+    annotations:
       acme.cert-manager.io/http01-edit-in-place: "true"
       kubernetes.io/ingress.class: "gce"
       kubernetes.io/ingress.allow-http: "true"
@@ -1956,9 +1955,9 @@ controller:
     hostName: ci.lsst.cloud
     resourceRootUrl:
     tls:
-     - secretName: jenkins-tls
-       hosts:
-         - ci.lsst.cloud
+      - secretName: jenkins-tls
+        hosts:
+          - ci.lsst.cloud
 
   # often you want to have your controller all locked down and private
   # but you still want to get webhooks from your SCM
