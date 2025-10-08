@@ -114,6 +114,21 @@ notify.wrap {
         } // util.nodeWrap
       } // retry
     } // stage
+    stage('update index files'){
+        build(
+          job: 'sqre/infra/update_indexjson',
+          parameters:[
+            string(name: 'ARCHITECTURE', value: 'linux-64'),
+            string(name:'SPLENV_REF', value: scipipe.template.splenv_ref),
+            string(name: 'MINI_VER', value: scipipe.template.tarball_defaults.miniver),
+            booleanParam(
+              name: 'NO_PUSH',
+              value: scipipe.release.step.update_indexjson.no_push,
+            ),
+          ],
+          wait: true,
+        ) // build
+    } // stage
 
     stage('build eups tarballs') {
       util.buildTarballMatrix(
@@ -127,6 +142,21 @@ notify.wrap {
         ],
         retries: retries,
       )
+    } // stage
+    stage('update index files'){
+        build(
+          job: 'sqre/infra/update_indexjson',
+          parameters:[
+            string(name: 'ARCHITECTURE', value: 'linux-64'),
+            string(name:'SPLENV_REF', value: scipipe.template.splenv_ref),
+            string(name: 'MINI_VER', value: scipipe.template.tarball_defaults.miniver),
+            booleanParam(
+              name: 'NO_PUSH',
+              value: scipipe.release.step.update_indexjson.no_push,
+            ),
+          ],
+          wait: true,
+        ) // build
     } // stage
 
     stage('build stack image') {
@@ -160,21 +190,6 @@ notify.wrap {
           wait: true,
         )
       }
-    }
-    triggerMe['Update index files'] = {
-    retry(retries){
-        build(
-          job: 'sqre/infra/update_indexjson',
-          parameters:[
-            string(name: 'ARCHITECTURE', value: 'linux-64'),
-            booleanParam(
-              name: 'NO_PUSH',
-              value: scipipe.release.step.update_indexjson.no_push,
-            ),
-          ],
-          wait: true,
-        )
-      } // retry
     }
     triggerMe['build Science Platform Notebook Aspect Lab image'] = {
       retry(retries) {

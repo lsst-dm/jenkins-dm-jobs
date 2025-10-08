@@ -20,8 +20,11 @@ notify.wrap {
     'NO_PUSH',
     ])
 
-  String architecture = params.ARCHITECTURE
+  String architecture    = params.ARCHITECTURE
+  String splenv_ref      = params.SPLENV_REF
+  String mini_ver        = params.MINI_VER
   Boolean noPush         = params.NO_PUSH
+
 
   def hub_repo = 'gcr.io/google.com/cloudsdktool/google-cloud-cli'
 
@@ -42,8 +45,10 @@ notify.wrap {
         )]) {
           withEnv([
             "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
+            "SPLENV_REF=${splenv_ref}",
+            "MINI_VER=${mini_ver}",
           ]) {
-            docker.image("$hub_repo:alpine").inside {
+            docker.image("${hub_repo}:alpine").inside {
                 util.posixSh '''
                 gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
                 python3 ci-scripts/updateindexfile.py
