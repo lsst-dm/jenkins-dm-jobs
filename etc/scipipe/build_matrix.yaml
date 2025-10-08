@@ -139,7 +139,6 @@ scipipe_release:
     github_repo: lsst-dm/docker-tarballs
     git_ref: main
     dir: ''
-    tag: 'w_2025_40'
   docker_registry:
     repo: lsst/scipipe
     ghcr: true
