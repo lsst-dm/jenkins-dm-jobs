@@ -1,4 +1,5 @@
 freeStyleJob('seed-job') {
+    assignedNode('manager-0')
     scm {
         git {
             remote {
