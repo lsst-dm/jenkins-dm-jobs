@@ -1760,7 +1760,7 @@ def String defaultCodekitImage() {
 
 def Object runIndexUpdate(){
   def job = 'sqre/infra/update_indexjson'
-  def result = build(
+  build(
     job: job,
     parameters:[
       string(name: 'ARCHITECTURE', value: 'linux-64'),
@@ -1773,23 +1773,6 @@ def Object runIndexUpdate(){
     wait: true,
   ) // build
 
-  nodeTiny {
-    resultsArtifact = 'results.json'
-
-    step([
-      $class: 'CopyArtifact',
-      projectName: job,
-      filter: resultsArtifact,
-      selector: [
-        $class: 'SpecificBuildSelector',
-        buildNumber: result.id,
-      ],
-    ])
-
-    def json = readJSON(file: resultsArtifact)
-    echo "parsed ${resultsArtifact}: ${json}"
-    return json
-  } // nodeTiny
 }
 
 /**
