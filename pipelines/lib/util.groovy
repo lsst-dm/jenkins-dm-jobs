@@ -381,7 +381,7 @@ def saveCache(
   )]) {
     withEnv([
       "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
-      "DATE_TAG=${tag}",
+      "DATE_TAG=${tag}"
     ]) {
         bash """
         cd lsstsw
@@ -407,7 +407,8 @@ def lsstswBuild(
   Map buildParams,
   Boolean wipeout=false,
   Boolean fetchCache=false,
-  Boolean cachelsstsw=false
+  Boolean cachelsstsw=false,
+  Boolean lsstcam_only=false
 ) {
   validateLsstswConfig(lsstswConfig)
   def slug = lsstswConfigSlug(lsstswConfig)
@@ -422,24 +423,12 @@ def lsstswBuild(
 
   def run = {
     if (cachelsstsw){ // runs only if we want to cache the work
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'github-api-token-checks',
-        variable: 'GITHUB_TOKEN'
-      ]]) {
         buildParams = [SCONSFLAGS: "--no-tests"] + buildParams
         jenkinsWrapper(buildParams)
         saveCache("d_latest")
-      } // withCredentials
     } // if saveCacheRun
     else {
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'github-api-token-checks',
-        variable: 'GITHUB_TOKEN'
-      ]]) {
         jenkinsWrapper(buildParams)
-      } // withCredentials
     } // else
   } // run
   def runDocker = {
@@ -447,8 +436,30 @@ def lsstswBuild(
       image: lsstswConfig.image,
       pull: true,
     ) {
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'github-api-token-checks',
+        variable: 'GITHUB_TOKEN'
+      ], [
+        $class: 'StringBinding',
+        credentialsId: 'weka-bucket-secret',
+        variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
+      ], [
+        $class: 'StringBinding',
+        credentialsId: 'weka-access-key',
+        variable: 'RCLONE_CONFIG_WEKA_ACCESS_KEY_ID'
+      ], [
+        $class: 'StringBinding',
+        credentialsId: 'weka-bucket-url',
+        variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
+      ]){
+      withEnv([
+        "RCLONE_CONFIG_WEKA_TYPE=s3"
+      ]){
         run()
-    }
+        } // withEnv
+      } // withCredentials
+    } // insideDockerWrap
   } // runDocker
 
   def runEnv = { doRun ->
@@ -1082,6 +1093,7 @@ def void nodeTiny(Closure run) {
   }
 }
 
+
 /**
  * Execute a multiple multiple lsstsw builds using different configurations.
  *
@@ -1094,26 +1106,39 @@ def lsstswBuildMatrix(
   Map buildParams,
   Boolean wipeout=false,
   Boolean loadCache=false,
-  Boolean saveCache=false
+  Boolean saveCache=false,
+  Boolean lsstcam_only=false
 ) {
-  def matrix = [:]
-
-  matrixConfig.each { lsstswConfig ->
-    validateLsstswConfig(lsstswConfig)
-    def slug = lsstswConfigSlug(lsstswConfig)
-
-    matrix[slug] = {
+  if (lsstcam_only){
+      def lsstswConfig = matrixConfig[0]
+      validateLsstswConfig(lsstswConfig)
       lsstswBuild(
         lsstswConfig,
         buildParams,
         wipeout,
         loadCache,
-        saveCache
+        saveCache,
+        lsstcam_only
       )
-    }
-  }
+  } else {
+    def matrix = [:]
 
-  parallel matrix
+    matrixConfig.each { lsstswConfig ->
+      validateLsstswConfig(lsstswConfig)
+      def slug = lsstswConfigSlug(lsstswConfig)
+
+      matrix[slug] = {
+        lsstswBuild(
+        lsstswConfig,
+        buildParams,
+        wipeout,
+        loadCache,
+        saveCache
+        )
+      }
+    }
+    parallel matrix
+  } // else
 } // lsstswBuildMatrix
 
 /**
