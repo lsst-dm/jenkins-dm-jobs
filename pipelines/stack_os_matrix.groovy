@@ -34,6 +34,7 @@ notify.wrap {
     LSST_PRODUCTS:          PRODUCTS,
     LSST_BUILD_DOCS:        BUILD_DOCS,
     LSST_NO_BINARY_FETCH:   NO_BINARY_FETCH,
+    LSSTCAM_ONLY:           LSSTCAM_ONLY,
   ]
 
   // override conda env ref from build_matrix.yaml
@@ -42,7 +43,7 @@ notify.wrap {
   }
 
   // override env for SAVE_CACHE. Currently job override any env set by the build job
-  // in nightly. 
+  // in nightly.
   if (params.SAVE_CACHE) {
     SAVE_CACHE = params.SAVE_CACHE
   }
@@ -54,7 +55,7 @@ notify.wrap {
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean() )
+      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean(), LSSTCAM_ONLY.toBoolean() )
     }
   }
 } // notify.wrap
