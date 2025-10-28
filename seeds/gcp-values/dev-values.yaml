@@ -110,7 +110,7 @@ controller:
     - name: CASC_VAULT_URL
       value: https://vault-ci.lsst.cloud
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control-dev/aws-eups-push,secret/rubin/rubin-jenkins-control-dev/aws-eups-backup,secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-checks,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/github-jenkins,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev,secret/rubin/rubin-jenkins-control-dev/sqre-mini,secret/rubin/rubin-jenkins-control-dev/rubinobs-dm,secret/rubin/rubin-jenkins-control-dev/gs-eups-push
+      value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control-dev/aws-eups-push,secret/rubin/rubin-jenkins-control-dev/aws-eups-backup,secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-checks,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/github-jenkins,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev,secret/rubin/rubin-jenkins-control-dev/sqre-mini,secret/rubin/rubin-jenkins-control-dev/rubinobs-dm,secret/rubin/rubin-jenkins-control-dev/gs-eups-push,secret/rubin/weka-s3/tesdata-ci-lsst/access-key,secret/rubin/weka-s3/tesdata-ci-lsst/secret-key,secret/rubin/weka-s3/tesdata-ci-lsst/url
     #- name: JAVA_OPTS
     #  value: --add-opens=java.base/java.lang=ALL-UNNAMED,--add-opens=java.base/java.lang.reflect=ALL-UNNAMED
     #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
@@ -148,7 +148,7 @@ controller:
     - name: CASC_VAULT_URL
       value: https://ci-vault.lsst.cloud
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control-dev/aws-eups-push,secret/rubin/rubin-jenkins-control-dev/aws-eups-backup,secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-checks,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/github-jenkins,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev,secret/rubin/rubin-jenkins-control-dev/sqre-mini,secret/rubin/rubin-jenkins-control-dev/rubinobs-dm,secret/rubin/rubin-jenkins-control-dev/gs-eups-push
+      value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/aws-jenkins-master-snapshot,secret/rubin/rubin-jenkins-control-dev/aws-eups-push,secret/rubin/rubin-jenkins-control-dev/aws-eups-backup,secret/rubin/rubin-jenkins-control-dev/aws-eups-tag-admin,secret/rubin/rubin-jenkins-control-dev/aws-doxygen-push,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-checks,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/github-jenkins,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/aws-cmirror-push,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev,secret/rubin/rubin-jenkins-control-dev/sqre-mini,secret/rubin/rubin-jenkins-control-dev/rubinobs-dm,secret/rubin/rubin-jenkins-control-dev/gs-eups-push,secret/rubin/weka-s3/tesdata-ci-lsst/access-key,secret/rubin/weka-s3/tesdata-ci-lsst/secret-key,secret/rubin/weka-s3/tesdata-ci-lsst/url
   # Set min/max heap here if needed with:
   javaOpts: "--add-opens=java.base/java.lang=ALL-UNNAMED"
   # jenkinsOpts: ""
@@ -797,6 +797,21 @@ controller:
                   id: "slack-channel-prefix"
                   scope: GLOBAL
                   secret: "${secret/rubin/rubin-jenkins-control-dev/common/slack-channel-prefix}"
+              - string:
+                  description: "url for weka bucket at S3DF"
+                  id: "weka-bucket-url"
+                  scope: GLOBAL
+                  secret: "${rubin/weka-s3/tesdata-ci-lsst/url}"
+              - string:
+                  description: "secret key for weka bucket at S3DF"
+                  id: "weka-bucket-secret"
+                  scope: GLOBAL
+                  secret: "${rubin/weka-s3/tesdata-ci-lsst/secret_key}"
+              - string:
+                  description: "access key for weka bucket at S3DF"
+                  id: "weka-access-key"
+                  scope: GLOBAL
+                  secret: "${rubin/weka-s3/tesdata-ci-lsst/access_key}"
               - usernamePassword:
                   description: "jenkins master snapshot AWS credentials"
                   id: "aws-jenkins-master-snapshot"

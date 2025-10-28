@@ -407,8 +407,7 @@ def lsstswBuild(
   Map buildParams,
   Boolean wipeout=false,
   Boolean fetchCache=false,
-  Boolean cachelsstsw=false,
-  Boolean lsstcam_only=false
+  Boolean cachelsstsw=false
 ) {
   validateLsstswConfig(lsstswConfig)
   def slug = lsstswConfigSlug(lsstswConfig)
@@ -452,7 +451,7 @@ def lsstswBuild(
         $class: 'StringBinding',
         credentialsId: 'weka-bucket-url',
         variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
-      ]){
+      ]]){
       withEnv([
         "RCLONE_CONFIG_WEKA_TYPE=s3"
       ]){
@@ -1106,10 +1105,9 @@ def lsstswBuildMatrix(
   Map buildParams,
   Boolean wipeout=false,
   Boolean loadCache=false,
-  Boolean saveCache=false,
-  Boolean lsstcam_only=false
+  Boolean saveCache=false
 ) {
-  if (lsstcam_only){
+  if (buildParams['LSSTCAM_ONLY']){
       def lsstswConfig = matrixConfig[0]
       validateLsstswConfig(lsstswConfig)
       lsstswBuild(
@@ -1118,7 +1116,6 @@ def lsstswBuildMatrix(
         wipeout,
         loadCache,
         saveCache,
-        lsstcam_only
       )
   } else {
     def matrix = [:]

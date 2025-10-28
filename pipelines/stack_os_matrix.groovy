@@ -34,9 +34,11 @@ notify.wrap {
     LSST_PRODUCTS:          PRODUCTS,
     LSST_BUILD_DOCS:        BUILD_DOCS,
     LSST_NO_BINARY_FETCH:   NO_BINARY_FETCH,
-    LSSTCAM_ONLY:           LSSTCAM_ONLY,
   ]
 
+  if (LSSTCAM_ONLY){
+    buildParams['LSSTCAM_ONLY'] = LSSTCAM_ONLY
+    }
   // override conda env ref from build_matrix.yaml
   if (params.SPLENV_REF) {
     buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
@@ -55,7 +57,7 @@ notify.wrap {
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean(), LSSTCAM_ONLY.toBoolean() )
+      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean() )
     }
   }
 } // notify.wrap
