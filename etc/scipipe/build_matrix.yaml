@@ -27,32 +27,32 @@ template:
       display_name: linux-9-aarch64
       compiler: conda-system
       python: '3'
-    - &macarm64-conda
-      <<: *platform_defaults
-      image: null
-      label: osx-arm64
-      display_name: macos-arm64
-      compiler: conda-system
-      python: '3'
+    # - &macarm64-conda
+    #   <<: *platform_defaults
+    #   image: null
+    #   label: osx-arm64
+    #   display_name: macos-arm64
+    #   compiler: conda-system
+    #   python: '3'
 #
 # build environment/matrix configs
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
-  - <<: *macarm64-conda
+  # - <<: *macarm64-conda
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
-  - <<: *macarm64-conda
+  # - <<: *macarm64-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
-  - <<: *macarm64-conda
+  # - <<: *macarm64-conda
 scipipe-lsstsw-ci_imsim:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
-  - <<: *macarm64-conda
+  # - <<: *macarm64-conda
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
 #
@@ -89,7 +89,7 @@ tarball:
       platform: el8-arm
       osfamily: redhat
     - <<: *tarball_defaults
-      <<: *macarm64-conda
+      # <<: *macarm64-conda
       platform: 14-arm
       osfamily: osx
       timelimit: 8
