@@ -337,10 +337,11 @@ def loadLSSTCamTestData(
   def cwd = pwd()
   testdata = "${cwd}/${testDir}"
   dir(testdata){
-    withCredentials([[
-      $class: 'StringBinding',
-      credentialsId: 'weka-bucket-secret',
-      variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
+    withCredentials([
+      [
+        $class: 'StringBinding',
+        credentialsId: 'weka-bucket-secret',
+        variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
       ], [
         $class: 'StringBinding',
         credentialsId: 'weka-access-key',
@@ -429,7 +430,7 @@ def saveCache(
   )]) {
     withEnv([
       "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
-      "DATE_TAG=${tag}"
+      "DATE_TAG=${tag}",
     ]) {
         bash """
         cd lsstsw
@@ -531,7 +532,7 @@ def lsstswBuild(
       if (buildParams['LSSTCAM_ONLY']){
         def testdatadir = loadLSSTCamTestData(slug,"lsstcam_testdata")
         buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
-        }
+      }
       runEnv(runDocker)
     }
   } else {
@@ -542,7 +543,7 @@ def lsstswBuild(
     }
     else {
       task = { runEnv(run) }
-      }
+    }
   }
 
   nodeWrap(agent) {
@@ -612,7 +613,7 @@ def void jenkinsWrapper(Map buildParams) {
     // This line uses k8s to set EUPSPKG_NJOBS
     def njobs = env.K8S_DIND_LIMITS_CPU
     if (njobs == null){
-        njobs = 20
+        njobs = 32
     }
 
     // Check if NODE_LABELS is set in the environment
@@ -1127,7 +1128,6 @@ def void nodeTiny(Closure run) {
     }
   }
 }
-
 
 /**
  * Execute a multiple multiple lsstsw builds using different configurations.
