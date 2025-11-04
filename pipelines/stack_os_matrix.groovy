@@ -34,8 +34,12 @@ notify.wrap {
     LSST_PRODUCTS:          PRODUCTS,
     LSST_BUILD_DOCS:        BUILD_DOCS,
     LSST_NO_BINARY_FETCH:   NO_BINARY_FETCH,
-    LSSTCAM_ONLY:           LSSTCAM_ONLY,
   ]
+
+  // Checks if ci_lsstcam is ran
+  if (env.LSSTCAM_ONLY){
+      buildParams['LSSTCAM_ONLY'] = LSSTCAM_ONLY
+  }
 
   // override conda env ref from build_matrix.yaml
   if (params.SPLENV_REF) {
@@ -43,7 +47,7 @@ notify.wrap {
   }
 
   // override env for SAVE_CACHE. Currently job override any env set by the build job
-  // in nightly. 
+  // in nightly.
   if (params.SAVE_CACHE) {
     SAVE_CACHE = params.SAVE_CACHE
   }
