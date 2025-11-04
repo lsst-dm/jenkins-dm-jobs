@@ -611,10 +611,7 @@ def void jenkinsWrapper(Map buildParams) {
     '''
 
     // This line uses k8s to set EUPSPKG_NJOBS
-    def njobs = env.K8S_DIND_LIMITS_CPU
-    if (njobs == null){
-        njobs = 32
-    }
+    def njobs = 16
 
     // Check if NODE_LABELS is set in the environment
     def nodeLabels = env.NODE_LABELS
