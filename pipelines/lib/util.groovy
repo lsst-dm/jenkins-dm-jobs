@@ -323,6 +323,55 @@ def void runPublish(Map p) {
 } // runPublish
 
 /**
+ * Loads LSSTCAM test data
+ * @param buildDir where to run this
+ * @param testDir where to place the test data
+ * @return full path of test data
+ */
+def loadLSSTCamTestData(
+  String buildDir,
+  String testDir){
+  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
+  def testdata // Assigning location of data later
+  dir(buildDir) {
+  def cwd = pwd()
+  testdata = "${cwd}/${testDir}"
+  dir(testdata){
+    withCredentials([
+      [
+        $class: 'StringBinding',
+        credentialsId: 'weka-bucket-secret',
+        variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
+      ], [
+        $class: 'StringBinding',
+        credentialsId: 'weka-access-key',
+        variable: 'RCLONE_CONFIG_WEKA_ACCESS_KEY_ID'
+      ], [
+        $class: 'StringBinding',
+        credentialsId: 'weka-bucket-url',
+        variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
+      ]]){
+      withEnv([
+        "RCLONE_CONFIG_WEKA_TYPE=s3",
+        "RCLONE_CONFIG_WEKA_PROVIDER=Other",
+        "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
+    ]){
+      insideDockerWrap(
+        image: "${gcp_repo}:latest",
+        pull: true,
+        args: "-v ${cwd}:/home",
+      ) {
+        bash """
+          rclone copy weka:"${LSSTCAM_BUCKET}" .
+        """
+        }
+      }
+    }
+  }
+  }
+  return testdata
+}
+/**
  * Loads Cache
  * @param buildDir where to place the loaded file
  * @param tag Which eups tag to load
@@ -422,24 +471,12 @@ def lsstswBuild(
 
   def run = {
     if (cachelsstsw){ // runs only if we want to cache the work
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'github-api-token-checks',
-        variable: 'GITHUB_TOKEN'
-      ]]) {
         buildParams = [SCONSFLAGS: "--no-tests"] + buildParams
         jenkinsWrapper(buildParams)
         saveCache("d_latest")
-      } // withCredentials
     } // if saveCacheRun
     else {
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'github-api-token-checks',
-        variable: 'GITHUB_TOKEN'
-      ]]) {
         jenkinsWrapper(buildParams)
-      } // withCredentials
     } // else
   } // run
   def runDocker = {
@@ -447,8 +484,14 @@ def lsstswBuild(
       image: lsstswConfig.image,
       pull: true,
     ) {
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'github-api-token-checks',
+        variable: 'GITHUB_TOKEN'
+      ]]){
         run()
-    }
+      } // withCredentials
+    } // insideDockerWrap
   } // runDocker
 
   def runEnv = { doRun ->
@@ -486,6 +529,10 @@ def lsstswBuild(
       if (fetchCache){
         loadCache(slug,"d_latest")
       }
+      if (buildParams['LSSTCAM_ONLY']){
+        def testdatadir = loadLSSTCamTestData(slug,"lsstcam_testdata")
+        buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
+      }
       runEnv(runDocker)
     }
   } else {
@@ -496,7 +543,7 @@ def lsstswBuild(
     }
     else {
       task = { runEnv(run) }
-      }
+    }
   }
 
   nodeWrap(agent) {
@@ -566,7 +613,7 @@ def void jenkinsWrapper(Map buildParams) {
     // This line uses k8s to set EUPSPKG_NJOBS
     def njobs = env.K8S_DIND_LIMITS_CPU
     if (njobs == null){
-        njobs = 8
+        njobs = 32
     }
 
     // Check if NODE_LABELS is set in the environment
@@ -1096,24 +1143,35 @@ def lsstswBuildMatrix(
   Boolean loadCache=false,
   Boolean saveCache=false
 ) {
-  def matrix = [:]
-
-  matrixConfig.each { lsstswConfig ->
-    validateLsstswConfig(lsstswConfig)
-    def slug = lsstswConfigSlug(lsstswConfig)
-
-    matrix[slug] = {
+  if (buildParams['LSSTCAM_ONLY']){
+      def lsstswConfig = matrixConfig[0]
+      validateLsstswConfig(lsstswConfig)
       lsstswBuild(
         lsstswConfig,
         buildParams,
         wipeout,
         loadCache,
-        saveCache
+        saveCache,
       )
-    }
-  }
+  } else {
+    def matrix = [:]
 
-  parallel matrix
+    matrixConfig.each { lsstswConfig ->
+      validateLsstswConfig(lsstswConfig)
+      def slug = lsstswConfigSlug(lsstswConfig)
+
+      matrix[slug] = {
+        lsstswBuild(
+        lsstswConfig,
+        buildParams,
+        wipeout,
+        loadCache,
+        saveCache
+        )
+      }
+    }
+    parallel matrix
+  } // else
 } // lsstswBuildMatrix
 
 /**

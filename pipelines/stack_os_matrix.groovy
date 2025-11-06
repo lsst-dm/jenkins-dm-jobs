@@ -34,6 +34,7 @@ notify.wrap {
     LSST_PRODUCTS:          PRODUCTS,
     LSST_BUILD_DOCS:        BUILD_DOCS,
     LSST_NO_BINARY_FETCH:   NO_BINARY_FETCH,
+    LSSTCAM_ONLY:           LSSTCAM_ONLY,
   ]
 
   // override conda env ref from build_matrix.yaml
