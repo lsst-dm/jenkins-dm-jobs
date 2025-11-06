@@ -1140,7 +1140,8 @@ def lsstswBuildMatrix(
   Boolean loadCache=false,
   Boolean saveCache=false
 ) {
-  if (buildParams['LSSTCAM_ONLY']){
+  def lsstcam = buildParams['LSSTCAM_ONLY'].toBoolean()
+  if (lsstcam == true){
       def lsstswConfig = matrixConfig[0]
       validateLsstswConfig(lsstswConfig)
       lsstswBuild(
