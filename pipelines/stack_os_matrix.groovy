@@ -34,9 +34,14 @@ notify.wrap {
     LSST_PRODUCTS:          PRODUCTS,
     LSST_BUILD_DOCS:        BUILD_DOCS,
     LSST_NO_BINARY_FETCH:   NO_BINARY_FETCH,
-    LSSTCAM_ONLY:           LSSTCAM_ONLY,
   ]
 
+  if (params.containsKey("LSSTCAM_ONLY")) {
+    if (params.LSSTCAM_ONLY == true ) {
+      buildParams["LSSTCAM_ONLY"] = params.LSSTCAM_ONLY
+      buildParams["PRODUCTS"] = "ci_lsstcam"
+    }
+  }
   // override conda env ref from build_matrix.yaml
   if (params.SPLENV_REF) {
     buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
