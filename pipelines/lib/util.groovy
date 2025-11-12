@@ -1226,6 +1226,16 @@ def checkoutGitRef(String url, String ref) {
 }
 
 /**
+ * Parse products for duplicates
+ *
+ * @param products String of products seperated by whitespace
+ * @return String of products seperated by whitespace with no duplicates
+ */
+def String validateProducts(String products) {
+  return products.toLowerCase().split().toList().unique().join(' ')
+}
+
+/**
  * Parse yaml file into object -- parsed files are memoized.
  *
  * @param file String file to parse
