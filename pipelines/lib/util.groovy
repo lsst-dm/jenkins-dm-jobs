@@ -529,7 +529,7 @@ def lsstswBuild(
       if (fetchCache){
         loadCache(slug,"d_latest")
       }
-      if (buildParams['LSSTCAM_ONLY']){
+      if (buildParams['CI_LSSTCAM']){
         def testdatadir = loadLSSTCamTestData(slug,"lsstcam_testdata")
         buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
       }
@@ -1140,20 +1140,16 @@ def lsstswBuildMatrix(
   Boolean loadCache=false,
   Boolean saveCache=false
 ) {
-  lsstcam = false
-  if (buildParams.containsKey("LSSTCAM_ONLY")){
-    lsstcam = buildParams['LSSTCAM_ONLY'].toBoolean()
-  }
-  if (lsstcam == true){
-      def lsstswConfig = matrixConfig[0]
-      validateLsstswConfig(lsstswConfig)
-      lsstswBuild(
+  if (buildParams.containsKey("CI_LSSTCAM")){
+    def lsstswConfig = matrixConfig[0]
+    validateLsstswConfig(lsstswConfig)
+    lsstswBuild(
         lsstswConfig,
         buildParams,
         wipeout,
         loadCache,
         saveCache,
-      )
+    )
   } else {
     def matrix = [:]
 
