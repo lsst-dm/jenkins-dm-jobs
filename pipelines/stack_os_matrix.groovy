@@ -29,6 +29,8 @@ notify.wrap {
     'SAVE_CACHE'
   ])
 
+  PRODUCTS = util.validateProducts(PRODUCTS)
+
   def buildParams = [
     LSST_REFS:              REFS,
     LSST_PRODUCTS:          PRODUCTS,
