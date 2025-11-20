@@ -4,6 +4,7 @@ import javaposse.jobdsl.dsl.DslFactory
 import javaposse.jobdsl.dsl.Job
 
 class CleanBuild {
+
   String name
   String products
   String refs = ''
@@ -61,9 +62,10 @@ class CleanBuild {
               branch(ref)
             }
           }
-          scriptPath("pipelines/stack_os_matrix.groovy")
+          scriptPath('pipelines/stack_os_matrix.groovy')
         }
       } // definition
     } // pipelineJob
   } // build
+
 } // CleanBuild

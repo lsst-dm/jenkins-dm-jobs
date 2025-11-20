@@ -1,4 +1,5 @@
 import util.Common
+
 Common.makeFolders(this)
 
 multibranchPipelineJob('sqre/infra/ci-scripts') {

@@ -17,13 +17,13 @@ node('jenkins-manager') {
 notify.wrap {
   util.requireParams(['YEAR', 'WEEK'])
 
-  String year = params.YEAR.padLeft(4, "0")
-  String week = params.WEEK.padLeft(2, "0")
+  String year = params.YEAR.padLeft(4, '0')
+  String week = params.WEEK.padLeft(2, '0')
 
-  if (year == "0000"){
+  if (year == '0000') {
       def now = new Date()
-      year = now.format("YYYY")
-      week = now.format("ww")
+      year = now.format('YYYY')
+      week = now.format('ww')
   }
 
   def products        = scipipe.canonical.products
@@ -113,7 +113,7 @@ notify.wrap {
       } // retry
     } // stage
 
-    stage('update index files'){
+    stage('update index files') {
       util.runIndexUpdate()
     } // stage
 
@@ -131,7 +131,7 @@ notify.wrap {
       )
     } // stage
 
-    stage('update index files'){
+    stage('update index files') {
       util.runIndexUpdate()
     } // stage
 
@@ -152,11 +152,11 @@ notify.wrap {
     def triggerMe = [:]
 
     triggerMe['Update cache'] = {
-    retry(retries){
+      retry(retries) {
         build(
           job: 'stack-os-matrix',
           parameters:[
-            string(name:'REFS', value:""),
+            string(name:'REFS', value:''),
             string(name:'PRODUCTS', value: scipipe.canonical.products),
             string(name:'SPLENV_REF', value: scipipe.template.splenv_ref),
             booleanParam(name:'NO_BINARY_FETCH', value: true),
@@ -183,7 +183,7 @@ notify.wrap {
       } // stage
     }
 
-    ['linux-64','linux-aarch64'].each{ arch ->
+    ['linux-64', 'linux-aarch64'].each { arch ->
       triggerMe['verify_drp_metrics ' + arch] = {
         retry(1) {
           // based on lsstsqre/stack image
@@ -243,7 +243,6 @@ notify.wrap {
     stage('triggered jobs') {
       parallel triggerMe
     } // stage
-
   } // run
 
   try {

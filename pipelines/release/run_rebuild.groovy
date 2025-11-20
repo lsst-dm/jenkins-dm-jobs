@@ -1,6 +1,6 @@
 properties([
   copyArtifactPermission('/release/*'),
-]);
+])
 
 node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
@@ -62,7 +62,7 @@ notify.wrap {
       def buildParams = [
         EUPS_PKGROOT:          "${cwd}/distrib",
         GIT_SSH_COMMAND:       'ssh -o StrictHostKeyChecking=no',
-        K8S_DIND_LIMITS_CPU:   "4",
+        K8S_DIND_LIMITS_CPU:   '4',
         LSST_BUILD_DOCS:       buildDocs,
         LSST_COMPILER:         lsstswConfig.compiler,
         LSST_JUNIT_PREFIX:     slug,
@@ -87,7 +87,7 @@ notify.wrap {
       }
 
       def withVersiondbCredentials = { closure ->
-        sshagent (credentials: ['github-jenkins-versiondb']) {
+        sshagent(credentials: ['github-jenkins-versiondb']) {
           closure()
         }
       }

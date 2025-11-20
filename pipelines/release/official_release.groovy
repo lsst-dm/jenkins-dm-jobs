@@ -35,7 +35,7 @@ notify.wrap {
 
   // define source git refs for tagging auxilliaries
   def refs = params.SOURCE_GIT_REFS
-  def refArgs = refs?.trim() ? refs.split().collectMany { ["-r", it] } : []
+  def refArgs = refs?.trim() ? refs.split().collectMany { ['-r', it] } : []
 
   // generate eups tag from git tag
   String eupsTag = util.sanitizeEupsTag(gitTag)
@@ -45,7 +45,7 @@ notify.wrap {
 
   // o_latest is only allowed for a final release
   if (dockerLatest && !finalRelease) {
-    error "O_LATEST is only allowed on final (non-rc) releases"
+    error 'O_LATEST is only allowed on final (non-rc) releases'
   }
 
   // type of eupspkg to create -- "git" should always be used except for a
@@ -73,18 +73,22 @@ notify.wrap {
   def tarballProducts = ''
 
   // remove excluded products from tarball build list
-  for(prod in prodTarballList)
-    if(! (prod in excludeTarballs)) tarballProducts += prod + ' '
-  tarballProducts = tarballProducts.trim()
+  for (prod in prodTarballList) {
+    if ((! (prod in excludeTarballs)) tarballProducts += prod + ' ') {
+      tarballProducts = tarballProducts.trim()
+    }
+  }
 
   // remove excludes products from build list
   def excludeBuilds = exclude_builds.split(' ')
   def prodList = scipipe.canonical.products.split(' ')
   def products = ''
 
-  for(prod in prodList)
-    if(! (prod in excludeBuilds)) products += prod + ' '
-  products = products.trim()
+  for (prod in prodList) {
+    if ((! (prod in excludeBuilds)) products += prod + ' ') {
+      products = products.trim()
+    }
+  }
 
   def retries         = 3
   def extraDockerTags = ''
@@ -184,7 +188,7 @@ notify.wrap {
 
       parallel pub
     } // stage
-    stage('update index files'){
+    stage('update index files') {
       util.runIndexUpdate()
     } // stage
 
@@ -204,7 +208,7 @@ notify.wrap {
       )
     } // stage
 
-    stage('update index files'){
+    stage('update index files') {
       util.runIndexUpdate()
     } // stage
 
@@ -218,9 +222,9 @@ notify.wrap {
             MANIFEST_ID: manifestId,
             LSST_COMPILER: lsstswConfig.compiler,
             SPLENV_REF: rubinEnvVer,
-            // This is not splenvRef, which could be an eups tag.
-            // This parameter is used to select the base newinstall container,
-            // which only has rubin-env version tags.
+          // This is not splenvRef, which could be an eups tag.
+          // This parameter is used to select the base newinstall container,
+          // which only has rubin-env version tags.
           ],
         )
       } // retry
@@ -241,7 +245,7 @@ notify.wrap {
       } // retry
     }
 
-    ['linux-64','linux-aarch64'].each{ arch ->
+    ['linux-64', 'linux-aarch64'].each { arch ->
       triggerMe['verify_drp_metrics ' + arch] = {
         retry(1) {
           // based on lsstsqre/stack image

@@ -31,7 +31,8 @@ import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
  * Cleanup base class. Not intended to be used directly.
  */
 @InheritConstructors
-class CleanupException extends Exception {}
+
+class CleanupException extends Exception { }
 
 /**
  * Cleanup status exception with {@link hudson.model.Slave} information. Not
@@ -39,6 +40,7 @@ class CleanupException extends Exception {}
  */
 @InheritConstructors
 class Node extends CleanupException {
+
   Slave node
 
   /**
@@ -73,25 +75,29 @@ class Node extends CleanupException {
     super(m, t)
     this.node = node
   }
+
 }
 
 /**
  * Cleanup of node failed.
  */
 @InheritConstructors
-class Failed extends Node {}
+
+class Failed extends Node { }
 
 /**
  * Node is offline (and can not be cleaned up).
  */
 @InheritConstructors
-class Offline extends Node {}
+
+class Offline extends Node { }
 
 /**
  * Node was skipped (was not cleaned up)
  */
 @InheritConstructors
-class Skipped extends Node {}
+
+class Skipped extends Node { }
 
 /**
  * Node was successfully cleaned up.
@@ -99,7 +105,8 @@ class Skipped extends Node {}
  * Note that this "exception" is being [ab]used to signal success.
  */
 @InheritConstructors
-class Cleaned extends Node {}
+
+class Cleaned extends Node { }
 
 /**
  * Enable/Disable printing of debug messages.
@@ -131,12 +138,12 @@ class Cleaned extends Node {}
 /**
  * Force a cleanup on a particular node.
  */
-@Field String forceNode = ""
+@Field String forceNode = ''
 
 /**
  * Accounting of node status (Cleaned, Failed, etc.).
  */
-@Field Map nodeStatus = [:].withDefault {[]}
+@Field Map nodeStatus = [:].withDefault { [] }
 
 /**
  * Delete a remote file path ignoring any exceptions.
@@ -181,7 +188,7 @@ boolean deleteRemote(FilePath path, boolean deleteContentsOnly) {
  * @param Object value string-ified debug message.
  */
 void debugln(Object value) {
- debug && println(value)
+  debug && println(value)
 }
 
 /**
@@ -413,9 +420,9 @@ void processNodes() {
         }
       }
 
-      if (node.assignedLabels.find{ it.expression in skippedLabels }) {
+      if (node.assignedLabels.find { it.expression in skippedLabels }) {
         throw new Skipped(node, 'based on label(s)')
-      }
+    }
 
       def dsm = DiskSpaceMonitor.DESCRIPTOR.get(computer)
       def roundedSize = null
@@ -434,12 +441,11 @@ void processNodes() {
               + ", free space: ${roundedSize} GiB"
               + ", idle: ${computer.isIdle()}")
 
-
       // skip nodes with sufficient disk space
       if (!forceCleanup && (roundedSize >= threshold)
           && node.getDisplayName() != forceNode) {
         throw new Skipped(node, 'disk threshold')
-      }
+          }
 
       // mark node as offline
       if (!manualOffline) {
@@ -483,8 +489,8 @@ void processNodes() {
       }
 
       println ''
-    }
   }
+}
 }
 
 /**
