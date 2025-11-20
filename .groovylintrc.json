@@ -1,0 +1,10 @@
+{
+    "extends": "recommended",
+    "rules": {
+        "comments.ClassJavadoc": "on",
+        "formatting.Indentation": {
+            "spacesPerIndentLevel": 2,
+            "severity": "info"
+        }
+    }
+}
