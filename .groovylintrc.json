@@ -1,10 +1,11 @@
 {
     "extends": "recommended",
     "rules": {
-        "comments.ClassJavadoc": "on",
+        "comments.ClassJavadoc": "off",
         "formatting.Indentation": {
             "spacesPerIndentLevel": 2,
             "severity": "info"
-        }
+        },
+        "UnnecessaryReturnKeyword": "error"
     }
 }
