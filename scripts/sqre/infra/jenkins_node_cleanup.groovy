@@ -19,13 +19,10 @@ which is itself a fork of:
 import groovy.transform.Field
 import groovy.transform.InheritConstructors
 import hudson.FilePath
-import hudson.FilePath.FileCallable
 import hudson.model.*
 import hudson.node_monitors.*
-import hudson.slaves.OfflineCause
 import hudson.util.*
 import jenkins.model.*
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
 /**
  * Cleanup base class. Not intended to be used directly.
