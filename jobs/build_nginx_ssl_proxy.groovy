@@ -9,7 +9,7 @@ p.pipeline().with {
     '''
     Constructs docker lsstsqre/nginx-ssl-proxy image, which is a an updated
     build of gcr.io/cloud-solutions-images/nginx-ssl-proxy.
-    '''.replaceFirst("\n","").stripIndent()
+    '''.replaceFirst('\n', '').stripIndent()
   )
 
   parameters {

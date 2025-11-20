@@ -38,10 +38,10 @@ notify.wrap {
     ]]) {
       image.inside {
         stage('run github-snapshot') {
-          sh "github-snapshot"
+          sh 'github-snapshot'
         }
         stage('run snapshot-purger') {
-          sh "snapshot-purger"
+          sh 'snapshot-purger'
         }
       }
     }
