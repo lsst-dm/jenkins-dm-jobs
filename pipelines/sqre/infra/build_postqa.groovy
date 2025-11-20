@@ -64,6 +64,5 @@ notify.wrap {
     timeout(time: 30, unit: 'MINUTES') {
       run()
     }
-
   } // util.nodeWrap
 } // notify.wrap

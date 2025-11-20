@@ -5,6 +5,7 @@ import javaposse.jobdsl.dsl.Job
 import util.Common
 
 class Plumber {
+
   String name
   String script
   DslFactory dsl
@@ -54,4 +55,5 @@ class Plumber {
       } // definition
     } // pipelineJob
   } // pipeline
+
 } // class

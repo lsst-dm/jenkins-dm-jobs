@@ -1,4 +1,5 @@
 import util.Common
+
 Common.makeFolders(this)
 
 job('sqre/infra/jenkins-node-cleanup') {

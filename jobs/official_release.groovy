@@ -14,7 +14,7 @@ p.pipeline().with {
 
     Eg., (git tag) `888.0.0.rc1` -> (eups tag) `888_0_0_rc1`
   '''
-  description(text.replaceFirst("\n","").stripIndent())
+  description(text.replaceFirst('\n', '').stripIndent())
 
   parameters {
     stringParam('SOURCE_GIT_REFS', null,
