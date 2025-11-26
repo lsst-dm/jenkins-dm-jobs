@@ -18,27 +18,27 @@ which is itself a fork of:
 
 import groovy.transform.Field
 import groovy.transform.InheritConstructors
+import groovy.transform.CompileStatic
 import hudson.FilePath
-import hudson.FilePath.FileCallable
 import hudson.model.*
 import hudson.node_monitors.*
-import hudson.slaves.OfflineCause
 import hudson.util.*
 import jenkins.model.*
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
 /**
  * Cleanup base class. Not intended to be used directly.
  */
 @InheritConstructors
-class CleanupException extends Exception {}
-
+@CompileStatic
+class CleanupException extends Exception { }
 /**
  * Cleanup status exception with {@link hudson.model.Slave} information. Not
  * intended to be used directly.
  */
 @InheritConstructors
+@CompileStatic
 class Node extends CleanupException {
+
   Slave node
 
   /**
@@ -73,25 +73,29 @@ class Node extends CleanupException {
     super(m, t)
     this.node = node
   }
+
 }
 
 /**
  * Cleanup of node failed.
  */
+@CompileStatic
 @InheritConstructors
-class Failed extends Node {}
+class Failed extends Node { }
 
 /**
  * Node is offline (and can not be cleaned up).
  */
+@CompileStatic
 @InheritConstructors
-class Offline extends Node {}
+class Offline extends Node { }
 
 /**
  * Node was skipped (was not cleaned up)
  */
+@CompileStatic
 @InheritConstructors
-class Skipped extends Node {}
+class Skipped extends Node { }
 
 /**
  * Node was successfully cleaned up.
@@ -99,7 +103,8 @@ class Skipped extends Node {}
  * Note that this "exception" is being [ab]used to signal success.
  */
 @InheritConstructors
-class Cleaned extends Node {}
+@CompileStatic
+class Cleaned extends Node { }
 
 /**
  * Enable/Disable printing of debug messages.
@@ -131,12 +136,12 @@ class Cleaned extends Node {}
 /**
  * Force a cleanup on a particular node.
  */
-@Field String forceNode = ""
+@Field String forceNode = ''
 
 /**
  * Accounting of node status (Cleaned, Failed, etc.).
  */
-@Field Map nodeStatus = [:].withDefault {[]}
+@Field Map nodeStatus = [:].withDefault { [] }
 
 /**
  * Delete a remote file path ignoring any exceptions.
@@ -172,7 +177,7 @@ boolean deleteRemote(FilePath path, boolean deleteContentsOnly) {
       throw t
     }
   }
-  return result
+  result
 }
 
 /**
@@ -181,7 +186,7 @@ boolean deleteRemote(FilePath path, boolean deleteContentsOnly) {
  * @param Object value string-ified debug message.
  */
 void debugln(Object value) {
- debug && println(value)
+  debug && println(value)
 }
 
 /**
@@ -413,7 +418,7 @@ void processNodes() {
         }
       }
 
-      if (node.assignedLabels.find{ it.expression in skippedLabels }) {
+      if (node.assignedLabels.find { it.expression in skippedLabels }) {
         throw new Skipped(node, 'based on label(s)')
       }
 
@@ -433,7 +438,6 @@ void processNodes() {
       println("node: ${node.getDisplayName()}"
               + ", free space: ${roundedSize} GiB"
               + ", idle: ${computer.isIdle()}")
-
 
       // skip nodes with sufficient disk space
       if (!forceCleanup && (roundedSize >= threshold)
@@ -462,27 +466,26 @@ void processNodes() {
 
       // signal success
       throw new Cleaned(node, 'OK')
-    } catch (Node t) {
-      switch (t) {
-        case Cleaned:
-          nodeStatus['cleanedNodes'] << t
-          break
-        case Offline:
-          nodeStatus['offlineNodes'] << t
-          break
-        case Skipped:
-          nodeStatus['skippedNodes'] << t
-          break
-        default:
-          // includes Failed
-          nodeStatus['failedNodes'] << t
-      }
-    } finally {
-      if (node.toComputer() != null && !manualOffline) {
-        node.toComputer().setTemporarilyOffline(false, null)
-      }
-
-      println ''
+      } catch (Node t) {
+        switch (t) {
+          case Cleaned:
+            nodeStatus['cleanedNodes'] << t
+            break
+          case Offline:
+            nodeStatus['offlineNodes'] << t
+            break
+          case Skipped:
+            nodeStatus['skippedNodes'] << t
+            break
+          default:
+            // includes Failed
+            nodeStatus['failedNodes'] << t
+        }
+      } finally {
+        if (node.toComputer() != null && !manualOffline) {
+          node.toComputer().setTemporarilyOffline(false, null)
+        }
+        println ''
     }
   }
 }

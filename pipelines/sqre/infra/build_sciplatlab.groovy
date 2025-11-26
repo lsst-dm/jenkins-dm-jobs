@@ -28,12 +28,12 @@ notify.wrap {
   String tag              = params.TAG
   String supplementary    = params.SUPPLEMENTARY
   String image            = params.IMAGE
-  String push             = "true"
+  String push             = 'true'
   String branch           = params.BRANCH
   Instant starttime = null
 
   if (params.NO_PUSH) {
-    push = "false"
+    push = 'false'
   }
 
   def run = {
@@ -49,7 +49,7 @@ notify.wrap {
       ]
       def json = new groovy.json.JsonBuilder(body)
 
-      def url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/dispatches")
+      def url = new URL('https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/workflows/build.yaml/dispatches')
       starttime = Instant.now()
       println("url: ${url}")
       println("body: ${json}")
@@ -97,9 +97,9 @@ notify.wrap {
       def loop_idx = 0
       def jsonSlurper = new groovy.json.JsonSlurper()
       def run_id = 0
-      def wf = {}
-      def status = ""
-      def conclusion = ""
+      def wf = { }
+      def status = ''
+      def conclusion = ''
       while ((run_id == 0) || (created_at < starttime)) {
         if (loop_idx > 30) {
           assert 0: "Build did not start in 15 minutes: ${status}/${conclusion}"
@@ -121,14 +121,14 @@ notify.wrap {
           println("#{$loop_idx}: id = ${run_id}; created_at=${created_at}")
         } // openConnection().with
       } // while
-      assert (run_id != 0): "Did not find run_id!"
+      assert (run_id != 0): 'Did not find run_id!'
       loop_idx = 0
       status = wf.status
       conclusion = wf.conclusion
-      wf = {}
+      wf = { }
       // Next loop: we have a run_id, so we can check its status directly
       url = new URL("https://api.github.com/repos/lsst-sqre/sciplat-lab/actions/runs/${run_id}")
-      while ( status != "completed") {
+      while (status != 'completed') {
         if (loop_idx > 240) {
           assert 0: "Build did not finish in 2 hours: ${status}/${conclusion}"
         }
@@ -148,10 +148,10 @@ notify.wrap {
           println("#{$loop_idx}: id = ${run_id}; status=${status}; conclusion=${conclusion}")
         } // openConnection.with()
       } // while
-      if (conclusion != "success") {
+      if (conclusion != 'success') {
           currentBuild.result = 'FAILURE'
       }
-      assert conclusion == "success": "Build for id ${run_id} failed: conclusion=${conclusion}"
+      assert conclusion == 'success': "Build for id ${run_id} failed: conclusion=${conclusion}"
     } // stage
   } // run
 

@@ -9,8 +9,8 @@ p.pipeline().with {
 
   parameters {
     stringParam('ARCHITECTURE', 'linux-64', 'Architecture to run script.')
-    stringParam('SPLENV_REF', scipipe.template.splenv_ref, "Rubin env to update")
-    stringParam('MINI_VER', scipipe.template.tarball_defaults.miniver, "Minconda version")
+    stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'Rubin env to update')
+    stringParam('MINI_VER', scipipe.template.tarball_defaults.miniver, 'Minconda version')
     booleanParam('NO_PUSH', false, 'Do not push image to docker registry.')
   }
 }

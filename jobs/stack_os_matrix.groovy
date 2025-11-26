@@ -14,7 +14,7 @@ p.pipeline().with {
 
   parameters {
     stringParam('REFS', null, 'Whitespace delimited list of "refs" to attempt to build.  Priority is highest -> lowest from left to right.  "main" or branch from repos.yaml is implicitly appended to the right side of the list, if not specified; do not specify "main" explicitly.')
-    stringParam('PRODUCTS', scipipe.canonical.products + " lsst_sitcom",
+    stringParam('PRODUCTS', scipipe.canonical.products + ' lsst_sitcom',
       'Whitespace delimited list of EUPS products to build.')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
     // XXX testing only

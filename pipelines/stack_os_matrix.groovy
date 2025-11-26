@@ -38,8 +38,8 @@ notify.wrap {
     LSST_NO_BINARY_FETCH:   NO_BINARY_FETCH,
   ]
 
-  if (PRODUCTS.contains("ci_lsstcam")){
-      buildParams["CI_LSSTCAM"] = true
+  if (PRODUCTS.contains('ci_lsstcam')) {
+      buildParams['CI_LSSTCAM'] = true
   }
 
   // override conda env ref from build_matrix.yaml
@@ -60,7 +60,7 @@ notify.wrap {
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean() )
+      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean())
     }
   }
 } // notify.wrap

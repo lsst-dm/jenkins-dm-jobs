@@ -50,7 +50,7 @@ notify.wrap {
       conf.code.git_ref = ref
     } else {
       if (conf.code) {
-         conf.code = null
+        conf.code = null
       }
     }
     if (conf.code) {
@@ -277,8 +277,8 @@ def void verifyDataset(Map p) {
         homeDir: homeDir,
         archiveDir: jobDir,
         codeDir: codeDir,
-        namespace: p.squashPush ?  "lsst.verify.ap" : "",
-        restProxyUrl: p.squashPush ? sqre.sasquatch.url : "",
+        namespace: p.squashPush ?  'lsst.verify.ap' : '',
+        restProxyUrl: p.squashPush ? sqre.sasquatch.url : '',
         pipeline: Path.of(ds.gen3_pipeline.trim()).getFileName().toString()
       )
 
@@ -290,12 +290,12 @@ def void verifyDataset(Map p) {
             def gen3Dir = util.joinPath(ds.name, 'repo')
             def collection = 'ap_verify-output'
 
-            def codeRef = buildCode ? code.git_ref : "main"
+            def codeRef = buildCode ? code.git_ref : 'main'
             util.runVerifyToSasquatch(
               runDir: runDir,
               gen3Dir: gen3Dir,
               collectionName: collection,
-              namespace: "lsst.verify.ap",
+              namespace: 'lsst.verify.ap',
               datasetName: ds.name,
               sasquatchUrl: sqre.sasquatch.url,
               branchRefs: codeRef,

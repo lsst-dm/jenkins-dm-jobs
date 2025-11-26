@@ -15,7 +15,7 @@ p.pipeline().with {
     booleanParam('PREP_ONLY', false, 'Pass -p flag to lsstsw/bin/rebuild -- prepare git clones/a manifest but do not build products.')
     stringParam('TIMEOUT', '8', 'build timeout in hours')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
-    // enable for debugging only
-    // booleanParam('NO_VERSIONDB_PUSH', true, 'Skip push to remote versiondb repo.')
+  // enable for debugging only
+  // booleanParam('NO_VERSIONDB_PUSH', true, 'Skip push to remote versiondb repo.')
   }
 }

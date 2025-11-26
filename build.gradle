@@ -32,7 +32,7 @@ task libs(type: Copy) {
 sourceSets {
     jobs {
         groovy {
-            srcDirs 'jobs'
+      srcDirs 'jobs'
         }
     }
 }

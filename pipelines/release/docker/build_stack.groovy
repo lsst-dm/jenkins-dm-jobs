@@ -1,6 +1,6 @@
 properties([
   copyArtifactPermission('/release/*'),
-]);
+])
 
 node('jenkins-manager') {
   dir('jenkins-dm-jobs') {
@@ -36,7 +36,6 @@ notify.wrap {
   String manifestId   = params.MANIFEST_ID ?: ''
   String lsstCompiler = params.LSST_COMPILER ?: ''
 
-
   def build_stack    = scipipe.build_stack
   def lsstswConfigs  = build_stack.lsstsw_config
   def release        = scipipe.scipipe_release
@@ -67,112 +66,107 @@ notify.wrap {
     registryTags += Arrays.asList(extraDockerTags.split())
     def extraTagList = Arrays.asList(extraDockerTags.split())
     extraTagList.each { tag ->
-    registryTags += "al9-${tag}"
+      registryTags += "al9-${tag}"
     }
   }
 
-
   def newRegistryTags = []
   registryTags.each { name ->
-    fixOSVersion = name.replaceFirst("7", "9")
-    fixDistribName = fixOSVersion.replace("stack-lsst_distrib", "lsst_sitcom")
+    fixOSVersion = name.replaceFirst('7', '9')
+    fixDistribName = fixOSVersion.replace('stack-lsst_distrib', 'lsst_sitcom')
     newRegistryTags += fixDistribName
   }
 
   def matrix = [:]
-  lsstswConfigs.each{ lsstswConfig ->
+  lsstswConfigs.each { lsstswConfig ->
     def slug = util.lsstswConfigSlug(lsstswConfig)
-    matrix[slug] ={
+    matrix[slug] = {
+      def newinstallImage = newinstall.docker_registry.repo
+      def newinstallTagBase = newinstall.docker_registry.tag
+      def splenvRef       = lsstswConfig.splenv_ref
+      if (params.SPLENV_REF) {
+        splenvRef = params.SPLENV_REF
+      }
 
-    def newinstallImage = newinstall.docker_registry.repo
-    def newinstallTagBase = newinstall.docker_registry.tag
-    def splenvRef       = lsstswConfig.splenv_ref
-    if (params.SPLENV_REF) {
-      splenvRef = params.SPLENV_REF
-    }
+      def baseImage       = "${newinstallImage}:${newinstallTagBase}-${splenvRef}"
 
-    def baseImage       = "${newinstallImage}:${newinstallTagBase}-${splenvRef}"
+      def image = null
+      def repo  = null
 
-    def image = null
-    def repo  = null
-
-
-    def run = {
-      stage('checkout') {
-        repo = git([
+      def run = {
+        stage('checkout') {
+          repo = git([
           url: githubRepo,
           branch: gitRef,
         ])
-      }
-
-      stage('build') {
-        def opt = []
-        // ensure base image is always up to date
-        opt << '--pull=true'
-        opt << '--no-cache'
-        opt << "--build-arg EUPS_PRODUCTS=\"${products}\""
-        opt << "--build-arg EUPS_TAG=\"${eupsTag}\""
-        opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\""
-        opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\""
-        opt << "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\""
-        opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
-        opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
-        opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
-        opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
-        opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
-        opt << "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\""
-        opt << "--build-arg LSST_COMPILER=\"${lsstCompiler}\""
-        opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
-        opt << "--load"
-        opt << '.'
-
-        dir(buildDir) {
-          image = docker.build("${dockerRepo}", opt.join(' '))
-          image2 = docker.build("prompt-proto/${gcpRepo}", opt.join(' '))
         }
-      }
-      stage('push') {
-        def digest = null
-        // Should be removed once we drop dockerhub support
-        def arch = lsstswConfig.display_name.tokenize('-').last()
-        if (!noPush) {
-          docker.withRegistry(
+
+        stage('build') {
+          def opt = []
+          // ensure base image is always up to date
+          opt << '--pull=true'
+          opt << '--no-cache'
+          opt << "--build-arg EUPS_PRODUCTS=\"${products}\""
+          opt << "--build-arg EUPS_TAG=\"${eupsTag}\""
+          opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\""
+          opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\""
+          opt << "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\""
+          opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
+          opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
+          opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
+          opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
+          opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
+          opt << "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\""
+          opt << "--build-arg LSST_COMPILER=\"${lsstCompiler}\""
+          opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
+          opt << '--load'
+          opt << '.'
+
+          dir(buildDir) {
+            image = docker.build("${dockerRepo}", opt.join(' '))
+            image2 = docker.build("prompt-proto/${gcpRepo}", opt.join(' '))
+          }
+        }
+        stage('push') {
+          def digest = null
+          // Should be removed once we drop dockerhub support
+          def arch = lsstswConfig.display_name.tokenize('-').last()
+          if (!noPush) {
+            docker.withRegistry(
             'https://ghcr.io',
             'rubinobs-dm'
           ) {
-            registryTags.each { name ->
-              image.push(name + "_" + arch)
-            }
+              registryTags.each { name ->
+                image.push(name + '_' + arch)
+              }
           }
-          docker.withRegistry(
+            docker.withRegistry(
             'https://us-central1-docker.pkg.dev/',
             'google_archive_registry_sa'
           ) {
-            registryTags.each { name ->
-              image2.push(name+"_"+arch)
-            }
+              registryTags.each { name ->
+                image2.push(name + '_' + arch)
+              }
           }
-          digest = sh(
+            digest = sh(
             script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}_${arch}",
             returnStdout: true
           ).trim()
-
-        }
+          }
           dockerdigest.add(digest)
       } // push
-
   } // run
 
-  util.nodeWrap(lsstswConfig.label) {
-    try {
-      timeout(time: timelimit, unit: 'HOURS') {
-        run()
-      }
+      util.nodeWrap(lsstswConfig.label) {
+        try {
+          timeout(time: timelimit, unit: 'HOURS') {
+            run()
+          }
     } finally {
-      stage('archive') {
-        def resultsFile = 'results.json'
+          stage('archive') {
+            def resultsFile = 'results.json'
 
-        util.dumpJson(resultsFile,  [
+            util.dumpJson(resultsFile,  [
           base_image: baseImage ?: null,
           image: "${dockerRepo}:${dockerTag}",
           docker_registry: [
@@ -181,19 +175,19 @@ notify.wrap {
           ],
         ])
 
-        archiveArtifacts([
+            archiveArtifacts([
           artifacts: resultsFile,
           fingerprint: true
         ])
       } // stage
     } // try
   } // util.nodeWrap
-  }
+    }
   }
   parallel matrix
 
   def merge = {
-    stage('digest'){
+    stage('digest') {
         def digest = dockerdigest.join(' ')
         docker.withRegistry(
           'https://ghcr.io',
@@ -206,7 +200,6 @@ notify.wrap {
             """,
             returnStdout: true)
         }
-
         }
         docker.withRegistry(
           'https://us-central1-docker.pkg.dev/',
@@ -221,12 +214,10 @@ notify.wrap {
           }
         }
     }
-
   } // merge
   util.nodeWrap('linux-64') {
       timeout(time: timelimit, unit: 'HOURS') {
         merge()
       }
     } // nodeWrap
-
 } // notify.wrap
