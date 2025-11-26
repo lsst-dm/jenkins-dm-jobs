@@ -133,41 +133,6 @@ notify.wrap {
           echo 'skipping gcp push.'
         }
       } // stage('push packages')
-      stage('push packages aws') {
-        if (pushToBucket) {
-          withCredentials([[
-            $class: 'UsernamePasswordMultiBinding',
-            credentialsId: 'aws-eups-push',
-            usernameVariable: 'AWS_ACCESS_KEY_ID',
-            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-          ],
-          [
-            $class: 'StringBinding',
-            credentialsId: 'eups-push-bucket',
-            variable: 'EUPS_S3_BUCKET'
-          ]]) {
-            def env = [
-              "EUPS_PKGROOT=${pkgroot}",
-              "HOME=${cwd}/home",
-              'EUPS_S3_OBJECT_PREFIX=stack/src/'
-            ]
-            withEnv(env) {
-              docker.image(util.defaultAwscliImage()).inside {
-                // alpine does not include bash by default
-                util.posixSh '''
-                  aws s3 cp \
-                    --only-show-errors \
-                    --recursive \
-                    "${EUPS_PKGROOT}/" \
-                    "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
-                '''
-              } // .inside
-            } // withEnv
-          } // withCredentials
-        } else {
-          echo 'skipping bucket push.'
-        }
-      } // stage('push packages')
     } // ws
   } // run
   util.nodeWrap(lsstswConfig.label) {
