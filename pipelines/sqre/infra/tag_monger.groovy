@@ -36,7 +36,7 @@ notify.wrap {
           'TAG_MONGER_VERBOSE=true',
         ]) {
           image.inside {
-            sh 'tag-monger -g'
+            sh 'tag-monger'
           }
         }
       } // withCredentials
