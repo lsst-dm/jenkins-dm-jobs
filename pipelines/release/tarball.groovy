@@ -135,7 +135,6 @@ def void linuxTarballs(
 
         stage('publish') {
           if (publish) {
-            s3PushConda(envId)
             gsPushConda(envId)
           }
         }
@@ -209,7 +208,6 @@ def void osxTarballs(
 
         stage('publish') {
           if (publish) {
-            s3PushConda(envId)
             gsPushConda(envId)
           }
         }
@@ -590,48 +588,6 @@ def void writeScript(Map p) {
   util.bash "chmod a+x ${p.file}"
 }
 
-/**
- * Push {@code ./distrib} dir to an s3 bucket under the "path" formed by
- * joining the {@code parts} parameters.
- */
-def void s3PushConda(String ... parts) {
-  def objectPrefix = 'stack/' + util.joinPath(parts)
-  def cwd = pwd()
-  def buildDir = "${cwd}/build"
-
-  def env = [
-    "EUPS_PKGROOT=${cwd}/distrib",
-    "EUPS_S3_OBJECT_PREFIX=${objectPrefix}",
-    "HOME=${cwd}/home",
-    "BUILDDIR=${buildDir}",
-  ]
-
-  withEnv(env) {
-    withEupsBucketEnv {
-      timeout(time: 10, unit: 'MINUTES') {
-        if (osfamily != 'osx') {
-          docker.image(util.defaultAwscliImage()).inside {
-            util.posixSh(s3PushCmd())
-          }
-          return
-        }
-        // alpine does not include bash by default
-        util.posixSh("""
-        eval "\$(${BUILDDIR}/conda/bin/conda shell.bash hook)"
-        if conda env list | grep aws-cli-env > /dev/null 2>&1; then
-            conda activate aws-cli-env
-            mamba update awscli
-        else
-            mamba create -y --name aws-cli-env awscli
-            conda activate aws-cli-env
-        fi
-        ${s3PushCmd()}
-        conda deactivate
-        """)
-      }
-    } //withEupsBucketEnv
-  } // withEnv
-} // s3PushConda
 
 /**
  * Push {@code ./distrib} dir to an gs bucket under the "path" formed by
@@ -652,7 +608,7 @@ def void gsPushConda(String ... parts) {
   withEnv(env) {
     withGSEupsBucketEnv {
       timeout(time: 10, unit: 'MINUTES') {
-        if (osfamily != 'osx') {
+        if (osfamily != "osx") {
           docker.image(util.defaultGcloudImage()).inside {
             util.posixSh(gsPushCmd())
           }
@@ -672,6 +628,7 @@ def void gsPushConda(String ... parts) {
         ${gsPushCmd()}
         conda deactivate
         """)
+
       }
     } //withGSEupsBucketEnv
   } // withEnv
@@ -690,22 +647,6 @@ def String gsPushCmd() {
       --recursive \
       "${EUPS_PKGROOT}/*" \
       "gs://${EUPS_GS_BUCKET}/${EUPS_GS_OBJECT_PREFIX}"
-  ''')
-}
-
-/**
- * Returns a shell command string for pushing the EUPS_PKGROOT to s3.
- *
- * @return String cmd
- */
-def String s3PushCmd() {
-  // do not interpolate now -- all values should come from the shell env.
-  return util.dedent('''
-    aws s3 cp \
-      --only-show-errors \
-      --recursive \
-      "${EUPS_PKGROOT}/" \
-      "s3://${EUPS_S3_BUCKET}/${EUPS_S3_OBJECT_PREFIX}"
   ''')
 }
 
