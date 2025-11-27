@@ -25,6 +25,7 @@ notify.wrap {
   String mini_ver        = params.MINI_VER
   Boolean noPush         = params.NO_PUSH
 
+
   def hub_repo = 'gcr.io/google.com/cloudsdktool/google-cloud-cli'
 
   def run = {
@@ -43,7 +44,7 @@ notify.wrap {
           variable: 'GOOGLE_APPLICATION_CREDENTIALS'
         )]) {
           withEnv([
-            'SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com',
+            "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
             "SPLENV_REF=${splenv_ref}",
             "MINI_VER=${mini_ver}",
           ]) {
@@ -57,6 +58,7 @@ notify.wrap {
         } // withCredentials
       }
     }
+
   } // run
 
   util.nodeWrap(architecture) {

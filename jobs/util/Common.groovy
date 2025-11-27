@@ -5,7 +5,6 @@ import javaposse.jobdsl.dsl.Folder
 import javaposse.jobdsl.dsl.Job
 
 class Common {
-
   static void addNotification(Job job) {
     job.with {
       publishers {
@@ -83,5 +82,4 @@ class Common {
       description('Science Pipelines / witchcraft.')
     }
   }
-
 }

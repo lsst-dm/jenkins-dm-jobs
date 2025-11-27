@@ -1,5 +1,4 @@
 import util.Common
-
 Common.makeFolders(this)
 
 def folder = 'sqre/ci-ci'

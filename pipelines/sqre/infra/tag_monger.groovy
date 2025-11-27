@@ -31,9 +31,9 @@ notify.wrap {
         )])  {
         withEnv([
           "IMAGE=${image.id}",
-          'TAG_MONGER_BUCKET=eups-prod',
-          'TAG_MONGER_MAX=0',
-          'TAG_MONGER_VERBOSE=true',
+          "TAG_MONGER_BUCKET=eups-prod",
+          "TAG_MONGER_MAX=0",
+          "TAG_MONGER_VERBOSE=true",
         ]) {
           image.inside {
             sh 'tag-monger'

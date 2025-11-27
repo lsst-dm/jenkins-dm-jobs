@@ -13,7 +13,7 @@ def String dedent(String text) {
   if (text == null) {
     return null
   }
-  text.replaceFirst('\n', '').stripIndent()
+  text.replaceFirst("\n","").stripIndent()
 }
 
 /**
@@ -130,7 +130,7 @@ def void wrapDockerImage(Map p) {
   Boolean pull = p.pull ?: false
 
   def buildDir = 'docker'
-  def config = dedent('''
+  def config = dedent("""
     FROM ${image}
 
     ARG     D_USER
@@ -146,7 +146,7 @@ def void wrapDockerImage(Map p) {
 
     USER    \$D_USER
     WORKDIR \$D_HOME
-  ''')
+  """)
 
   // docker insists on recusrively checking file access under its execution
   // path -- so run it from a dedicated dir
@@ -334,10 +334,10 @@ def loadLSSTCamTestData(
   def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
   def testdata // Assigning location of data later
   dir(buildDir) {
-    def cwd = pwd()
-    testdata = "${cwd}/${testDir}"
-    dir(testdata) {
-      withCredentials([
+  def cwd = pwd()
+  testdata = "${cwd}/${testDir}"
+  dir(testdata){
+    withCredentials([
       [
         $class: 'StringBinding',
         credentialsId: 'weka-bucket-secret',
@@ -350,27 +350,27 @@ def loadLSSTCamTestData(
         $class: 'StringBinding',
         credentialsId: 'weka-bucket-url',
         variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
-      ]]) {
-        withEnv([
-        'RCLONE_CONFIG_WEKA_TYPE=s3',
-        'RCLONE_CONFIG_WEKA_PROVIDER=Other',
-        'LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49'
-    ]) {
-          insideDockerWrap(
+      ]]){
+      withEnv([
+        "RCLONE_CONFIG_WEKA_TYPE=s3",
+        "RCLONE_CONFIG_WEKA_PROVIDER=Other",
+        "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
+    ]){
+      insideDockerWrap(
         image: "${gcp_repo}:latest",
         pull: true,
         args: "-v ${cwd}:/home",
       ) {
-            bash '''
+        bash """
           rclone copy weka:"${LSSTCAM_BUCKET}" .
-        '''
+        """
+        }
       }
     }
-      }
-    }
+  }
   }
   return testdata
-  }
+}
 /**
  * Loads Cache
  * @param buildDir where to place the loaded file
@@ -378,13 +378,13 @@ def loadLSSTCamTestData(
  */
 def loadCache(
   String buildDir,
-  String tag='d_latest'
+  String tag="d_latest"
 ) {
   def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
   dir(buildDir) {
     def cwd = pwd()
     def ciDir = "${cwd}/ci-scripts"
-    dir(ciDir) {
+    dir(ciDir){
       cloneCiScripts()
     }
     withCredentials([file(
@@ -392,7 +392,7 @@ def loadCache(
       variable: 'GOOGLE_APPLICATION_CREDENTIALS'
     )]) {
       withEnv([
-        'SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com',
+        "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
         "DATE_TAG=${tag}",
       ]) {
           insideDockerWrap(
@@ -400,12 +400,12 @@ def loadCache(
             pull: true,
             args: "-v ${cwd}:/home",
           ) {
-          bash '''
+             bash """
              gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
              cd /home/ci-scripts
              ./loadlsststack.sh $DATE_TAG
-             '''
-          }
+             """
+        }
       }
     }
   }
@@ -416,7 +416,7 @@ def loadCache(
  * @param tag Which eups tag to load
  */
 def saveCache(
-  String tag='d_latest'
+  String tag="d_latest"
 ) {
   def cwd = pwd()
   bash '''
@@ -429,19 +429,20 @@ def saveCache(
     variable: 'GOOGLE_APPLICATION_CREDENTIALS'
   )]) {
     withEnv([
-      'SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com',
+      "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
       "DATE_TAG=${tag}",
     ]) {
-        bash '''
+        bash """
         cd lsstsw
         source bin/envconfig
         gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
         cd ../ci-scripts
         ./backuplsststack.sh $DATE_TAG
-        '''
+        """
     }
   }
 }
+
 
 /**
  * Run a lsstsw build.
@@ -467,14 +468,15 @@ def lsstswBuild(
     LSST_SPLENV_REF:     lsstswConfig.splenv_ref,
   ] + buildParams
 
+
   def run = {
-    if (cachelsstsw) { // runs only if we want to cache the work
-      buildParams = [SCONSFLAGS: '--no-tests'] + buildParams
-      jenkinsWrapper(buildParams)
-      saveCache('d_latest')
+    if (cachelsstsw){ // runs only if we want to cache the work
+        buildParams = [SCONSFLAGS: "--no-tests"] + buildParams
+        jenkinsWrapper(buildParams)
+        saveCache("d_latest")
     } // if saveCacheRun
     else {
-      jenkinsWrapper(buildParams)
+        jenkinsWrapper(buildParams)
     } // else
   } // run
   def runDocker = {
@@ -486,17 +488,17 @@ def lsstswBuild(
         $class: 'StringBinding',
         credentialsId: 'github-api-token-checks',
         variable: 'GITHUB_TOKEN'
-      ]]) {
+      ]]){
         run()
       } // withCredentials
     } // insideDockerWrap
   } // runDocker
 
   def runEnv = { doRun ->
-    // No longer need hashpath as slug is short enough
-    def buildDirHash = slug
-    try {
-      dir(buildDirHash) {
+      // No longer need hashpath as slug is short enough
+      def buildDirHash = slug
+      try {
+        dir(buildDirHash) {
           if (wipeout) {
             deleteDir()
           }
@@ -509,32 +511,32 @@ def lsstswBuild(
             if (!lsstswConfig.allow_fail) {
               throw e
             }
-            echo 'giving up on build but suppressing error'
+            echo "giving up on build but suppressing error"
             echo e.toString()
           } // try
         } // dir
       } finally {
-      // needs to be called in the parent dir of jenkinsWrapper() in order to
-      // add the slug as a prefix to the archived files.
-      jenkinsWrapperPost(buildDirHash)
-    }
+        // needs to be called in the parent dir of jenkinsWrapper() in order to
+        // add the slug as a prefix to the archived files.
+        jenkinsWrapperPost(buildDirHash)
+      }
   } // runEnv
 
   def agent = lsstswConfig.label
   def task = null
   if (lsstswConfig.image) {
     task = {
-      if (fetchCache) {
-        loadCache(slug, 'd_latest')
+      if (fetchCache){
+        loadCache(slug,"d_latest")
       }
-      if (buildParams['CI_LSSTCAM']) {
-        def testdatadir = loadLSSTCamTestData(slug, 'lsstcam_testdata')
+      if (buildParams['CI_LSSTCAM']){
+        def testdatadir = loadLSSTCamTestData(slug,"lsstcam_testdata")
         buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
       }
       runEnv(runDocker)
     }
   } else {
-    if (cachelsstsw) {
+    if (cachelsstsw){
       // runs only if we are not running a caching job. Since this isn't on
       // docker we do not need to store cache for them.
       return
@@ -1062,7 +1064,7 @@ def void insideCodekit(Closure run) {
 def String mapToCliFlags(Map opt) {
   def flags = []
 
-  opt.each { k, v ->
+  opt.each { k,v ->
     if (v) {
       if (v == true) {
         // its a boolean flag
@@ -1138,7 +1140,7 @@ def lsstswBuildMatrix(
   Boolean loadCache=false,
   Boolean saveCache=false
 ) {
-  if (buildParams.containsKey('CI_LSSTCAM')) {
+  if (buildParams.containsKey("CI_LSSTCAM")){
     def lsstswConfig = matrixConfig[0]
     validateLsstswConfig(lsstswConfig)
     lsstswBuild(
@@ -1334,7 +1336,7 @@ def void buildTarballMatrix(Map p) {
         try {
           tarballBuild()
         } catch (e) {
-          echo 'giving up on build but suppressing error'
+          echo "giving up on build but suppressing error"
           echo e.toString()
         }
       } else {
@@ -1399,7 +1401,7 @@ def String epochMilliToUtc(Long epoch) {
 def String instantToUtc(Instant moment) {
   def utcFormat = DateTimeFormatter
                     .ofPattern("yyyyMMdd'T'hhmmssX")
-                    .withZone(ZoneId.of('UTC'))
+                    .withZone(ZoneId.of('UTC') )
 
   utcFormat.format(moment)
 }
@@ -1490,12 +1492,13 @@ def ltdPush(Map p) {
     masonImage: 'lsstsqre/ltd-mason',
   ] + p
 
+
   withEnv([
-    'LTD_MASON_BUILD=true',
+    "LTD_MASON_BUILD=true",
     "LTD_MASON_PRODUCT=${p.ltdProduct}",
-    'LTD_KEEPER_URL=https://keeper.lsst.codes',
-    'LTD_KEEPER_USER=travis',
-    'TRAVIS_PULL_REQUEST=false',
+    "LTD_KEEPER_URL=https://keeper.lsst.codes",
+    "LTD_KEEPER_USER=travis",
+    "TRAVIS_PULL_REQUEST=false",
     "TRAVIS_REPO_SLUG=${p.repoSlug}",
     "TRAVIS_BRANCH=${p.ltdSlug}",
   ]) {
@@ -1736,8 +1739,8 @@ def String sanitizeEupsTag(String tag) {
   // if the git tag is an official version, starts with a number
   // but eups tag need still to have 'v' in front
   char c = tag.charAt(0)
-  if (c.isDigit()) {
-    tag = 'v' + tag
+  if ( c.isDigit() ) {
+    tag = "v" + tag
   }
 
   // eups doesn't like dots in tags, convert to underscores
@@ -1820,7 +1823,7 @@ def String defaultCodekitImage() {
   "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
 
-def Object runIndexUpdate() {
+def Object runIndexUpdate(){
   def job = 'sqre/infra/update_indexjson'
   build(
     job: job,
@@ -1834,6 +1837,7 @@ def Object runIndexUpdate() {
       ),],
     wait: true,
   ) // build
+
 }
 
 /**
@@ -1989,11 +1993,11 @@ def void checkoutLFS(Map p) {
       image: lfsImage,
       pull: true,
     ) {
-      bash('''
+      bash("""
       source /opt/lsst/software/stack/loadLSST.bash
       git lfs install --skip-repo
       git lfs pull origin
-      ''')
+      """)
     }
   } finally {
     // try not to break jenkins clone mangement
@@ -2142,7 +2146,7 @@ def List xz(List patterns) {
   patterns = relPath(pwd(), patterns)
   def files = patterns.collect { g -> findFiles(glob: g) }.flatten()
   def targetFile = 'compress_files.txt'
-  writeFile(file: targetFile, text: files.join('\n') + '\n')
+  writeFile(file: targetFile, text: files.join("\n") + "\n")
 
   // compressing an example hsc output file
   // (cmd)       (ratio)  (time)
@@ -2394,17 +2398,17 @@ def void runVerifyToSasquatch(Map p) {
     "JOB_REFS=${p.containsKey('branchRefs') ? p.branchRefs : ''}",
     "JOB_PIPELINE=${p.containsKey('pipeline') ? p.pipeline : ''}",
   ]) {
-      // TODO: need Sasquatch authentication eventually; verify_to_sasquatch.py takes a --token arg
-      // withCredentials([[
-      //   $class: 'UsernamePasswordMultiBinding',
-      //   credentialsId: 'squash-api-user',
-      //   usernameVariable: 'SQUASH_USER',
-      //   passwordVariable: 'SQUASH_PASS',
-      // ]]) {
+    // TODO: need Sasquatch authentication eventually; verify_to_sasquatch.py takes a --token arg
+    // withCredentials([[
+    //   $class: 'UsernamePasswordMultiBinding',
+    //   credentialsId: 'squash-api-user',
+    //   usernameVariable: 'SQUASH_USER',
+    //   passwordVariable: 'SQUASH_PASS',
+    // ]]) {
       dir(p.runDir) {
         run()
       }
-  // } // withCredentials
+    // } // withCredentials
   } // withEnv
 } // runDispatchVerify
 
@@ -2520,4 +2524,4 @@ def void nodeWrap(String label, Closure run) {
   }
 }
 
-return this
+return this;

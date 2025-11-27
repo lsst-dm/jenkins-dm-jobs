@@ -248,15 +248,15 @@ def void verifyDataset(Map p) {
         archiveDir: jobDir,
       )
 
-      def gen3Dir = util.joinPath(datasetDir.toString(), 'SMALL_HSC')
+      def gen3Dir = util.joinPath(datasetDir.toString(), "SMALL_HSC")
       util.runVerifyToSasquatch(
         runDir: runDir,
         gen3Dir: gen3Dir,
-        collectionName: 'jenkins/step3',
-        namespace: 'lsst.verify.drp',
-        datasetName: 'HSC/RC2/Nightly',
+        collectionName: "jenkins/step3",
+        namespace: "lsst.verify.drp",
+        datasetName: "HSC/RC2/Nightly",
         sasquatchUrl: sqre.sasquatch.url,
-        pipeline: 'DRP-RC2_subset.yaml',
+        pipeline: "DRP-RC2_subset.yaml",
       )
 
       // push results to squash
@@ -294,7 +294,7 @@ def void verifyDataset(Map p) {
           run()
         } // timeout
       } // util.nodeWrap
-    } catch (e) {
+    } catch(e) {
       runNodeCleanup()
       throw e
     } // try
@@ -391,6 +391,7 @@ def void runDrpMetrics(Map p) {
     'ciDir',
     'archiveDir',
   ])
+
 
   withEnv([
     "LSST_VERIFY_DRP_METRICS_CODE_DIR=${p.codeDir}",
