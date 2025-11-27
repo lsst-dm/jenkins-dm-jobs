@@ -113,8 +113,8 @@ notify.wrap {
             def env = [
               "EUPS_PKGROOT=${pkgroot}",
               "HOME=${cwd}/home",
-              'EUPS_GS_OBJECT_PREFIX=stack/src/',
-              'EUPS_GS_BUCKET=eups-prod'
+              "EUPS_GS_OBJECT_PREFIX=stack/src/",
+              "EUPS_GS_BUCKET=eups-prod"
             ]
             withEnv(env) {
               docker.image(util.defaultGcloudImage()).inside {
@@ -130,7 +130,7 @@ notify.wrap {
             } // withEnv
           } // withCredentials
         } else {
-          echo 'skipping gcp push.'
+          echo "skipping gcp push."
         }
       } // stage('push packages')
     } // ws

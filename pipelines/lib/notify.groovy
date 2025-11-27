@@ -5,10 +5,12 @@ import org.codehaus.groovy.runtime.StackTraceUtils
 @Field String checkerboardEndpoint = 'https://roundtable.lsst.cloud/checkerboard'
 @Field Boolean debug = true
 
+
 /*
  * methods in this section must not be coupled to jenkins or pipeline script so
  * that may be used/tested external to a jenkins pipeline job.
  */
+
 
 /*
  * Return name of calling method
@@ -21,7 +23,7 @@ import org.codehaus.groovy.runtime.StackTraceUtils
  *
  * @return String name of calling method
  */
-String getParentMethodName() {
+String getParentMethodName(){
   def marker = new Throwable()
   return StackTraceUtils.sanitize(marker).stackTrace[2].methodName
 }
@@ -74,7 +76,7 @@ String githubToSlack(String jenkinsUser, String authToken) {
  * @return String slack user Id
  */
 String mapToArg(Map data) {
-  data.collect { k, v ->
+  data.collect { k,v ->
     "${k}=${URLEncoder.encode(v)}"
   }.join('&')
 }
@@ -92,12 +94,12 @@ Object slackApiGet(Map args) {
 
   // token is not allowed in query parameters anymore
   token = args.query.token
-  args.query.remove('token')
+  args.query.remove("token")
   def call = "${slackEndpoint}/${args.method}?${mapToArg(args.query)}"
 
   url = new URL(call)
   debugln("url: ${url.toString()}")
-  debugln("token: ${token.substring(0, 8)}")
+  debugln("token: ${token.substring(0,8)}")
 
   def data = null
   def conn = url.openConnection().with { conn ->
@@ -136,7 +138,7 @@ Object slackApiPost(Map args) {
   def call = "${slackEndpoint}/${args.method}"
   url = new URL(call)
   debugln("url: ${url.toString()}")
-  debugln("token: ${args.token.substring(0, 8)}")
+  debugln("token: ${args.token.substring(0,8)}")
 
   def data = null
   def conn = url.openConnection().with { conn ->
@@ -296,9 +298,11 @@ def requiredParams(List need, Map args) {
   }
 }
 
+
 /*
  * Methods below are coupled to jenkins
  */
+
 
 /*
  * Build cause -- Ie what triggered the build
@@ -392,9 +396,9 @@ Map baseBuildMessage(Map args) {
   ]
 
   if (!params.isEmpty()) {
-    message.attachments.first().text += ' ```\n' +
-      params.collect { k, v -> "${k}: ${v}" }.join('\n') +
-      '\n```'
+    message.attachments.first().text += " ```\n" +
+      params.collect{ k,v -> "${k}: ${v}" }.join("\n") +
+      "\n```"
   }
 
   return message
@@ -607,18 +611,18 @@ def trynotify(Closure run) {
   // if (debug) {
   //   run()
   // } else {
-  try {
-    run()
+    try {
+      run()
     } catch (org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException e) {
-    // fail on groovy sandbox exceptions. ie., methods that need to be
-    // whitelisted
-    throw e
+      // fail on groovy sandbox exceptions. ie., methods that need to be
+      // whitelisted
+      throw e
     } catch (Error e) {
-    // ignore other exception so problems with slack messaging will not cause
-    // the build to be marked as a failure.
-    echo "error sending slack notification: ${e.toString()}"
-  }
-// }
+      // ignore other exception so problems with slack messaging will not cause
+      // the build to be marked as a failure.
+      echo "error sending slack notification: ${e.toString()}"
+    }
+  // }
 }
 
 def wrap(Closure run) {
@@ -628,13 +632,13 @@ def wrap(Closure run) {
     run()
   } catch (e) {
     // If there was an exception thrown, the build failed
-    currentBuild.result = 'FAILED'
+    currentBuild.result = "FAILED"
     throw e
   } finally {
     echo "result: ${currentBuild.result}"
 
     trynotify {
-      switch (currentBuild.result) {
+      switch(currentBuild.result) {
         case null:
         case 'SUCCESS':
           success()
@@ -652,4 +656,4 @@ def wrap(Closure run) {
   }
 }
 
-return this
+return this;

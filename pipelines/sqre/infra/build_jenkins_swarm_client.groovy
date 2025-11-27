@@ -84,7 +84,7 @@ notify.wrap {
       // ensure base image is always up to date
       opt << '--pull=true'
       opt << '--no-cache'
-      opt << '--build-arg JSWARM_UID=48435'
+		  opt << '--build-arg JSWARM_UID=48435'
       opt << '--build-arg JSWARM_GID=202'
       opt << '.'
 

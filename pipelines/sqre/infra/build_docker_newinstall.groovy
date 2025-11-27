@@ -31,67 +31,71 @@ notify.wrap {
 
   Boolean noPush         = params.NO_PUSH
 
+
+
   def splenvRef       = lsstswConfigs[0].splenv_ref
   def registryTags = [
     dockerTag,
-    'latest',
+    "latest",
     "$dockerTag-$splenvRef",
   ]
   def matrix = [:]
-  lsstswConfigs.each { lsstswConfig ->
+  lsstswConfigs.each{ lsstswConfig ->
     def slug = util.lsstswConfigSlug(lsstswConfig)
-    matrix[slug] = {
-      def run = {
-        stage('checkout') {
-          repo = git([
+    matrix[slug] ={
+    def run = {
+      stage('checkout') {
+        repo = git([
           url: githubRepo,
           branch: gitRef,
         ])
+      }
+      stage('build') {
+        def opt = []
+        opt << '--pull=true'
+        opt << '--no-cache'
+        opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
+        opt << "--load"
+        opt << '.'
+        dir(buildDir) {
+          println("TEST")
+          println(dockerRepo)
+          image = docker.build("${dockerRepo}", opt.join(' '))
         }
-        stage('build') {
-          def opt = []
-          opt << '--pull=true'
-          opt << '--no-cache'
-          opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
-          opt << '--load'
-          opt << '.'
-          dir(buildDir) {
-            println('TEST')
-            println(dockerRepo)
-            image = docker.build("${dockerRepo}", opt.join(' '))
-          }
-        }
-        stage('push') {
-          def digest = null
-          if (!noPush) {
-            docker.withRegistry(
+      }
+      stage('push') {
+        def digest = null
+        if (!noPush) {
+          docker.withRegistry(
             'https://ghcr.io',
             'rubinobs-dm'
           ) {
-              registryTags.each { name ->
-                image.push(name)
-              }
+            registryTags.each { name ->
+              image.push(name)
+            }
           }
-            digest = sh(
+          digest = sh(
             script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}",
             returnStdout: true
           ).trim()
-          }
+
+        }
           dockerdigest.add(digest)
       } // push
-      }
+  }
 
-      util.nodeWrap(lsstswConfig.label) {
-        timeout(time: 4, unit: 'HOURS') {
-          run()
-        }
-  } // util.nodeWrap('linux-64')
+
+  util.nodeWrap(lsstswConfig.label) {
+    timeout(time: 4, unit: 'HOURS') {
+      run()
     }
+  } // util.nodeWrap('linux-64')
+  }
   }
   parallel matrix
 
   def merge = {
-    stage('digest') {
+    stage('digest'){
         def digest = dockerdigest.join(' ')
         docker.withRegistry(
           'https://ghcr.io',
@@ -103,13 +107,16 @@ notify.wrap {
             $digest
             """,
             returnStdout: true)
+          }
         }
-        }
-    }
+      }
   } // merge
   util.nodeWrap('linux-64') {
       timeout(time: 1, unit: 'HOURS') {
         merge()
       }
     } // nodeWrap
+
 } // notify.wrap
+
+

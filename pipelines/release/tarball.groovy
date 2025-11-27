@@ -54,7 +54,7 @@ notify.wrap {
   Integer timeout       = Integer.parseInt(params.TIMEOUT)
   Boolean wipeout       = params.WIPEOUT
 
-  def py = new MinicondaEnv(pythonVersion, miniver, splenvRef, rubinEnvVer)
+  def py = new MinicondaEnv(pythonVersion,miniver, splenvRef, rubinEnvVer)
 
   def buildTarget = [
     products: products,
@@ -68,7 +68,7 @@ notify.wrap {
     ]
   }
 
-  switch (osfamily) {
+  switch(osfamily) {
     case 'redhat':
       linuxTarballs(image, platform, compiler, py,
         timeout, buildTarget, smokeConfig, wipeout, publish)
@@ -511,7 +511,7 @@ def void osxSmoke(
     dir(smokeDir) {
       withEnv([
         "RUN_SCONS_CHECK=${smokeConfig.run_scons_check}",
-        'FIX_SHEBANGS=true',
+        "FIX_SHEBANGS=true",
       ]) {
         util.bash shName
       }
@@ -594,7 +594,7 @@ def void writeScript(Map p) {
  * joining the {@code parts} parameters.
  */
 def void gsPushConda(String ... parts) {
-  def objectPrefix = 'stack/' + util.joinPath(parts)
+  def objectPrefix = "stack/" + util.joinPath(parts)
   def cwd = pwd()
   def buildDir = "${cwd}/build"
 
@@ -614,7 +614,7 @@ def void gsPushConda(String ... parts) {
           }
           return
         }
-        // alpine does not include bash by default
+          // alpine does not include bash by default
         util.posixSh("""
         eval "\$(${BUILDDIR}/conda/bin/conda shell.bash hook)"
         if conda env list | grep gcloud-env > /dev/null 2>&1; then
@@ -633,6 +633,7 @@ def void gsPushConda(String ... parts) {
     } //withGSEupsBucketEnv
   } // withEnv
 } // gsPushConda
+
 
 /**
  * Returns a shell command string for pushing the EUPS_PKGROOT to gs.
@@ -905,7 +906,6 @@ def String scriptPreamble(
  * Represents a miniconda build environment.
  */
 class MinicondaEnv implements Serializable {
-
   String pythonVersion
   String minicondaVersion
   String splenvRef
@@ -934,7 +934,6 @@ class MinicondaEnv implements Serializable {
   String slug() {
     "miniconda${pythonVersion}-${minicondaVersion}-${rubinEnvVer}"
   }
-
 }
 
 /**

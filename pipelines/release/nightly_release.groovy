@@ -17,14 +17,14 @@ node('jenkins-manager') {
 notify.wrap {
   util.requireParams(['YEAR', 'MONTH', 'DAY'])
 
-  String year  = params.YEAR.padLeft(4, '0')
-  String month = params.MONTH.padLeft(2, '0')
-  String day   = params.DAY.padLeft(2, '0')
-  if (year == '0000') {
+  String year  = params.YEAR.padLeft(4, "0")
+  String month = params.MONTH.padLeft(2, "0")
+  String day   = params.DAY.padLeft(2, "0")
+  if (year == "0000"){
       def now = new Date()
-      year = now.format('YYYY')
-      month = now.format('MM')
-      day = now.format('dd')
+      year = now.format("YYYY")
+      month = now.format("MM")
+      day = now.format("dd")
   }
 
   def products        = scipipe.canonical.products
@@ -62,7 +62,7 @@ notify.wrap {
     stage('eups publish') {
       def pub = [:]
 
-      [eupsTag, 'd_latest'].each { tagName ->
+      [eupsTag,'d_latest'].each { tagName ->
         pub[tagName] = {
           retry(retries) {
             util.runPublish(
@@ -114,7 +114,7 @@ notify.wrap {
         } // util.nodeWrap
       } // retry
     } // stage
-    stage('update index files') {
+    stage('update index files'){
       util.runIndexUpdate()
     } // stage
 
@@ -131,7 +131,7 @@ notify.wrap {
         retries: retries,
       )
     } // stage
-    stage('update index files') {
+    stage('update index files'){
       util.runIndexUpdate()
     } // stage
 
@@ -152,11 +152,11 @@ notify.wrap {
     def triggerMe = [:]
 
     triggerMe['Update cache'] = {
-      retry(retries) {
+    retry(retries){
         build(
           job: 'stack-os-matrix',
           parameters:[
-            string(name:'REFS', value:''),
+            string(name:'REFS', value:""),
             string(name:'PRODUCTS', value: scipipe.canonical.products),
             string(name:'SPLENV_REF', value: scipipe.template.splenv_ref),
             booleanParam(name:'NO_BINARY_FETCH', value: true),
@@ -179,7 +179,7 @@ notify.wrap {
         )
       } // retry
     }
-    ['linux-64', 'linux-aarch64'].each { arch ->
+    ['linux-64','linux-aarch64'].each{ arch ->
       triggerMe['verify_drp_metrics ' + arch] = {
         retry(1) {
           // based on lsstsqre/stack image
