@@ -108,10 +108,12 @@ notify.wrap {
 
       stage('push docs') {
         if (buildDocs) {
-          withCredentials([file(
-            credentialsId: 'gs-eups-push',
-            variable: 'GOOGLE_APPLICATION_CREDENTIALS'
-          ),
+          withCredentials([[
+            $class: 'UsernamePasswordMultiBinding',
+            credentialsId: 'aws-doxygen-push',
+            usernameVariable: 'AWS_ACCESS_KEY_ID',
+            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+          ],
           [
             $class: 'StringBinding',
             credentialsId: 'doxygen-push-bucket',
@@ -121,20 +123,22 @@ notify.wrap {
               "EUPS_PKGROOT=${cwd}/distrib",
               "HOME=${cwd}/home",
             ]) {
-
-              docker.image(util.defaultGcloudImage()).inside {
+              // the current iteration of the awscli container is alpine based
+              // and doesn't work with util.insideDockerWrap.  However, the aws
+              // cli seems to work OK without trying to lookup the username.
+              docker.image(util.defaultAwscliImage()).inside {
                 // alpine does not include bash by default
                 util.posixSh '''
                   # provides DOC_PUSH_PATH
                   . ./ci-scripts/settings.cfg.sh
-                  gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
 
-                  gcloud storage cp \
+                  aws s3 cp \
+                    --only-show-errors \
                     --recursive \
-                    "${DOC_PUSH_PATH}/*" \
-                    "gs://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
+                    "${DOC_PUSH_PATH}/" \
+                    "s3://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
                 '''
-              } // util.defaultGcloudImage
+              } // util.insideDockerWrap
             } // withEnv
           } // withCredentials
         }
