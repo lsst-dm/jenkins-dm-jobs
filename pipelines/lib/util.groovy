@@ -533,10 +533,13 @@ def lsstswBuild(
         def testdatadir = loadLSSTCamTestData(slug,"lsstcam_testdata")
         buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
       }
+      if (buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64'){
+        return
+      }
       runEnv(runDocker)
     }
   } else {
-    if (cachelsstsw){
+    if (cachelsstsw || buildParams['CI_LSSTCAM']){
       // runs only if we are not running a caching job. Since this isn't on
       // docker we do not need to store cache for them.
       return
@@ -1140,35 +1143,23 @@ def lsstswBuildMatrix(
   Boolean loadCache=false,
   Boolean saveCache=false
 ) {
-  if (buildParams.containsKey("CI_LSSTCAM")){
-    def lsstswConfig = matrixConfig[0]
+  def matrix = [:]
+
+  matrixConfig.each { lsstswConfig ->
     validateLsstswConfig(lsstswConfig)
-    lsstswBuild(
-        lsstswConfig,
-        buildParams,
-        wipeout,
-        loadCache,
-        saveCache,
-    )
-  } else {
-    def matrix = [:]
+    def slug = lsstswConfigSlug(lsstswConfig)
 
-    matrixConfig.each { lsstswConfig ->
-      validateLsstswConfig(lsstswConfig)
-      def slug = lsstswConfigSlug(lsstswConfig)
-
-      matrix[slug] = {
-        lsstswBuild(
-        lsstswConfig,
-        buildParams,
-        wipeout,
-        loadCache,
-        saveCache
-        )
-      }
+    matrix[slug] = {
+      lsstswBuild(
+      lsstswConfig,
+      buildParams,
+      wipeout,
+      loadCache,
+      saveCache
+      )
     }
-    parallel matrix
-  } // else
+  }
+  parallel matrix
 } // lsstswBuildMatrix
 
 /**
