@@ -1457,7 +1457,13 @@ def runDocumenteer(Map p) {
           pip install --upgrade --user -r requirements.txt
           export PATH="${HOME}/.local/bin:${PATH}"
           setup -r . -t "$EUPS_TAG"
-          build-stack-docs -d . -v
+          if command -v stack-docs >/dev/null 2>&1; then
+            # Use sphinxutils if installed
+            stack-docs -d . -v build
+          else
+            # old documenteer 0.8 build
+            build-stack-docs -d . -v
+          fi
         '''
       } // dir
     } // insideDockerWrap
