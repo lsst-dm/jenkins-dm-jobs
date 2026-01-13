@@ -748,6 +748,13 @@ controller:
                 - "Overall/Administer"
 
     configScripts:
+      gcp-secrets-manager: |
+        unclassified:
+          gcpCredentialsProvider:
+            # filter:
+            #   label: "env"
+            #   value: "jenkins"
+            project: "prompt-proto"
       welcome-message: |
         jenkins:
           systemMessage: This is the DEVELOPMENT GCP instance of Jenkins.
