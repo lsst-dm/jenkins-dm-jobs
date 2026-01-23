@@ -1454,15 +1454,18 @@ def runDocumenteer(Map p) {
         bash '''
           source /opt/lsst/software/stack/loadLSST.bash
           dot -V
-          pip install --upgrade --user -r requirements.txt
+          if [ -f requirements.txt ]; then
+            # allow to override doc tools
+            pip install --upgrade --user --force-reinstall -r requirements.txt
+          fi
           export PATH="${HOME}/.local/bin:${PATH}"
           setup -r . -t "$EUPS_TAG"
-          if command -v stack-docs >/dev/null 2>&1; then
-            # Use sphinxutils if installed
-            stack-docs -d . -v build
-          else
-            # old documenteer 0.8 build
+          if command -v  build-stack-docs >/dev/null 2>&1; then
+            # use old documenteer 0.8 build installed from requirements.txt
             build-stack-docs -d . -v
+          else
+            # New documenteer 2.X build with spinxutils from stack
+            stack-docs -d . -v build
           fi
         '''
       } // dir
