@@ -444,6 +444,64 @@ def saveCache(
 }
 
 
+def labelPod(){
+  if (env.NODE_NAME && (env.NODE_NAME =~ /(manager|snowflake)/)) {
+        echo "Skipping pod label: ${env.NODE_NAME} is a static manager/snowflake node."
+        return
+  }
+
+  def JOB = env.JOB_NAME ? env.JOB_NAME.replace('/', '.') : "unknown"
+    def BUILD_NUMBER = env.BUILD_NUMBER ? env.BUILD_NUMBER.toString() : "unknown"
+
+  def labels = [
+        "jenkins-job": JOB,
+        "jenkins-build": BUILD_NUMBER
+    ]
+  
+  def upstream = currentBuild.upstreamBuilds
+  def upstreamFields = ""
+  if (upstream) {
+    def tJob = upstream[0].projectName.replace('/', '.')
+    def tNum = upstream[0].number.toString()
+    echo "Upstream Trigger: ${tJob} #${tNum}"
+    labels["triggered-by"] = tJob
+    labels["triggered-build"] = tNum
+  }
+
+  def jsonLabels = groovy.json.JsonOutput.toJson([metadata: [labels: labels]])
+  echo "jsonLabels: ${jsonLabels}"
+  writeFile file: '/tmp/patch.json', text: jsonLabels
+
+  bash '''
+  set -eu
+  set +x
+
+  SA=/var/run/secrets/kubernetes.io/serviceaccount
+  [ -r "$SA/token" ] || { echo "not in k8s; skipping pod label"; exit 0; }
+  NS=$(cat $SA/namespace)
+  POD=${HOSTNAME}
+  TOKEN=$(cat $SA/token)
+  CA=$SA/ca.crt
+
+
+  if curl -sS --fail \
+    --cacert "$CA" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/merge-patch+json" \
+    -X PATCH \
+    "https://kubernetes.default.svc/api/v1/namespaces/\$NS/pods/\$POD" \
+    --data-binary @/tmp/patch.json >/dev/null
+  then
+    echo "labeled for pod $NS/$POD"
+  else
+    echo "pod label skipped for $NS/$POD"
+    exit 0
+  fi
+  set -x
+  '''
+
+}
+
 /**
  * Run a lsstsw build.
  *
@@ -2522,6 +2580,7 @@ def void nodeWrap(Closure run) {
 def void nodeWrap(String label, Closure run) {
   node(label) {
     printK8sVars()
+    labelPod()
     run()
   }
 }
