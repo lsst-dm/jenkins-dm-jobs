@@ -444,6 +444,43 @@ def saveCache(
 }
 
 
+def labelPod(String slug){
+  bash '''
+  set -eu
+  set +x
+
+  SA=/var/run/secrets/kubernetes.io/serviceaccount
+  [ -r "$SA/token" ] || { echo "not in k8s; skipping pod label"; exit 0; }
+  NS=$(cat $SA/namespace)
+  POD=${HOSTNAME}
+  TOKEN=$(cat $SA/token)
+  CA=$SA/ca.crt
+
+  JOB="${JOB_NAME//\\//.}" || JOB=unknown
+  BUILD_NUMBER="${BUILD_NUMBER}" || BUILD_NUMBER=unknown
+
+  echo "$JOB / $BUILD_NUMBER"
+
+  printf '{"metadata":{"labels":{"jenkins-job":"%s","jenkins-build":"%s"}}}\n' "$JOB" "$BUILD_NUMBER" > /tmp/patch.json
+
+  if curl -sS --fail \
+    --cacert "$CA" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/merge-patch+json" \
+    -X PATCH \
+    "https://kubernetes.default.svc/api/v1/namespaces/$NS/pods/$POD" \
+    --data-binary @/tmp/patch.json >/dev/null
+  then
+    echo "labeled jenkins-job=$JOB jenkins-build=$BUILD_NUMBER for pod $NS/$POD"
+  else
+    echo "pod label skipped for $NS/$POD"
+    exit 0
+  fi
+  set -x
+  '''
+
+}
+
 /**
  * Run a lsstsw build.
  *
@@ -550,6 +587,7 @@ def lsstswBuild(
   }
 
   nodeWrap(agent) {
+    labelPod(slug)
     task()
   } // nodeWrap
 } // lsstswBuild
