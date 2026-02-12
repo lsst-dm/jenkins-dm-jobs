@@ -17,6 +17,7 @@ node('jenkins-manager') {
 notify.wrap {
   util.requireParams([
     'NO_PUSH',
+    'LATEST',
   ])
   def build_stack    = scipipe.build_stack
   def lsstswConfigs  = build_stack.lsstsw_config
@@ -34,11 +35,17 @@ notify.wrap {
 
 
   def splenvRef       = lsstswConfigs[0].splenv_ref
+  // If we pass a from a job, use that instead of what is on build.yaml
+  if (params.SPLENV_REF) {
+    splenvRef = params.SPLENV_REF
+  }
   def registryTags = [
     dockerTag,
-    "latest",
     "$dockerTag-$splenvRef",
   ]
+  if (params.LATEST) {
+    registryTags.add("latest")
+  }
   def matrix = [:]
   lsstswConfigs.each{ lsstswConfig ->
     def slug = util.lsstswConfigSlug(lsstswConfig)
@@ -118,5 +125,3 @@ notify.wrap {
     } // nodeWrap
 
 } // notify.wrap
-
-
