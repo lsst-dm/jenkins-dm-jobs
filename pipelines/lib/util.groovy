@@ -1128,6 +1128,56 @@ def void nodeTiny(Closure run) {
     }
   }
 }
+def void buildOlderVersionMatrix(List LSSTVersions, products) {
+  def matrix = [:]
+
+  scipipe = scipipeConfig() // needed for side effects
+  def lsstswConfig = scipipe.tarball.build_config[0]
+
+  LSSTVersions.each { rubinVer ->
+    matrix[rubinVer] = {
+      buildOlderVersionTask(rubinVer, products, lsstswConfig)
+    }
+  } // loop
+
+  parallel matrix
+} // buildOlderVersionMatrix
+
+def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
+  def agent = lsstswConfig.label
+
+  def runDocker = {
+    insideDockerWrap(
+      image: lsstswConfig.image,
+      pull: true,
+    ) {
+      withCredentials([[
+        $class: 'StringBinding',
+        credentialsId: 'github-api-token-checks',
+        variable: 'GITHUB_TOKEN'
+      ]]){
+      stage("Load and build env"){
+    def cwd     = pwd()
+
+    dir('lsstsw') {
+      cloneLsstsw()
+    }
+      rubinEnv = rubinVer.replaceAll("\\.", "_")
+      bash """
+        cd ${cwd}/lsstsw
+        ./bin/deploy -x v${rubinEnv}
+        . bin/envconfig -n lsst-scipipe-v${rubinEnv}
+        rebuild -r v${rubinVer} -r ${rubinVer} ${products}
+        """
+      }
+      } // withCredentials
+    } // insideDockerWrap
+  } // runDocker
+
+  nodeWrap(agent) {
+    runDocker()
+  } // nodeWrap
+} // buildOlderVersionTask
 
 /**
  * Execute a multiple multiple lsstsw builds using different configurations.
