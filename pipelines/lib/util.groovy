@@ -1162,12 +1162,11 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
     dir('lsstsw') {
       cloneLsstsw()
     }
-      rubinEnv = rubinVer.replaceAll("\\.", "_")
       bash """
         cd ${cwd}/lsstsw
-        ./bin/deploy -x v${rubinEnv}
-        . bin/envconfig -n lsst-scipipe-v${rubinEnv}
-        rebuild -r v${rubinVer} -r ${rubinVer} ${products}
+        ./bin/deploy
+        . bin/envconfig
+        rebuild -B -r v${rubinVer} -r ${rubinVer} ${products}
         """
       }
       } // withCredentials

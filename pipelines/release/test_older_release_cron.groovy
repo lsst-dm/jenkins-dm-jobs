@@ -15,20 +15,13 @@ node('jenkins-manager') {
 }
 
 notify.wrap {
-  util.requireEnvVars([
-    'PRODUCTS',
-    'VERSIONS',
-  ])
+  def testOlderRelease = 'release/test-older-release'
 
-
-  def run = {
-    stage('build older versions') {
-      def rubinVers = VERSIONS.split(',').collect { it.trim() }
-      util.buildOlderVersionMatrix(rubinVers, PRODUCTS)
-    }
-  }
-
-  timeout(time: 6, unit: 'HOURS') {
-    run()
+  stage('run test-older-release') {
+    build job: testOlderRelease,
+      parameters: [
+        stringParam(name: 'VERSIONS', "o_latest, 29.2.1"),
+        stringParam(name: 'PRODUCTS', value:scipipe.canonical.products )
+      ]
   }
 } // notify.wrap
