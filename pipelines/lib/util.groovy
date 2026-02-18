@@ -1143,6 +1143,14 @@ def void buildOlderVersionMatrix(List LSSTVersions, products) {
   parallel matrix
 } // buildOlderVersionMatrix
 
+def getNewestTag(){
+  def eupsUrl = scipipe.eups.base_url
+  def etbUrl = eupsUrl + "/src/tags"
+  def command = sh(script: "curl -s \"${etbUrl}\" | grep -oE 'v[0-9]+_[0-9]+_[0-9]+' | sed 's/^v//' | sort -t'_' -k1,1n -k2,2n -k3,3n | tail -1 | tr '_' '.'", returnStdout:true).trim()
+
+  return command
+} //getNewestTag
+
 def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
   def agent = lsstswConfig.label
 
@@ -1159,6 +1167,12 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
       stage("Load and build env"){
     def cwd     = pwd()
 
+    // If rubinVer is set to o_latest, get the newest rubin env from eups.lsst
+    if (rubinVer == "o_latest") {
+      def command = getNewestTag()
+      println command
+      rubinVer = command.replaceAll("v","").replaceAll("_",".")
+    }
     dir('lsstsw') {
       cloneLsstsw()
     }
@@ -1168,7 +1182,7 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
         . bin/envconfig
         rebuild -B -r v${rubinVer} -r ${rubinVer} ${products}
         """
-      }
+        } // stage
       } // withCredentials
     } // insideDockerWrap
   } // runDocker
