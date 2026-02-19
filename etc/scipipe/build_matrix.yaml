@@ -53,8 +53,6 @@ scipipe-lsstsw-ci_imsim:
   - <<: *el7-conda
   - <<: *linux-9-aarch64
   - <<: *macarm64-conda
-scipipe-lsstsw-ci_lsstcam:
-  - <<: *el7-conda
 
 #
 # canonical build env -- Ie., release/{run-rebuild,run-publish}
