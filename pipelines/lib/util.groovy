@@ -1528,7 +1528,7 @@ def runDocumenteer(Map p) {
             build-stack-docs -d . -v
           else
             # New documenteer 2.X build with spinxutils from stack
-            stack-docs -d . -v build
+            stack-docs -d . -v build --disable-doxygen --disable-doxygen-conf
           fi
         '''
       } // dir
