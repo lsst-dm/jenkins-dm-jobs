@@ -1145,7 +1145,7 @@ def void buildOlderVersionMatrix(List LSSTVersions, products) {
 
 def getNewestTag(){
   def eupsUrl = scipipe.eups.base_url
-  def etbUrl = eupsUrl + "/src/tags"
+  def etbUrl = eupsUrl + "/src/tags/"
   def command = sh(script: "curl -s \"${etbUrl}\" | grep -oE 'v[0-9]+_[0-9]+_[0-9]+' | sed 's/^v//' | sort -t'_' -k1,1n -k2,2n -k3,3n | tail -1 | tr '_' '.'", returnStdout:true).trim()
 
   return command
