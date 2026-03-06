@@ -445,6 +445,11 @@ def saveCache(
 
 
 def labelPod(String slug){
+  if (env.NODE_NAME =~ /(manager|snowflake)/) {
+        echo "Skipping pod label: ${env.NODE_NAME} is a static/snowflake node."
+        return
+  }
+
   bash '''
   set -eu
   set +x
