@@ -667,24 +667,6 @@ def void withGSEupsBucketEnv(Closure run) {
     }
   } // withCredentials
 }
-/**
- * Declares the following env vars from credentials:
- * - AWS_ACCESS_KEY_ID
- * - AWS_SECRET_ACCESS_KEY
- * - EUPS_S3_BUCKET
- */
-def void withEupsBucketEnv(Closure run) {
-  withCredentials([[
-    $class: 'UsernamePasswordMultiBinding',
-    credentialsId: 'aws-eups-push',
-    usernameVariable: 'AWS_ACCESS_KEY_ID',
-    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-  ]]) {
-    util.withEupsEnv {
-      run()
-    }
-  } // withCredentials
-}
 
 /**
  *  Record logs
