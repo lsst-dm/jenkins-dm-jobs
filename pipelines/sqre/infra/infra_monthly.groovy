@@ -21,33 +21,6 @@ notify.wrap {
     def tasks = [:]
 
     triggerJob trigger: tasks,
-      name: 'sqre/infra/build-s3cmd',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
-      name: 'sqre/backup/build-ec2-snapshot',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
-      name: 'sqre/backup/build-sqre-github-snapshot',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-        booleanParam(name: 'LATEST', value: true),
-      ]
-
-    triggerJob trigger: tasks,
-      name: 'sqre/infra/build-postqa',
-      parameters: [
-        booleanParam(name: 'NO_PUSH', value: false),
-      ]
-
-    triggerJob trigger: tasks,
       name: 'sqre/infra/build-jenkins-swarm-client',
       parameters: [
         booleanParam(name: 'NO_PUSH', value: false),

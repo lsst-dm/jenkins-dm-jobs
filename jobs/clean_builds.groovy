@@ -26,12 +26,6 @@ import util.CleanBuild
     buildConfig: 'scipipe-lsstsw-ci_imsim',
     seedJob: SEED_JOB,
   ],
-  [
-    name: 'scipipe/ci_lsstcam',
-    products: 'ci_lsstcam',
-    buildConfig: 'scipipe-lsstsw-ci_lsstcam',
-    seedJob: SEED_JOB,
-  ],
 ].each { j ->
   def clean = new CleanBuild(j)
 
