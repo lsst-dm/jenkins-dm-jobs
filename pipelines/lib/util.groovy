@@ -457,7 +457,7 @@ def labelPod(){
         "jenkins-job": JOB,
         "jenkins-build": BUILD_NUMBER
     ]
-  
+
   def upstream = currentBuild.upstreamBuilds
   def upstreamFields = ""
   if (upstream) {
@@ -1651,6 +1651,21 @@ def String runRebuild(Map p) {
     wait: true,
   )
 
+  if (p.parameters.SONARQUBE) {
+    nodeWrap('linux-64') {
+      withSonarQubeEnv('sonar-scanner') {
+      echo "\${SONAR_SCANNER_HOME}"
+                    sh """
+                        \${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.projectKey=my-python-project \
+                        -Dsonar.sources=. \
+                        -Dsonar.language=py \
+                        -Dsonar.python.coverage.reportPaths=coverage.xml \
+                        -Dsonar.exclusions=**/tests/**,**/venv/**
+                    """
+      } // withSonarQubeEnv
+    } // nodeTiny
+  } // sonarqube
   nodeTiny {
     manifestArtifact = 'lsstsw/build/manifest.txt'
 

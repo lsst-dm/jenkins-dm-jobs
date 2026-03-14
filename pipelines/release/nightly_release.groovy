@@ -54,8 +54,10 @@ notify.wrap {
             PRODUCTS: products,
             BUILD_DOCS: true,
             NO_BINARY_FETCH: true,
+            SONARQUBE: true,
           ],
         )
+
       } // retry
     } // stage
 
