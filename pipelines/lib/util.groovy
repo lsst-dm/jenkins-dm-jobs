@@ -1218,6 +1218,23 @@ def getRubinEnv(String rubinVer) {
   return command
 }
 
+def filterProducts(String rubinVer, String products) {
+  def eupsUrl = scipipe.eups.base_url
+  def etbUrl = eupsUrl + "/src/tags/" + rubinVer + ".list"
+
+  def packages = sh(
+    script: "curl -s \"${etbUrl}\" | grep -vE '^#' | cut -d' ' -f1",
+    returnStdout: true
+  ).trim().readLines()
+
+  def pkgSet = packages as Set
+
+  return products
+    .split(/\s+/)
+    .findAll { pkgSet.contains(it) }
+    .join(' ')
+}
+
 def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
   def agent = lsstswConfig.label
   def runDocker = {
@@ -1241,8 +1258,10 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
     }
     def gitTag = rubinVer.replaceAll("^v","").replaceAll("_",".")
     def rubinEnvVer = getRubinEnv(rubinVer)
+    def prod = filterProducts(rubinVer, products)
     println "Tag: ${rubinVer}"
     println "Rubin environment version: ${rubinEnvVer}"
+    println "Products to build: ${prod}"
     dir('lsstsw') {
       cloneLsstsw()
     }
@@ -1250,7 +1269,7 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
         cd ${cwd}/lsstsw
         ./bin/deploy -v ${rubinEnvVer}
         . bin/envconfig -n lsst-scipipe-${rubinEnvVer}
-        rebuild -B -r v${gitTag} -r ${gitTag} ${products}
+        rebuild -B -r v${gitTag} -r ${gitTag} ${prod}
         """
         } // stage
       } // withCredentials
