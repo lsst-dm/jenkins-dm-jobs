@@ -9,6 +9,6 @@ p.pipeline().with {
 
   parameters {
     stringParam('PRODUCTS', scipipe.canonical.products + " lsst_sitcom", 'Whitespace delimited list of EUPS products to build.')
-    stringParam('VERSIONS', "o_latest, 29.2.1", 'Versions to test')
+    stringParam('VERSIONS', "o_latest, v29_2_1", 'Versions to test')
   }
 }
