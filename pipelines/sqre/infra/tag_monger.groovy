@@ -18,7 +18,7 @@ notify.wrap {
   def hub_repo = 'ghcr.io/lsst-dm/tag-monger'
 
   def run = {
-    def image = docker.image("${hub_repo}:latest")
+    def image = docker.image("${hub_repo}:pr-19-tickets-DM-54570")
 
     stage('pull') {
       image.pull()
