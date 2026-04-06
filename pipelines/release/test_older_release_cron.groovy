@@ -20,7 +20,7 @@ notify.wrap {
   stage('run test-older-release') {
     build job: testOlderRelease,
       parameters: [
-        stringParam(name: 'VERSIONS', value:"o_latest, 29.2.1"),
+        stringParam(name: 'VERSIONS', value:"o_latest, v29_2_1"),
         stringParam(name: 'PRODUCTS', value:scipipe.canonical.products )
       ]
   }
