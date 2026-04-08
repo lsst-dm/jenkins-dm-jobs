@@ -61,7 +61,7 @@ canonical:
   products: &canonical_products lsst_distrib lsst_ci lsst_extras
   lsstsw_config:
     <<: *el7-conda
-    label: snowflake-0
+    label: linux-64
   workspace: snowflake/release
 #
 # build stack env -- used by release/docker/{build-stack}
