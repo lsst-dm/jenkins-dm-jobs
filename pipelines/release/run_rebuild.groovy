@@ -143,6 +143,7 @@ notify.wrap {
   } // run
 
   util.nodeWrap(lsstswConfig.label) {
+    echo "Running on label: ${lsstswConfig.label}"
     timeout(time: timelimit, unit: 'HOURS') {
       run()
     }
