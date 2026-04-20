@@ -457,7 +457,7 @@ def labelPod(){
         "jenkins-job": JOB,
         "jenkins-build": BUILD_NUMBER
     ]
-  
+
   def upstream = currentBuild.upstreamBuilds
   def upstreamFields = ""
   if (upstream) {
@@ -1523,6 +1523,58 @@ def String epochToUtc(Integer epoch) {
   def unixTime = Instant.ofEpochSecond(epoch)
   instantToUtc(unixTime)
 }
+
+/**
+ * run ltd-mason-travis to push a doc build
+ *
+ * @param p Map
+ * @param p.eupsTag String tag to setup (required). Eg.: 'current', 'b1234'
+ * @param p.repoSlug String github repo slug (required). Eg.: 'lsst/pipelines_lsst_io'
+ * @param p.ltdProduct String LTD product name (required)., Eg.: 'pipelines'
+ * @param p.masonImage String docker image (optional). Defaults to: 'lsstsqre/ltd-mason'
+ */
+def ltdPush(Map p) {
+  requireMapKeys(p, [
+    'ltdSlug',
+    'ltdProduct',
+    'repoSlug',
+  ])
+  p = [
+    masonImage: 'lsstsqre/ltd-mason',
+  ] + p
+
+
+  withEnv([
+    "LTD_MASON_BUILD=true",
+    "LTD_MASON_PRODUCT=${p.ltdProduct}",
+    "LTD_KEEPER_URL=https://keeper.lsst.codes",
+    "LTD_KEEPER_USER=travis",
+    "TRAVIS_PULL_REQUEST=false",
+    "TRAVIS_REPO_SLUG=${p.repoSlug}",
+    "TRAVIS_BRANCH=${p.ltdSlug}",
+  ]) {
+    withCredentials([[
+      $class: 'UsernamePasswordMultiBinding',
+      credentialsId: 'ltd-mason-aws',
+      usernameVariable: 'LTD_MASON_AWS_ID',
+      passwordVariable: 'LTD_MASON_AWS_SECRET',
+    ],
+    [
+      $class: 'UsernamePasswordMultiBinding',
+      credentialsId: 'ltd-keeper',
+      usernameVariable: 'LTD_KEEPER_USER',
+      passwordVariable: 'LTD_KEEPER_PASSWORD',
+    ]]) {
+      docker.image(p.masonImage).inside {
+        // expect that the service will return an HTTP 502, which causes
+        // ltd-mason-travis to exit 1
+        sh '''
+        ltd-mason-travis --html-dir _build/html --verbose || true
+        '''
+      } // .inside
+    } // withCredentials
+  } //withEnv
+} // ltdPush
 
 /**
  * Convert UNIX epoch (milliseconds) to a UTC formatted date/time string.
