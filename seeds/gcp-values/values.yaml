@@ -110,7 +110,7 @@ controller:
     - name: CASC_VAULT_URL
       value: https://vault-ci.lsst.cloud
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-checks,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini,secret/rubin/rubin-jenkins-control/rubinobs-dm,secret/rubin/rubin-jenkins-control/approle,secret/rubin/rubin-jenkins-control/gs-eups-push,secret/rubin/rubin-jenkins-control/weka-s3/testdata-ci-lsst
+      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-checks,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini,secret/rubin/rubin-jenkins-control/rubinobs-dm,secret/rubin/rubin-jenkins-control/approle,secret/rubin/rubin-jenkins-control/gs-eups-push,secret/rubin/rubin-jenkins-control/weka-s3/testdata-ci-lsst,secret/rubin/rubin-jenkins-control/ltd-mason-aws
     #- name: JAVA_OPTS
     #  value: --add-opens=java.base/java.lang=ALL-UNNAMED,--add-opens=java.base/java.lang.reflect=ALL-UNNAMED
     #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
@@ -898,6 +898,12 @@ controller:
                   password: "${secret/rubin/rubin-jenkins-control/squash-api-user/password}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control/squash-api-user/username}"
+              - usernamePassword:
+                  description: "ltd-mason"
+                  id: "ltd-mason-aws"
+                  password: "${secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws/username}"
               - usernamePassword:
                   description: "dockerhub - sqreadmin"
                   id: "dockerhub-sqreadmin"
