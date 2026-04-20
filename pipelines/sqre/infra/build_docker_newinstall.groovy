@@ -15,6 +15,7 @@ node('jenkins-manager') {
 notify.wrap {
   util.requireParams([
     'NO_PUSH',
+    'SPLENV_REF',
   ])
   def build_stack    = scipipe.build_stack
   def lsstswConfigs  = build_stack.lsstsw_config
@@ -31,7 +32,7 @@ notify.wrap {
 
 
 
-  def splenvRef       = lsstswConfigs[0].splenv_ref
+  def splenvRef       = params.SPLENV_REF
   def registryTags = [
     dockerTag,
     "latest",
