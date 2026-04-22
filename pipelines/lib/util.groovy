@@ -1345,8 +1345,6 @@ def void gitNoNoise(Map args) {
   git([
     url: args.url,
     branch: args.branch,
-    changelog: false,
-    poll: false
   ])
 }
 
@@ -1363,8 +1361,6 @@ def checkoutGitRef(String url, String ref) {
       extensions: [
           [$class: 'CloneOption', noTags: false, shallow: false]
         ],
-    changelog: false,
-    poll: false
   ])
 }
 
