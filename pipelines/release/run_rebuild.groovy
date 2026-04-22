@@ -8,8 +8,6 @@ node('jenkins-manager') {
       $class: 'GitSCM',
       branches: scm.getBranches(),
       userRemoteConfigs: scm.getUserRemoteConfigs(),
-      changelog: false,
-      poll: false
     ])
     notify = load 'pipelines/lib/notify.groovy'
     util = load 'pipelines/lib/util.groovy'
