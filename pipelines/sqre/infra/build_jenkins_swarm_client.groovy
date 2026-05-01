@@ -32,8 +32,6 @@ notify.wrap {
   def buildDir   = dockerfile.dir
   def dockerRepo = dockerRegistry.repo
 
-  def image = null
-
   def run = {
     stage('checkout') {
       git([
@@ -42,70 +40,94 @@ notify.wrap {
       ])
     }
 
-    // current we are producing a "generic" image which uses the uid/gids
-    // historically used by LSST jenkins and an "ldfc". Hopefully, this is a
-    // short term kludge that may be replaced with k8s' runAsGroup security
-    // context.
+    // Produce a "generic" image and an "ldfc" image with specific uid/gids.
     stage('build generic') {
-      def opt = []
-      // ensure base image is always up to date
-      opt << '--pull=true'
-      opt << '--no-cache'
-      opt << "--build-arg JSWARM_VERSION=${ver}"
-      opt << '.'
-
       dir(buildDir) {
-        // ensure base image is always up to date
-        //#image = docker.build(dockerRepo, opt.join(' '))
-        // XXX jenkins has trouble with multipart docker builds
-        util.bash("docker build -t ${dockerRepo} ${opt.join(' ')}")
-        image = docker.image(dockerRepo)
-      }
-    }
+        withCredentials([
+          usernamePassword(credentialsId: 'dockerhub-sqreadmin',
+            usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS'),
+        ]) {
+          container('kaniko') {
+            sh """
+              mkdir -p /kaniko/.docker
+              printf '%s' '{"auths":{"index.docker.io":{"auth":"'"\$(printf '%s:%s' "\$DH_USER" "\$DH_PASS" | base64 -w0)"'"}}}' \
+                > /kaniko/.docker/config.json
+            """
 
-    stage('push generic') {
-      if (pushDocker) {
-        docker.withRegistry(
-          'https://index.docker.io/v1/',
-          'dockerhub-sqreadmin'
-        ) {
-          image.push(ver)
-          if (pushLatest) {
-            image.push('latest')
+            if (pushDocker) {
+              sh """
+                /kaniko/executor \
+                  --context=. \
+                  --dockerfile=Dockerfile \
+                  --no-cache \
+                  --build-arg JSWARM_VERSION=${ver} \
+                  --destination=${dockerRepo}:${ver}
+              """
+              if (pushLatest) {
+                sh """
+                  /kaniko/executor \
+                    --context=. \
+                    --dockerfile=Dockerfile \
+                    --no-cache \
+                    --build-arg JSWARM_VERSION=${ver} \
+                    --destination=${dockerRepo}:latest
+                """
+              }
+            } else {
+              sh """
+                /kaniko/executor \
+                  --context=. \
+                  --dockerfile=Dockerfile \
+                  --no-cache \
+                  --build-arg JSWARM_VERSION=${ver} \
+                  --no-push
+              """
+            }
           }
         }
       }
-    } // push
+    }
 
     stage('build ldfc') {
-      def opt = []
-      // ensure base image is always up to date
-      opt << '--pull=true'
-      opt << '--no-cache'
-		  opt << '--build-arg JSWARM_UID=48435'
-      opt << '--build-arg JSWARM_GID=202'
-      opt << '.'
-
       dir(buildDir) {
-        // ensure base image is always up to date
-        // XXX jenkins has trouble with multipart docker builds
-        util.bash("docker build -t ${dockerRepo} ${opt.join(' ')}")
-        image = docker.image(dockerRepo)
-      }
-    }
+        withCredentials([
+          usernamePassword(credentialsId: 'dockerhub-sqreadmin',
+            usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS'),
+        ]) {
+          container('kaniko') {
+            sh """
+              mkdir -p /kaniko/.docker
+              printf '%s' '{"auths":{"index.docker.io":{"auth":"'"\$(printf '%s:%s' "\$DH_USER" "\$DH_PASS" | base64 -w0)"'"}}}' \
+                > /kaniko/.docker/config.json
+            """
 
-    stage('push ldfc') {
-      if (pushDocker) {
-        docker.withRegistry(
-          'https://index.docker.io/v1/',
-          'dockerhub-sqreadmin'
-        ) {
-          if (pushLatest) {
-            image.push("${ver}-ldfc")
+            if (pushDocker && pushLatest) {
+              sh """
+                /kaniko/executor \
+                  --context=. \
+                  --dockerfile=Dockerfile \
+                  --no-cache \
+                  --build-arg JSWARM_VERSION=${ver} \
+                  --build-arg JSWARM_UID=48435 \
+                  --build-arg JSWARM_GID=202 \
+                  --destination=${dockerRepo}:${ver}-ldfc
+              """
+            } else {
+              sh """
+                /kaniko/executor \
+                  --context=. \
+                  --dockerfile=Dockerfile \
+                  --no-cache \
+                  --build-arg JSWARM_VERSION=${ver} \
+                  --build-arg JSWARM_UID=48435 \
+                  --build-arg JSWARM_GID=202 \
+                  --no-push
+              """
+            }
           }
         }
       }
-    } // push
+    }
   } // run
 
   util.nodeWrap('linux-64') {

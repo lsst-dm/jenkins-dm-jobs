@@ -30,8 +30,6 @@ notify.wrap {
 
   Boolean noPush         = params.NO_PUSH
 
-
-
   def splenvRef       = params.SPLENV_REF
   def registryTags = [
     dockerTag,
@@ -50,65 +48,73 @@ notify.wrap {
         ])
       }
       stage('build') {
-        def opt = []
-        opt << '--pull=true'
-        opt << '--no-cache'
-        opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
-        opt << "--load"
-        opt << '.'
         dir(buildDir) {
-          println("TEST")
-          println(dockerRepo)
-          image = docker.build("${dockerRepo}", opt.join(' '))
-        }
-      }
-      stage('push') {
-        def digest = null
-        if (!noPush) {
-          docker.withRegistry(
-            'https://ghcr.io',
-            'rubinobs-dm'
-          ) {
-            registryTags.each { name ->
-              image.push(name)
+          withCredentials([
+            usernamePassword(credentialsId: 'rubinobs-dm',
+              usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN'),
+          ]) {
+            container('kaniko') {
+              sh """
+                mkdir -p /kaniko/.docker
+                printf '%s' '{"auths":{"ghcr.io":{"auth":"'"\$(printf '%s:%s' "\$GHCR_USER" "\$GHCR_TOKEN" | base64 -w0)"'"}}}' \
+                  > /kaniko/.docker/config.json
+              """
+
+              if (!noPush) {
+                sh """
+                  /kaniko/executor \
+                    --context=. \
+                    --dockerfile=Dockerfile \
+                    --no-cache \
+                    --build-arg LSST_SPLENV_REF="${splenvRef}" \
+                    --destination=${dockerRepo}:${dockerTag} \
+                    --digest-file=/tmp/digest-newinstall.txt
+                """
+                def digest = readFile('/tmp/digest-newinstall.txt').trim()
+                dockerdigest.add("${dockerRepo}@${digest}")
+              } else {
+                sh """
+                  /kaniko/executor \
+                    --context=. \
+                    --dockerfile=Dockerfile \
+                    --no-cache \
+                    --build-arg LSST_SPLENV_REF="${splenvRef}" \
+                    --no-push
+                """
+                dockerdigest.add(null)
+              }
             }
           }
-          digest = sh(
-            script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}",
-            returnStdout: true
-          ).trim()
-
         }
-          dockerdigest.add(digest)
-      } // push
-  }
-
+      }
+    } // run
 
   util.nodeWrap(lsstswConfig.label) {
     timeout(time: 4, unit: 'HOURS') {
       run()
     }
-  } // util.nodeWrap('linux-64')
+  } // util.nodeWrap
   }
   }
   parallel matrix
 
   def merge = {
     stage('digest'){
-        def digest = dockerdigest.join(' ')
-        docker.withRegistry(
-          'https://ghcr.io',
-          'rubinobs-dm'
-        ) {
-        registryTags.each { name ->
-          sh(script: """ \
-            docker buildx imagetools create -t $dockerRepo:$name \
-            $digest
-            """,
-            returnStdout: true)
+      if (!noPush) {
+        def digests = dockerdigest.findAll { it != null }.join(' ')
+        withCredentials([
+          usernamePassword(credentialsId: 'rubinobs-dm',
+            usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN'),
+        ]) {
+          container('crane') {
+            sh "crane auth login ghcr.io --username \$GHCR_USER --password \$GHCR_TOKEN"
+            registryTags.each { name ->
+              sh "crane index append -t ${dockerRepo}:${name} ${digests}"
+            }
           }
         }
       }
+    }
   } // merge
   util.nodeWrap('linux-64') {
       timeout(time: 1, unit: 'HOURS') {

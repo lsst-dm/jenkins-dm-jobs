@@ -51,6 +51,7 @@ notify.wrap {
   def timestamp      = util.epochMilliToUtc(currentBuild.startTimeInMillis)
   def shebangtronUrl = util.shebangtronUrl()
   def dockerdigest   = []
+  def gcpdigest      = []
 
   if (dockerRegistry.ghcr) {
       dockerRepo = "ghcr.io/${dockerRepo}"
@@ -90,10 +91,7 @@ notify.wrap {
     }
 
     def baseImage       = "${newinstallImage}:${newinstallTagBase}-${splenvRef}"
-
-    def image = null
     def repo  = null
-
 
     def run = {
       stage('checkout') {
@@ -104,60 +102,85 @@ notify.wrap {
       }
 
       stage('build') {
-        def opt = []
-        // ensure base image is always up to date
-        opt << '--pull=true'
-        opt << '--no-cache'
-        opt << "--build-arg EUPS_PRODUCTS=\"${products}\""
-        opt << "--build-arg EUPS_TAG=\"${eupsTag}\""
-        opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\""
-        opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\""
-        opt << "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\""
-        opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
-        opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
-        opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
-        opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
-        opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
-        opt << "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\""
-        opt << "--build-arg LSST_COMPILER=\"${lsstCompiler}\""
-        opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
-        opt << "--load"
-        opt << '.'
+        def arch = lsstswConfig.display_name.tokenize('-').last()
+        def buildArgs = [
+          "--build-arg EUPS_PRODUCTS=\"${products}\"",
+          "--build-arg EUPS_TAG=\"${eupsTag}\"",
+          "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\"",
+          "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\"",
+          "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\"",
+          "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\"",
+          "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\"",
+          "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\"",
+          "--build-arg BASE_IMAGE=\"${baseImage}\"",
+          "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\"",
+          "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\"",
+          "--build-arg LSST_COMPILER=\"${lsstCompiler}\"",
+          "--build-arg LSST_SPLENV_REF=\"${splenvRef}\"",
+        ].join(' ')
 
         dir(buildDir) {
-          image = docker.build("${dockerRepo}", opt.join(' '))
-          image2 = docker.build("prompt-proto/${gcpRepo}", opt.join(' '))
-        }
-      }
-      stage('push') {
-        def digest = null
-        // Should be removed once we drop dockerhub support
-        def arch = lsstswConfig.display_name.tokenize('-').last()
-        if (!noPush) {
-          docker.withRegistry(
-            'https://ghcr.io',
-            'rubinobs-dm'
-          ) {
-            registryTags.each { name ->
-              image.push(name + "_" + arch)
-            }
-          }
-          docker.withRegistry(
-            'https://us-central1-docker.pkg.dev/',
-            'google_archive_registry_sa'
-          ) {
-            registryTags.each { name ->
-              image2.push(name+"_"+arch)
-            }
-          }
-          digest = sh(
-            script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}_${arch}",
-            returnStdout: true
-          ).trim()
+          withCredentials([
+            usernamePassword(credentialsId: 'rubinobs-dm',
+              usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN'),
+            file(credentialsId: 'google_archive_registry_sa',
+              variable: 'GCP_SA_KEY'),
+          ]) {
+            container('kaniko') {
+              def ghcrDigest = null
+              def gcpBuildDigest = null
 
+              sh """
+                mkdir -p /kaniko/.docker
+                printf '%s' '{"auths":{"ghcr.io":{"auth":"'"\$(printf '%s:%s' "\$GHCR_USER" "\$GHCR_TOKEN" | base64 -w0)"'"}}}' \
+                  > /kaniko/.docker/config.json
+              """
+
+              if (!noPush) {
+                sh """
+                  /kaniko/executor \
+                    --context=. \
+                    --dockerfile=Dockerfile \
+                    --no-cache \
+                    ${buildArgs} \
+                    --destination=${dockerRepo}:${dockerTag}_${arch} \
+                    --digest-file=/tmp/digest-ghcr.txt
+                """
+                ghcrDigest = readFile('/tmp/digest-ghcr.txt').trim()
+
+                sh """
+                  /kaniko/executor \
+                    --context=. \
+                    --dockerfile=Dockerfile \
+                    --no-cache \
+                    ${buildArgs} \
+                    --destination=us-central1-docker.pkg.dev/prompt-proto/${gcpRepo}:${dockerTag}_${arch} \
+                    --digest-file=/tmp/digest-gcp.txt \
+                    --google-application-credentials=\$GCP_SA_KEY
+                """
+                gcpBuildDigest = readFile('/tmp/digest-gcp.txt').trim()
+              } else {
+                sh """
+                  /kaniko/executor \
+                    --context=. \
+                    --dockerfile=Dockerfile \
+                    --no-cache \
+                    ${buildArgs} \
+                    --no-push
+                """
+              }
+
+              dockerdigest.add(ghcrDigest ? "${dockerRepo}@${ghcrDigest}" : null)
+              gcpdigest.add(gcpBuildDigest ? "us-central1-docker.pkg.dev/prompt-proto/${gcpRepo}@${gcpBuildDigest}" : null)
+            }
+          }
         }
-          dockerdigest.add(digest)
-      } // push
+      } // build
+
+      stage('push') {
+        // push is handled inline by kaniko --destination; this stage is kept
+        // for structural parity and archiving below
+      }
 
   } // run
 
@@ -192,32 +215,29 @@ notify.wrap {
 
   def merge = {
     stage('digest'){
-        def digest = dockerdigest.join(' ')
-        docker.withRegistry(
-          'https://ghcr.io',
-          'rubinobs-dm'
-        ) {
-        registryTags.each { name ->
-          sh(script: """ \
-            docker buildx imagetools create -t $dockerRepo:$name \
-            $digest
-            """,
-            returnStdout: true)
-        }
+      if (!noPush) {
+        def ghcrDigests = dockerdigest.findAll { it != null }.join(' ')
+        def gcpDigests  = gcpdigest.findAll { it != null }.join(' ')
 
-        }
-        docker.withRegistry(
-          'https://us-central1-docker.pkg.dev/',
-          'google_archive_registry_sa'
-        ) {
-          registryTags.each { name ->
-            sh(script: """ \
-              docker buildx imagetools create -t us-central1-docker.pkg.dev/prompt-proto/$gcpRepo:$name \
-              $digest
-              """,
-              returnStdout: true)
+        withCredentials([
+          usernamePassword(credentialsId: 'rubinobs-dm',
+            usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN'),
+          file(credentialsId: 'google_archive_registry_sa',
+            variable: 'GCP_SA_KEY'),
+        ]) {
+          container('crane') {
+            sh "crane auth login ghcr.io --username \$GHCR_USER --password \$GHCR_TOKEN"
+            registryTags.each { name ->
+              sh "crane index append -t ${dockerRepo}:${name} ${ghcrDigests}"
+            }
+
+            sh "crane auth login us-central1-docker.pkg.dev --username _json_key_base64 --password \"\$(base64 -w0 \$GCP_SA_KEY)\""
+            registryTags.each { name ->
+              sh "crane index append -t us-central1-docker.pkg.dev/prompt-proto/${gcpRepo}:${name} ${gcpDigests}"
+            }
           }
         }
+      }
     }
 
   } // merge
