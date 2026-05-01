@@ -13,27 +13,18 @@ node('jenkins-manager') {
 }
 
 notify.wrap {
-  def hub_repo = 'ghcr.io/lsst-dm/tag-monger'
-
   def run = {
-    def image = docker.image("${hub_repo}:latest")
-
-    stage('pull') {
-      image.pull()
-    }
-
     stage('retire daily tags') {
       withCredentials([file(
           credentialsId: 'gs-eups-push',
           variable: 'GOOGLE_APPLICATION_CREDENTIALS'
         )])  {
         withEnv([
-          "IMAGE=${image.id}",
           "TAG_MONGER_BUCKET=eups-prod",
           "TAG_MONGER_MAX=0",
           "TAG_MONGER_VERBOSE=true",
         ]) {
-          image.inside {
+          container('tag-monger') {
             sh 'tag-monger'
           }
         }

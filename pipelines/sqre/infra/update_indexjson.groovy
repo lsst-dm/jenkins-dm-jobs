@@ -24,10 +24,7 @@ notify.wrap {
   Boolean noPush         = params.NO_PUSH
 
 
-  def hub_repo = 'gcr.io/google.com/cloudsdktool/google-cloud-cli'
-
   def run = {
-    // def image = docker.image("${hub_repo}:latest")
     def cwd      = pwd()
     def ciDir    = "${cwd}/ci-scripts"
     dir('ci-scripts') {
@@ -35,7 +32,6 @@ notify.wrap {
     }
 
     stage('update index file') {
-      // image.pull()
       if (!noPush) {
         withCredentials([file(
           credentialsId: 'gs-eups-push',
@@ -46,11 +42,11 @@ notify.wrap {
             "SPLENV_REF=${splenv_ref}",
             "MINI_VER=${mini_ver}",
           ]) {
-            docker.image("${hub_repo}:alpine").inside {
-                util.posixSh '''
-                gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-                python3 ci-scripts/updateindexfile.py
-                '''
+            container('gcloud') {
+              util.posixSh '''
+              gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+              python3 ci-scripts/updateindexfile.py
+              '''
             }
           }
         } // withCredentials
