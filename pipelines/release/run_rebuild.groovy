@@ -60,7 +60,6 @@ notify.wrap {
       def buildParams = [
         EUPS_PKGROOT:          "${cwd}/distrib",
         GIT_SSH_COMMAND:       'ssh -o StrictHostKeyChecking=no',
-        K8S_DIND_LIMITS_CPU:   "4",
         LSST_BUILD_DOCS:       buildDocs,
         LSST_COMPILER:         lsstswConfig.compiler,
         LSST_JUNIT_PREFIX:     slug,
@@ -91,17 +90,14 @@ notify.wrap {
       }
 
       stage('build') {
-        util.insideDockerWrap(
-          image: lsstswConfig.image,
-          pull: true,
-        ) {
+        container('scipipe') {
           // only setup sshagent if we are going to push
           if (versiondbPush) {
             withVersiondbCredentials(runJW)
           } else {
             runJW()
           }
-        } // util.insideDockerWrap
+        } // container('scipipe')
       } // stage('build')
 
       stage('push docs') {
@@ -120,7 +116,7 @@ notify.wrap {
               "HOME=${cwd}/home",
             ]) {
 
-              docker.image(util.defaultGcloudImage()).inside {
+              container('gcloud') {
                 // alpine does not include bash by default
                 util.posixSh '''
                   # provides DOC_PUSH_PATH
@@ -132,7 +128,7 @@ notify.wrap {
                     "${DOC_PUSH_PATH}/*" \
                     "gs://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
                 '''
-              } // util.defaultGcloudImage
+              } // container('gcloud')
             } // withEnv
           } // withCredentials
         }

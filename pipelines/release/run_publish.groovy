@@ -76,10 +76,7 @@ notify.wrap {
         ]
 
         withEnv(env) {
-          util.insideDockerWrap(
-            image: lsstswConfig.image,
-            pull: true,
-          ) {
+          container('scipipe') {
             util.bash '''
               ARGS=()
               ARGS+=('-b' "$MANIFEST_ID")
@@ -100,7 +97,7 @@ notify.wrap {
               publish "${ARGS[@]}"
             '''
           }
-        } // util.insideDockerWrap
+        } // container('scipipe')
       } // stage('publish')
       stage('push packages gcp') {
         if (pushToBucket) {
@@ -115,7 +112,7 @@ notify.wrap {
               "EUPS_GS_BUCKET=eups-prod"
             ]
             withEnv(env) {
-              docker.image(util.defaultGcloudImage()).inside {
+              container('gcloud') {
                 // alpine does not include bash by default
                 util.posixSh '''
                  gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
@@ -124,7 +121,7 @@ notify.wrap {
                  "${EUPS_PKGROOT}/*" \
                  "gs://${EUPS_GS_BUCKET}/${EUPS_GS_OBJECT_PREFIX}"
                 '''
-              } // .inside
+              } // container('gcloud')
             } // withEnv
           } // withCredentials
         } else {
