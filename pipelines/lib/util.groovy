@@ -2105,11 +2105,14 @@ def void withEupsEnv(Closure run) {
  *     util.checkoutLFS(
  *       githubSlug: 'foo/bar',
  *       gitRef: 'main',
+ *       containerName: 'scipipe',
  *     )
  *
  * @param p Map
  * @param p.gitRepo String github repo slug
  * @param p.gitRef String git ref to checkout. Defaults to `main`
+ * @param p.containerName String Kubernetes container name to run lfs pull in.
+ *   When set, uses container() instead of insideDockerWrap (no docker daemon needed).
  */
 def void checkoutLFS(Map p) {
   requireMapKeys(p, [
@@ -2122,24 +2125,32 @@ def void checkoutLFS(Map p) {
 
   def gitRepo = githubSlugToUrl(p.githubSlug)
 
-  def lfsImage = 'ghcr.io/lsst-dm/docker-newinstall'
-
   // running a git clone in a docker.inside block is broken
   checkoutGitRef(gitRepo, p.gitRef)
 
+  def lfsPull = {
+    bash("""
+    source /opt/lsst/software/stack/loadLSST.bash
+    git lfs install --skip-repo
+    git lfs pull origin
+    """)
+  }
+
   try {
-    insideDockerWrap(
-      image: lfsImage,
-      pull: true,
-    ) {
-      bash("""
-      source /opt/lsst/software/stack/loadLSST.bash
-      git lfs install --skip-repo
-      git lfs pull origin
-      """)
+    if (p.containerName) {
+      container(p.containerName) {
+        lfsPull()
+      }
+    } else {
+      insideDockerWrap(
+        image: 'ghcr.io/lsst-dm/docker-newinstall',
+        pull: true,
+      ) {
+        lfsPull()
+      }
     }
   } finally {
-    // try not to break jenkins clone mangement
+    // try not to break jenkins clone management
     bash 'rm -f .git/hooks/post-checkout'
   }
 } // checkoutLFS

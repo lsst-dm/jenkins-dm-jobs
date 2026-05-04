@@ -235,6 +235,7 @@ def void verifyDataset(Map p) {
               util.checkoutLFS(
                 githubSlug: ds.github_repo,
                 gitRef: ds.git_ref,
+                containerName: 'scipipe',
               )
             }
           } // dir
