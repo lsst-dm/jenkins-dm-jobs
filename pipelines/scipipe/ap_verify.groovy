@@ -171,153 +171,175 @@ def void verifyDataset(Map p) {
   // code.name is required in order to build code
   Boolean buildCode = code?.name
 
-  def run = {
-    // note that pwd() must be run inside of a node {} block
-    def jobDir           = pwd()
-    def datasetDir       = "${jobDir}/datasets/${ds.name}"
-    def ciDir            = "${jobDir}/ci-scripts"
-    def baseDir          = "${jobDir}/${p.slug}"
-    // the code clone needs to be under the long winded path for archiving
-    def codeDir          = buildCode ? "${baseDir}/${code.name}" : ''
-    def homeDir          = "${baseDir}/home"
-    def runDir           = "${baseDir}/run"
-    def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
-
-    docker.image(p.dockerImage).pull()
-    def labels = util.shJson """
-      docker inspect --format '{{json .Config.Labels }}' ${p.dockerImage}
-    """
-
-    if (!labels.VERSIONDB_MANIFEST_ID) {
-      missingDockerLabel 'VERSIONDB_MANIFEST_ID'
-    }
-    if (!labels.LSST_COMPILER) {
-      missingDockerLabel 'LSST_COMPILER'
-    }
-
-    String manifestId = labels.VERSIONDB_MANIFEST_ID
-    String lsstCompiler = labels.LSST_COMPILER
-
-    // empty ephemeral dirs at start of build
-    util.emptyDirs([
-      homeDir,
-      runDir,
-    ])
-
-    // stage manifest.txt early so we don't risk a long processing run and
-    // then fail setting up to run dispatch_verify.py
-    stageFakeLsstsw(
-      fakeLsstswDir: fakeLsstswDir,
-      manifestId: manifestId,
-      archiveDir: jobDir,
-    )
-
-    dir(ciDir) {
-      util.cloneCiScripts()
-    }
-
-    // clone dataset
-    dir(datasetDir) {
-      timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
-        util.checkoutLFS(
-          githubSlug: ds.github_repo,
-          gitRef: ds.git_ref,
-        )
-      } // timeout
-    } // dir
-
-    // clone code
-    if (buildCode) {
-      dir(codeDir) {
-        timeout(time: code.clone_timelimit, unit: 'MINUTES') {
-          // the simplier git step doesn't support 'CleanBeforeCheckout'
-          def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
-          def codeRef     = code.git_ref
-
-          checkout(
-            scm: [
-              $class: 'GitSCM',
-              branches: [[name: "*/${codeRef}"]],
-              doGenerateSubmoduleConfigurations: false,
-              extensions: [[$class: 'CleanBeforeCheckout']],
-              submoduleCfg: [],
-              userRemoteConfigs: [[url: codeRepoUrl]]
-            ],
-          )
-        } // timeout
-      } // dir
-    }
-
-    // process dataset
-    util.insideDockerWrap(
-      image: p.dockerImage,
-      pull: true,
-      args: "-v ${datasetDir}:${datasetDir}",
-    ) {
-      if (buildCode) {
-        buildAp(
-          codeDir: codeDir,
-          ciDir: ciDir,
-          homeDir: homeDir,
-          runSlug: p.slug,
-          lsstCompiler: lsstCompiler,
-          archiveDir: jobDir,
-        )
-      }
-
-      runApVerify(
-        runDir: runDir,
-        dataset: ds,
-        gen: conf.gen,
-        datasetDir: datasetDir,
-        homeDir: homeDir,
-        archiveDir: jobDir,
-        codeDir: codeDir,
-        namespace: p.squashPush ?  "lsst.verify.ap" : "",
-        restProxyUrl: p.squashPush ? sqre.sasquatch.url : "",
-        pipeline: Path.of(ds.gen3_pipeline.trim()).getFileName().toString()
-      )
-
-      // push results to squash
-      if (p.squashPush) {
-        switch (conf.gen) {
-          case 3:
-            // Path is partially hard-coded in ap_verify.
-            def gen3Dir = util.joinPath(ds.name, 'repo')
-            def collection = 'ap_verify-output'
-
-            def codeRef = buildCode ? code.git_ref : "main"
-            util.runVerifyToSasquatch(
-              runDir: runDir,
-              gen3Dir: gen3Dir,
-              collectionName: collection,
-              namespace: "lsst.verify.ap",
-              datasetName: ds.name,
-              sasquatchUrl: sqre.sasquatch.url,
-              branchRefs: codeRef,
-              pipeline: Path.of(ds.gen3_pipeline.trim()).getFileName().toString()
-            )
-            break
-          default:
-            currentBuild.result = 'UNSTABLE'
-            echo "Sasquatch upload not supported for Gen ${conf.gen} pipeline framework; skipping"
-        }
-      }
-    } // insideDockerWrap
-  } // run
+  def nodeSelector = p.architecture == 'linux-aarch64' ?
+    'cloud.google.com/gke-nodepool=jenkins-workers-multiarch-c4a,kubernetes.io/arch=arm64' :
+    'cloud.google.com/gke-nodepool=jenkins-workers-c4d'
 
   retry(conf.retries) {
-    util.nodeWrap(architecture) {
-      // total allowed runtime for this "try" including cloning a test data /
-      // git-lfs repo
-      timeout(time: conf.run_timelimit, unit: 'MINUTES') {
-        if (p.wipeout) {
-          deleteDir()
-        }
+    podTemplate(
+      nodeSelector: nodeSelector,
+      containers: [
+        containerTemplate(
+          name: 'scipipe',
+          image: p.dockerImage,
+          command: '/bin/cat',
+          ttyEnabled: true,
+          resourceRequestCpu: '8',
+          resourceRequestMemory: '64Gi',
+          resourceLimitCpu: '8',
+          resourceLimitMemory: '64Gi',
+        ),
+        containerTemplate(
+          name: 'crane',
+          image: 'ghcr.io/google/go-containerregistry/crane:latest',
+          command: '/busybox/sh',
+          ttyEnabled: true,
+          resourceRequestCpu: '500m',
+          resourceRequestMemory: '512Mi',
+          resourceLimitCpu: '500m',
+          resourceLimitMemory: '512Mi',
+        ),
+      ],
+    ) {
+      node(POD_LABEL) {
+        // total allowed runtime for this "try" including cloning a test data /
+        // git-lfs repo
+        timeout(time: conf.run_timelimit, unit: 'MINUTES') {
+          if (p.wipeout) {
+            deleteDir()
+          }
 
-        run()
-      } // timeout
-    } // util.nodeWrap
+          def jobDir           = pwd()
+          def datasetDir       = "${jobDir}/datasets/${ds.name}"
+          def ciDir            = "${jobDir}/ci-scripts"
+          def baseDir          = "${jobDir}/${p.slug}"
+          // the code clone needs to be under the long winded path for archiving
+          def codeDir          = buildCode ? "${baseDir}/${code.name}" : ''
+          def homeDir          = "${baseDir}/home"
+          def runDir           = "${baseDir}/run"
+          def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
+
+          // get image labels via crane (no docker daemon required)
+          container('crane') {
+            sh "crane config ${p.dockerImage} > image-config.json"
+          }
+          def imageConfig = readJSON(file: 'image-config.json')
+          def labels = imageConfig.config?.Labels ?: [:]
+
+          if (!labels.VERSIONDB_MANIFEST_ID) {
+            missingDockerLabel 'VERSIONDB_MANIFEST_ID'
+          }
+          if (!labels.LSST_COMPILER) {
+            missingDockerLabel 'LSST_COMPILER'
+          }
+
+          String manifestId = labels.VERSIONDB_MANIFEST_ID
+          String lsstCompiler = labels.LSST_COMPILER
+
+          // empty ephemeral dirs at start of build
+          util.emptyDirs([
+            homeDir,
+            runDir,
+          ])
+
+          // stage manifest.txt early so we don't risk a long processing run and
+          // then fail setting up to run dispatch_verify.py
+          stageFakeLsstsw(
+            fakeLsstswDir: fakeLsstswDir,
+            manifestId: manifestId,
+            archiveDir: jobDir,
+          )
+
+          dir(ciDir) {
+            util.cloneCiScripts()
+          }
+
+          // clone dataset
+          dir(datasetDir) {
+            timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
+              util.checkoutLFS(
+                githubSlug: ds.github_repo,
+                gitRef: ds.git_ref,
+              )
+            } // timeout
+          } // dir
+
+          // clone code
+          if (buildCode) {
+            dir(codeDir) {
+              timeout(time: code.clone_timelimit, unit: 'MINUTES') {
+                // the simplier git step doesn't support 'CleanBeforeCheckout'
+                def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
+                def codeRef     = code.git_ref
+
+                checkout(
+                  scm: [
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${codeRef}"]],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [[$class: 'CleanBeforeCheckout']],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [[url: codeRepoUrl]]
+                  ],
+                )
+              } // timeout
+            } // dir
+          }
+
+          // process dataset
+          container('scipipe') {
+            if (buildCode) {
+              buildAp(
+                codeDir: codeDir,
+                ciDir: ciDir,
+                homeDir: homeDir,
+                runSlug: p.slug,
+                lsstCompiler: lsstCompiler,
+                archiveDir: jobDir,
+              )
+            }
+
+            runApVerify(
+              runDir: runDir,
+              dataset: ds,
+              gen: conf.gen,
+              datasetDir: datasetDir,
+              homeDir: homeDir,
+              archiveDir: jobDir,
+              codeDir: codeDir,
+              namespace: p.squashPush ? "lsst.verify.ap" : "",
+              restProxyUrl: p.squashPush ? sqre.sasquatch.url : "",
+              pipeline: Path.of(ds.gen3_pipeline.trim()).getFileName().toString()
+            )
+
+            // push results to squash
+            if (p.squashPush) {
+              switch (conf.gen) {
+                case 3:
+                  def gen3Dir = util.joinPath(ds.name, 'repo')
+                  def collection = 'ap_verify-output'
+
+                  def codeRef = buildCode ? code.git_ref : "main"
+                  util.runVerifyToSasquatch(
+                    runDir: runDir,
+                    gen3Dir: gen3Dir,
+                    collectionName: collection,
+                    namespace: "lsst.verify.ap",
+                    datasetName: ds.name,
+                    sasquatchUrl: sqre.sasquatch.url,
+                    branchRefs: codeRef,
+                    pipeline: Path.of(ds.gen3_pipeline.trim()).getFileName().toString()
+                  )
+                  break
+                default:
+                  currentBuild.result = 'UNSTABLE'
+                  echo "Sasquatch upload not supported for Gen ${conf.gen} pipeline framework; skipping"
+              }
+            }
+          } // container('scipipe')
+        } // timeout
+      } // node(POD_LABEL)
+    } // podTemplate
   } // retry
 } // verifyDataset
 

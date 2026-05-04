@@ -144,156 +144,174 @@ def void verifyDataset(Map p) {
 
   // code.name is required in order to build code
 
-  def run = {
-    // note that pwd() must be run inside of a node {} block
-    def jobDir           = pwd()
-    def datasetDir       = "${jobDir}/datasets/${ds.name}"
-    def ciDir            = "${jobDir}/ci-scripts"
-    def baseDir          = "${jobDir}/${p.slug}"
-    // the code clone needs to be under the long winded path for archiving
-    def codeDir          = "${baseDir}/${code.name}"
-    def homeDir          = "${baseDir}/home"
-    def runDir           = "${baseDir}/run"
-    def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
-
-    docker.image(p.dockerImage).pull()
-    def labels = util.shJson """
-      docker inspect --format '{{json .Config.Labels }}' ${p.dockerImage}
-    """
-
-    if (!labels.VERSIONDB_MANIFEST_ID) {
-      missingDockerLabel 'VERSIONDB_MANIFEST_ID'
-    }
-    if (!labels.LSST_COMPILER) {
-      missingDockerLabel 'LSST_COMPILER'
-    }
-
-    String manifestId   = labels.VERSIONDB_MANIFEST_ID
-    String lsstCompiler = labels.LSST_COMPILER
-
-    // empty ephemeral dirs at start of build
-    util.emptyDirs([
-      homeDir,
-      runDir,
-    ])
-
-    // stage manifest.txt early so we don't risk a long processing run and
-    // then fail setting up to run dispatch_verify.py
-    stageFakeLsstsw(
-      fakeLsstswDir: fakeLsstswDir,
-      manifestId: manifestId,
-      archiveDir: jobDir,
-    )
-
-    dir(ciDir) {
-      util.cloneCiScripts()
-    }
-
-    // clone dataset
-    dir(datasetDir) {
-      // start with a fresh clone each time to avoid running out of disk
-      deleteDir()
-      timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
-        util.checkoutLFS(
-          githubSlug: ds.github_repo,
-          gitRef: ds.git_ref,
-        )
-      }
-    } // dir
-
-    // clone code
-    dir(codeDir) {
-      timeout(time: code.clone_timelimit, unit: 'MINUTES') {
-        // the simplier git step doesn't support 'CleanBeforeCheckout'
-        def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
-        def codeRef     = p.gitRef
-
-        checkout(
-          scm: [
-            $class: 'GitSCM',
-            branches: [[name: "*/${codeRef}"]],
-            doGenerateSubmoduleConfigurations: false,
-            extensions: [[$class: 'CleanBeforeCheckout']],
-            submoduleCfg: [],
-            userRemoteConfigs: [[url: codeRepoUrl]]
-          ],
-        )
-      } // timeout
-    } // dir
-
-    util.insideDockerWrap(
-      image: p.dockerImage,
-      pull: true,
-      args: "-v ${datasetDir}:${datasetDir} -v ${ciDir}:${ciDir}",
-    ) {
-      buildDrp(
-        codeDir: codeDir,
-        ciDir: ciDir,
-        homeDir: homeDir,
-        runSlug: p.slug,
-        lsstCompiler: lsstCompiler,
-        archiveDir: jobDir,
-      )
-
-      runDrpMetrics(
-        runDir: runDir,
-        codeDir: codeDir,
-        ciDir: ciDir,
-        datasetName: ds.name,
-        datasetDir: datasetDir,
-        archiveDir: jobDir,
-      )
-
-      def gen3Dir = util.joinPath(datasetDir.toString(), "SMALL_HSC")
-      util.runVerifyToSasquatch(
-        runDir: runDir,
-        gen3Dir: gen3Dir,
-        collectionName: "jenkins/step3",
-        namespace: "lsst.verify.drp",
-        datasetName: "HSC/RC2/Nightly",
-        sasquatchUrl: sqre.sasquatch.url,
-        pipeline: "DRP-RC2_subset.yaml",
-      )
-
-      // push results to squash
-      /* Temporarily disable (DM-39271)
-      if (p.squashPush) {
-        def files = []
-        dir(runDir) {
-          files = findFiles(glob: '*.verify.json')
-        }
-
-        files.each { f ->
-          util.runDispatchVerify(
-            runDir: runDir,
-            lsstswDir: fakeLsstswDir,
-            datasetName: ds.name,
-            resultFile: f,
-            squashUrl: sqre.squash.url,
-          )
-        }
-      }
-      */
-    } // inside
-  } // run
+  def nodeSelector = p.architecture == 'linux-aarch64' ?
+    'cloud.google.com/gke-nodepool=jenkins-workers-multiarch-c4a,kubernetes.io/arch=arm64' :
+    'cloud.google.com/gke-nodepool=jenkins-workers-c4d'
 
   // retrying is important as there is a good chance that the dataset will
-  // fill the disk up
+  // fill the disk up; ephemeral pod storage is automatically freed on failure
   retry(conf.retries) {
-    try {
-      util.nodeWrap(architecture) {
+    podTemplate(
+      nodeSelector: nodeSelector,
+      containers: [
+        containerTemplate(
+          name: 'scipipe',
+          image: p.dockerImage,
+          command: '/bin/cat',
+          ttyEnabled: true,
+          resourceRequestCpu: '8',
+          resourceRequestMemory: '64Gi',
+          resourceLimitCpu: '8',
+          resourceLimitMemory: '64Gi',
+        ),
+        containerTemplate(
+          name: 'crane',
+          image: 'ghcr.io/google/go-containerregistry/crane:latest',
+          command: '/busybox/sh',
+          ttyEnabled: true,
+          resourceRequestCpu: '500m',
+          resourceRequestMemory: '512Mi',
+          resourceLimitCpu: '500m',
+          resourceLimitMemory: '512Mi',
+        ),
+      ],
+    ) {
+      node(POD_LABEL) {
         timeout(time: conf.run_timelimit, unit: 'MINUTES') {
           if (p.wipeout) {
             deleteDir()
           }
 
-          run()
+          def jobDir           = pwd()
+          def datasetDir       = "${jobDir}/datasets/${ds.name}"
+          def ciDir            = "${jobDir}/ci-scripts"
+          def baseDir          = "${jobDir}/${p.slug}"
+          // the code clone needs to be under the long winded path for archiving
+          def codeDir          = "${baseDir}/${code.name}"
+          def homeDir          = "${baseDir}/home"
+          def runDir           = "${baseDir}/run"
+          def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
+
+          // get image labels via crane (no docker daemon required)
+          container('crane') {
+            sh "crane config ${p.dockerImage} > image-config.json"
+          }
+          def imageConfig = readJSON(file: 'image-config.json')
+          def labels = imageConfig.config?.Labels ?: [:]
+
+          if (!labels.VERSIONDB_MANIFEST_ID) {
+            missingDockerLabel 'VERSIONDB_MANIFEST_ID'
+          }
+          if (!labels.LSST_COMPILER) {
+            missingDockerLabel 'LSST_COMPILER'
+          }
+
+          String manifestId   = labels.VERSIONDB_MANIFEST_ID
+          String lsstCompiler = labels.LSST_COMPILER
+
+          // empty ephemeral dirs at start of build
+          util.emptyDirs([
+            homeDir,
+            runDir,
+          ])
+
+          // stage manifest.txt early so we don't risk a long processing run and
+          // then fail setting up to run dispatch_verify.py
+          stageFakeLsstsw(
+            fakeLsstswDir: fakeLsstswDir,
+            manifestId: manifestId,
+            archiveDir: jobDir,
+          )
+
+          dir(ciDir) {
+            util.cloneCiScripts()
+          }
+
+          // clone dataset
+          dir(datasetDir) {
+            // start with a fresh clone each time to avoid running out of disk
+            deleteDir()
+            timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
+              util.checkoutLFS(
+                githubSlug: ds.github_repo,
+                gitRef: ds.git_ref,
+              )
+            }
+          } // dir
+
+          // clone code
+          dir(codeDir) {
+            timeout(time: code.clone_timelimit, unit: 'MINUTES') {
+              // the simplier git step doesn't support 'CleanBeforeCheckout'
+              def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
+              def codeRef     = p.gitRef
+
+              checkout(
+                scm: [
+                  $class: 'GitSCM',
+                  branches: [[name: "*/${codeRef}"]],
+                  doGenerateSubmoduleConfigurations: false,
+                  extensions: [[$class: 'CleanBeforeCheckout']],
+                  submoduleCfg: [],
+                  userRemoteConfigs: [[url: codeRepoUrl]]
+                ],
+              )
+            } // timeout
+          } // dir
+
+          container('scipipe') {
+            buildDrp(
+              codeDir: codeDir,
+              ciDir: ciDir,
+              homeDir: homeDir,
+              runSlug: p.slug,
+              lsstCompiler: lsstCompiler,
+              archiveDir: jobDir,
+            )
+
+            runDrpMetrics(
+              runDir: runDir,
+              codeDir: codeDir,
+              ciDir: ciDir,
+              datasetName: ds.name,
+              datasetDir: datasetDir,
+              archiveDir: jobDir,
+            )
+
+            def gen3Dir = util.joinPath(datasetDir.toString(), "SMALL_HSC")
+            util.runVerifyToSasquatch(
+              runDir: runDir,
+              gen3Dir: gen3Dir,
+              collectionName: "jenkins/step3",
+              namespace: "lsst.verify.drp",
+              datasetName: "HSC/RC2/Nightly",
+              sasquatchUrl: sqre.sasquatch.url,
+              pipeline: "DRP-RC2_subset.yaml",
+            )
+
+            // push results to squash
+            /* Temporarily disable (DM-39271)
+            if (p.squashPush) {
+              def files = []
+              dir(runDir) {
+                files = findFiles(glob: '*.verify.json')
+              }
+
+              files.each { f ->
+                util.runDispatchVerify(
+                  runDir: runDir,
+                  lsstswDir: fakeLsstswDir,
+                  datasetName: ds.name,
+                  resultFile: f,
+                  squashUrl: sqre.squash.url,
+                )
+              }
+            }
+            */
+          } // container('scipipe')
         } // timeout
-      } // util.nodeWrap
-    } catch(e) {
-      runNodeCleanup()
-      throw e
-    } // try
+      } // node(POD_LABEL)
+    } // podTemplate
   } // retry
 } // verifyDataset
 
