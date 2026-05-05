@@ -326,48 +326,53 @@ def void runPublish(Map p) {
  * Loads LSSTCAM test data
  * @param buildDir where to run this
  * @param testDir where to place the test data
+ * @param containerName Kubernetes container name. When set, uses container()
+ *   instead of insideDockerWrap (no docker daemon needed).
  * @return full path of test data
  */
 def loadLSSTCamTestData(
   String buildDir,
-  String testDir){
+  String testDir,
+  String containerName = null
+) {
   def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
-  def testdata // Assigning location of data later
+  def testdata
   dir(buildDir) {
-  def cwd = pwd()
-  testdata = "${cwd}/${testDir}"
-  dir(testdata){
-    withCredentials([
-      [
-        $class: 'StringBinding',
-        credentialsId: 'weka-bucket-secret',
-        variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
-      ], [
-        $class: 'StringBinding',
-        credentialsId: 'weka-access-key',
-        variable: 'RCLONE_CONFIG_WEKA_ACCESS_KEY_ID'
-      ], [
-        $class: 'StringBinding',
-        credentialsId: 'weka-bucket-url',
-        variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
-      ]]){
-      withEnv([
-        "RCLONE_CONFIG_WEKA_TYPE=s3",
-        "RCLONE_CONFIG_WEKA_PROVIDER=Other",
-        "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
-    ]){
-      insideDockerWrap(
-        image: "${gcp_repo}:latest",
-        pull: true,
-        args: "-v ${cwd}:/home",
-      ) {
-        bash """
-          rclone copy weka:"${LSSTCAM_BUCKET}" .
-        """
+    def cwd = pwd()
+    testdata = "${cwd}/${testDir}"
+    dir(testdata) {
+      withCredentials([
+        [
+          $class: 'StringBinding',
+          credentialsId: 'weka-bucket-secret',
+          variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
+        ], [
+          $class: 'StringBinding',
+          credentialsId: 'weka-access-key',
+          variable: 'RCLONE_CONFIG_WEKA_ACCESS_KEY_ID'
+        ], [
+          $class: 'StringBinding',
+          credentialsId: 'weka-bucket-url',
+          variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
+        ]]) {
+        withEnv([
+          "RCLONE_CONFIG_WEKA_TYPE=s3",
+          "RCLONE_CONFIG_WEKA_PROVIDER=Other",
+          "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
+        ]) {
+          def rcloneCmd = { bash "rclone copy weka:\"${LSSTCAM_BUCKET}\" ." }
+          if (containerName) {
+            container(containerName) { rcloneCmd() }
+          } else {
+            insideDockerWrap(
+              image: "${gcp_repo}:latest",
+              pull: true,
+              args: "-v ${cwd}:/home",
+            ) { rcloneCmd() }
+          }
         }
       }
     }
-  }
   }
   return testdata
 }
@@ -375,16 +380,19 @@ def loadLSSTCamTestData(
  * Loads Cache
  * @param buildDir where to place the loaded file
  * @param tag Which eups tag to load
+ * @param containerName Kubernetes container name. When set, uses container()
+ *   instead of insideDockerWrap (no docker daemon needed).
  */
 def loadCache(
   String buildDir,
-  String tag="d_latest"
+  String tag = "d_latest",
+  String containerName = null
 ) {
   def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
   dir(buildDir) {
     def cwd = pwd()
     def ciDir = "${cwd}/ci-scripts"
-    dir(ciDir){
+    dir(ciDir) {
       cloneCiScripts()
     }
     withCredentials([file(
@@ -395,16 +403,26 @@ def loadCache(
         "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
         "DATE_TAG=${tag}",
       ]) {
+        if (containerName) {
+          container(containerName) {
+            bash """
+            gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+            cd ${ciDir}
+            ./loadlsststack.sh $DATE_TAG
+            """
+          }
+        } else {
           insideDockerWrap(
             image: "${gcp_repo}:latest",
             pull: true,
             args: "-v ${cwd}:/home",
           ) {
-             bash """
-             gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-             cd /home/ci-scripts
-             ./loadlsststack.sh $DATE_TAG
-             """
+            bash """
+            gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+            cd /home/ci-scripts
+            ./loadlsststack.sh $DATE_TAG
+            """
+          }
         }
       }
     }
@@ -581,35 +599,91 @@ def lsstswBuild(
   } // runEnv
 
   def agent = lsstswConfig.label
-  def task = null
-  if (lsstswConfig.image) {
-    task = {
-      if (fetchCache){
-        loadCache(slug,"d_latest")
-      }
-      if (buildParams['CI_LSSTCAM']){
-        def testdatadir = loadLSSTCamTestData(slug,"lsstcam_testdata")
-        buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
-      }
-      if (buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64'){
-        return
-      }
-      runEnv(runDocker)
+
+  if (!lsstswConfig.image) {
+    if (!cachelsstsw && !buildParams['CI_LSSTCAM']) {
+      nodeWrap(agent) {
+        runEnv(run)
+      } // nodeWrap
     }
-  } else {
-    if (cachelsstsw || buildParams['CI_LSSTCAM']){
-      // runs only if we are not running a caching job. Since this isn't on
-      // docker we do not need to store cache for them.
-      return
-    }
-    else {
-      task = { runEnv(run) }
-    }
+    return
   }
 
-  nodeWrap(agent) {
-    task()
-  } // nodeWrap
+  def k8sNodeSelectors = [
+    'linux-64': 'cloud.google.com/gke-nodepool=jenkins-workers-c4d',
+    'linux-aarch64': 'cloud.google.com/gke-nodepool=jenkins-workers-multiarch-c4a,kubernetes.io/arch=arm64',
+  ]
+  def k8sNodeSelector = k8sNodeSelectors[agent]
+  def shouldRunBuild = !(buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64')
+
+  if (k8sNodeSelector) {
+    def runContainer = {
+      container('lsstsw') {
+        withCredentials([[
+          $class: 'StringBinding',
+          credentialsId: 'github-api-token-checks',
+          variable: 'GITHUB_TOKEN'
+        ]]) {
+          run()
+        }
+      }
+    }
+
+    podTemplate(
+      nodeSelector: k8sNodeSelector,
+      containers: [
+        containerTemplate(
+          name: 'lsstsw',
+          image: lsstswConfig.image,
+          command: '/bin/cat',
+          ttyEnabled: true,
+          resourceRequestCpu: '8',
+          resourceRequestMemory: '64Gi',
+          resourceLimitCpu: '8',
+          resourceLimitMemory: '64Gi',
+        ),
+        containerTemplate(
+          name: 'gcloudcli',
+          image: 'ghcr.io/lsst-dm/docker-gcloudcli:latest',
+          command: '/bin/cat',
+          ttyEnabled: true,
+          resourceRequestCpu: '500m',
+          resourceRequestMemory: '512Mi',
+          resourceLimitCpu: '500m',
+          resourceLimitMemory: '512Mi',
+        ),
+      ],
+    ) {
+      node(POD_LABEL) {
+        printK8sVars()
+        labelPod()
+        if (fetchCache) {
+          loadCache(slug, "d_latest", 'gcloudcli')
+        }
+        if (buildParams['CI_LSSTCAM']) {
+          def testdatadir = loadLSSTCamTestData(slug, "lsstcam_testdata", 'gcloudcli')
+          buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
+        }
+        if (shouldRunBuild) {
+          runEnv(runContainer)
+        }
+      } // node
+    } // podTemplate
+  } else {
+    // Static nodes (snowflake, osx-arm64) keep existing docker approach
+    nodeWrap(agent) {
+      if (fetchCache) {
+        loadCache(slug, "d_latest")
+      }
+      if (buildParams['CI_LSSTCAM']) {
+        def testdatadir = loadLSSTCamTestData(slug, "lsstcam_testdata")
+        buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
+      }
+      if (shouldRunBuild) {
+        runEnv(runDocker)
+      }
+    } // nodeWrap
+  }
 } // lsstswBuild
 
 /**
@@ -1253,50 +1327,82 @@ def filterProducts(String rubinVer, String products) {
     .join(' ')
 }
 
-def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
+def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig) {
   def agent = lsstswConfig.label
-  def runDocker = {
-    insideDockerWrap(
-      image: lsstswConfig.image,
-      pull: true,
-    ) {
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'github-api-token-checks',
-        variable: 'GITHUB_TOKEN'
-      ]]){
-      stage("Load and build env"){
-    def cwd     = pwd()
 
-    // If rubinVer is set to o_latest, get the newest rubin env from eups.lsst
-    if (rubinVer == "o_latest") {
-      def command = getNewestTag()
-      println "Latest tag: ${command}"
-      rubinVer = command
-    }
-    def gitTag = rubinVer.replaceAll("^v","").replaceAll("_",".")
-    def rubinEnvVer = getRubinEnv(rubinVer)
-    def prod = filterProducts(rubinVer, products)
-    println "Tag: ${rubinVer}"
-    println "Rubin environment version: ${rubinEnvVer}"
-    println "Products to build: ${prod}"
-    dir('lsstsw') {
-      cloneLsstsw()
-    }
-      bash """
-        cd ${cwd}/lsstsw
-        ./bin/deploy -v ${rubinEnvVer}
-        . bin/envconfig -n lsst-scipipe-${rubinEnvVer}
-        rebuild -B -r v${gitTag} -r ${gitTag} ${prod}
+  def doBuild = {
+    withCredentials([[
+      $class: 'StringBinding',
+      credentialsId: 'github-api-token-checks',
+      variable: 'GITHUB_TOKEN'
+    ]]) {
+      stage("Load and build env") {
+        def cwd = pwd()
+
+        if (rubinVer == "o_latest") {
+          def command = getNewestTag()
+          println "Latest tag: ${command}"
+          rubinVer = command
+        }
+        def gitTag = rubinVer.replaceAll("^v", "").replaceAll("_", ".")
+        def rubinEnvVer = getRubinEnv(rubinVer)
+        def prod = filterProducts(rubinVer, products)
+        println "Tag: ${rubinVer}"
+        println "Rubin environment version: ${rubinEnvVer}"
+        println "Products to build: ${prod}"
+        dir('lsstsw') {
+          cloneLsstsw()
+        }
+        bash """
+          cd ${cwd}/lsstsw
+          ./bin/deploy -v ${rubinEnvVer}
+          . bin/envconfig -n lsst-scipipe-${rubinEnvVer}
+          rebuild -B -r v${gitTag} -r ${gitTag} ${prod}
         """
-        } // stage
-      } // withCredentials
-    } // insideDockerWrap
-  } // runDocker
+      } // stage
+    } // withCredentials
+  }
 
-  nodeWrap(agent) {
-    runDocker()
-  } // nodeWrap
+  def k8sNodeSelectors = [
+    'linux-64': 'cloud.google.com/gke-nodepool=jenkins-workers-c4d',
+    'linux-aarch64': 'cloud.google.com/gke-nodepool=jenkins-workers-multiarch-c4a,kubernetes.io/arch=arm64',
+  ]
+  def k8sNodeSelector = k8sNodeSelectors[agent]
+
+  if (k8sNodeSelector) {
+    podTemplate(
+      nodeSelector: k8sNodeSelector,
+      containers: [
+        containerTemplate(
+          name: 'lsstsw',
+          image: lsstswConfig.image,
+          command: '/bin/cat',
+          ttyEnabled: true,
+          resourceRequestCpu: '8',
+          resourceRequestMemory: '64Gi',
+          resourceLimitCpu: '8',
+          resourceLimitMemory: '64Gi',
+        ),
+      ],
+    ) {
+      node(POD_LABEL) {
+        printK8sVars()
+        labelPod()
+        container('lsstsw') {
+          doBuild()
+        }
+      } // node
+    } // podTemplate
+  } else {
+    nodeWrap(agent) {
+      insideDockerWrap(
+        image: lsstswConfig.image,
+        pull: true,
+      ) {
+        doBuild()
+      }
+    } // nodeWrap
+  }
 } // buildOlderVersionTask
 
 /**
