@@ -1546,6 +1546,8 @@ def String epochToUtc(Integer epoch) {
  * @param p.repoSlug String github repo slug (required). Eg.: 'lsst/pipelines_lsst_io'
  * @param p.ltdProduct String LTD product name (required)., Eg.: 'pipelines'
  * @param p.masonImage String docker image (optional). Defaults to: 'lsstsqre/ltd-mason'
+ * @param p.containerName String Kubernetes container name. When set, uses
+ *   container() instead of docker.image().inside (no docker daemon needed).
  */
 def ltdPush(Map p) {
   requireMapKeys(p, [
@@ -1555,8 +1557,8 @@ def ltdPush(Map p) {
   ])
   p = [
     masonImage: 'lsstsqre/ltd-mason',
+    containerName: null,
   ] + p
-
 
   withEnv([
     "LTD_MASON_BUILD=true",
@@ -1579,13 +1581,20 @@ def ltdPush(Map p) {
       usernameVariable: 'LTD_KEEPER_USER',
       passwordVariable: 'LTD_KEEPER_PASSWORD',
     ]]) {
-      docker.image(p.masonImage).inside {
+      def ltdRun = {
         // expect that the service will return an HTTP 502, which causes
         // ltd-mason-travis to exit 1
-        sh '''
-        ltd-mason-travis --html-dir _build/html --verbose || true
-        '''
-      } // .inside
+        sh 'ltd-mason-travis --html-dir _build/html --verbose || true'
+      }
+      if (p.containerName) {
+        container(p.containerName) {
+          ltdRun()
+        }
+      } else {
+        docker.image(p.masonImage).inside {
+          ltdRun()
+        } // .inside
+      }
     } // withCredentials
   } //withEnv
 } // ltdPush
@@ -1640,6 +1649,8 @@ def void librarianPuppet(String cmd='install', String tag='2.2.3') {
  * @param p.eupsPath String path to EUPS installed productions (optional)
  * @param p.docImage String defaults to: 'lsstsqre/documenteer-base'
  * @param p.docPull Boolean defaults to: `false`
+ * @param p.containerName String Kubernetes container name. When set, uses
+ *   container() instead of insideDockerWrap (no docker daemon needed).
  */
 def runDocumenteer(Map p) {
   requireMapKeys(p, [
@@ -1649,6 +1660,7 @@ def runDocumenteer(Map p) {
   p = [
     docImage: null,
     docPull: false,
+    containerName: null,
   ] + p
 
   def homeDir = "${pwd()}/home"
@@ -1663,31 +1675,41 @@ def runDocumenteer(Map p) {
     docEnv += "EUPS_PATH=${p.eupsPath}"
   }
 
+  def docBuild = {
+    dir(p.docTemplateDir) {
+      bash '''
+        source /opt/lsst/software/stack/loadLSST.bash
+        dot -V
+        if [ -f requirements.txt ]; then
+          # allow to override doc tools
+          pip install --upgrade --user --force-reinstall -r requirements.txt
+        fi
+        export PATH="${HOME}/.local/bin:${PATH}"
+        setup -r . -t "$EUPS_TAG"
+        if command -v  build-stack-docs >/dev/null 2>&1; then
+          # use old documenteer 0.8 build installed from requirements.txt
+          build-stack-docs -d . -v
+        else
+          # New documenteer 2.X build with spinxutils from stack
+          stack-docs -d . -v build --disable-doxygen --disable-doxygen-conf
+        fi
+      '''
+    } // dir
+  }
+
   withEnv(docEnv) {
-    insideDockerWrap(
-      image: p.docImage,
-      pull: p.docPull,
-    ) {
-      dir(p.docTemplateDir) {
-        bash '''
-          source /opt/lsst/software/stack/loadLSST.bash
-          dot -V
-          if [ -f requirements.txt ]; then
-            # allow to override doc tools
-            pip install --upgrade --user --force-reinstall -r requirements.txt
-          fi
-          export PATH="${HOME}/.local/bin:${PATH}"
-          setup -r . -t "$EUPS_TAG"
-          if command -v  build-stack-docs >/dev/null 2>&1; then
-            # use old documenteer 0.8 build installed from requirements.txt
-            build-stack-docs -d . -v
-          else
-            # New documenteer 2.X build with spinxutils from stack
-            stack-docs -d . -v build --disable-doxygen --disable-doxygen-conf
-          fi
-        '''
-      } // dir
-    } // insideDockerWrap
+    if (p.containerName) {
+      container(p.containerName) {
+        docBuild()
+      }
+    } else {
+      insideDockerWrap(
+        image: p.docImage,
+        pull: p.docPull,
+      ) {
+        docBuild()
+      } // insideDockerWrap
+    }
   } // withEnv
 } // runDocumenteer
 
