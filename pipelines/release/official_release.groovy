@@ -9,6 +9,7 @@ node('jenkins-manager') {
     util = load 'pipelines/lib/util.groovy'
     scipipe = util.scipipeConfig()
     sqre = util.sqreConfig() // side effect only
+    codekitImage = util.defaultCodekitImage()
   }
 }
 
@@ -112,19 +113,36 @@ notify.wrap {
 
     stage('git tag eups products') {
       retry(retries) {
-        util.nodeWrap('linux-64') {
-          util.githubTagRelease(
-            options: [
-              '--dry-run': false,
-              '--org': scipipe.release_tag_org,
-              '--manifest': gitTagOnlyManifestId,
-              '--manifest-only': true,
-              '--ignore-git-message': true,
-              '--ignore-git-tagger': true,
-            ],
-            args: [gitTag],
-          )
-        } // util.nodeWrap
+        podTemplate(
+          nodeSelector: 'cloud.google.com/gke-nodepool=jenkins-workers-c4d',
+          containers: [
+            containerTemplate(
+              name: 'codekit',
+              image: codekitImage,
+              command: '/bin/cat',
+              ttyEnabled: true,
+              resourceRequestCpu: '100m',
+              resourceRequestMemory: '512Mi',
+              resourceLimitCpu: '100m',
+              resourceLimitMemory: '512Mi',
+            ),
+          ],
+        ) {
+          node(POD_LABEL) {
+            util.githubTagRelease(
+              options: [
+                '--dry-run': false,
+                '--org': scipipe.release_tag_org,
+                '--manifest': gitTagOnlyManifestId,
+                '--manifest-only': true,
+                '--ignore-git-message': true,
+                '--ignore-git-tagger': true,
+              ],
+              args: [gitTag],
+              containerName: 'codekit',
+            )
+          } // node
+        } // podTemplate
       } // retry
     } // stage
 
@@ -133,16 +151,33 @@ notify.wrap {
     // first being removed from the aux team).
     stage('git tag auxilliaries') {
       retry(retries) {
-        util.nodeWrap('linux-64') {
-          util.githubTagTeams(
-            options: [
-              '--dry-run': false,
-              '--org': scipipe.release_tag_org,
-              '--tag': gitTag,
-            ],
-            args: refArgs,
-          )
-        } // util.nodeWrap
+        podTemplate(
+          nodeSelector: 'cloud.google.com/gke-nodepool=jenkins-workers-c4d',
+          containers: [
+            containerTemplate(
+              name: 'codekit',
+              image: codekitImage,
+              command: '/bin/cat',
+              ttyEnabled: true,
+              resourceRequestCpu: '100m',
+              resourceRequestMemory: '512Mi',
+              resourceLimitCpu: '100m',
+              resourceLimitMemory: '512Mi',
+            ),
+          ],
+        ) {
+          node(POD_LABEL) {
+            util.githubTagTeams(
+              options: [
+                '--dry-run': false,
+                '--org': scipipe.release_tag_org,
+                '--tag': gitTag,
+              ],
+              args: refArgs,
+              containerName: 'codekit',
+            )
+          } // node
+        } // podTemplate
       } // retry
     } // stage
 

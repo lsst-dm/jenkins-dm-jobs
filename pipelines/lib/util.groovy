@@ -975,7 +975,7 @@ def void githubTagRelease(Map p) {
     '--fail-fast': true,
   ]
 
-  runCodekitCmd(prog, defaultOptions, p.options, p.args)
+  runCodekitCmd(prog, defaultOptions, p.options, p.args, 30, p.containerName ?: null)
 } // githubTagRelease
 
 /**
@@ -1018,7 +1018,7 @@ def void githubTagTeams(Map p) {
     '--ignore-existing-tag': true,
   ]
 
-  runCodekitCmd(prog, defaultOptions, p.options, p.containsKey('args') ? p.args : null)
+  runCodekitCmd(prog, defaultOptions, p.options, p.containsKey('args') ? p.args : null, 30, p.containerName ?: null)
 } // githubTagTeams
 
 /**
@@ -1047,12 +1047,13 @@ def void runCodekitCmd(
   Map defaultOptions,
   Map options,
   List args,
-  Integer timelimit = 30
+  Integer timelimit = 30,
+  String containerName = null
 ) {
   def cliCmd = makeCliCmd(prog, defaultOptions, options, args)
 
   timeout(time: timelimit, unit: 'MINUTES') {
-    insideCodekit {
+    insideCodekit(containerName) {
       bash cliCmd
     }
   }
@@ -1106,14 +1107,31 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  insideDockerWrap(
-    image: defaultCodekitImage(),
-    pull: true,
-  ) {
-    withGithubAdminCredentials {
-      run()
+  insideCodekit(null, run)
+}
+
+/**
+ * @param containerName String Kubernetes container name. When set, uses
+ *   container() instead of insideDockerWrap (no docker daemon needed).
+ * @param run Closure Invoked inside of container
+ */
+def void insideCodekit(String containerName, Closure run) {
+  if (containerName) {
+    container(containerName) {
+      withGithubAdminCredentials {
+        run()
+      }
     }
-  } // insideDockerWrap
+  } else {
+    insideDockerWrap(
+      image: defaultCodekitImage(),
+      pull: true,
+    ) {
+      withGithubAdminCredentials {
+        run()
+      }
+    } // insideDockerWrap
+  }
 } // insideCodekit
 
 /**
