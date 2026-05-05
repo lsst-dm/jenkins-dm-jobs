@@ -781,7 +781,7 @@ def String smokeScript(
     export EUPS_PKGROOT="${eupsPkgroot}"
     export BASE_URL="${baseUrl}"
 
-    curl -sSL ${util.lsstinstallUrl()} | bash -s
+    curl -sSL ${util.lsstinstallUrl()} | bash -s -- -v ${menv.rubinEnvVer}
     . ./loadLSST.bash
 
     # override lsstinstall configured EUPS_PKGROOT
