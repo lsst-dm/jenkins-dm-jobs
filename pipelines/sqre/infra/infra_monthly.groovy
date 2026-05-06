@@ -25,6 +25,13 @@ notify.wrap {
         booleanParam(name: 'LATEST', value: true),
       ]
 
+    triggerJob trigger: tasks,
+      name: 'sqre/infra/build-tarball-docker',
+      parameters: [
+        stringParam(name: 'TAG', value: 'w_latest'),
+        stringParam(name: 'BRANCH', value: 'main'),
+      ]
+
     parallel tasks
   } // run
 
