@@ -145,18 +145,19 @@ def void insideK8sContainer(Map p, Closure run) {
   String image      = p.image
   Boolean pull      = p.pull ?: false
   List   mounts     = p.mounts ?: []
+  mounts.each { m -> requireMapKeys(m, ['name', 'hostPath', 'mountPath']) }
   String pullPolicy = pull ? 'Always' : 'IfNotPresent'
 
-  def volumeMountsYaml = mounts
-    ? mounts.collect { m ->
+  def volumeMountsSection = mounts
+    ? "    volumeMounts:\n" + mounts.collect { m ->
         "    - name: ${m.name}\n      mountPath: ${m.mountPath}"
-      }.join('\n')
+      }.join('\n') + '\n'
     : ''
 
-  def volumesYaml = mounts
-    ? mounts.collect { m ->
+  def volumesSection = mounts
+    ? "  volumes:\n" + mounts.collect { m ->
         "  - name: ${m.name}\n    hostPath:\n      path: ${m.hostPath}"
-      }.join('\n')
+      }.join('\n') + '\n'
     : ''
 
   def podYaml = """
@@ -170,14 +171,10 @@ spec:
     tty: true
     command: [sleep]
     args: ['99d']
-    securityContext:
+    securityContext:  # matches 'jenkins' user in LSST base images
       runAsUser: 1000
       runAsNonRoot: true
-    volumeMounts:
-${volumeMountsYaml}
-  volumes:
-${volumesYaml}
-"""
+${volumeMountsSection}${volumesSection}"""
 
   podTemplate(yaml: podYaml) {
     node(POD_LABEL) {
@@ -186,7 +183,7 @@ ${volumesYaml}
       }
     }
   }
-}
+} // insideK8sContainer
 
 /**
  * Create a thin "wrapper" container around {@code image} to map uid/gid of
