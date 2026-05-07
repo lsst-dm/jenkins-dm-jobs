@@ -76,7 +76,7 @@ notify.wrap {
         ]
 
         withEnv(env) {
-          util.insideDockerWrap(
+          util.insideK8sContainer(
             image: lsstswConfig.image,
             pull: true,
           ) {
@@ -100,7 +100,7 @@ notify.wrap {
               publish "${ARGS[@]}"
             '''
           }
-        } // util.insideDockerWrap
+        } // util.insideK8sContainer
       } // stage('publish')
       stage('push packages gcp') {
         if (pushToBucket) {
