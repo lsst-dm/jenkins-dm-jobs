@@ -103,6 +103,33 @@ def void buildImage(Map p) {
 } // buildImage
 
 /**
+ * Create a buildx builder pointing at the BuildKit sidecar socket.
+ * Call once per node before any docker buildx build invocation.
+ */
+def void setupBuildkitBuilder() {
+  sh '''
+    docker buildx create \
+      --driver remote \
+      --name agent-builder \
+      unix:///run/buildkit/buildkitd.sock \
+      --use 2>/dev/null \
+      || docker buildx use agent-builder
+  '''
+}
+
+/**
+ * Return --cache-from and --cache-to flags for BuildKit registry cache.
+ *
+ * @param cacheRepo Full repo path without tag, e.g.
+ *   us-central1-docker.pkg.dev/prompt-proto/buildcache/newinstall
+ * @param arch Architecture suffix, e.g. amd64 or arm64
+ */
+def String buildkitCacheArgs(String cacheRepo, String arch) {
+  return "--cache-from type=registry,ref=${cacheRepo}:cache-${arch} " +
+         "--cache-to type=registry,ref=${cacheRepo}:cache-${arch},mode=max"
+}
+
+/**
  * Create a thin "wrapper" container around {@code image} to map uid/gid of
  * the user invoking docker into the container.
  *
