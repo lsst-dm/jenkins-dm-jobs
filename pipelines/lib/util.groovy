@@ -130,6 +130,65 @@ def String buildkitCacheArgs(String cacheRepo, String arch) {
 }
 
 /**
+ * Run a closure inside a Kubernetes pod using the specified container image.
+ * Kubernetes-native replacement for insideDockerWrap — no Docker daemon required.
+ *
+ * @param p Map
+ * @param p.image   String container image to run inside (required)
+ * @param p.pull    Boolean set imagePullPolicy: Always (optional, default false)
+ * @param p.mounts  List of Maps with keys: name, hostPath, mountPath (optional)
+ * @param run       Closure to execute inside the container
+ */
+def void insideK8sContainer(Map p, Closure run) {
+  requireMapKeys(p, ['image'])
+
+  String image      = p.image
+  Boolean pull      = p.pull ?: false
+  List   mounts     = p.mounts ?: []
+  String pullPolicy = pull ? 'Always' : 'IfNotPresent'
+
+  def volumeMountsYaml = mounts
+    ? mounts.collect { m ->
+        "    - name: ${m.name}\n      mountPath: ${m.mountPath}"
+      }.join('\n')
+    : ''
+
+  def volumesYaml = mounts
+    ? mounts.collect { m ->
+        "  - name: ${m.name}\n    hostPath:\n      path: ${m.hostPath}"
+      }.join('\n')
+    : ''
+
+  def podYaml = """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: runner
+    image: ${image}
+    imagePullPolicy: ${pullPolicy}
+    tty: true
+    command: [sleep]
+    args: ['99d']
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+    volumeMounts:
+${volumeMountsYaml}
+  volumes:
+${volumesYaml}
+"""
+
+  podTemplate(yaml: podYaml) {
+    node(POD_LABEL) {
+      container('runner') {
+        run()
+      }
+    }
+  }
+}
+
+/**
  * Create a thin "wrapper" container around {@code image} to map uid/gid of
  * the user invoking docker into the container.
  *
