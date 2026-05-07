@@ -439,10 +439,12 @@ def loadLSSTCamTestData(
         "RCLONE_CONFIG_WEKA_PROVIDER=Other",
         "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
     ]){
-      insideDockerWrap(
+      insideK8sContainer(
         image: "${gcp_repo}:latest",
         pull: true,
-        args: "-v ${cwd}:/home",
+        mounts: [
+          [name: 'cwd', hostPath: cwd, mountPath: '/home'],
+        ],
       ) {
         bash """
           rclone copy weka:"${LSSTCAM_BUCKET}" .
@@ -478,10 +480,12 @@ def loadCache(
         "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
         "DATE_TAG=${tag}",
       ]) {
-          insideDockerWrap(
+          insideK8sContainer(
             image: "${gcp_repo}:latest",
             pull: true,
-            args: "-v ${cwd}:/home",
+            mounts: [
+              [name: 'cwd', hostPath: cwd, mountPath: '/home'],
+            ],
           ) {
              bash """
              gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
@@ -1194,14 +1198,14 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  insideDockerWrap(
+  insideK8sContainer(
     image: defaultCodekitImage(),
     pull: true,
   ) {
     withGithubAdminCredentials {
       run()
     }
-  } // insideDockerWrap
+  } // insideK8sContainer
 } // insideCodekit
 
 /**
@@ -1692,12 +1696,13 @@ def String instantToUtc(Instant moment) {
  * @param tag String tag of docker image to use.
  */
 def void librarianPuppet(String cmd='install', String tag='2.2.3') {
-  insideDockerWrap(
+  insideK8sContainer(
     image: "lsstsqre/cakepan:${tag}",
-    args: "-e HOME=${pwd()}",
     pull: true,
   ) {
-    bash "librarian-puppet ${cmd}"
+    withEnv(["HOME=${pwd()}"]) {
+      bash "librarian-puppet ${cmd}"
+    }
   }
 }
 
@@ -1734,7 +1739,7 @@ def runDocumenteer(Map p) {
   }
 
   withEnv(docEnv) {
-    insideDockerWrap(
+    insideK8sContainer(
       image: p.docImage,
       pull: p.docPull,
     ) {
@@ -1757,7 +1762,7 @@ def runDocumenteer(Map p) {
           fi
         '''
       } // dir
-    } // insideDockerWrap
+    } // insideK8sContainer
   } // withEnv
 } // runDocumenteer
 
@@ -2216,7 +2221,7 @@ def void checkoutLFS(Map p) {
   checkoutGitRef(gitRepo, p.gitRef)
 
   try {
-    insideDockerWrap(
+    insideK8sContainer(
       image: lfsImage,
       pull: true,
     ) {
