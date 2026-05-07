@@ -626,7 +626,7 @@ def lsstswBuild(
     } // else
   } // run
   def runDocker = {
-    insideDockerWrap(
+    insideK8sContainer(
       image: lsstswConfig.image,
       pull: true,
     ) {
@@ -637,7 +637,7 @@ def lsstswBuild(
       ]]){
         run()
       } // withCredentials
-    } // insideDockerWrap
+    } // insideK8sContainer
   } // runDocker
 
   def runEnv = { doRun ->
@@ -1326,7 +1326,7 @@ def filterProducts(String rubinVer, String products) {
 def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
   def agent = lsstswConfig.label
   def runDocker = {
-    insideDockerWrap(
+    insideK8sContainer(
       image: lsstswConfig.image,
       pull: true,
     ) {
@@ -1361,7 +1361,7 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
         """
         } // stage
       } // withCredentials
-    } // insideDockerWrap
+    } // insideK8sContainer
   } // runDocker
 
   nodeWrap(agent) {
