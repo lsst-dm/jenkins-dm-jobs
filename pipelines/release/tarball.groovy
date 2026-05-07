@@ -276,35 +276,21 @@ def void linuxBuild(
       util.cloneCiScripts()
     }
 
-    util.wrapDockerImage(
+    util.insideK8sContainer(
       image: imageName,
-      tag: localImageName,
       pull: true,
-    )
-
-    withEnv([
-      "RUN=/build/scripts/${shBasename}",
-      "IMAGE=${localImageName}",
-      "BUILDDIR=${buildDir}",
-      "BUILDDIR_CONTAINER=${buildDirContainer}",
-      "DISTDIR=${distDir}",
-      "DISTDIR_CONTAINER=${distDirContainer}",
-      "CIDIR=${ciDir}",
-      "CIDIR_CONTAINER=${ciDirContainer}",
-    ]) {
-      // XXX refactor to use util.insideDockerWrap
-      util.bash '''
-        docker run \
-          -v "${BUILDDIR}:${BUILDDIR_CONTAINER}" \
-          -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
-          -v "${CIDIR}:${CIDIR_CONTAINER}" \
-          -w /build \
-          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-          -u "$(id -u -n)" \
-          "$IMAGE" \
-          bash -c "$RUN"
-      '''
-    } // withEnv
+      mounts: [
+        [name: 'builddir', hostPath: buildDir,  mountPath: buildDirContainer],
+        [name: 'distdir',  hostPath: distDir,   mountPath: distDirContainer],
+        [name: 'cidir',    hostPath: ciDir,     mountPath: ciDirContainer],
+      ],
+    ) {
+      dir(buildDirContainer) {
+        withEnv(["EUPS_S3_BUCKET=${env.EUPS_S3_BUCKET}"]) {
+          util.bash("/build/scripts/${shBasename}")
+        }
+      }
+    } // util.insideK8sContainer
   } finally {
     record(buildDir, menv)
     cleanup(buildDir)
@@ -423,38 +409,25 @@ def void linuxSmoke(
       util.cloneCiScripts()
     }
 
-    util.wrapDockerImage(
+    util.insideK8sContainer(
       image: imageName,
-      tag: localImageName,
       pull: true,
-    )
-
-    withEnv([
-      "RUN=/smoke/scripts/${shBasename}",
-      "IMAGE=${localImageName}",
-      "RUN_SCONS_CHECK=${smokeConfig.run_scons_check}",
-      "SMOKEDIR=${smokeDir}",
-      "SMOKEDIR_CONTAINER=${smokeDirContainer}",
-      "DISTDIR=${distDir}",
-      "DISTDIR_CONTAINER=${distDirContainer}",
-      "CIDIR=${ciDir}",
-      "CIDIR_CONTAINER=${ciDirContainer}",
-    ]) {
-      // XXX refactor to use util.insideDockerWrap
-      util.bash '''
-        docker run \
-          -v "${SMOKEDIR}:${SMOKEDIR_CONTAINER}" \
-          -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
-          -v "${CIDIR}:${CIDIR_CONTAINER}" \
-          -w /smoke \
-          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-          -e RUN_SCONS_CHECK="$RUN_SCONS_CHECK" \
-          -e FIX_SHEBANGS=true \
-          -u "$(id -u -n)" \
-          "$IMAGE" \
-          bash -c "$RUN"
-      '''
-    } // withEnv
+      mounts: [
+        [name: 'smokedir', hostPath: smokeDir,  mountPath: smokeDirContainer],
+        [name: 'distdir',  hostPath: distDir,   mountPath: distDirContainer],
+        [name: 'cidir',    hostPath: ciDir,     mountPath: ciDirContainer],
+      ],
+    ) {
+      dir(smokeDirContainer) {
+        withEnv([
+          "EUPS_S3_BUCKET=${env.EUPS_S3_BUCKET}",
+          "RUN_SCONS_CHECK=${smokeConfig.run_scons_check}",
+          "FIX_SHEBANGS=true",
+        ]) {
+          util.bash("/smoke/scripts/${shBasename}")
+        }
+      }
+    } // util.insideK8sContainer
   } finally {
     record(smokeDir, menv)
   }
