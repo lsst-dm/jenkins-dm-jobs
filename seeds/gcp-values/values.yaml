@@ -1043,7 +1043,7 @@ controller:
                           memory: 64Gi
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
-                    - name: buildkit
+                    - name: buildkitd
                       image: moby/buildkit:v0.15.0-rootless
                       imagePullPolicy: Always
                       command:
@@ -1158,7 +1158,7 @@ controller:
                     ownerReferences:
                   spec:
                     containers:
-                    - name: buildkit
+                    - name: buildkitd
                       image: moby/buildkit:v0.15.0-rootless
                       imagePullPolicy: Always
                       command:
@@ -1333,7 +1333,7 @@ controller:
                         operator: Equal
                         value: arm64
                     containers:
-                    - name: buildkit
+                    - name: buildkitd
                       image: moby/buildkit:v0.15.0-rootless
                       imagePullPolicy: Always
                       command:
