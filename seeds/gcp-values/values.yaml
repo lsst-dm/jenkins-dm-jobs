@@ -1051,6 +1051,7 @@ controller:
                       args:
                         - --addr
                         - unix:///run/buildkit/buildkitd.sock
+                        - --oci-worker-no-process-sandbox
                       readinessProbe:
                         exec:
                           command:
@@ -1087,6 +1088,8 @@ controller:
                         runAsGroup: 1000
                         runAsNonRoot: true
                         runAsUser: 1000
+                        seccompProfile:
+                          type: Unconfined
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
                       volumeMounts:
@@ -1166,6 +1169,7 @@ controller:
                       args:
                         - --addr
                         - unix:///run/buildkit/buildkitd.sock
+                        - --oci-worker-no-process-sandbox
                       readinessProbe:
                         exec:
                           command:
@@ -1202,6 +1206,8 @@ controller:
                         runAsGroup: 1000
                         runAsNonRoot: true
                         runAsUser: 1000
+                        seccompProfile:
+                          type: Unconfined
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
                       volumeMounts:
@@ -1341,6 +1347,7 @@ controller:
                       args:
                         - --addr
                         - unix:///run/buildkit/buildkitd.sock
+                        - --oci-worker-no-process-sandbox
                       readinessProbe:
                         exec:
                           command:
@@ -1377,6 +1384,8 @@ controller:
                         runAsGroup: 1000
                         runAsNonRoot: true
                         runAsUser: 1000
+                        seccompProfile:
+                          type: Unconfined
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
                       volumeMounts:
