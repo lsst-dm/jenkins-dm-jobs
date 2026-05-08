@@ -91,7 +91,6 @@ notify.wrap {
 
     def baseImage       = "${newinstallImage}:${newinstallTagBase}-${splenvRef}"
 
-    def image = null
     def repo  = null
 
 
@@ -103,61 +102,69 @@ notify.wrap {
         ])
       }
 
-      stage('build') {
-        def opt = []
-        // ensure base image is always up to date
-        opt << '--pull=true'
-        opt << '--no-cache'
-        opt << "--build-arg EUPS_PRODUCTS=\"${products}\""
-        opt << "--build-arg EUPS_TAG=\"${eupsTag}\""
-        opt << "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\""
-        opt << "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\""
-        opt << "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\""
-        opt << "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\""
-        opt << "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\""
-        opt << "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\""
-        opt << "--build-arg BASE_IMAGE=\"${baseImage}\""
-        opt << "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\""
-        opt << "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\""
-        opt << "--build-arg LSST_COMPILER=\"${lsstCompiler}\""
-        opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
-        opt << "--load"
-        opt << '.'
+      stage('build and push') {
+        def arch = lsstswConfig.display_name.tokenize('-').last()
+        def cacheRepo = 'us-central1-docker.pkg.dev/prompt-proto/buildcache/scipipe-base'
+        def metadataFile = '/tmp/build-metadata.json'
+
+        util.setupBuildkitBuilder()
+
+        if (!noPush) {
+          withCredentials([usernamePassword(
+            credentialsId: 'rubinobs-dm',
+            usernameVariable: 'GHCR_USER',
+            passwordVariable: 'GHCR_TOKEN',
+          )]) {
+            sh 'echo $GHCR_TOKEN | docker login ghcr.io -u $GHCR_USER --password-stdin'
+          }
+          withCredentials([file(
+            credentialsId: 'google_archive_registry_sa',
+            variable: 'GOOGLE_APPLICATION_CREDENTIALS',
+          )]) {
+            sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+            sh 'gcloud auth configure-docker us-central1-docker.pkg.dev --quiet'
+          }
+        }
+
+        def buildArgs = [
+          '--pull=true',
+          "--build-arg EUPS_PRODUCTS=\"${products}\"",
+          "--build-arg EUPS_TAG=\"${eupsTag}\"",
+          "--build-arg DOCKERFILE_GIT_BRANCH=\"${repo.GIT_BRANCH}\"",
+          "--build-arg DOCKERFILE_GIT_COMMIT=\"${repo.GIT_COMMIT}\"",
+          "--build-arg DOCKERFILE_GIT_URL=\"${repo.GIT_URL}\"",
+          "--build-arg JENKINS_JOB_NAME=\"${env.JOB_NAME}\"",
+          "--build-arg JENKINS_BUILD_ID=\"${env.BUILD_ID}\"",
+          "--build-arg JENKINS_BUILD_URL=\"${env.RUN_DISPLAY_URL}\"",
+          "--build-arg BASE_IMAGE=\"${baseImage}\"",
+          "--build-arg SHEBANGTRON_URL=\"${shebangtronUrl}\"",
+          "--build-arg VERSIONDB_MANIFEST_ID=\"${manifestId}\"",
+          "--build-arg LSST_COMPILER=\"${lsstCompiler}\"",
+          "--build-arg LSST_SPLENV_REF=\"${splenvRef}\"",
+          util.buildkitCacheArgs(cacheRepo, arch),
+          "--metadata-file ${metadataFile}",
+        ]
+
+        if (!noPush) {
+          buildArgs << '--push'
+          registryTags.each { name ->
+            buildArgs << "--tag ${dockerRepo}:${name}_${arch}"
+            buildArgs << "--tag us-central1-docker.pkg.dev/prompt-proto/${gcpRepo}:${name}_${arch}"
+          }
+        }
+
+        buildArgs << '.'
 
         dir(buildDir) {
-          image = docker.build("${dockerRepo}", opt.join(' '))
-          image2 = docker.build("prompt-proto/${gcpRepo}", opt.join(' '))
+          sh "docker buildx build ${buildArgs.join(' ')}"
         }
-      }
-      stage('push') {
-        def digest = null
-        // Should be removed once we drop dockerhub support
-        def arch = lsstswConfig.display_name.tokenize('-').last()
-        if (!noPush) {
-          docker.withRegistry(
-            'https://ghcr.io',
-            'rubinobs-dm'
-          ) {
-            registryTags.each { name ->
-              image.push(name + "_" + arch)
-            }
-          }
-          docker.withRegistry(
-            'https://us-central1-docker.pkg.dev/',
-            'google_archive_registry_sa'
-          ) {
-            registryTags.each { name ->
-              image2.push(name+"_"+arch)
-            }
-          }
-          digest = sh(
-            script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}_${arch}",
-            returnStdout: true
-          ).trim()
 
+        if (!noPush) {
+          def meta = readJSON(file: metadataFile)
+          def digest = meta['containerimage.digest']
+          dockerdigest.add("${dockerRepo}:${dockerTag}_${arch}@${digest}")
         }
-          dockerdigest.add(digest)
-      } // push
+      } // stage('build and push')
 
   } // run
 
@@ -191,40 +198,36 @@ notify.wrap {
   parallel matrix
 
   def merge = {
-    stage('digest'){
-        def digest = dockerdigest.join(' ')
-        docker.withRegistry(
-          'https://ghcr.io',
-          'rubinobs-dm'
-        ) {
-        registryTags.each { name ->
-          sh(script: """ \
-            docker buildx imagetools create -t $dockerRepo:$name \
-            $digest
-            """,
-            returnStdout: true)
-        }
+    stage('digest') {
+      withCredentials([usernamePassword(
+        credentialsId: 'rubinobs-dm',
+        usernameVariable: 'GHCR_USER',
+        passwordVariable: 'GHCR_TOKEN',
+      )]) {
+        sh 'echo $GHCR_TOKEN | docker login ghcr.io -u $GHCR_USER --password-stdin'
+      }
+      withCredentials([file(
+        credentialsId: 'google_archive_registry_sa',
+        variable: 'GOOGLE_APPLICATION_CREDENTIALS',
+      )]) {
+        sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+        sh 'gcloud auth configure-docker us-central1-docker.pkg.dev --quiet'
+      }
 
-        }
-        docker.withRegistry(
-          'https://us-central1-docker.pkg.dev/',
-          'google_archive_registry_sa'
-        ) {
-          registryTags.each { name ->
-            sh(script: """ \
-              docker buildx imagetools create -t us-central1-docker.pkg.dev/prompt-proto/$gcpRepo:$name \
-              $digest
-              """,
-              returnStdout: true)
-          }
-        }
+      def digest = dockerdigest.join(' ')
+      registryTags.each { name ->
+        sh "docker buildx imagetools create -t ${dockerRepo}:${name} ${digest}"
+        sh "docker buildx imagetools create -t us-central1-docker.pkg.dev/prompt-proto/${gcpRepo}:${name} ${digest}"
+      }
     }
-
   } // merge
-  util.nodeWrap('linux-64') {
+
+  if (!noPush && !dockerdigest.isEmpty()) {
+    util.nodeWrap('linux-64') {
       timeout(time: timelimit, unit: 'HOURS') {
         merge()
       }
     } // nodeWrap
+  }
 
 } // notify.wrap
