@@ -249,10 +249,12 @@ def void verifyDataset(Map p) {
     }
 
     // process dataset
-    util.insideDockerWrap(
+    util.insideK8sContainer(
       image: p.dockerImage,
       pull: true,
-      args: "-v ${datasetDir}:${datasetDir}",
+      mounts: [
+        [name: 'dataset', hostPath: datasetDir, mountPath: datasetDir],
+      ],
     ) {
       if (buildCode) {
         buildAp(
@@ -303,7 +305,7 @@ def void verifyDataset(Map p) {
             echo "Sasquatch upload not supported for Gen ${conf.gen} pipeline framework; skipping"
         }
       }
-    } // insideDockerWrap
+    } // util.insideK8sContainer
   } // run
 
   retry(conf.retries) {
