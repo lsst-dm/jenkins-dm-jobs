@@ -119,10 +119,12 @@ notify.wrap {
       }
     }
   } // merge
-  util.nodeWrap('linux-64') {
+  if (!noPush && !dockerdigest.isEmpty()) {
+    util.nodeWrap('linux-64') {
       timeout(time: 1, unit: 'HOURS') {
         merge()
       }
     } // nodeWrap
+  }
 
 } // notify.wrap
