@@ -1002,8 +1002,8 @@ controller:
                       workingDir: /j
                       args: ["$(JENKINS_SECRET)", "$(JENKINS_NAME)"]
                       env:
-                        - name: DOCKER_HOST
-                          value: tcp://localhost:2375
+                        - name: BUILDKIT_HOST
+                          value: unix:///run/buildkit/buildkitd.sock
                         - name: K8S_NODE_NAME
                           valueFrom:
                             fieldRef:
@@ -1023,8 +1023,8 @@ controller:
                           value: /j
                       tty: true
                       volumeMounts:
-                        - name: docker-graph-storage
-                          mountPath: /var/lib/docker
+                        - name: buildkit-socket
+                          mountPath: /run/buildkit
                         - name: ws
                           mountPath: /j
                       securityContext:
@@ -1043,106 +1043,55 @@ controller:
                           memory: 64Gi
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
-                    - args:
-                      - --host=tcp://localhost:2375
-                      - --mtu=1376
-                      command:
-                      - /usr/local/bin/dockerd
-                      env:
-                      - name: DOCKER_HOST
-                        value: tcp://localhost:2375
-                      image: docker:27.1.1-dind
+                    - name: buildkit
+                      image: moby/buildkit:v0.15.0-rootless
                       imagePullPolicy: Always
-                      livenessProbe:
-                        exec:
-                          command:
-                          - wget
-                          - --spider
-                          - -q
-                          - http://localhost:2375/_ping
-                        failureThreshold: 2
-                        initialDelaySeconds: 5
-                        periodSeconds: 5
-                        successThreshold: 1
-                        timeoutSeconds: 1
-                      name: dind
+                      command:
+                        - buildkitd
+                      args:
+                        - --addr
+                        - unix:///run/buildkit/buildkitd.sock
                       readinessProbe:
                         exec:
                           command:
-                          - wget
-                          - --spider
-                          - -q
-                          - http://localhost:2375/_ping
-                        failureThreshold: 2
+                            - buildctl
+                            - debug
+                            - workers
+                        failureThreshold: 3
                         initialDelaySeconds: 5
-                        periodSeconds: 5
+                        periodSeconds: 10
                         successThreshold: 1
-                        timeoutSeconds: 1
+                        timeoutSeconds: 5
+                      livenessProbe:
+                        exec:
+                          command:
+                            - buildctl
+                            - debug
+                            - workers
+                        failureThreshold: 3
+                        initialDelaySeconds: 15
+                        periodSeconds: 30
+                        successThreshold: 1
+                        timeoutSeconds: 5
                       resources:
                         limits:
-                          cpu: "12"
-                          memory: 64Gi
+                          cpu: "4"
+                          memory: 16Gi
                         requests:
-                          cpu: "12"
-                          memory: 64Gi
-                          ephemeral-storage: 150Gi
+                          cpu: "2"
+                          memory: 8Gi
                       securityContext:
-                        allowPrivilegeEscalation: true
-                        privileged: true
-                        readOnlyRootFilesystem: false
-                        runAsGroup: 0
-                        runAsNonRoot: false
-                        runAsUser: 0
-                      terminationMessagePath: /dev/termination-log
-                      terminationMessagePolicy: File
-                      volumeMounts:
-                      - mountPath: /var/lib/docker
-                        name: docker-graph-storage
-                      - mountPath: /j
-                        name: ws
-                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-                        name: kube-api-access-kf6wr
-                        readOnly: true
-                    - command:
-                      - sh
-                      - -c
-                      - while true; do /usr/local/bin/docker-gc; sleep $GRACE_PERIOD_SECONDS; done
-                      env:
-                      - name: DOCKER_HOST
-                        value: tcp://localhost:2375
-                      - name: GRACE_PERIOD_SECONDS
-                        value: "3600"
-                      - name: MINIMUM_IMAGES_TO_SAVE
-                        value: "5"
-                      - name: REMOVE_VOLUMES
-                        value: "1"
-                      - name: FORCE_CONTAINER_REMOVAL
-                        value: "1"
-                      - name: FORCE_IMAGE_REMOVAL
-                        value: "1"
-                      image: lsstsqre/docker-gc:latest
-                      imagePullPolicy: Always
-                      name: docker-gc
-                      resources:
-                        limits:
-                          cpu: 500m
-                          memory: 512Mi
-                        requests:
-                          cpu: 500m
-                          memory: 512Mi
-                      securityContext:
-                        allowPrivilegeEscalation: true
+                        allowPrivilegeEscalation: false
                         privileged: false
                         readOnlyRootFilesystem: false
-                        runAsGroup: 0
-                        runAsNonRoot: false
-                        runAsUser: 0
+                        runAsGroup: 1000
+                        runAsNonRoot: true
+                        runAsUser: 1000
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
                       volumeMounts:
-                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-                        name: kube-api-access-kf6wr
-                        readOnly: true
+                        - name: buildkit-socket
+                          mountPath: /run/buildkit
                     dnsPolicy: ClusterFirst
                     nodeSelector:
                       cloud.google.com/gke-nodepool: jenkins-workers-c4d
@@ -1174,7 +1123,7 @@ controller:
                       emptyDir:
                         #sizeLimit: 70Gi
                     - emptyDir: {}
-                      name: docker-graph-storage
+                      name: buildkit-socket
                     - name: kube-api-access-kf6wr
                       projected:
                         defaultMode: 420
@@ -1209,113 +1158,62 @@ controller:
                     ownerReferences:
                   spec:
                     containers:
-                    - args:
-                      - --host=tcp://localhost:2375
-                      - --mtu=1376
-                      command:
-                      - /usr/local/bin/dockerd
-                      env:
-                      - name: DOCKER_HOST
-                        value: tcp://localhost:2375
-                      image: docker:27.1.1-dind
+                    - name: buildkit
+                      image: moby/buildkit:v0.15.0-rootless
                       imagePullPolicy: Always
-                      livenessProbe:
-                        exec:
-                          command:
-                          - wget
-                          - --spider
-                          - -q
-                          - http://localhost:2375/_ping
-                        failureThreshold: 2
-                        initialDelaySeconds: 5
-                        periodSeconds: 5
-                        successThreshold: 1
-                        timeoutSeconds: 1
-                      name: dind
+                      command:
+                        - buildkitd
+                      args:
+                        - --addr
+                        - unix:///run/buildkit/buildkitd.sock
                       readinessProbe:
                         exec:
                           command:
-                          - wget
-                          - --spider
-                          - -q
-                          - http://localhost:2375/_ping
-                        failureThreshold: 2
+                            - buildctl
+                            - debug
+                            - workers
+                        failureThreshold: 3
                         initialDelaySeconds: 5
-                        periodSeconds: 5
+                        periodSeconds: 10
                         successThreshold: 1
-                        timeoutSeconds: 1
+                        timeoutSeconds: 5
+                      livenessProbe:
+                        exec:
+                          command:
+                            - buildctl
+                            - debug
+                            - workers
+                        failureThreshold: 3
+                        initialDelaySeconds: 15
+                        periodSeconds: 30
+                        successThreshold: 1
+                        timeoutSeconds: 5
                       resources:
                         limits:
-                          cpu: "12"
-                          memory: 64Gi
+                          cpu: "4"
+                          memory: 16Gi
                         requests:
-                          cpu: "12"
-                          memory: 64Gi
-                          ephemeral-storage: 150Gi
+                          cpu: "2"
+                          memory: 8Gi
                       securityContext:
-                        allowPrivilegeEscalation: true
-                        privileged: true
-                        readOnlyRootFilesystem: false
-                        runAsGroup: 0
-                        runAsNonRoot: false
-                        runAsUser: 0
-                      terminationMessagePath: /dev/termination-log
-                      terminationMessagePolicy: File
-                      volumeMounts:
-                      - mountPath: /var/lib/docker
-                        name: docker-graph-storage
-                      - mountPath: /j
-                        name: volume-aarch
-                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-                        name: kube-api-access-p9jsc
-                        readOnly: true
-                    - command:
-                      - sh
-                      - -c
-                      - while true; do /usr/local/bin/docker-gc; sleep $GRACE_PERIOD_SECONDS; done
-                      env:
-                      - name: DOCKER_HOST
-                        value: tcp://localhost:2375
-                      - name: GRACE_PERIOD_SECONDS
-                        value: "3600"
-                      - name: MINIMUM_IMAGES_TO_SAVE
-                        value: "5"
-                      - name: REMOVE_VOLUMES
-                        value: "1"
-                      - name: FORCE_CONTAINER_REMOVAL
-                        value: "1"
-                      - name: FORCE_IMAGE_REMOVAL
-                        value: "1"
-                      image: ghcr.io/lsst-dm/docker-docker-gc:latest
-                      imagePullPolicy: Always
-                      name: docker-gc
-                      resources:
-                        limits:
-                          cpu: 500m
-                          memory: 512Mi
-                        requests:
-                          cpu: 500m
-                          memory: 512Mi
-                      securityContext:
-                        allowPrivilegeEscalation: true
+                        allowPrivilegeEscalation: false
                         privileged: false
                         readOnlyRootFilesystem: false
-                        runAsGroup: 0
-                        runAsNonRoot: false
-                        runAsUser: 0
+                        runAsGroup: 1000
+                        runAsNonRoot: true
+                        runAsUser: 1000
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
                       volumeMounts:
-                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-                        name: kube-api-access-p9jsc
-                        readOnly: true
+                        - name: buildkit-socket
+                          mountPath: /run/buildkit
                     - name: jnlp
                       image: ghcr.io/lsst-dm/jenkins-jnlp-client:latest
                       workingDir: /j
                       args: ["$(JENKINS_SECRET)", "$(JENKINS_NAME)"]
                       env:
-                        - name: DOCKER_HOST
-                          value: tcp://localhost:2375
+                        - name: BUILDKIT_HOST
+                          value: unix:///run/buildkit/buildkitd.sock
                         - name: K8S_NODE_NAME
                           valueFrom:
                             fieldRef:
@@ -1335,8 +1233,8 @@ controller:
                           value: /j
                       tty: true
                       volumeMounts:
-                        - name: docker-graph-storage
-                          mountPath: /var/lib/docker
+                        - name: buildkit-socket
+                          mountPath: /run/buildkit
                         - name: volume-aarch
                           mountPath: /j
                       securityContext:
@@ -1391,7 +1289,7 @@ controller:
                       emptyDir:
                         #sizeLimit: 70Gi
                     - emptyDir: {}
-                      name: docker-graph-storage
+                      name: buildkit-socket
                     - name: kube-api-access-p9jsc
                       projected:
                         defaultMode: 420
@@ -1435,113 +1333,62 @@ controller:
                         operator: Equal
                         value: arm64
                     containers:
-                    - args:
-                      - --host=tcp://localhost:2375
-                      - --mtu=1376
-                      command:
-                      - /usr/local/bin/dockerd
-                      env:
-                      - name: DOCKER_HOST
-                        value: tcp://localhost:2375
-                      image: docker:27.1.1-dind
+                    - name: buildkit
+                      image: moby/buildkit:v0.15.0-rootless
                       imagePullPolicy: Always
-                      livenessProbe:
-                        exec:
-                          command:
-                          - wget
-                          - --spider
-                          - -q
-                          - http://localhost:2375/_ping
-                        failureThreshold: 2
-                        initialDelaySeconds: 5
-                        periodSeconds: 5
-                        successThreshold: 1
-                        timeoutSeconds: 1
-                      name: dind
+                      command:
+                        - buildkitd
+                      args:
+                        - --addr
+                        - unix:///run/buildkit/buildkitd.sock
                       readinessProbe:
                         exec:
                           command:
-                          - wget
-                          - --spider
-                          - -q
-                          - http://localhost:2375/_ping
-                        failureThreshold: 2
+                            - buildctl
+                            - debug
+                            - workers
+                        failureThreshold: 3
                         initialDelaySeconds: 5
-                        periodSeconds: 5
+                        periodSeconds: 10
                         successThreshold: 1
-                        timeoutSeconds: 1
+                        timeoutSeconds: 5
+                      livenessProbe:
+                        exec:
+                          command:
+                            - buildctl
+                            - debug
+                            - workers
+                        failureThreshold: 3
+                        initialDelaySeconds: 15
+                        periodSeconds: 30
+                        successThreshold: 1
+                        timeoutSeconds: 5
                       resources:
                         limits:
-                          cpu: "12"
-                          memory: 64Gi
+                          cpu: "4"
+                          memory: 16Gi
                         requests:
-                          cpu: "12"
-                          memory: 64Gi
-                          ephemeral-storage: 150Gi
+                          cpu: "2"
+                          memory: 8Gi
                       securityContext:
-                        allowPrivilegeEscalation: true
-                        privileged: true
-                        readOnlyRootFilesystem: false
-                        runAsGroup: 0
-                        runAsNonRoot: false
-                        runAsUser: 0
-                      terminationMessagePath: /dev/termination-log
-                      terminationMessagePolicy: File
-                      volumeMounts:
-                      - mountPath: /var/lib/docker
-                        name: docker-graph-storage
-                      - mountPath: /j
-                        name: ws-snowflake
-                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-                        name: kube-api-access-p9jsc
-                        readOnly: true
-                    - command:
-                      - sh
-                      - -c
-                      - while true; do /usr/local/bin/docker-gc; sleep $GRACE_PERIOD_SECONDS; done
-                      env:
-                      - name: DOCKER_HOST
-                        value: tcp://localhost:2375
-                      - name: GRACE_PERIOD_SECONDS
-                        value: "3600"
-                      - name: MINIMUM_IMAGES_TO_SAVE
-                        value: "5"
-                      - name: REMOVE_VOLUMES
-                        value: "1"
-                      - name: FORCE_CONTAINER_REMOVAL
-                        value: "1"
-                      - name: FORCE_IMAGE_REMOVAL
-                        value: "1"
-                      image: ghcr.io/lsst-dm/docker-docker-gc:latest
-                      imagePullPolicy: Always
-                      name: docker-gc
-                      resources:
-                        limits:
-                          cpu: 500m
-                          memory: 512Mi
-                        requests:
-                          cpu: 500m
-                          memory: 512Mi
-                      securityContext:
-                        allowPrivilegeEscalation: true
+                        allowPrivilegeEscalation: false
                         privileged: false
                         readOnlyRootFilesystem: false
-                        runAsGroup: 0
-                        runAsNonRoot: false
-                        runAsUser: 0
+                        runAsGroup: 1000
+                        runAsNonRoot: true
+                        runAsUser: 1000
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
                       volumeMounts:
-                      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-                        name: kube-api-access-p9jsc
-                        readOnly: true
+                        - name: buildkit-socket
+                          mountPath: /run/buildkit
                     - name: jnlp
                       image: ghcr.io/lsst-dm/jenkins-jnlp-client:latest
                       workingDir: /j
                       args: ["$(JENKINS_SECRET)", "$(JENKINS_NAME)"]
                       env:
-                        - name: DOCKER_HOST
-                          value: tcp://localhost:2375
+                        - name: BUILDKIT_HOST
+                          value: unix:///run/buildkit/buildkitd.sock
                         - name: K8S_NODE_NAME
                           valueFrom:
                             fieldRef:
@@ -1561,8 +1408,8 @@ controller:
                           value: /j
                       tty: true
                       volumeMounts:
-                        - name: docker-graph-storage
-                          mountPath: /var/lib/docker
+                        - name: buildkit-socket
+                          mountPath: /run/buildkit
                         - name: ws-snowflake
                           mountPath: /j
                       securityContext:
@@ -1601,7 +1448,7 @@ controller:
                       persistentVolumeClaim:
                         claimName: snowflake-pvc
                     - emptyDir: {}
-                      name: docker-graph-storage
+                      name: buildkit-socket
                     - name: kube-api-access-p9jsc
                       projected:
                         defaultMode: 420
