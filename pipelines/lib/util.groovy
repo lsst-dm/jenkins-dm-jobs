@@ -508,7 +508,11 @@ def lsstswBuild(
         credentialsId: 'github-api-token-checks',
         variable: 'GITHUB_TOKEN'
       ]]){
-        run()
+        // dir(slug) replicates the outer dir(buildDirHash) context, which does
+        // not carry across the node() boundary created by insideK8sContainer.
+        dir(slug) {
+          run()
+        }
       } // withCredentials
     } // insideK8sContainer
   } // runDocker
