@@ -134,6 +134,8 @@ spec:
     env:
     - name: HOME
       value: /home/jenkins
+    - name: USER
+      value: jenkins
     securityContext:  # matches 'jenkins' user in LSST base images
       runAsUser: 1000
       runAsNonRoot: true
