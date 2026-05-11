@@ -131,6 +131,9 @@ spec:
     tty: true
     command: [sleep]
     args: ['99d']
+    env:
+    - name: HOME
+      value: /home/jenkins
     securityContext:  # matches 'jenkins' user in LSST base images
       runAsUser: 1000
       runAsNonRoot: true
