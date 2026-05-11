@@ -108,22 +108,42 @@ def void insideK8sContainer(Map p, Closure run) {
   mounts.each { m -> requireMapKeys(m, ['name', 'hostPath', 'mountPath']) }
   String pullPolicy = pull ? 'Always' : 'IfNotPresent'
 
-  def volumeMountsSection = mounts
-    ? "    volumeMounts:\n" + mounts.collect { m ->
-        "    - name: ${m.name}\n      mountPath: ${m.mountPath}"
-      }.join('\n') + '\n'
-    : ''
+  // Always include the shared-passwd volume; append any caller-supplied mounts.
+  def containerVolumeMounts = "    volumeMounts:\n    - name: shared-passwd\n      mountPath: /etc/passwd\n      subPath: passwd\n"
+  if (mounts) {
+    containerVolumeMounts += mounts.collect { m ->
+      "    - name: ${m.name}\n      mountPath: ${m.mountPath}"
+    }.join('\n') + '\n'
+  }
 
-  def volumesSection = mounts
-    ? "  volumes:\n" + mounts.collect { m ->
-        "  - name: ${m.name}\n    hostPath:\n      path: ${m.hostPath}"
-      }.join('\n') + '\n'
-    : ''
+  def volumesSection = "  volumes:\n  - name: shared-passwd\n    emptyDir: {}\n"
+  if (mounts) {
+    volumesSection += mounts.collect { m ->
+      "  - name: ${m.name}\n    hostPath:\n      path: ${m.hostPath}"
+    }.join('\n') + '\n'
+  }
 
+  // The initContainer copies the image's /etc/passwd and appends a jenkins
+  // entry for UID 1000 if one is absent.  This is needed because SCons builds
+  // subprocess environments from its own ENV dict (not os.environ), so the
+  // HOME env var set by Jenkins withEnv never reaches pytest; the fallback
+  // pwd.getpwuid(1000) must therefore succeed for Path.home() to work.
   def podYaml = """
 apiVersion: v1
 kind: Pod
 spec:
+  initContainers:
+  - name: setup-passwd
+    image: ${image}
+    imagePullPolicy: ${pullPolicy}
+    securityContext:
+      runAsUser: 1000
+    command: [sh, -c]
+    args:
+    - cp /etc/passwd /shared-passwd/passwd; grep -q ':1000:' /shared-passwd/passwd || echo 'jenkins:x:1000:1000:Jenkins:/home/jenkins:/bin/bash' >> /shared-passwd/passwd
+    volumeMounts:
+    - name: shared-passwd
+      mountPath: /shared-passwd
   containers:
   - name: runner
     image: ${image}
@@ -136,10 +156,12 @@ spec:
       value: /home/jenkins
     - name: USER
       value: jenkins
+    - name: LOGNAME
+      value: jenkins
     securityContext:  # matches 'jenkins' user in LSST base images
       runAsUser: 1000
       runAsNonRoot: true
-${volumeMountsSection}${volumesSection}"""
+${containerVolumeMounts}${volumesSection}"""
 
   podTemplate(yaml: podYaml) {
     node(POD_LABEL) {
