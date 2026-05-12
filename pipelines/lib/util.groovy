@@ -108,17 +108,20 @@ def void insideK8sContainer(Map p, Closure run) {
   mounts.each { m -> requireMapKeys(m, ['name', 'hostPath', 'mountPath']) }
   String pullPolicy = pull ? 'Always' : 'IfNotPresent'
 
-  def volumeMountsSection = mounts
-    ? "    volumeMounts:\n" + mounts.collect { m ->
-        "    - name: ${m.name}\n      mountPath: ${m.mountPath}"
-      }.join('\n') + '\n'
-    : ''
+  // Always mount an emptyDir at /j so the cluster's readOnlyRootFilesystem
+  // default doesn't prevent Jenkins from creating /j/workspace/...
+  def extraVolumeMounts = "    - name: j-workspace\n      mountPath: /j\n"
+  def extraVolumes      = "  - name: j-workspace\n    emptyDir: {}\n"
 
-  def volumesSection = mounts
-    ? "  volumes:\n" + mounts.collect { m ->
+  def volumeMountsSection = "    volumeMounts:\n" + extraVolumeMounts +
+    (mounts ? mounts.collect { m ->
+        "    - name: ${m.name}\n      mountPath: ${m.mountPath}"
+      }.join('\n') + '\n' : '')
+
+  def volumesSection = "  volumes:\n" + extraVolumes +
+    (mounts ? mounts.collect { m ->
         "  - name: ${m.name}\n    hostPath:\n      path: ${m.hostPath}"
-      }.join('\n') + '\n'
-    : ''
+      }.join('\n') + '\n' : '')
 
   def podYaml = """
 apiVersion: v1
@@ -141,6 +144,7 @@ spec:
     securityContext:  # matches 'jenkins' user in LSST base images
       runAsUser: 1000
       runAsNonRoot: true
+      readOnlyRootFilesystem: false
 ${volumeMountsSection}${volumesSection}"""
 
   podTemplate(yaml: podYaml) {
