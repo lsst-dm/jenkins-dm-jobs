@@ -175,6 +175,13 @@ spec:
     - name: home-jenkins
       mountPath: /home/jenkins
   containers:
+  - name: jnlp
+    workingDir: /j
+    volumeMounts:
+    - name: j-workspace
+      mountPath: /j
+    - name: home-jenkins
+      mountPath: /home/jenkins
   - name: runner
     image: ${image}
     imagePullPolicy: ${pullPolicy}
