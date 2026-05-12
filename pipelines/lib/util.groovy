@@ -94,19 +94,25 @@ def String buildkitCacheArgs(String cacheRepo, String arch) {
  * Kubernetes-native replacement for insideDockerWrap — no Docker daemon required.
  *
  * @param p Map
- * @param p.image   String container image to run inside (required)
- * @param p.pull    Boolean set imagePullPolicy: Always (optional, default false)
+ * @param p.image       String container image to run inside (required)
+ * @param p.pull        Boolean set imagePullPolicy: Always (optional, default false)
+ * @param p.cacheImage  String gcloud-cli image to add as a second container for cache
+ *                      operations (optional). When set, a 'gcloud-cli' container is
+ *                      added to the pod sharing the same workspace volumes so that
+ *                      container('gcloud-cli') can be used to download/upload cache
+ *                      without a separate pod and without hostPath mounts.
  * @param p.mounts  List of Maps with keys: name, hostPath, mountPath (optional)
  * @param run       Closure to execute inside the container
  */
 def void insideK8sContainer(Map p, Closure run) {
   requireMapKeys(p, ['image'])
 
-  String image      = p.image
-  Boolean pull      = p.pull ?: false
-  List   mounts     = p.mounts ?: []
+  String image       = p.image
+  Boolean pull       = p.pull ?: false
+  String cacheImage  = p.cacheImage ?: null
+  List   mounts      = p.mounts ?: []
   mounts.each { m -> requireMapKeys(m, ['name', 'hostPath', 'mountPath']) }
-  String pullPolicy = pull ? 'Always' : 'IfNotPresent'
+  String pullPolicy  = pull ? 'Always' : 'IfNotPresent'
 
   // Always mount emptyDirs at /j and /home/jenkins.
   // /j: cluster default readOnlyRootFilesystem:true blocks Jenkins creating /j/workspace/...
@@ -125,6 +131,30 @@ def void insideK8sContainer(Map p, Closure run) {
     (mounts ? mounts.collect { m ->
         "  - name: ${m.name}\n    hostPath:\n      path: ${m.hostPath}"
       }.join('\n') + '\n' : '')
+
+  // Optional gcloud-cli sidecar that shares the same workspace volumes.
+  // Both containers see the same /j/workspace/... so files downloaded by
+  // gcloud-cli are immediately visible to the runner without any inter-pod
+  // data transfer or hostPath mounts.
+  def gcloudContainerSection = cacheImage ? """  - name: gcloud-cli
+    image: ${cacheImage}
+    imagePullPolicy: Always
+    tty: true
+    command: [sleep]
+    args: ['99d']
+    env:
+    - name: HOME
+      value: /home/jenkins
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+      readOnlyRootFilesystem: false
+    volumeMounts:
+    - name: j-workspace
+      mountPath: /j
+    - name: home-jenkins
+      mountPath: /home/jenkins
+""" : ''
 
   def podYaml = """
 apiVersion: v1
@@ -162,7 +192,7 @@ spec:
       runAsUser: 1000
       runAsNonRoot: true
       readOnlyRootFilesystem: false
-${volumeMountsSection}${volumesSection}"""
+${volumeMountsSection}${gcloudContainerSection}${volumesSection}"""
 
   podTemplate(yaml: podYaml) {
     node(POD_LABEL) {
@@ -357,11 +387,9 @@ def loadCache(
   String buildDir,
   String tag="d_latest"
 ) {
-  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
   dir(buildDir) {
-    def cwd = pwd()
-    def ciDir = "${cwd}/ci-scripts"
-    dir(ciDir){
+    def workDir = pwd()
+    dir("${workDir}/ci-scripts") {
       cloneCiScripts()
     }
     withCredentials([file(
@@ -372,18 +400,16 @@ def loadCache(
         "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
         "DATE_TAG=${tag}",
       ]) {
-          insideK8sContainer(
-            image: "${gcp_repo}:latest",
-            pull: true,
-            mounts: [
-              [name: 'cwd', hostPath: cwd, mountPath: '/home'],
-            ],
-          ) {
-             bash """
-             gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-             cd /home/ci-scripts
-             ./loadlsststack.sh $DATE_TAG
-             """
+        // Run in the gcloud-cli sidecar that was added to this pod by
+        // insideK8sContainer when cacheImage was set.  Both containers share
+        // the j-workspace emptyDir so files downloaded here are immediately
+        // visible to the runner — no inter-pod hostPath mounts required.
+        container('gcloud-cli') {
+          bash """
+          gcloud auth activate-service-account \$SERVICEACCOUNT --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+          cd ${workDir}/ci-scripts
+          ./loadlsststack.sh \$DATE_TAG
+          """
         }
       }
     }
@@ -521,12 +547,20 @@ def lsstswBuild(
         jenkinsWrapper(buildParams)
     } // else
   } // run
+  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
   def runDocker = {
     insideK8sContainer(
       image: lsstswConfig.image,
       pull: true,
+      // Add gcloud-cli sidecar only when cache loading is needed.
+      // Both containers share the j-workspace emptyDir so loadCache can
+      // download into the workspace without inter-pod hostPath mounts.
+      cacheImage: fetchCache ? "${gcp_repo}:latest" : null,
     ) {
       try {
+        if (fetchCache) {
+          loadCache(slug, "d_latest")
+        }
         withCredentials([[
           $class: 'StringBinding',
           credentialsId: 'github-api-token-checks',
@@ -583,9 +617,6 @@ def lsstswBuild(
   def task = null
   if (lsstswConfig.image) {
     task = {
-      if (fetchCache){
-        loadCache(slug,"d_latest")
-      }
       if (buildParams['CI_LSSTCAM']){
         def testdatadir = loadLSSTCamTestData(slug,"lsstcam_testdata")
         buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
