@@ -108,10 +108,13 @@ def void insideK8sContainer(Map p, Closure run) {
   mounts.each { m -> requireMapKeys(m, ['name', 'hostPath', 'mountPath']) }
   String pullPolicy = pull ? 'Always' : 'IfNotPresent'
 
-  // Always mount an emptyDir at /j so the cluster's readOnlyRootFilesystem
-  // default doesn't prevent Jenkins from creating /j/workspace/...
-  def extraVolumeMounts = "    - name: j-workspace\n      mountPath: /j\n"
-  def extraVolumes      = "  - name: j-workspace\n    emptyDir: {}\n"
+  // Always mount emptyDirs at /j and /home/jenkins.
+  // /j: cluster default readOnlyRootFilesystem:true blocks Jenkins creating /j/workspace/...
+  // /home/jenkins: gives git a writable home so it can find .gitconfig and skip getpwuid()
+  def extraVolumeMounts = "    - name: j-workspace\n      mountPath: /j\n" +
+                          "    - name: home-jenkins\n      mountPath: /home/jenkins\n"
+  def extraVolumes      = "  - name: j-workspace\n    emptyDir: {}\n" +
+                          "  - name: home-jenkins\n    emptyDir: {}\n"
 
   def volumeMountsSection = "    volumeMounts:\n" + extraVolumeMounts +
     (mounts ? mounts.collect { m ->
@@ -127,6 +130,20 @@ def void insideK8sContainer(Map p, Closure run) {
 apiVersion: v1
 kind: Pod
 spec:
+  initContainers:
+  - name: setup-home
+    image: ${image}
+    imagePullPolicy: ${pullPolicy}
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+    command: [sh, -c]
+    args:
+    - |
+      printf '[user]\\n\\tname = jenkins\\n\\temail = jenkins@lsst.org\\n' > /home/jenkins/.gitconfig
+    volumeMounts:
+    - name: home-jenkins
+      mountPath: /home/jenkins
   containers:
   - name: runner
     image: ${image}
