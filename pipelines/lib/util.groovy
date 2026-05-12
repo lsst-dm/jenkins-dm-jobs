@@ -525,17 +525,25 @@ def lsstswBuild(
       image: lsstswConfig.image,
       pull: true,
     ) {
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'github-api-token-checks',
-        variable: 'GITHUB_TOKEN'
-      ]]){
-        // dir(slug) replicates the outer dir(buildDirHash) context, which does
-        // not carry across the node() boundary created by insideK8sContainer.
-        dir(slug) {
-          run()
-        }
-      } // withCredentials
+      try {
+        withCredentials([[
+          $class: 'StringBinding',
+          credentialsId: 'github-api-token-checks',
+          variable: 'GITHUB_TOKEN'
+        ]]){
+          // dir(slug) replicates the outer dir(buildDirHash) context, which does
+          // not carry across the node() boundary created by insideK8sContainer.
+          dir(slug) {
+            run()
+          }
+        } // withCredentials
+      } finally {
+        // Collect artifacts from the pod's own workspace.  jenkinsWrapperPost
+        // must run here (not in the outer nodeWrap agent) because insideK8sContainer
+        // allocates a separate pod with its own workspace; the outer agent never
+        // sees the build output.
+        jenkinsWrapperPost(slug)
+      }
     } // insideK8sContainer
   } // runDocker
 
@@ -561,9 +569,12 @@ def lsstswBuild(
           } // try
         } // dir
       } finally {
-        // needs to be called in the parent dir of jenkinsWrapper() in order to
-        // add the slug as a prefix to the archived files.
-        jenkinsWrapperPost(buildDirHash)
+        // For non-image builds (e.g. macOS), jenkinsWrapper ran on this same
+        // agent so artifacts are here.  For image builds, artifacts are in the
+        // inner pod's workspace and jenkinsWrapperPost is called inside runDocker.
+        if (!lsstswConfig.image) {
+          jenkinsWrapperPost(buildDirHash)
+        }
       }
   } // runEnv
 
