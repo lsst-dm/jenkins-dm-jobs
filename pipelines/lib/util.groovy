@@ -420,6 +420,26 @@ def loadCache(
         }
       }
     }
+    // Conda bakes absolute paths into its activation scripts at install time.
+    // If the cache tarball was created in a workspace with a different slug,
+    // patch every reference under miniconda/etc, bin, and condabin so that
+    // conda can activate in the current workspace.
+    bash """
+      conda_sh="${workDir}/lsstsw/miniconda/etc/profile.d/conda.sh"
+      if [ -f "\$conda_sh" ]; then
+        stale=\$(grep -o '/j/workspace/stack-os-matrix/[^/]*/lsstsw/miniconda' "\$conda_sh" | head -1)
+        current="${workDir}/lsstsw/miniconda"
+        if [ -n "\$stale" ] && [ "\$stale" != "\$current" ]; then
+          echo "Patching stale conda prefix: \$stale -> \$current"
+          grep -rl "\$stale" \
+            "${workDir}/lsstsw/miniconda/etc" \
+            "${workDir}/lsstsw/miniconda/bin" \
+            "${workDir}/lsstsw/miniconda/condabin" \
+            2>/dev/null | \
+            xargs -r sed -i "s|\$stale|\$current|g"
+        fi
+      fi
+    """
   }
 }
 /**
@@ -430,12 +450,10 @@ def loadCache(
 def saveCache(
   String tag="d_latest"
 ) {
-  def cwd = pwd()
-  bash '''
-    cd lsstsw
-    source bin/envconfig
-    conda install google-cloud-sdk
-  '''
+  def workDir = pwd()
+  dir("${workDir}/ci-scripts") {
+    cloneCiScripts()
+  }
   withCredentials([file(
     credentialsId: 'gs-eups-push',
     variable: 'GOOGLE_APPLICATION_CREDENTIALS'
@@ -444,13 +462,15 @@ def saveCache(
       "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
       "DATE_TAG=${tag}",
     ]) {
+      // Run in the gcloud-cli sidecar so we don't need gcloud in the LSST
+      // runner image and don't need to install it via conda.
+      container('gcloud-cli') {
         bash """
-        cd lsstsw
-        source bin/envconfig
-        gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-        cd ../ci-scripts
-        ./backuplsststack.sh $DATE_TAG
+        gcloud auth activate-service-account \$SERVICEACCOUNT --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+        cd ${workDir}/ci-scripts
+        ./backuplsststack.sh \$DATE_TAG
         """
+      }
     }
   }
 }
@@ -559,10 +579,10 @@ def lsstswBuild(
     insideK8sContainer(
       image: lsstswConfig.image,
       pull: true,
-      // Add gcloud-cli sidecar only when cache loading is needed.
-      // Both containers share the j-workspace emptyDir so loadCache can
-      // download into the workspace without inter-pod hostPath mounts.
-      cacheImage: fetchCache ? "${gcp_repo}:latest" : null,
+      // Add gcloud-cli sidecar when cache loading or saving is needed.
+      // Both containers share the j-workspace emptyDir so loadCache/saveCache
+      // can transfer cache without inter-pod hostPath mounts.
+      cacheImage: (fetchCache || cachelsstsw) ? "${gcp_repo}:latest" : null,
     ) {
       try {
         if (fetchCache) {
