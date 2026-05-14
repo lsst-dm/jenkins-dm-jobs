@@ -445,6 +445,11 @@ def saveCache(
 
 
 def labelPod(){
+  if (!fileExists('/var/run/secrets/kubernetes.io/serviceaccount/token')) {
+      echo "Not a K8s Pod, skipping pod label."
+      return
+  }
+
   if (env.NODE_NAME && (env.NODE_NAME =~ /(manager|snowflake)/)) {
         echo "Skipping pod label: ${env.NODE_NAME} is a static manager/snowflake node."
         return
@@ -489,7 +494,7 @@ def labelPod(){
     -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/merge-patch+json" \
     -X PATCH \
-    "https://kubernetes.default.svc/api/v1/namespaces/\$NS/pods/\$POD" \
+    "https://kubernetes.default.svc/api/v1/namespaces/$NS/pods/$POD" \
     --data-binary @/tmp/patch.json >/dev/null
   then
     echo "labeled for pod $NS/$POD"
