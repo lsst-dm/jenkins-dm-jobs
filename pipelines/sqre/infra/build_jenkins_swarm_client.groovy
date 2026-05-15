@@ -32,8 +32,6 @@ notify.wrap {
   def buildDir   = dockerfile.dir
   def dockerRepo = dockerRegistry.repo
 
-  def image = null
-
   def run = {
     stage('checkout') {
       git([
@@ -42,70 +40,69 @@ notify.wrap {
       ])
     }
 
-    // current we are producing a "generic" image which uses the uid/gids
-    // historically used by LSST jenkins and an "ldfc". Hopefully, this is a
-    // short term kludge that may be replaced with k8s' runAsGroup security
-    // context.
-    stage('build generic') {
-      def opt = []
-      // ensure base image is always up to date
-      opt << '--pull=true'
-      opt << '--no-cache'
-      opt << "--build-arg JSWARM_VERSION=${ver}"
-      opt << '.'
+    stage('build and push generic') {
+      def cacheRepo = 'us-central1-docker.pkg.dev/prompt-proto/buildcache/jenkins-swarm-client'
+      def metadataFile = '/tmp/build-metadata-generic.json'
+
+      util.setupBuildkitBuilder()
+
+      if (pushDocker) {
+        withCredentials([usernamePassword(
+          credentialsId: 'rubinobs-dm',
+          usernameVariable: 'GHCR_USER',
+          passwordVariable: 'GHCR_TOKEN',
+        )]) {
+          sh 'echo $GHCR_TOKEN | docker login ghcr.io -u $GHCR_USER --password-stdin'
+        }
+      }
+
+      def buildArgs = [
+        '--pull=true',
+        "--build-arg JSWARM_VERSION=${ver}",
+        util.buildkitCacheArgs(cacheRepo, 'amd64'),
+        "--metadata-file ${metadataFile}",
+      ]
+
+      if (pushDocker) {
+        buildArgs << '--push'
+        buildArgs << "--tag ${dockerRepo}:${ver}"
+        if (pushLatest) {
+          buildArgs << "--tag ${dockerRepo}:latest"
+        }
+      }
+
+      buildArgs << '.'
 
       dir(buildDir) {
-        // ensure base image is always up to date
-        //#image = docker.build(dockerRepo, opt.join(' '))
-        // XXX jenkins has trouble with multipart docker builds
-        util.bash("docker build -t ${dockerRepo} ${opt.join(' ')}")
-        image = docker.image(dockerRepo)
+        sh "docker buildx build ${buildArgs.join(' ')}"
       }
     }
 
-    stage('push generic') {
+    stage('build and push ldfc') {
+      def cacheRepo = 'us-central1-docker.pkg.dev/prompt-proto/buildcache/jenkins-swarm-client'
+      def metadataFile = '/tmp/build-metadata-ldfc.json'
+
+      def buildArgs = [
+        '--pull=true',
+        '--build-arg JSWARM_UID=48435',
+        '--build-arg JSWARM_GID=202',
+        util.buildkitCacheArgs(cacheRepo, 'amd64-ldfc'),
+        "--metadata-file ${metadataFile}",
+      ]
+
       if (pushDocker) {
-        docker.withRegistry(
-          'https://index.docker.io/v1/',
-          'dockerhub-sqreadmin'
-        ) {
-          image.push(ver)
-          if (pushLatest) {
-            image.push('latest')
-          }
+        buildArgs << '--push'
+        if (pushLatest) {
+          buildArgs << "--tag ${dockerRepo}:${ver}-ldfc"
         }
       }
-    } // push
 
-    stage('build ldfc') {
-      def opt = []
-      // ensure base image is always up to date
-      opt << '--pull=true'
-      opt << '--no-cache'
-		  opt << '--build-arg JSWARM_UID=48435'
-      opt << '--build-arg JSWARM_GID=202'
-      opt << '.'
+      buildArgs << '.'
 
       dir(buildDir) {
-        // ensure base image is always up to date
-        // XXX jenkins has trouble with multipart docker builds
-        util.bash("docker build -t ${dockerRepo} ${opt.join(' ')}")
-        image = docker.image(dockerRepo)
+        sh "docker buildx build ${buildArgs.join(' ')}"
       }
     }
-
-    stage('push ldfc') {
-      if (pushDocker) {
-        docker.withRegistry(
-          'https://index.docker.io/v1/',
-          'dockerhub-sqreadmin'
-        ) {
-          if (pushLatest) {
-            image.push("${ver}-ldfc")
-          }
-        }
-      }
-    } // push
   } // run
 
   util.nodeWrap('linux-64') {

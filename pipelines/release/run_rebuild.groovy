@@ -91,7 +91,7 @@ notify.wrap {
       }
 
       stage('build') {
-        util.insideDockerWrap(
+        util.insideK8sContainer(
           image: lsstswConfig.image,
           pull: true,
         ) {
@@ -101,7 +101,7 @@ notify.wrap {
           } else {
             runJW()
           }
-        } // util.insideDockerWrap
+        } // util.insideK8sContainer
       } // stage('build')
 
       stage('push docs') {

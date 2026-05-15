@@ -221,10 +221,13 @@ def void verifyDataset(Map p) {
       } // timeout
     } // dir
 
-    util.insideDockerWrap(
+    util.insideK8sContainer(
       image: p.dockerImage,
       pull: true,
-      args: "-v ${datasetDir}:${datasetDir} -v ${ciDir}:${ciDir}",
+      mounts: [
+        [name: 'dataset', hostPath: datasetDir, mountPath: datasetDir],
+        [name: 'cidir',   hostPath: ciDir,      mountPath: ciDir],
+      ],
     ) {
       buildDrp(
         codeDir: codeDir,
@@ -274,7 +277,7 @@ def void verifyDataset(Map p) {
         }
       }
       */
-    } // inside
+    } // util.insideK8sContainer
   } // run
 
   // retrying is important as there is a good chance that the dataset will

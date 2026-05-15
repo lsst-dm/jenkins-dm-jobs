@@ -174,7 +174,7 @@ notify.wrap {
             job: 'sqre/infra/build-sciplatlab',
             parameters: [
               string(name: 'TAG', value: eupsTag),
-              string(name: 'IMAGE', value: 'docker.io/lsstsqre/sciplat-lab,us-central1-docker.pkg.dev/rubin-shared-services-71ec/sciplat/sciplat-lab,ghcr.io/lsst-sqre/sciplat-lab'),
+              string(name: 'IMAGE', value: 'us-central1-docker.pkg.dev/rubin-shared-services-71ec/sciplat/sciplat-lab,ghcr.io/lsst-sqre/sciplat-lab'),
             ],
           )
         } // retry

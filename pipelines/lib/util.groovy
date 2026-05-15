@@ -63,140 +63,155 @@ def String hashpath(String path) {
 }
 
 /**
- * Build a docker image, constructing the `Dockerfile` from `config`.
- *
- * Example:
- *
- *     util.buildImage(
- *       config: dockerfileText,
- *       tag: 'example/foo:bar',
- *       pull: true,
- *     )
- *
- * @param p Map
- * @param p.config String literal text of Dockerfile (required)
- * @param p.tag String name of tag to apply to generated image (required)
- * @param p.pull Boolean always pull docker base image (optional)
+ * Create a buildx builder pointing at the BuildKit sidecar socket.
+ * Call once per node before any docker buildx build invocation.
  */
-def void buildImage(Map p) {
-  requireMapKeys(p, [
-    'config',
-    'tag',
-  ])
-
-  String config = p.config
-  String tag    = p.tag
-  Boolean pull  = p.pull ?: false
-
-  def opt = []
-  opt << "--pull=${pull}"
-  opt << '--build-arg D_USER="$(id -un)"'
-  opt << '--build-arg D_UID="$(id -u)"'
-  opt << '--build-arg D_GROUP="$(id -gn)"'
-  opt << '--build-arg D_GID="$(id -g)"'
-  opt << '--build-arg D_HOME="$HOME"'
-  opt << '--load'
-  opt << '.'
-
-  writeFile(file: 'Dockerfile', text: config)
-  docker.build(tag, opt.join(' '))
-} // buildImage
-
-/**
- * Create a thin "wrapper" container around {@code image} to map uid/gid of
- * the user invoking docker into the container.
- *
- * Example:
- *
- *     util.wrapDockerImage(
- *       image: 'example/foo:bar',
- *       tag: 'example/foo:bar-local',
- *       pull: true,
- *     )
- *
- * @param p Map
- * @param p.image String name of docker base image (required)
- * @param p.tag String name of tag to apply to generated image
- * @param p.pull Boolean always pull docker base image. Defaults to `false`
- */
-def void wrapDockerImage(Map p) {
-  requireMapKeys(p, [
-    'image',
-    'tag',
-  ])
-
-  String image = p.image
-  String tag   = p.tag
-  Boolean pull = p.pull ?: false
-
-  def buildDir = 'docker'
-  def config = dedent("""
-    FROM ${image}
-
-    ARG     D_USER
-    ARG     D_UID
-    ARG     D_GROUP
-    ARG     D_GID
-    ARG     D_HOME
-
-    USER    root
-    RUN     mkdir -p "\$(dirname \$D_HOME)"
-    RUN     groupadd \$D_GROUP || echo \$D_GROUP already exist
-    RUN     useradd -d \$D_HOME -g \$D_GROUP \$D_USER || echo \$D_USER already exist
-
-    USER    \$D_USER
-    WORKDIR \$D_HOME
-  """)
-
-  // docker insists on recusrively checking file access under its execution
-  // path -- so run it from a dedicated dir
-  dir(buildDir) {
-    buildImage(
-      config: config,
-      tag: tag,
-      pull: pull,
-    )
-
-    deleteDir()
-  }
-} // wrapDockerImage
-
-/**
- * Invoke block inside of a "wrapper" container.  See: wrapDockerImage
- *
- * Example:
- *
- *     util.insideDockerWrap(
- *       image: 'example/foo:bar',
- *       args: '-e HOME=/baz',
- *       pull: true,
- *     )
- *
- * @param p Map
- * @param p.image String name of docker image (required)
- * @param p.args String docker run args (optional)
- * @param p.pull Boolean always pull docker image. Defaults to `false`
- * @param run Closure Invoked inside of wrapper container
- */
-def insideDockerWrap(Map p, Closure run) {
-  requireMapKeys(p, [
-    'image',
-  ])
-
-  String image = p.image
-  String args  = p.args ?: null
-  Boolean pull = p.pull ?: false
-
-  def imageLocal = "${image}-local"
-
-  wrapDockerImage(
-    image: image,
-    tag: imageLocal,
-    pull: pull,
-  )
-
-  docker.image(imageLocal).inside(args) { run() }
+def void setupBuildkitBuilder() {
+  sh '''
+    docker buildx create \
+      --driver remote \
+      --name agent-builder \
+      unix:///run/buildkit/buildkitd.sock \
+      --use 2>/dev/null \
+      || docker buildx use agent-builder
+  '''
 }
+
+/**
+ * Return --cache-from and --cache-to flags for BuildKit registry cache.
+ *
+ * @param cacheRepo Full repo path without tag, e.g.
+ *   us-central1-docker.pkg.dev/prompt-proto/buildcache/newinstall
+ * @param arch Architecture suffix, e.g. amd64 or arm64
+ */
+def String buildkitCacheArgs(String cacheRepo, String arch) {
+  return "--cache-from type=registry,ref=${cacheRepo}:cache-${arch} " +
+         "--cache-to type=registry,ref=${cacheRepo}:cache-${arch},mode=max"
+}
+
+/**
+ * Run a closure inside a Kubernetes pod using the specified container image.
+ * Kubernetes-native replacement for insideDockerWrap — no Docker daemon required.
+ *
+ * @param p Map
+ * @param p.image       String container image to run inside (required)
+ * @param p.pull        Boolean set imagePullPolicy: Always (optional, default false)
+ * @param p.cacheImage  String gcloud-cli image to add as a second container for cache
+ *                      operations (optional). When set, a 'gcloud-cli' container is
+ *                      added to the pod sharing the same workspace volumes so that
+ *                      container('gcloud-cli') can be used to download/upload cache
+ *                      without a separate pod and without hostPath mounts.
+ * @param p.mounts  List of Maps with keys: name, hostPath, mountPath (optional)
+ * @param run       Closure to execute inside the container
+ */
+def void insideK8sContainer(Map p, Closure run) {
+  requireMapKeys(p, ['image'])
+
+  String image       = p.image
+  Boolean pull       = p.pull ?: false
+  String cacheImage  = p.cacheImage ?: null
+  List   mounts      = p.mounts ?: []
+  mounts.each { m -> requireMapKeys(m, ['name', 'hostPath', 'mountPath']) }
+  String pullPolicy  = pull ? 'Always' : 'IfNotPresent'
+
+  // Always mount emptyDirs at /j and /home/jenkins.
+  // /j: cluster default readOnlyRootFilesystem:true blocks Jenkins creating /j/workspace/...
+  // /home/jenkins: gives git a writable home so it can find .gitconfig and skip getpwuid()
+  def extraVolumeMounts = "    - name: j-workspace\n      mountPath: /j\n" +
+                          "    - name: home-jenkins\n      mountPath: /home/jenkins\n"
+  def extraVolumes      = "  - name: j-workspace\n    emptyDir: {}\n" +
+                          "  - name: home-jenkins\n    emptyDir: {}\n"
+
+  def volumeMountsSection = "    volumeMounts:\n" + extraVolumeMounts +
+    (mounts ? mounts.collect { m ->
+        "    - name: ${m.name}\n      mountPath: ${m.mountPath}"
+      }.join('\n') + '\n' : '')
+
+  def volumesSection = "  volumes:\n" + extraVolumes +
+    (mounts ? mounts.collect { m ->
+        "  - name: ${m.name}\n    hostPath:\n      path: ${m.hostPath}"
+      }.join('\n') + '\n' : '')
+
+  // Optional gcloud-cli sidecar that shares the same workspace volumes.
+  // Both containers see the same /j/workspace/... so files downloaded by
+  // gcloud-cli are immediately visible to the runner without any inter-pod
+  // data transfer or hostPath mounts.
+  def gcloudContainerSection = cacheImage ? """  - name: gcloud-cli
+    image: ${cacheImage}
+    imagePullPolicy: Always
+    tty: true
+    command: [sleep]
+    args: ['99d']
+    env:
+    - name: HOME
+      value: /home/jenkins
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+      readOnlyRootFilesystem: false
+    volumeMounts:
+    - name: j-workspace
+      mountPath: /j
+    - name: home-jenkins
+      mountPath: /home/jenkins
+""" : ''
+
+  def podYaml = """
+apiVersion: v1
+kind: Pod
+spec:
+  initContainers:
+  - name: setup-home
+    image: ${image}
+    imagePullPolicy: ${pullPolicy}
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+    command: [sh, -c]
+    args:
+    - |
+      printf '[user]\\n\\tname = jenkins\\n\\temail = jenkins@lsst.org\\n' > /home/jenkins/.gitconfig
+    volumeMounts:
+    - name: home-jenkins
+      mountPath: /home/jenkins
+  containers:
+  - name: jnlp
+    workingDir: /j
+    volumeMounts:
+    - name: j-workspace
+      mountPath: /j
+    - name: home-jenkins
+      mountPath: /home/jenkins
+  - name: runner
+    image: ${image}
+    imagePullPolicy: ${pullPolicy}
+    tty: true
+    command: [sh, -c]
+    args:
+    - |
+      echo 'jenkins:x:1000:0:Jenkins:/home/jenkins:/bin/sh' >> /etc/passwd
+      exec sleep 99d
+    env:
+    - name: HOME
+      value: /home/jenkins
+    - name: USER
+      value: jenkins
+    - name: LOGNAME
+      value: jenkins
+    securityContext:  # matches 'jenkins' user in LSST base images
+      runAsUser: 1000
+      runAsNonRoot: true
+      readOnlyRootFilesystem: false
+${volumeMountsSection}${gcloudContainerSection}${volumesSection}"""
+
+  podTemplate(yaml: podYaml) {
+    node(POD_LABEL) {
+      container('runner') {
+        run()
+      }
+    }
+  }
+} // insideK8sContainer
 
 /**
  * Join multiple String args togther with '/'s to resemble a filesystem path.
@@ -331,43 +346,41 @@ def void runPublish(Map p) {
 def loadLSSTCamTestData(
   String buildDir,
   String testDir){
-  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
-  def testdata // Assigning location of data later
+  def testdata
   dir(buildDir) {
-  def cwd = pwd()
-  testdata = "${cwd}/${testDir}"
-  dir(testdata){
-    withCredentials([
-      [
-        $class: 'StringBinding',
-        credentialsId: 'weka-bucket-secret',
-        variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
-      ], [
-        $class: 'StringBinding',
-        credentialsId: 'weka-access-key',
-        variable: 'RCLONE_CONFIG_WEKA_ACCESS_KEY_ID'
-      ], [
-        $class: 'StringBinding',
-        credentialsId: 'weka-bucket-url',
-        variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
-      ]]){
-      withEnv([
-        "RCLONE_CONFIG_WEKA_TYPE=s3",
-        "RCLONE_CONFIG_WEKA_PROVIDER=Other",
-        "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
-    ]){
-      insideDockerWrap(
-        image: "${gcp_repo}:latest",
-        pull: true,
-        args: "-v ${cwd}:/home",
-      ) {
-        bash """
-          rclone copy weka:"${LSSTCAM_BUCKET}" .
-        """
+    def cwd = pwd()
+    testdata = "${cwd}/${testDir}"
+    dir(testdata){
+      withCredentials([
+        [
+          $class: 'StringBinding',
+          credentialsId: 'weka-bucket-secret',
+          variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
+        ], [
+          $class: 'StringBinding',
+          credentialsId: 'weka-access-key',
+          variable: 'RCLONE_CONFIG_WEKA_ACCESS_KEY_ID'
+        ], [
+          $class: 'StringBinding',
+          credentialsId: 'weka-bucket-url',
+          variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
+        ]]){
+        withEnv([
+          "RCLONE_CONFIG_WEKA_TYPE=s3",
+          "RCLONE_CONFIG_WEKA_PROVIDER=Other",
+          "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
+        ]){
+          // Use the gcloud-cli sidecar already present in the builder pod.
+          // dir(testdata) above sets CWD inside the shared j-workspace emptyDir,
+          // so rclone writes directly into the path returned to the caller.
+          container('gcloud-cli') {
+            bash """
+              rclone copy weka:"\${LSSTCAM_BUCKET}" .
+            """
+          }
         }
       }
     }
-  }
   }
   return testdata
 }
@@ -380,11 +393,9 @@ def loadCache(
   String buildDir,
   String tag="d_latest"
 ) {
-  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
   dir(buildDir) {
-    def cwd = pwd()
-    def ciDir = "${cwd}/ci-scripts"
-    dir(ciDir){
+    def workDir = pwd()
+    dir("${workDir}/ci-scripts") {
       cloneCiScripts()
     }
     withCredentials([file(
@@ -395,19 +406,37 @@ def loadCache(
         "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
         "DATE_TAG=${tag}",
       ]) {
-          insideDockerWrap(
-            image: "${gcp_repo}:latest",
-            pull: true,
-            args: "-v ${cwd}:/home",
-          ) {
-             bash """
-             gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-             cd /home/ci-scripts
-             ./loadlsststack.sh $DATE_TAG
-             """
+        // Run in the gcloud-cli sidecar that was added to this pod by
+        // insideK8sContainer when cacheImage was set.  Both containers share
+        // the j-workspace emptyDir so files downloaded here are immediately
+        // visible to the runner — no inter-pod hostPath mounts required.
+        container('gcloud-cli') {
+          bash """
+          gcloud auth activate-service-account \$SERVICEACCOUNT --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+          cd ${workDir}/ci-scripts
+          ./loadlsststack.sh \$DATE_TAG
+          """
         }
       }
     }
+    // Conda bakes absolute paths into activation scripts, shebangs, and eups
+    // helpers at install time.  If the cache tarball was built in a workspace
+    // with a different slug, search the entire miniconda tree (text files only,
+    // -I skips binaries) and rewrite every stale reference.
+    bash """
+      conda_sh="${workDir}/lsstsw/miniconda/etc/profile.d/conda.sh"
+      if [ -f "\$conda_sh" ]; then
+        stale=\$(grep -o '/j/workspace/stack-os-matrix/[^/]*/lsstsw/miniconda' "\$conda_sh" | head -1)
+        current="${workDir}/lsstsw/miniconda"
+        if [ -n "\$stale" ] && [ "\$stale" != "\$current" ]; then
+          echo "Patching stale conda prefix: \$stale -> \$current"
+          grep -rIl "\$stale" \
+            "${workDir}/lsstsw/miniconda" \
+            2>/dev/null | \
+            xargs -r sed -i "s|\$stale|\$current|g"
+        fi
+      fi
+    """
   }
 }
 /**
@@ -418,12 +447,10 @@ def loadCache(
 def saveCache(
   String tag="d_latest"
 ) {
-  def cwd = pwd()
-  bash '''
-    cd lsstsw
-    source bin/envconfig
-    conda install google-cloud-sdk
-  '''
+  def workDir = pwd()
+  dir("${workDir}/ci-scripts") {
+    cloneCiScripts()
+  }
   withCredentials([file(
     credentialsId: 'gs-eups-push',
     variable: 'GOOGLE_APPLICATION_CREDENTIALS'
@@ -432,13 +459,15 @@ def saveCache(
       "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
       "DATE_TAG=${tag}",
     ]) {
+      // Run in the gcloud-cli sidecar so we don't need gcloud in the LSST
+      // runner image and don't need to install it via conda.
+      container('gcloud-cli') {
         bash """
-        cd lsstsw
-        source bin/envconfig
-        gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-        cd ../ci-scripts
-        ./backuplsststack.sh $DATE_TAG
+        gcloud auth activate-service-account \$SERVICEACCOUNT --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+        cd ${workDir}/ci-scripts
+        ./backuplsststack.sh \$DATE_TAG
         """
+      }
     }
   }
 }
@@ -542,19 +571,42 @@ def lsstswBuild(
         jenkinsWrapper(buildParams)
     } // else
   } // run
+  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
   def runDocker = {
-    insideDockerWrap(
+    insideK8sContainer(
       image: lsstswConfig.image,
       pull: true,
+      // Add gcloud-cli sidecar when cache loading, saving, or test-data download
+      // is needed.  All three operations share the j-workspace emptyDir so data
+      // transfers happen without inter-pod hostPath mounts.
+      cacheImage: (fetchCache || cachelsstsw || buildParams['CI_LSSTCAM']) ? "${gcp_repo}:latest" : null,
     ) {
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'github-api-token-checks',
-        variable: 'GITHUB_TOKEN'
-      ]]){
-        run()
-      } // withCredentials
-    } // insideDockerWrap
+      try {
+        if (fetchCache) {
+          loadCache(slug, "d_latest")
+        }
+        if (buildParams['CI_LSSTCAM']) {
+          buildParams['LSSTCAM_TESTDATA_DIR'] = loadLSSTCamTestData(slug, "lsstcam_testdata")
+        }
+        withCredentials([[
+          $class: 'StringBinding',
+          credentialsId: 'github-api-token-checks',
+          variable: 'GITHUB_TOKEN'
+        ]]){
+          // dir(slug) replicates the outer dir(buildDirHash) context, which does
+          // not carry across the node() boundary created by insideK8sContainer.
+          dir(slug) {
+            run()
+          }
+        } // withCredentials
+      } finally {
+        // Collect artifacts from the pod's own workspace.  jenkinsWrapperPost
+        // must run here (not in the outer nodeWrap agent) because insideK8sContainer
+        // allocates a separate pod with its own workspace; the outer agent never
+        // sees the build output.
+        jenkinsWrapperPost(slug)
+      }
+    } // insideK8sContainer
   } // runDocker
 
   def runEnv = { doRun ->
@@ -579,9 +631,12 @@ def lsstswBuild(
           } // try
         } // dir
       } finally {
-        // needs to be called in the parent dir of jenkinsWrapper() in order to
-        // add the slug as a prefix to the archived files.
-        jenkinsWrapperPost(buildDirHash)
+        // For non-image builds (e.g. macOS), jenkinsWrapper ran on this same
+        // agent so artifacts are here.  For image builds, artifacts are in the
+        // inner pod's workspace and jenkinsWrapperPost is called inside runDocker.
+        if (!lsstswConfig.image) {
+          jenkinsWrapperPost(buildDirHash)
+        }
       }
   } // runEnv
 
@@ -589,13 +644,6 @@ def lsstswBuild(
   def task = null
   if (lsstswConfig.image) {
     task = {
-      if (fetchCache){
-        loadCache(slug,"d_latest")
-      }
-      if (buildParams['CI_LSSTCAM']){
-        def testdatadir = loadLSSTCamTestData(slug,"lsstcam_testdata")
-        buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
-      }
       if (buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64'){
         return
       }
@@ -1111,14 +1159,14 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  insideDockerWrap(
+  insideK8sContainer(
     image: defaultCodekitImage(),
     pull: true,
   ) {
     withGithubAdminCredentials {
       run()
     }
-  } // insideDockerWrap
+  } // insideK8sContainer
 } // insideCodekit
 
 /**
@@ -1243,7 +1291,7 @@ def filterProducts(String rubinVer, String products) {
 def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
   def agent = lsstswConfig.label
   def runDocker = {
-    insideDockerWrap(
+    insideK8sContainer(
       image: lsstswConfig.image,
       pull: true,
     ) {
@@ -1278,7 +1326,7 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
         """
         } // stage
       } // withCredentials
-    } // insideDockerWrap
+    } // insideK8sContainer
   } // runDocker
 
   nodeWrap(agent) {
@@ -1609,12 +1657,13 @@ def String instantToUtc(Instant moment) {
  * @param tag String tag of docker image to use.
  */
 def void librarianPuppet(String cmd='install', String tag='2.2.3') {
-  insideDockerWrap(
+  insideK8sContainer(
     image: "lsstsqre/cakepan:${tag}",
-    args: "-e HOME=${pwd()}",
     pull: true,
   ) {
-    bash "librarian-puppet ${cmd}"
+    withEnv(["HOME=${pwd()}"]) {
+      bash "librarian-puppet ${cmd}"
+    }
   }
 }
 
@@ -1651,7 +1700,7 @@ def runDocumenteer(Map p) {
   }
 
   withEnv(docEnv) {
-    insideDockerWrap(
+    insideK8sContainer(
       image: p.docImage,
       pull: p.docPull,
     ) {
@@ -1674,7 +1723,7 @@ def runDocumenteer(Map p) {
           fi
         '''
       } // dir
-    } // insideDockerWrap
+    } // insideK8sContainer
   } // withEnv
 } // runDocumenteer
 
@@ -2133,7 +2182,7 @@ def void checkoutLFS(Map p) {
   checkoutGitRef(gitRepo, p.gitRef)
 
   try {
-    insideDockerWrap(
+    insideK8sContainer(
       image: lfsImage,
       pull: true,
     ) {
