@@ -26,7 +26,7 @@ controller:
   image:
     registry: "docker.io"
     repository: "jenkins/jenkins"
-    tag: "2.528.3-lts-jdk21"
+    tag: "2.555.2-lts-jdk21"
     #tagLabel: jdk11
     pullPolicy: "Always"
   imagePullSecretName:
@@ -148,7 +148,7 @@ controller:
     - name: CASC_VAULT_URL
       value: https://ci-vault.lsst.cloud
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-checks,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini,secret/rubin/rubin-jenkins-control/rubinobs-dm,secret/rubin/rubin-jenkins-control/approle,secret/rubin/rubin-jenkins-control/gs-eups-push,secret/rubin/rubin-jenkins-control/weka-s3/testdata-ci-lsst
+      value: secret/rubin/rubin-jenkins-control/common,secret/rubin/rubin-jenkins-control/slack-lsstc-token,secret/rubin/rubin-jenkins-control/ghslacker,secret/rubin/rubin-jenkins-control/github-api-token-checks,secret/rubin/rubin-jenkins-control/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control/github_backup,secret/rubin/rubin-jenkins-control/squash-api-user,secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control/ltd-keeper,secret/rubin/rubin-jenkins-control/google_archive_registry_sa,secret/rubin/rubin-jenkins-control/github-oauth,secret/rubin/rubin-jenkins-control/sqre-mini,secret/rubin/rubin-jenkins-control/rubinobs-dm,secret/rubin/rubin-jenkins-control/approle,secret/rubin/rubin-jenkins-control/gs-eups-push,secret/rubin/rubin-jenkins-control/weka-s3/testdata-ci-lsst,secret/rubin/rubin-jenkins-control/ltd-mason-aws
 
 
   # Set min/max heap here if needed with:
@@ -291,7 +291,7 @@ controller:
     - JNLP2-connect
   csrf:
     defaultCrumbIssuer:
-      enabled: true
+      enabled: false
       proxyCompatability: true
   # Kubernetes service type for the JNLP agent service
   # agentListenerServiceType is the Kubernetes Service type for the JNLP agent service,
@@ -339,13 +339,13 @@ controller:
 
   # List of plugins to be install during Jenkins controller start
   installPlugins:
-    - kubernetes:4398.vb_b_33d9e7fe23
+    - kubernetes:4423.vb_59f230b_ce53
     - workflow-aggregator:608.v67378e9d3db_1
-    - job-dsl:1.93
+    - job-dsl:3654.vdf58f53e2d15
     - blueocean:1.27.25
-    - configuration-as-code:2006.v001a_2ca_6b_574
-    - matrix-auth:3.2.9
-    - hashicorp-vault-plugin:371.v884a_4dd60fb_6
+    - configuration-as-code:2077.v41f1011a_5110
+    - matrix-auth:3.2.10
+    - hashicorp-vault-plugin:379.v080d932e61e4
 
   # Set to false to download the minimum required version of all dependencies.
   installLatestPlugins: false
@@ -358,7 +358,7 @@ controller:
     #- ace-editor:1.1
     - antisamy-markup-formatter:173.v680e3a_b_69ff3
     - apache-httpcomponents-client-4-api:4.5.14-269.vfa_2321039a_83
-    - apache-httpcomponents-client-5-api:5.6-183.ve5a_8a_b_e71e59
+    - apache-httpcomponents-client-5-api:5.6.1-195.v65ffe15189a_d
     - asm-api:9.9.1-189.vb_5ef2964da_91
     #depreciated    - async-http-client:1.9.40.0
     - authentication-tokens:1.144.v5ff4a_5ec5c33
@@ -381,55 +381,55 @@ controller:
     - blueocean-rest:1.27.25
     - blueocean-rest-impl:1.27.25
     - blueocean-web:1.27.25
-    - bootstrap5-api:5.3.8-895.v4d0d8e47fea_d
-    - bouncycastle-api:2.30.1.82-277.v70ca_0b_877184
-    - branch-api:2.1268.v044a_87612da_8
-    - build-timeout:1.39
-    - build-user-vars-plugin:212.vd6b_e9f6d0cdb_
+    - bootstrap5-api:5.3.8-1038.vee76a_fe825ff
+    - bouncycastle-api:2.30.1.84-291.v9f17b_21896e2
+    - branch-api:2.1280.v0d4e5b_b_460ef
+    - build-timeout:1.40
+    - build-user-vars-plugin:214.va_eed2ed849ca_
     - caffeine-api:3.2.3-194.v31a_b_f7a_b_5a_81
     - checks-api:402.vca_263b_f200e3
-    - cloudbees-bitbucket-branch-source:937.2.3
+    - cloudbees-bitbucket-branch-source:937.3.1
     - cloudbees-disk-usage-simple:256.v20ec4eb_884f1
-    - cloudbees-folder:6.1073.va_7888eb_dd514
-    - command-launcher:123.v37cfdc92ef67
-    - commons-compress-api:1.28.0-2
+    - cloudbees-folder:6.1100.ve9eed61d16c4
+    - command-launcher:134.v025a_5fcf9dea_
+    - commons-compress-api:1.28.0-3
     - commons-lang3-api:3.20.0-109.ve43756e2d2b_4
-    - commons-text-api:1.15.0-210.v7480a_da_70b_9e
-    - copyartifact:770.va_6c69e063442
-    - credentials:1465.ve8c9516d78b_f
-    - credentials-binding:702.vfe613e537e88
-    - data-tables-api:2.3.5-1497.v38449eb_7d5a_1
+    - commons-text-api:1.15.0-218.va_61573470393
+    - copyartifact:795.ve8e151429b_27
+    - credentials:1502.v5c95e620ddfe
+    - credentials-binding:720.v3f6decef43ea_
+    - data-tables-api:2.3.7-1534.v539d4edf109d
     - display-url-api:2.217.va_6b_de84cc74b_
-    - docker-commons:457.v0f62a_94f11a_3
+    - docker-commons:472.vee120e23d3a_c
     - dockerhub-notification:222.v483263f10718
     - docker-workflow:634.vedc7242b_eda_7
-    - durable-task:639.vefb_3d8372f6d
-    - echarts-api:6.0.0-1165.vd1283a_3e37d4
-    - eddsa-api:0.3.0.1-27.v6ea_07b_e90d1a_
-    - envinject:2.934.vc674e76cf954
-    - envinject-api:1.236.v35fd4d7eb_515
+    - durable-task:664.v2b_e7a_dfff66c
+    - echarts-api:6.0.0-1287.vfd24c22a_3d00
+    - eddsa-api:0.3.0.1-29.v67e9a_1c969b_b_
+    - envinject:2.941.v351a_20c0a_3ca_
+    - envinject-api:1.241.vdd714803b_403
     - external-monitor-job:223.vb_fddcf42c9b_3
-    - favorite:2.253.v9b_413168133b_
-    - font-awesome-api:7.1.0-882.v1dfb_771e3278
+    - favorite:2.263.v941d21defef7
+    - font-awesome-api:7.2.0-990.vf220b_2a_496f9
     - gcp-secrets-manager-credentials-provider:0.3.1
-    - git:5.8.1
-    - git-client:6.5.0
-    - github:1.45.0
+    - git:5.10.1
+    - git-client:6.6.0
+    - github:1.46.0.1
     - github-api:1.330-492.v3941a_032db_2a_
-    - github-branch-source:1917.v9ee8a_39b_3d0d
-    - github-checks:634.v371dc6d978a_3
-    - github-oauth:683.v04a_a_b_e9d7e07
+    - github-branch-source:1967.1969.v205fd594c821
+    - github-checks:679.v74133da_b_435a_
+    - github-oauth:685.v53b_070455063
     - git-server:137.ve0060b_432302
     #deprecated    - greenballs:1.15.1
-    - groovy:497.v7b_061a_a_de65d
-    - gson-api:2.13.2-173.va_a_092315913c
+    - groovy:537.v741a_5a_f1b_581
+    - gson-api:2.14.0-201.v8eefe5515533
     #deprecated    - handlebars:3.0.8
     - handy-uri-templates-2-api:2.1.8-38.vcea_5d521d5f3
-    - htmlpublisher:427
+    - htmlpublisher:427.1
     #deprecated    - icon-shim:3.0.0
     - instance-identity:203.v15e81a_1b_7a_38
     - ionicons-api:94.vcc3065403257
-    - jackson2-api:2.20.1-423.v13951f6b_6532
+    - jackson2-api:2.21.2-436.v29efdb_7418ff
     - jakarta-activation-api:2.1.4-1
     - jakarta-mail-api:2.1.5-1
     - javadoc:354.vee1a_660b_4990
@@ -438,84 +438,84 @@ controller:
     - jaxb:2.3.9-143.v5979df3304e6
     - jdk-tool:83.v417146707a_3d
     - jenkins-design-language:1.27.25
-    - jersey2-api:2.47-165.ve7809a_3e87e0
+    - jersey2-api:2.48-180.ve47b_264f849b_
     - jira:3.21
-    - jjwt-api:0.11.5-120.v0268cf544b_89
-    - joda-time-api:2.14.0-149.v1c3ce991d1b_9
+    - jjwt-api:0.13.0-141.vd58b_a_9592b_6c
+    - joda-time-api:2.14.2-193.v422b_efce56e0
     - jquery:1.12.4-3
     #deprecated    - jquery-detached:1.2.1
-    - jquery3-api:3.7.1-619.vdb_10e002501a_
+    - jquery3-api:3.7.1-687.v68d468e40b_30
     - jsch:0.2.16-95.v3eecb_55fa_b_78
     - json-api:20251224-185.v0cc18490c62c
-    - json-path-api:2.10.0-202.va_9cc16c1e476
-    - junit:1369.v15da_00283f06
+    - json-path-api:3.0.0-218.vcd4dd1355de2
+    - junit:1403.vd9d1413fd205
     - kubernetes-client-api:7.3.1-256.v788a_0b_787114
     - kubernetes-credentials:207.v492f58828b_ed
-    - lockable-resources:1438.v3c0f8c9e2060
-    - log-parser:2.5.0
-    - mailer:525.v2458b_d8a_1a_71
+    - lockable-resources:1515.v380548282a_59
+    - log-parser:3.0.2
+    - mailer:534.v1b_36f5864073
     - matrix-project:870.v9db_fcfc2f45b_
     - mercurial:1323.ve69d2a_db_8a_b_d
-    - mina-sshd-api-common:2.16.0-167.va_269f38cc024
-    - mina-sshd-api-core:2.16.0-167.va_269f38cc024
-    - metrics:4.2.37-489.vb_6db_69b_ce753
+    - mina-sshd-api-common:2.16.0-184.v1e0e8b_e8e813
+    - mina-sshd-api-core:2.16.0-184.v1e0e8b_e8e813
+    - metrics:4.2.37-494.v06f9a_939d33a_
     #deprecated    - momentjs:1.1.1
     #deprecated - need alternative?    - multiple-scms:0.8
-    - nodelabelparameter:759.vb_b_e95db_f3251
-    - okhttp-api:4.12.0-195.vc02552c04ffd
-    - oss-symbols-api:424.ved751e062911
-    - parameterized-trigger:873.v8b_e37dd8418f
-    - pipeline-build-step:571.v08a_fffd4b_0ce
-    - pipeline-graph-analysis:245.v88f03631a_b_21
-    - pipeline-groovy-lib:787.ve2fef0efdca_6
-    - pipeline-input-step:540.v14b_100d754dd
-    - pipeline-milestone-step:138.v78ca_76831a_43
+    - nodelabelparameter:851.vd94e5048d321
+    - okhttp-api:5.3.2-200.vedb_720a_cf1f8
+    - oss-symbols-api:456.v46e634a_63b_99
+    - parameterized-trigger:893.va_383a_9b_a_4c11
+    - pipeline-build-step:584.vdb_a_2cc3a_d07a_
+    - pipeline-graph-analysis:254.v0f63a_a_447dca_
+    - pipeline-groovy-lib:797.v90ea_a_9b_e45a_0
+    - pipeline-input-step:551.vdff487c5998c
+    - pipeline-milestone-step:152.v6e22b_8cfc66c
     - pipeline-model-api:2.2277.v00573e73ddf1
     #deprecated    - pipeline-model-declarative-agent:1.1.1
     - pipeline-model-definition:2.2277.v00573e73ddf1
     - pipeline-model-extensions:2.2277.v00573e73ddf1
-    - pipeline-rest-api:2.38
-    - pipeline-stage-step:322.vecffa_99f371c
+    - pipeline-rest-api:2.41
+    - pipeline-stage-step:345.va_96187909426
     - pipeline-stage-tags-metadata:2.2277.v00573e73ddf1
-    - pipeline-stage-view:2.38
-    - pipeline-utility-steps:2.20.0
+    - pipeline-stage-view:2.41
+    - pipeline-utility-steps:3.810.va_7672d206740
     - plain-credentials:199.v9f8e1f741799
-    - plugin-util-api:6.1192.v30fe6e2837ff
+    - plugin-util-api:7.1341.v039f146993d9
     - popper2-api:2.11.6-5 #deprecated but needed for bootstrap5-api
     - postbuildscript:3.4.1-695.vf6b_0b_8053979
-    - prism-api:1.30.0-630.va_e19d17f83b_0
-    - prometheus:847.v8440e5c21e7c
+    - prism-api:1.30.0-727.vc475481f034d
+    - prometheus:852.v317db_5d17a_b_0
     - pubsub-light:1.19
     - purge-build-queue-plugin:125.v09ee2147746f
     - rebuild:338.va_0a_b_50e29397
     - run-condition:276.v97298f3a_cd51
     - saferestart:102.v4dc1b_9636a_ee
-    - scm-api:724.v7d839074eb_5c
-    - script-security:1385.v7d2d9ec4d909
-    - snakeyaml-api:2.5-143.v93b_c004f89de
+    - scm-api:728.vc30dcf7a_0df5
+    - script-security:1402.v94c9ce464861
+    - snakeyaml-api:2.5-149.v72471e9c6371
     - sonar:2.18.2
-    - sse-gateway:1.28
-    - ssh-agent:386.v36cc0c7582f0
-    - ssh-credentials:361.vb_f6760818e8c
-    - sshd:3.374.v19b_d59ce6610
-    - ssh-slaves:3.1085.vc64d040efa_85
+    - sse-gateway:1.29
+    - ssh-agent:396.vcc7d84e622ec
+    - ssh-credentials:372.va_250881b_08cd
+    - sshd:3.384.vc89b_5e138cf9
+    - ssh-slaves:3.1097.v868116049892
     - structs:362.va_b_695ef4fdf9
-    - swarm:3.51
+    - swarm:1254.vf26a_5e188f26
     - timestamper:1.30
     - token-macro:477.vd4f0dc3cb_cf1
     - trilead-api:2.284.v1974ea_324382
     - variant:70.va_d9f17f859e0
     #depreciated     - windows-slaves:1.8.1  need to find alternative?
-    - workflow-api:1384.vdc05a_48f535f
+    - workflow-api:1413.v2ff1a_5e720fa_
     - workflow-basic-steps:1098.v808b_fd7f8cf4
-    - workflow-cps:4238.va_6fb_65c1f699
+    - workflow-cps:4331.v9d06ed4658ff
     #depreciated    - workflow-cps-global-lib:609.vd95673f149b_b
-    - workflow-durable-task-step:1464.v2d3f5c68f84c
-    - workflow-job:1559.va_a_533730b_ea_d
+    - workflow-durable-task-step:1479.v56e587f413a_7
+    - workflow-job:1571.vb_423c255d6d9
     - workflow-multibranch:821.vc3b_4ea_780798
     - workflow-scm-step:466.va_d69e602552b_
-    - workflow-step-api:710.v3e456cc85233
-    - workflow-support:1010.vb_b_39488a_9841
+    - workflow-step-api:724.v538c2362b_dfb_
+    - workflow-support:1015.v785e5a_b_b_8b_22
 
   # Enable to initialize the Jenkins controller only once on initial installation.
   # Without this, whenever the controller gets restarted (Evicted, etc.) it will fetch plugin updates which has the potential to cause breakage.
@@ -750,6 +750,29 @@ controller:
                 - "Overall/Administer"
 
     configScripts:
+      prometheus: |
+        unclassified:
+          prometheusConfiguration:
+            appendParamLabel: true
+            appendStatusLabel: true
+            collectCodeCoverage: false
+            collectDiskUsage: true
+            collectNodeStatus: true
+            collectingMetricsPeriodInSeconds: 30
+            countAbortedBuilds: true
+            countFailedBuilds: true
+            countNotBuiltBuilds: true
+            countSuccessfulBuilds: true
+            countUnstableBuilds: true
+            defaultNamespace: "default"
+            fetchTestResults: true
+            jobAttributeName: "jenkins_job"
+            path: "prometheus"
+            perBuildMetrics: true
+            perBuildMetricsMaxAgeInHours: 0
+            perBuildMetricsMaxBuilds: 50
+            processingDisabledBuilds: false
+            useAuthenticatedEndpoint: false
       gcp-secrets-manager: |
         unclassified:
           gcpCredentialsProvider:
@@ -899,17 +922,17 @@ controller:
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control/squash-api-user/username}"
               - usernamePassword:
-                  description: "ltd-mason"
-                  id: "ltd-mason-aws"
-                  password: "${secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws/password}"
-                  scope: GLOBAL
-                  username: "${secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws/username}"
-              - usernamePassword:
                   description: "dockerhub - sqreadmin"
                   id: "dockerhub-sqreadmin"
                   password: "${secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin/password}"
                   scope: GLOBAL
                   username: "${secret/rubin/rubin-jenkins-control/dockerhub-sqreadmin/username}"
+              - usernamePassword:
+                  description: "ltd-mason"
+                  id: "ltd-mason-aws"
+                  password: "${secret/rubin/rubin-jenkins-control/ltd-mason-aws/password}"
+                  scope: GLOBAL
+                  username: "${secret/rubin/rubin-jenkins-control/ltd-mason-aws/username}"
               - usernamePassword:
                   description: "ltd-keeper"
                   id: "ltd-keeper"
