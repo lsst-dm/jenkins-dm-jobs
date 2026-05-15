@@ -186,8 +186,11 @@ spec:
     image: ${image}
     imagePullPolicy: ${pullPolicy}
     tty: true
-    command: [sleep]
-    args: ['99d']
+    command: [sh, -c]
+    args:
+    - |
+      printf 'jenkins:x:1000:0:Jenkins:/home/jenkins:/bin/sh\n' >> /etc/passwd
+      exec sleep 99d
     env:
     - name: HOME
       value: /home/jenkins
@@ -427,7 +430,7 @@ def loadCache(
         current="${workDir}/lsstsw/miniconda"
         if [ -n "\$stale" ] && [ "\$stale" != "\$current" ]; then
           echo "Patching stale conda prefix: \$stale -> \$current"
-          grep -rl "\$stale" \
+          grep -rIl "\$stale" \
             "${workDir}/lsstsw/miniconda/etc" \
             "${workDir}/lsstsw/miniconda/bin" \
             "${workDir}/lsstsw/miniconda/condabin" \
