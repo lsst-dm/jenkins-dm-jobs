@@ -343,45 +343,41 @@ def void runPublish(Map p) {
 def loadLSSTCamTestData(
   String buildDir,
   String testDir){
-  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
-  def testdata // Assigning location of data later
+  def testdata
   dir(buildDir) {
-  def cwd = pwd()
-  testdata = "${cwd}/${testDir}"
-  dir(testdata){
-    withCredentials([
-      [
-        $class: 'StringBinding',
-        credentialsId: 'weka-bucket-secret',
-        variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
-      ], [
-        $class: 'StringBinding',
-        credentialsId: 'weka-access-key',
-        variable: 'RCLONE_CONFIG_WEKA_ACCESS_KEY_ID'
-      ], [
-        $class: 'StringBinding',
-        credentialsId: 'weka-bucket-url',
-        variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
-      ]]){
-      withEnv([
-        "RCLONE_CONFIG_WEKA_TYPE=s3",
-        "RCLONE_CONFIG_WEKA_PROVIDER=Other",
-        "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
-    ]){
-      insideK8sContainer(
-        image: "${gcp_repo}:latest",
-        pull: true,
-        mounts: [
-          [name: 'cwd', hostPath: cwd, mountPath: '/home'],
-        ],
-      ) {
-        bash """
-          rclone copy weka:"${LSSTCAM_BUCKET}" .
-        """
+    def cwd = pwd()
+    testdata = "${cwd}/${testDir}"
+    dir(testdata){
+      withCredentials([
+        [
+          $class: 'StringBinding',
+          credentialsId: 'weka-bucket-secret',
+          variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
+        ], [
+          $class: 'StringBinding',
+          credentialsId: 'weka-access-key',
+          variable: 'RCLONE_CONFIG_WEKA_ACCESS_KEY_ID'
+        ], [
+          $class: 'StringBinding',
+          credentialsId: 'weka-bucket-url',
+          variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
+        ]]){
+        withEnv([
+          "RCLONE_CONFIG_WEKA_TYPE=s3",
+          "RCLONE_CONFIG_WEKA_PROVIDER=Other",
+          "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
+        ]){
+          // Use the gcloud-cli sidecar already present in the builder pod.
+          // dir(testdata) above sets CWD inside the shared j-workspace emptyDir,
+          // so rclone writes directly into the path returned to the caller.
+          container('gcloud-cli') {
+            bash """
+              rclone copy weka:"\${LSSTCAM_BUCKET}" .
+            """
+          }
         }
       }
     }
-  }
   }
   return testdata
 }
@@ -579,14 +575,17 @@ def lsstswBuild(
     insideK8sContainer(
       image: lsstswConfig.image,
       pull: true,
-      // Add gcloud-cli sidecar when cache loading or saving is needed.
-      // Both containers share the j-workspace emptyDir so loadCache/saveCache
-      // can transfer cache without inter-pod hostPath mounts.
-      cacheImage: (fetchCache || cachelsstsw) ? "${gcp_repo}:latest" : null,
+      // Add gcloud-cli sidecar when cache loading, saving, or test-data download
+      // is needed.  All three operations share the j-workspace emptyDir so data
+      // transfers happen without inter-pod hostPath mounts.
+      cacheImage: (fetchCache || cachelsstsw || buildParams['CI_LSSTCAM']) ? "${gcp_repo}:latest" : null,
     ) {
       try {
         if (fetchCache) {
           loadCache(slug, "d_latest")
+        }
+        if (buildParams['CI_LSSTCAM']) {
+          buildParams['LSSTCAM_TESTDATA_DIR'] = loadLSSTCamTestData(slug, "lsstcam_testdata")
         }
         withCredentials([[
           $class: 'StringBinding',
@@ -644,10 +643,6 @@ def lsstswBuild(
   def task = null
   if (lsstswConfig.image) {
     task = {
-      if (buildParams['CI_LSSTCAM']){
-        def testdatadir = loadLSSTCamTestData(slug,"lsstcam_testdata")
-        buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
-      }
       if (buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64'){
         return
       }
