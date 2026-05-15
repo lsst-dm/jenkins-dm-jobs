@@ -419,10 +419,10 @@ def loadCache(
         }
       }
     }
-    // Conda bakes absolute paths into its activation scripts at install time.
-    // If the cache tarball was created in a workspace with a different slug,
-    // patch every reference under miniconda/etc, bin, and condabin so that
-    // conda can activate in the current workspace.
+    // Conda bakes absolute paths into activation scripts, shebangs, and eups
+    // helpers at install time.  If the cache tarball was built in a workspace
+    // with a different slug, search the entire miniconda tree (text files only,
+    // -I skips binaries) and rewrite every stale reference.
     bash """
       conda_sh="${workDir}/lsstsw/miniconda/etc/profile.d/conda.sh"
       if [ -f "\$conda_sh" ]; then
@@ -431,9 +431,7 @@ def loadCache(
         if [ -n "\$stale" ] && [ "\$stale" != "\$current" ]; then
           echo "Patching stale conda prefix: \$stale -> \$current"
           grep -rIl "\$stale" \
-            "${workDir}/lsstsw/miniconda/etc" \
-            "${workDir}/lsstsw/miniconda/bin" \
-            "${workDir}/lsstsw/miniconda/condabin" \
+            "${workDir}/lsstsw/miniconda" \
             2>/dev/null | \
             xargs -r sed -i "s|\$stale|\$current|g"
         fi
