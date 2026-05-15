@@ -189,7 +189,7 @@ spec:
     command: [sh, -c]
     args:
     - |
-      printf 'jenkins:x:1000:0:Jenkins:/home/jenkins:/bin/sh\n' >> /etc/passwd
+      echo 'jenkins:x:1000:0:Jenkins:/home/jenkins:/bin/sh' >> /etc/passwd
       exec sleep 99d
     env:
     - name: HOME
