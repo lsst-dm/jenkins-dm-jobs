@@ -306,7 +306,7 @@ def void linuxBuild(
       '''
     } // withEnv
   } finally {
-    record(buildDir, menv)
+    record(buildDir)
     cleanup(buildDir)
   }
 } // linuxBuild
@@ -365,7 +365,7 @@ def void osxBuild(
       util.bash shName
     }
   } finally {
-    record(buildDir, menv)
+    record(buildDir)
     cleanup(buildDir)
   }
 } // osxBuild
@@ -456,7 +456,7 @@ def void linuxSmoke(
       '''
     } // withEnv
   } finally {
-    record(smokeDir, menv)
+    record(smokeDir)
   }
 } // linuxSmoke
 
@@ -515,7 +515,7 @@ def void osxSmoke(
       }
     }
   } finally {
-    record(smokeDir, menv)
+    record(smokeDir)
   }
 } // osxSmoke
 
@@ -669,16 +669,16 @@ def void withGSEupsBucketEnv(Closure run) {
 /**
  *  Record logs
  */
-def void record(String buildDir, MinicondaEnv menv) {
-  def eupsBuildDir = eupsBuildDir(buildDir, menv)
+def void record(String buildDir) {
+  def eupsBuildDir = buildDir + '/conda/envs/'
 
   def archive = [
-    '**/*.log',
-    '**/*.failed',
+    '*/share/eups/EupsBuildDir/*/**/*.log',
+    '*/share/eups/EupsBuildDir/*/**/*.failed',
   ]
 
   def reports = [
-    '**/pytest-*.xml',
+    '*/share/eups/EupsBuildDir/*/**/pytest-*.xml',
   ]
 
   dir(eupsBuildDir) {
