@@ -677,20 +677,12 @@ def void record(String buildDir) {
     '*/share/eups/EupsBuildDir/*/**/*.failed',
   ]
 
-  def reports = [
-    '*/share/eups/EupsBuildDir/*/**/pytest-*.xml',
-  ]
 
   dir(eupsBuildDir) {
     archiveArtifacts([
       artifacts: archive.join(', '),
       allowEmptyArchive: true,
       fingerprint: true
-    ])
-
-    junit([
-      testResults: reports.join(', '),
-      allowEmptyResults: true,
     ])
   }
 }
