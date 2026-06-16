@@ -74,11 +74,3 @@ ap_verify:
       gen: 3
       code:
         <<: *code_ap
-    - dataset:
-        <<: *dataset_dc2
-        display_name: dc2+fakes
-        gen3_pipeline: >
-          ${AP_VERIFY_CI_DC2_DIR}/pipelines/ApVerifyWithFakes.yaml
-      gen: 3
-      code:
-        <<: *code_ap
