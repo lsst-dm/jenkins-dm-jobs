@@ -149,21 +149,29 @@ notify.wrap {
 
     def triggerMe = [:]
 
-    triggerMe['Update cache'] = {
-    retry(retries){
+    triggerMe['Update cache + sonar-scan'] = {
+      retry(retries) {
         build(
           job: 'stack-os-matrix',
-          parameters:[
-            string(name:'REFS', value:""),
-            string(name:'PRODUCTS', value: scipipe.canonical.products),
-            string(name:'SPLENV_REF', value: scipipe.template.splenv_ref),
-            booleanParam(name:'NO_BINARY_FETCH', value: true),
-            booleanParam(name:'LOAD_CACHE', value: false),
-            booleanParam(name:'SAVE_CACHE', value: true),
+          parameters: [
+            string(name: 'REFS', value: ''),
+            string(name: 'PRODUCTS', value: scipipe.canonical.products),
+            string(name: 'SPLENV_REF', value: scipipe.template.splenv_ref),
+            booleanParam(name: 'NO_BINARY_FETCH', value: true),
+            booleanParam(name: 'LOAD_CACHE', value: false),
+            booleanParam(name: 'SAVE_CACHE', value: true),
           ],
-          wait: false,
+          wait: true,
         )
       }
+      build(
+        job: 'sqre/infra/sonar-scan',
+        parameters: [
+          string(name: 'EUPS_TAG',  value: eupsTag),
+          string(name: 'CACHE_TAG', value: 'd_latest'),
+        ],
+        wait: false,
+      )
     }
 
     triggerMe['build Science Platform Notebook Aspect Lab images'] = {
