@@ -783,6 +783,29 @@ controller:
       welcome-message: |
         jenkins:
           systemMessage: This is the Production GCP instance of Jenkins.
+      sonarqube: |
+        unclassified:
+          sonarGlobalConfiguration:
+            buildWrapperEnabled: false
+            installations:
+              - name: "lsst-sonarqube"
+                serverUrl: "https://ci-sonarqube.lsst.cloud"
+                credentialsId: "sonarqube-token"
+        tool:
+          sonarRunnerInstallation:
+            installations:
+              - name: "sonar-scanner"
+                properties:
+                  - installSource:
+                      installers:
+                        - sonarRunnerInstaller:
+                            id: "5.0.1.3006"
+        jenkins:
+          globalNodeProperties:
+            - envVars:
+                env:
+                  - key: "SONAR_ENV_PREFIX"
+                    value: ""
       # Connects to specified vault paths and variables to provide all credentials
       systemCredentials: |-
         credentials:
@@ -954,6 +977,11 @@ controller:
               - fileSystemServiceAccountCredential:
                   id: "db18c256-5c3e-4f94-aada-45def5734db7"
                   scope: GLOBAL
+              - string:
+                  description: "SonarQube auth token"
+                  id: "sonarqube-token"
+                  scope: GLOBAL
+                  secret: "${secret/sonarqube/jenkins-token/value}"
 
       add-seed-job: |
         jobs:
