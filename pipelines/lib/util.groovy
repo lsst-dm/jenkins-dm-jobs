@@ -2845,6 +2845,7 @@ def sonarScanUmbrella(Map args) {
             -Dsonar.sources=. \\
             -Dsonar.python.version=3 \\
             -Dsonar.sourceEncoding=UTF-8 \\
+            -Dsonar.scm.disabled=true \\
             -Dsonar.exclusions='**/tests/**,**/doc/**,**/.eupspkg/**,**/build/**,**/.git/**'
         """
       }
