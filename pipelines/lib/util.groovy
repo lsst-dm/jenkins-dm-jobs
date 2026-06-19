@@ -534,9 +534,8 @@ def lsstswBuild(
 
   def run = {
     if (cachelsstsw){ // runs only if we want to cache the work
-        buildParams = [SCONSFLAGS: "--no-tests"] + buildParams
-        jenkinsWrapper(buildParams)
-        saveCache("d_latest")
+      jenkinsWrapper(buildParams)
+      saveCache("d_latest")
     } // if saveCacheRun
     else {
         jenkinsWrapper(buildParams)
@@ -1308,11 +1307,11 @@ def lsstswBuildMatrix(
 
     matrix[slug] = {
       lsstswBuild(
-      lsstswConfig,
-      buildParams,
-      wipeout,
-      loadCache,
-      saveCache
+        lsstswConfig,
+        buildParams,
+        wipeout,
+        loadCache,
+        saveCache,
       )
     }
   }
@@ -2666,6 +2665,191 @@ def void nodeWrap(String label, Closure run) {
     printK8sVars()
     labelPod()
     run()
+  }
+}
+
+/**
+ * Run sonar-scanner across every package in the current workspace's lsstsw/build/
+ * tree, then run the umbrella scan. Intended to be called from inside lsstswBuild
+ * (cache path, linux-64) after saveCache() has uploaded the tarball.
+ *
+ * @param args.eupsTag    String  EUPS tag, used as projectVersion (e.g. 'w_2026_21')
+ * @param args.envPrefix  String  '' on prod, 'dev-' on dev (from SONAR_ENV_PREFIX)
+ */
+def sonarScanWorkspace(Map args) {
+  String eupsTag = args.eupsTag
+  String envPrefix = args.envPrefix ?: ''
+  String scannerHome = tool 'sonar-scanner'
+  String statusFile = "${env.WORKSPACE}/sonar-scan-status.csv"
+
+  writeFile file: statusFile, text: "package,status,reason\n"
+
+  def packages = sh(
+    returnStdout: true,
+    script: 'ls -1 lsstsw/build/ 2>/dev/null | sort',
+  ).trim().split('\n').findAll { it && !it.startsWith('.') }
+
+  echo "sonarScanWorkspace: found ${packages.size()} packages"
+
+  try {
+    packages.collate(8).each { chunk ->
+      def scans = [:]
+      chunk.each { pkg ->
+        scans["scan ${pkg}"] = {
+          sonarScanPackage(
+            pkg: pkg,
+            eupsTag: eupsTag,
+            envPrefix: envPrefix,
+            scannerHome: scannerHome,
+            statusFile: statusFile,
+          )
+        }
+      }
+      parallel scans
+    }
+
+    sonarScanUmbrella(
+      eupsTag: eupsTag,
+      envPrefix: envPrefix,
+      scannerHome: scannerHome,
+    )
+  } finally {
+    dir(env.WORKSPACE) {
+      archiveArtifacts artifacts: 'sonar-scan-status.csv', allowEmptyArchive: true
+    }
+  }
+}
+
+/**
+ * Run sonar-scanner against a single EUPS package directory.
+ *
+ * @param args.pkg            String  package directory name under lsstsw/build/
+ * @param args.eupsTag        String  EUPS tag (e.g. 'w_2026_21'), used as projectVersion
+ * @param args.envPrefix      String  env-scoped prefix ('' on prod, 'dev-' on dev)
+ * @param args.scannerHome    String  filesystem path returned by `tool 'sonar-scanner'`
+ * @param args.statusFile     String  CSV path appended to with "<pkg>,OK,"
+ */
+def sonarScanPackage(Map args) {
+  String pkg = args.pkg
+  String eupsTag = args.eupsTag
+  String envPrefix = args.envPrefix ?: ''
+  String scannerHome = args.scannerHome
+  String statusFile = args.statusFile
+  String projectKey = "${envPrefix}${pkg}"
+  String pkgDir = "lsstsw/build/${pkg}"
+
+  try {
+    dir(pkgDir) {
+      def covPaths = sh(
+        returnStdout: true,
+        script: '''find . -maxdepth 6 \\( \
+            -name 'coverage.xml' \
+            -o -name 'pytest-coverage.xml' \
+            -o -path '*/.tests/pytest-coverage.xml' \
+            -o -path '*/.tests/pytest-*.xml-cov-*.xml' \
+            -o -path '*/.tests/pytest-*-cov.xml' \
+            -o -path '*/.tests/*-cov.xml' \
+          \\) 2>/dev/null | sort -u''',
+      ).trim()
+      def junitPaths = sh(
+        returnStdout: true,
+        script: '''find . -maxdepth 6 \\( \
+            -path '*/.tests/pytest-*.xml' \
+            -o -path '*/.tests/junit*.xml' \
+          \\) 2>/dev/null | grep -v '\\.xml-cov-' | grep -v -- '-cov\\.xml$' | grep -v 'pytest-coverage\\.xml$' | sort -u''',
+      ).trim()
+
+      // Coverage XMLs from the build agent embed absolute <source> paths (e.g.
+      // /j/workspace/stack-os-matrix/linux-9-x86/lsstsw/build/<pkg>/python) that
+      // don't exist on the scan agent. Rewrite them to relative paths so SonarQube
+      // resolves <class filename="..."> entries against projectBaseDir (= pkgDir).
+      if (covPaths) {
+        sh """
+          for f in ${covPaths.replaceAll('\\n', ' ')}; do
+            echo "[sonar:${pkg}] rewriting <source> in \$f"
+            sed -i -E 's#<source>[^<]+/(python|tests)</source>#<source>./\\1</source>#g' "\$f"
+            echo "[sonar:${pkg}] post-rewrite sources:"
+            grep '<source>' "\$f" | head -5
+          done
+        """
+      }
+
+      echo "[sonar:${pkg}] coverage XMLs found: ${covPaths ? covPaths.split('\\n').size() : 0}"
+      if (covPaths)   { echo "[sonar:${pkg}] coverage:\n${covPaths}" }
+      echo "[sonar:${pkg}] junit XMLs found: ${junitPaths ? junitPaths.split('\\n').size() : 0}"
+      if (junitPaths) { echo "[sonar:${pkg}] junit:\n${junitPaths}" }
+
+      def extraProps = []
+      if (covPaths) {
+        extraProps << "-Dsonar.python.coverage.reportPaths=${covPaths.replaceAll('\\n', ',')}"
+      }
+      if (junitPaths) {
+        extraProps << "-Dsonar.python.xunit.reportPath=${junitPaths.split('\\n')[0]}"
+      }
+
+      // Narrow sonar.sources to python/ + tests/ to match codecov's scope.
+      // Fall back to '.' for packages with neither directory.
+      String sonarSources = sh(
+        returnStdout: true,
+        script: '''
+          srcs=""
+          [ -d python ] && srcs="python"
+          [ -d tests ] && srcs="${srcs:+$srcs,}tests"
+          [ -z "$srcs" ] && srcs="."
+          echo "$srcs"
+        ''',
+      ).trim()
+
+      withSonarQubeEnv('lsst-sonarqube') {
+        sh """
+          ${scannerHome}/bin/sonar-scanner \\
+            -Dsonar.projectKey=${projectKey} \\
+            -Dsonar.projectName=${pkg} \\
+            -Dsonar.projectVersion=${eupsTag} \\
+            -Dsonar.sources=${sonarSources} \\
+            -Dsonar.python.version=3 \\
+            -Dsonar.sourceEncoding=UTF-8 \\
+            -Dsonar.exclusions='**/doc/**,**/.eupspkg/**,**/build/**' \\
+            ${extraProps.join(' ')}
+        """
+      }
+    }
+    sh "echo '${pkg},OK,' >> ${statusFile}"
+  } catch (Exception e) {
+    echo "sonar-scan FAILED for ${pkg}: ${e.message}"
+  }
+}
+
+/**
+ * Run a single umbrella sonar-scanner over the entire lsstsw/build/ tree
+ * to populate the lsst_distrib SonarQube project.
+ *
+ * @param args.eupsTag        String  EUPS tag, used as projectVersion
+ * @param args.envPrefix      String  '' or 'dev-'
+ * @param args.scannerHome    String  filesystem path returned by `tool 'sonar-scanner'`
+ */
+def sonarScanUmbrella(Map args) {
+  String eupsTag = args.eupsTag
+  String envPrefix = args.envPrefix ?: ''
+  String scannerHome = args.scannerHome
+  String projectKey = "${envPrefix}lsst_distrib"
+
+  dir('lsstsw/build') {
+    withEnv(['SONAR_SCANNER_OPTS=-Xmx4g']) {
+      withSonarQubeEnv('lsst-sonarqube') {
+        sh """
+          ${scannerHome}/bin/sonar-scanner \\
+            -Dsonar.projectKey=${projectKey} \\
+            -Dsonar.projectName=lsst_distrib \\
+            -Dsonar.projectVersion=${eupsTag} \\
+            -Dsonar.sources=. \\
+            -Dsonar.python.version=3 \\
+            -Dsonar.sourceEncoding=UTF-8 \\
+            -Dsonar.scm.disabled=true \\
+            -Dsonar.exclusions='**/tests/**,**/doc/**,**/.eupspkg/**,**/build/**,**/.git/**'
+        """
+      }
+    }
   }
 }
 
