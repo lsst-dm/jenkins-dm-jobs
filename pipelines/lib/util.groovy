@@ -686,7 +686,7 @@ def void jenkinsWrapper(Map buildParams) {
       "HOME=${homeDir}",
       "EUPS_USERDATA=${homeDir}/.eups_userdata",
       "EUPSPKG_NJOBS=${njobs}",
-      "NODE_LABELS=${nodeLabels}"
+      "NODE_LABELS=${nodeLabels}",
     ]
 
     // Map -> List
