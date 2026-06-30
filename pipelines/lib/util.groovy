@@ -130,6 +130,11 @@ def String buildkitCacheArgs(String cacheRepo, String arch, Boolean pushCache = 
  *                      added to the pod sharing the same workspace volumes so that
  *                      container('gcloud-cli') can be used to download/upload cache
  *                      without a separate pod and without hostPath mounts.
+ * @param p.cpuRequest  String optional runner CPU request (default '8').
+ * @param p.cpuLimit    String optional runner CPU limit (default '10').
+ * @param p.memRequest  String optional runner memory request (default '64Gi').
+ * @param p.memLimit    String optional runner memory limit (default '64Gi').
+ * @param p.storage     String optional /j workspace size (default '300Gi').
  * @param run       Closure to execute inside the container
  */
 def void insideK8sContainer(Map p, Closure run) {
@@ -146,6 +151,11 @@ def void insideK8sContainer(Map p, Closure run) {
     pullPolicy: pullPolicy,
     cacheImage: cacheImage,
     arch:       arch,
+    cpuRequest: p.cpuRequest,
+    cpuLimit:   p.cpuLimit,
+    memRequest: p.memRequest,
+    memLimit:   p.memLimit,
+    storage:    p.storage,
   )
 
   // Surface the arch in the generated pod name so the two matrix instances are
@@ -177,6 +187,11 @@ def void insideK8sContainer(Map p, Closure run) {
  * @param p.arch       String optional target arch; 'arm64' pins the pod to arm
  *                     nodes (nodeSelector + toleration). Anything else schedules
  *                     on the default (x86) pool.
+ * @param p.cpuRequest String optional runner CPU request (default '8').
+ * @param p.cpuLimit   String optional runner CPU limit (default '10').
+ * @param p.memRequest String optional runner memory request (default '64Gi').
+ * @param p.memLimit   String optional runner memory limit (default '64Gi').
+ * @param p.storage    String optional /j workspace ephemeral-PVC size (default '300Gi').
  * @return YAML String
  */
 @NonCPS
@@ -185,6 +200,15 @@ def String renderPodYaml(Map p) {
   String pullPolicy = p.pullPolicy
   String cacheImage = p.cacheImage ?: null
   String arch       = p.arch ?: null
+  // Runner resources and workspace size. Defaults are sized for a full stack
+  // build; lightweight jobs (e.g. sonar-scan) can request less so the pod packs
+  // onto existing capacity instead of forcing a new -- possibly stocked-out --
+  // node to be scaled up.
+  String cpuRequest = p.cpuRequest ?: '8'
+  String cpuLimit   = p.cpuLimit ?: '10'
+  String memRequest = p.memRequest ?: '64Gi'
+  String memLimit   = p.memLimit ?: '64Gi'
+  String storage    = p.storage ?: '300Gi'
 
   // /j: the build workspace, backed by a per-build generic ephemeral volume
   // (a Hyperdisk dynamically provisioned via the hyperdisk-rwo StorageClass,
@@ -208,7 +232,7 @@ def String renderPodYaml(Map p) {
                           "          storageClassName: hyperdisk-rwo\n" +
                           "          resources:\n" +
                           "            requests:\n" +
-                          "              storage: 300Gi\n" +
+                          "              storage: ${storage}\n" +
                           "  - name: home-jenkins\n    emptyDir: {}\n"
 
   def volumeMountsSection = "    volumeMounts:\n" + extraVolumeMounts
@@ -327,11 +351,11 @@ spec:
       readOnlyRootFilesystem: false
     resources:
       requests:
-        cpu: "8"
-        memory: 64Gi
+        cpu: "${cpuRequest}"
+        memory: ${memRequest}
       limits:
-        cpu: "10"
-        memory: 64Gi
+        cpu: "${cpuLimit}"
+        memory: ${memLimit}
 ${volumeMountsSection}${gcloudContainerSection}${volumesSection}${schedulingSection}"""
 
   return podYaml
@@ -452,69 +476,6 @@ def shJson(String script) {
   def stdout = sh(returnStdout: true, script: script).trim()
   slurpJson(stdout)
 }
-
-/**
- * Create an EUPS distrib tag
- *
- * Example:
- *
- *     util.runPublish(
- *       parameters: [
- *         EUPSPKG_SOURCE: 'git',
- *         MANIFEST_ID: manifestId,
- *         EUPS_TAG: eupsTag,
- *         PRODUCTS: products,
- *       ],
- *     )
- *
- * @param p Map
- * @param p.job String job to trigger. Defaults to `release/run-publish`.
- * @param p.parameters.EUPSPKG_SOURCE String
- * @param p.parameters.MANIFEST_ID String
- * @param p.parameters.EUPS_TAG String
- * @param p.parameters.PRODUCTS String
- * @param p.parameters.TIMEOUT String Defaults to `'1'`.
- * @param p.parameters.SPLENV_REF String Optional
- */
-def void runPublish(Map p) {
-  requireMapKeys(p, [
-    'parameters',
-  ])
-  def useP = [
-    job: 'release/run-publish',
-  ] + p
-
-  requireMapKeys(p.parameters, [
-    'EUPSPKG_SOURCE',
-    'MANIFEST_ID',
-    'EUPS_TAG',
-    'PRODUCTS',
-  ])
-  useP.parameters = [
-    TIMEOUT: '1' // should be string
-  ] + p.parameters
-
-  def jobParameters = [
-          string(name: 'EUPSPKG_SOURCE', value: useP.parameters.EUPSPKG_SOURCE),
-          string(name: 'MANIFEST_ID', value: useP.parameters.MANIFEST_ID),
-          string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
-          string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
-          string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT.toString()),
-  ]
-
-  // Optional parameter. Set 'em if you got 'em
-  if (useP.parameters.SPLENV_REF) {
-    jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
-  }
-  if (useP.parameters.RUBINENV_VER) {
-    jobParameters += string(name: 'RUBINENV_VER', value: useP.parameters.RUBINENV_VER)
-  }
-
-  build(
-    job: useP.job,
-    parameters: jobParameters,
-  )
-} // runPublish
 
 /**
  * Loads LSSTCAM test data
@@ -1923,6 +1884,7 @@ def String runRebuild(Map p) {
     TIMEOUT: '12', // should be String
     PREP_ONLY: false,
     NO_BINARY_FETCH: true,
+    PUBLISH: false,
   ] + p.parameters
 
   def jobParameters = [
@@ -1932,11 +1894,22 @@ def String runRebuild(Map p) {
           booleanParam(name: 'NO_BINARY_FETCH', value: useP.parameters.NO_BINARY_FETCH),
           string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
           booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),
+          booleanParam(name: 'PUBLISH', value: useP.parameters.PUBLISH),
   ]
 
   // Optional parameter. Set 'em if you got 'em
   if (useP.parameters.SPLENV_REF) {
     jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
+  }
+  // EUPS distrib publish params -- only meaningful when PUBLISH is true.
+  if (useP.parameters.EUPS_TAG) {
+    jobParameters += string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG)
+  }
+  if (useP.parameters.EUPSPKG_SOURCE) {
+    jobParameters += string(name: 'EUPSPKG_SOURCE', value: useP.parameters.EUPSPKG_SOURCE)
+  }
+  if (useP.parameters.RUBINENV_VER) {
+    jobParameters += string(name: 'RUBINENV_VER', value: useP.parameters.RUBINENV_VER)
   }
 
   def result = build(
@@ -2932,20 +2905,26 @@ def sonarScanWorkspace(Map args) {
   echo "sonarScanWorkspace: found ${packages.size()} packages"
 
   try {
-    packages.collate(8).each { chunk ->
-      def scans = [:]
-      chunk.each { pkg ->
-        scans["scan ${pkg}"] = {
-          sonarScanPackage(
-            pkg: pkg,
-            eupsTag: eupsTag,
-            envPrefix: envPrefix,
-            scannerHome: scannerHome,
-            statusFile: statusFile,
-          )
+    // Cap each scanner JVM's heap so a chunk of 8 running in parallel fits the
+    // pod's memory limit (default JVM ergonomics would size each heap to ~25%
+    // of the container limit and collectively OOM). The umbrella scan sets its
+    // own larger -Xmx4g inside sonarScanUmbrella and is not affected.
+    withEnv(['SONAR_SCANNER_OPTS=-Xmx1g']) {
+      packages.collate(8).each { chunk ->
+        def scans = [:]
+        chunk.each { pkg ->
+          scans["scan ${pkg}"] = {
+            sonarScanPackage(
+              pkg: pkg,
+              eupsTag: eupsTag,
+              envPrefix: envPrefix,
+              scannerHome: scannerHome,
+              statusFile: statusFile,
+            )
+          }
         }
+        parallel scans
       }
-      parallel scans
     }
 
     sonarScanUmbrella(

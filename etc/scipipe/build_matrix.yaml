@@ -15,14 +15,14 @@ template:
   platforms:
     - &el7-conda
       <<: *platform_defaults
-      image: ghcr.io/lsst-dm/docker-scipipe:pr-14-tickets-DM-54833-2
+      image: ghcr.io/lsst-dm/docker-scipipe:9-latest
       display_name: linux-9-x86
       label: linux-64
       compiler: conda-system
       python: '3'
     - &linux-9-aarch64
       <<: *platform_defaults
-      image: ghcr.io/lsst-dm/docker-scipipe:pr-14-tickets-DM-54833-2
+      image: ghcr.io/lsst-dm/docker-scipipe:9-latest
       label: linux-aarch64
       display_name: linux-9-aarch64
       compiler: conda-system
