@@ -27,41 +27,41 @@ notify.wrap {
   def hub_repo = 'gcr.io/google.com/cloudsdktool/google-cloud-cli'
 
   def run = {
-    // def image = docker.image("${hub_repo}:latest")
-    def cwd      = pwd()
-    def ciDir    = "${cwd}/ci-scripts"
-    dir('ci-scripts') {
-      util.cloneCiScripts()
-    }
-
-    stage('update index file') {
-      // image.pull()
-      if (!noPush) {
-        withCredentials([file(
-          credentialsId: 'gs-eups-push',
-          variable: 'GOOGLE_APPLICATION_CREDENTIALS'
-        )]) {
-          withEnv([
-            "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
-            "SPLENV_REF=${splenv_ref}",
-            "MINI_VER=${mini_ver}",
-          ]) {
-            docker.image("${hub_repo}:alpine").inside {
-                util.posixSh '''
-                gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-                python3 ci-scripts/updateindexfile.py
-                '''
-            }
-          }
-        } // withCredentials
+    // Clone ci-scripts and run the updater in ONE pod sharing the emptyDir
+    // workspace; the gcloud image provides both gcloud and python3.
+    util.insideK8sContainer(
+      image: "${hub_repo}:alpine",
+      pull: true,
+      arch: (architecture == 'linux-aarch64') ? 'arm64' : 'amd64',
+    ) {
+      dir('ci-scripts') {
+        util.cloneCiScripts()
       }
-    }
 
+      stage('update index file') {
+        if (!noPush) {
+          withCredentials([file(
+            credentialsId: 'gs-eups-push',
+            variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+          )]) {
+            withEnv([
+              "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
+              "SPLENV_REF=${splenv_ref}",
+              "MINI_VER=${mini_ver}",
+            ]) {
+              util.posixSh '''
+              gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+              python3 ci-scripts/updateindexfile.py
+              '''
+            }
+          } // withCredentials
+        }
+      }
+    } // util.insideK8sContainer
   } // run
 
-  util.nodeWrap(architecture) {
-    timeout(time: 1, unit: 'HOURS') {
-      run()
-    }
-  } // util.nodeWrap('linux-64')
+  // No outer nodeWrap: the pod is the agent.
+  timeout(time: 1, unit: 'HOURS') {
+    run()
+  }
 } // notify.wrap

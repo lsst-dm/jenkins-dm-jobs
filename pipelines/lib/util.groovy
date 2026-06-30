@@ -1049,7 +1049,9 @@ def void getManifest(String rebuildId, String filename) {
   def buildJob          = 'release/run-rebuild'
 
   step([$class: 'CopyArtifact',
-        projectName: buildJob,
+        // leading slash: CopyArtifact resolves names relative to the copying
+        // job's folder, so a folder-qualified name must be made absolute.
+        projectName: "/${buildJob}",
         filter: manifest_artifact,
         selector: [
           $class: 'SpecificBuildSelector',
@@ -1667,11 +1669,14 @@ def String epochToUtc(Integer epoch) {
 /**
  * run ltd-mason-travis to push a doc build
  *
+ * Runs in the caller's container -- the caller must produce `_build/html` in
+ * the same pod/workspace (see documenteer.groovy). ltd-mason is pip-installed
+ * here because the LSST release image provides python/pip but not ltd-mason.
+ *
  * @param p Map
  * @param p.eupsTag String tag to setup (required). Eg.: 'current', 'b1234'
  * @param p.repoSlug String github repo slug (required). Eg.: 'lsst/pipelines_lsst_io'
  * @param p.ltdProduct String LTD product name (required)., Eg.: 'pipelines'
- * @param p.masonImage String docker image (optional). Defaults to: 'lsstsqre/ltd-mason'
  */
 def ltdPush(Map p) {
   requireMapKeys(p, [
@@ -1679,10 +1684,6 @@ def ltdPush(Map p) {
     'ltdProduct',
     'repoSlug',
   ])
-  p = [
-    masonImage: 'lsstsqre/ltd-mason',
-  ] + p
-
 
   withEnv([
     "LTD_MASON_BUILD=true",
@@ -1705,13 +1706,16 @@ def ltdPush(Map p) {
       usernameVariable: 'LTD_KEEPER_USER',
       passwordVariable: 'LTD_KEEPER_PASSWORD',
     ]]) {
-      docker.image(p.masonImage).inside {
-        // expect that the service will return an HTTP 502, which causes
-        // ltd-mason-travis to exit 1
-        sh '''
-        ltd-mason-travis --html-dir _build/html --verbose || true
-        '''
-      } // .inside
+      // expect that the service will return an HTTP 502, which causes
+      // ltd-mason-travis to exit 1
+      // TODO(DM-54833): migrate to ltd-conveyor (`ltd upload`) and drop this
+      // pip install of the deprecated ltd-mason.
+      bash '''
+      source /opt/lsst/software/stack/loadLSST.bash
+      pip install --user ltd-mason
+      export PATH="${HOME}/.local/bin:${PATH}"
+      ltd-mason-travis --html-dir _build/html --verbose || true
+      '''
     } // withCredentials
   } //withEnv
 } // ltdPush
@@ -1748,34 +1752,34 @@ def String instantToUtc(Instant moment) {
  * @param tag String tag of docker image to use.
  */
 def void librarianPuppet(String cmd='install', String tag='2.2.3') {
-  insideDockerWrap(
+  insideK8sContainer(
     image: "lsstsqre/cakepan:${tag}",
-    args: "-e HOME=${pwd()}",
     pull: true,
   ) {
-    bash "librarian-puppet ${cmd}"
+    withEnv(["HOME=${pwd()}"]) {
+      bash "librarian-puppet ${cmd}"
+    }
   }
 }
 
 /**
  * run documenteer doc build
  *
+ * Runs in the caller's container -- the caller must open the doc build pod
+ * (see documenteer.groovy) so this build and the subsequent ltdPush share one
+ * pod and thus one workspace (the produced `_build/html` must be visible to
+ * ltdPush).
+ *
  * @param p Map
  * @param p.docTemplateDir String path to sphinx template clone (required)
  * @param p.eupsTag String tag to setup (required)
  * @param p.eupsPath String path to EUPS installed productions (optional)
- * @param p.docImage String defaults to: 'lsstsqre/documenteer-base'
- * @param p.docPull Boolean defaults to: `false`
  */
 def runDocumenteer(Map p) {
   requireMapKeys(p, [
     'docTemplateDir',
     'eupsTag',
   ])
-  p = [
-    docImage: null,
-    docPull: false,
-  ] + p
 
   def homeDir = "${pwd()}/home"
   emptyDirs([homeDir])
@@ -1790,30 +1794,25 @@ def runDocumenteer(Map p) {
   }
 
   withEnv(docEnv) {
-    insideDockerWrap(
-      image: p.docImage,
-      pull: p.docPull,
-    ) {
-      dir(p.docTemplateDir) {
-        bash '''
-          source /opt/lsst/software/stack/loadLSST.bash
-          dot -V
-          if [ -f requirements.txt ]; then
-            # allow to override doc tools
-            pip install --upgrade --user --force-reinstall -r requirements.txt
-          fi
-          export PATH="${HOME}/.local/bin:${PATH}"
-          setup -r . -t "$EUPS_TAG"
-          if command -v  build-stack-docs >/dev/null 2>&1; then
-            # use old documenteer 0.8 build installed from requirements.txt
-            build-stack-docs -d . -v
-          else
-            # New documenteer 2.X build with spinxutils from stack
-            stack-docs -d . -v build --disable-doxygen --disable-doxygen-conf
-          fi
-        '''
-      } // dir
-    } // insideDockerWrap
+    dir(p.docTemplateDir) {
+      bash '''
+        source /opt/lsst/software/stack/loadLSST.bash
+        dot -V
+        if [ -f requirements.txt ]; then
+          # allow to override doc tools
+          pip install --upgrade --user --force-reinstall -r requirements.txt
+        fi
+        export PATH="${HOME}/.local/bin:${PATH}"
+        setup -r . -t "$EUPS_TAG"
+        if command -v  build-stack-docs >/dev/null 2>&1; then
+          # use old documenteer 0.8 build installed from requirements.txt
+          build-stack-docs -d . -v
+        else
+          # New documenteer 2.X build with spinxutils from stack
+          stack-docs -d . -v build --disable-doxygen --disable-doxygen-conf
+        fi
+      '''
+    } // dir
   } // withEnv
 } // runDocumenteer
 
@@ -1878,7 +1877,9 @@ def String runRebuild(Map p) {
     manifestArtifact = 'lsstsw/build/manifest.txt'
 
     step([$class: 'CopyArtifact',
-          projectName: useP.job,
+          // leading slash: CopyArtifact resolves names relative to the copying
+          // job's folder, so a folder-qualified name must be made absolute.
+          projectName: "/${useP.job}",
           filter: manifestArtifact,
           selector: [
             $class: 'SpecificBuildSelector',
@@ -2106,6 +2107,35 @@ def String defaultCodekitImage() {
   "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
 
+/*
+ * Get default gcloud-cli sidecar docker image string.
+ *
+ * @return gcloudCliImage String
+ */
+def String defaultGcloudCliImage() {
+  def dockerRegistry = sqreConfig().gcloudcli.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
+}
+
+/*
+ * Get the EUPS publish service account.
+ *
+ * @return serviceAccount String
+ */
+def String eupsServiceAccount() {
+  sqreConfig().eups.service_account
+}
+
+/*
+ * Build a BuildKit registry cache repo path for a given image name.
+ *
+ * @param name String cache image name, e.g. 'newinstall', 'scipipe-base'
+ * @return repo String full cache repo path
+ */
+def String buildcacheRepo(String name) {
+  "${sqreConfig().buildcache.repo_base}/${name}"
+}
+
 def Object runIndexUpdate(){
   def job = 'sqre/infra/update_indexjson'
   build(
@@ -2186,7 +2216,9 @@ def Object runBuildStack(Map p) {
 
     step([
       $class: 'CopyArtifact',
-      projectName: p.job,
+      // leading slash: CopyArtifact resolves names relative to the copying
+      // job's folder, so a folder-qualified name must be made absolute.
+      projectName: "/${p.job}",
       filter: resultsArtifact,
       selector: [
         $class: 'SpecificBuildSelector',

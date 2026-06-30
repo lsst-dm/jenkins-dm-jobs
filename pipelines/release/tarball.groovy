@@ -112,38 +112,47 @@ def void linuxTarballs(
   def buildDirHash = util.hashpath(envId)
 
   def run = {
-    if (wipeout) {
-      deleteDir()
-    }
-
-    // these "credentials" aren't secrets -- just a convient way of setting
-    // globals for the instance. Thus, they don't need to be tightly scoped to a
-    // single sh step
-    util.withEupsEnv {
-      dir(buildDirHash.take(10)) {
-        stage("build ${envId}") {
-          docker.image(imageName).pull()
-          linuxBuild(imageName, compiler, menv, buildTarget)
-        }
-        stage('smoke') {
-          if (smokeConfig) {
-            linuxSmoke(imageName, compiler, menv, buildTarget, smokeConfig)
-          }
-        }
-
-        stage('publish') {
-          if (publish) {
-            gsPushConda(envId)
-          }
-        }
+    // One pod for the whole build -> smoke -> publish flow so all three share
+    // the pod's /j workspace. The cross-pod hostPath approach didn't survive
+    // the pod landing on a different node than the agent, and separate per-stage
+    // pods can't see each other's distrib/ output. The gcloud-cli sidecar
+    // (cacheImage) provides gcloud for the publish step.
+    util.insideK8sContainer(
+      image: imageName,
+      pull: true,
+      cacheImage: util.defaultGcloudCliImage(),
+    ) {
+      if (wipeout) {
+        deleteDir()
       }
-    } // util.withEupsEnv
+
+      // these "credentials" aren't secrets -- just a convient way of setting
+      // globals for the instance. Thus, they don't need to be tightly scoped to a
+      // single sh step
+      util.withEupsEnv {
+        dir(buildDirHash.take(10)) {
+          stage("build ${envId}") {
+            linuxBuild(compiler, menv, buildTarget)
+          }
+          stage('smoke') {
+            if (smokeConfig) {
+              linuxSmoke(compiler, menv, buildTarget, smokeConfig)
+            }
+          }
+
+          stage('publish') {
+            if (publish) {
+              gsPushConda(envId)
+            }
+          }
+        }
+      } // util.withEupsEnv
+    } // util.insideK8sContainer
   } // run()
 
-  util.nodeWrap(label) {
-    timeout(time: timelimit, unit: 'HOURS') {
-      run()
-    }
+  // No outer nodeWrap: the pod IS the agent.
+  timeout(time: timelimit, unit: 'HOURS') {
+    run()
   }
 }
 
@@ -231,24 +240,19 @@ def void osxTarballs(
  * @param buildTarget.eups_tag String
  */
 def void linuxBuild(
-  String imageName,
   String compiler,
   MinicondaEnv menv,
   Map buildTarget
 ) {
+  // runs inside the linuxTarballs pod; pwd() is the shared /j workspace
   def cwd      = pwd()
   def buildDir = "${cwd}/build"
   def distDir  = "${cwd}/distrib"
   def shDir    = "${buildDir}/scripts"
   def ciDir    = "${cwd}/ci-scripts"
 
-  def buildDirContainer = '/build'
-  def distDirContainer  = '/distrib'
-  def ciDirContainer    = '/ci-scripts'
-
   def shBasename = 'run.sh'
   def shName = "${shDir}/${shBasename}"
-  def localImageName = "${imageName}-local"
 
   try {
     util.createDirs([
@@ -265,46 +269,22 @@ def void linuxBuild(
       buildTarget.products,
       buildTarget.eups_tag,
       shName,
-      distDirContainer,
+      distDir,
       compiler,
       null,
       menv,
-      ciDirContainer
+      ciDir
     )
 
     dir(ciDir) {
       util.cloneCiScripts()
     }
 
-    util.wrapDockerImage(
-      image: imageName,
-      tag: localImageName,
-      pull: true,
-    )
-
-    withEnv([
-      "RUN=/build/scripts/${shBasename}",
-      "IMAGE=${localImageName}",
-      "BUILDDIR=${buildDir}",
-      "BUILDDIR_CONTAINER=${buildDirContainer}",
-      "DISTDIR=${distDir}",
-      "DISTDIR_CONTAINER=${distDirContainer}",
-      "CIDIR=${ciDir}",
-      "CIDIR_CONTAINER=${ciDirContainer}",
-    ]) {
-      // XXX refactor to use util.insideDockerWrap
-      util.bash '''
-        docker run \
-          -v "${BUILDDIR}:${BUILDDIR_CONTAINER}" \
-          -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
-          -v "${CIDIR}:${CIDIR_CONTAINER}" \
-          -w /build \
-          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-          -u "$(id -u -n)" \
-          "$IMAGE" \
-          bash -c "$RUN"
-      '''
-    } // withEnv
+    dir(buildDir) {
+      withEnv(["EUPS_S3_BUCKET=${env.EUPS_S3_BUCKET}"]) {
+        util.bash(shName)
+      }
+    }
   } finally {
     record(buildDir)
     cleanup(buildDir)
@@ -383,25 +363,21 @@ def void osxBuild(
  * @param smoke.run_scons_check Boolean
  */
 def void linuxSmoke(
-  String imageName,
   String compiler,
   MinicondaEnv menv,
   Map buildTarget,
   Map smokeConfig
 ) {
+  // runs inside the linuxTarballs pod; pwd() is the shared /j workspace, so the
+  // distrib/ produced by linuxBuild is already visible here.
   def cwd      = pwd()
   def smokeDir = "${cwd}/smoke"
   def distDir  = "${cwd}/distrib"
   def shDir    = "${smokeDir}/scripts"
   def ciDir    = "${cwd}/ci-scripts"
 
-  def smokeDirContainer = '/smoke'
-  def distDirContainer  = '/distrib'
-  def ciDirContainer    = '/ci-scripts'
-
   def shBasename = 'run.sh'
   def shName = "${shDir}/${shBasename}"
-  def localImageName = "${imageName}-local"
 
   try {
     // smoke state is left at the end of the build for possible debugging but
@@ -412,49 +388,26 @@ def void linuxSmoke(
       buildTarget.products,
       buildTarget.eups_tag,
       shName,
-      distDirContainer,
+      distDir,
       compiler,
       null,
       menv,
-      ciDirContainer
+      ciDir
     )
 
     dir(ciDir) {
       util.cloneCiScripts()
     }
 
-    util.wrapDockerImage(
-      image: imageName,
-      tag: localImageName,
-      pull: true,
-    )
-
-    withEnv([
-      "RUN=/smoke/scripts/${shBasename}",
-      "IMAGE=${localImageName}",
-      "RUN_SCONS_CHECK=${smokeConfig.run_scons_check}",
-      "SMOKEDIR=${smokeDir}",
-      "SMOKEDIR_CONTAINER=${smokeDirContainer}",
-      "DISTDIR=${distDir}",
-      "DISTDIR_CONTAINER=${distDirContainer}",
-      "CIDIR=${ciDir}",
-      "CIDIR_CONTAINER=${ciDirContainer}",
-    ]) {
-      // XXX refactor to use util.insideDockerWrap
-      util.bash '''
-        docker run \
-          -v "${SMOKEDIR}:${SMOKEDIR_CONTAINER}" \
-          -v "${DISTDIR}:${DISTDIR_CONTAINER}" \
-          -v "${CIDIR}:${CIDIR_CONTAINER}" \
-          -w /smoke \
-          -e EUPS_S3_BUCKET="$EUPS_S3_BUCKET" \
-          -e RUN_SCONS_CHECK="$RUN_SCONS_CHECK" \
-          -e FIX_SHEBANGS=true \
-          -u "$(id -u -n)" \
-          "$IMAGE" \
-          bash -c "$RUN"
-      '''
-    } // withEnv
+    dir(smokeDir) {
+      withEnv([
+        "EUPS_S3_BUCKET=${env.EUPS_S3_BUCKET}",
+        "RUN_SCONS_CHECK=${smokeConfig.run_scons_check}",
+        "FIX_SHEBANGS=true",
+      ]) {
+        util.bash(shName)
+      }
+    }
   } finally {
     record(smokeDir)
   }
@@ -607,7 +560,9 @@ def void gsPushConda(String ... parts) {
     withGSEupsBucketEnv {
       timeout(time: 10, unit: 'MINUTES') {
         if (osfamily != "osx") {
-          docker.image(util.defaultGcloudImage()).inside {
+          // runs inside the linuxTarballs pod; push from the gcloud-cli sidecar
+          // which shares the /j workspace (and thus EUPS_PKGROOT/distrib).
+          container('gcloud-cli') {
             util.posixSh(gsPushCmd())
           }
           return

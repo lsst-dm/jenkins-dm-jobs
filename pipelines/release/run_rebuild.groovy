@@ -54,95 +54,98 @@ notify.wrap {
   def slug = util.lsstswConfigSlug(lsstswConfig)
 
   def run = {
-    ws(canonical.workspace) {
-      def cwd = pwd()
+    // Everything -- build and push docs -- runs inside ONE pod sharing the
+    // emptyDir workspace. jenkinsWrapper() clones ci-scripts and produces
+    // DOC_PUSH_PATH inside the build container; the push docs stage reads both
+    // via the gcloud-cli sidecar (cacheImage), so a single pod is required.
+    util.insideK8sContainer(
+      image: lsstswConfig.image,
+      pull: true,
+      cacheImage: util.defaultGcloudCliImage(),
+    ) {
+      ws(canonical.workspace) {
+        def cwd = pwd()
 
-      def buildParams = [
-        EUPS_PKGROOT:          "${cwd}/distrib",
-        GIT_SSH_COMMAND:       'ssh -o StrictHostKeyChecking=no',
-        K8S_DIND_LIMITS_CPU:   "4",
-        LSST_BUILD_DOCS:       buildDocs,
-        LSST_COMPILER:         lsstswConfig.compiler,
-        LSST_JUNIT_PREFIX:     slug,
-        LSST_PREP_ONLY:        prepOnly,
-        LSST_NO_BINARY_FETCH:  nobinary,
-        LSST_PRODUCTS:         products,
-        LSST_PYTHON_VERSION:   lsstswConfig.python,
-        LSST_SPLENV_REF:       splenvRef,
-        LSST_REFS:             refs,
-        VERSIONDB_PUSH:        versiondbPush,
-        VERSIONDB_REPO:        versiondbRepo,
-      ]
+        def buildParams = [
+          EUPS_PKGROOT:          "${cwd}/distrib",
+          GIT_SSH_COMMAND:       'ssh -o StrictHostKeyChecking=no',
+          K8S_DIND_LIMITS_CPU:   "4",
+          LSST_BUILD_DOCS:       buildDocs,
+          LSST_COMPILER:         lsstswConfig.compiler,
+          LSST_JUNIT_PREFIX:     slug,
+          LSST_PREP_ONLY:        prepOnly,
+          LSST_NO_BINARY_FETCH:  nobinary,
+          LSST_PRODUCTS:         products,
+          LSST_PYTHON_VERSION:   lsstswConfig.python,
+          LSST_SPLENV_REF:       splenvRef,
+          LSST_REFS:             refs,
+          VERSIONDB_PUSH:        versiondbPush,
+          VERSIONDB_REPO:        versiondbRepo,
+        ]
 
-      def runJW = {
-        // note that util.jenkinsWrapper() clones the ci-scripts repo, which is
-        // used by the push docs stage
-        try {
-          util.jenkinsWrapper(buildParams)
-        } finally {
-          util.jenkinsWrapperPost(null, prepOnly)
+        def runJW = {
+          // note that util.jenkinsWrapper() clones the ci-scripts repo, which is
+          // used by the push docs stage
+          try {
+            util.jenkinsWrapper(buildParams)
+          } finally {
+            util.jenkinsWrapperPost(null, prepOnly)
+          }
         }
-      }
 
-      def withVersiondbCredentials = { closure ->
-        sshagent (credentials: ['github-jenkins-versiondb']) {
-          closure()
+        def withVersiondbCredentials = { closure ->
+          sshagent (credentials: ['github-jenkins-versiondb']) {
+            closure()
+          }
         }
-      }
 
-      stage('build') {
-        util.insideDockerWrap(
-          image: lsstswConfig.image,
-          pull: true,
-        ) {
+        stage('build') {
           // only setup sshagent if we are going to push
           if (versiondbPush) {
             withVersiondbCredentials(runJW)
           } else {
             runJW()
           }
-        } // util.insideDockerWrap
-      } // stage('build')
+        } // stage('build')
 
-      stage('push docs') {
-        if (buildDocs) {
-          withCredentials([file(
-            credentialsId: 'gs-eups-push',
-            variable: 'GOOGLE_APPLICATION_CREDENTIALS'
-          ),
-          [
-            $class: 'StringBinding',
-            credentialsId: 'doxygen-push-bucket',
-            variable: 'DOXYGEN_S3_BUCKET'
-          ]]) {
-            withEnv([
-              "EUPS_PKGROOT=${cwd}/distrib",
-              "HOME=${cwd}/home",
-            ]) {
+        stage('push docs') {
+          if (buildDocs) {
+            withCredentials([file(
+              credentialsId: 'gs-eups-push',
+              variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+            ),
+            [
+              $class: 'StringBinding',
+              credentialsId: 'doxygen-push-bucket',
+              variable: 'DOXYGEN_S3_BUCKET'
+            ]]) {
+              withEnv([
+                "EUPS_PKGROOT=${cwd}/distrib",
+                "HOME=${cwd}/home",
+              ]) {
 
-              docker.image(util.defaultGcloudImage()).inside {
-                // alpine does not include bash by default
-                util.posixSh '''
-                  # provides DOC_PUSH_PATH
-                  . ./ci-scripts/settings.cfg.sh
-                  gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+                container('gcloud-cli') {
+                  // alpine does not include bash by default
+                  util.posixSh '''
+                    # provides DOC_PUSH_PATH
+                    . ./ci-scripts/settings.cfg.sh
+                    gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
 
-                  gcloud storage cp \
-                    --recursive \
-                    "${DOC_PUSH_PATH}/*" \
-                    "gs://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
-                '''
-              } // util.defaultGcloudImage
-            } // withEnv
-          } // withCredentials
-        }
-      } // stage('push docs')
-    } // ws
+                    gcloud storage cp \
+                      --recursive \
+                      "${DOC_PUSH_PATH}/*" \
+                      "gs://${DOXYGEN_S3_BUCKET}/stack/doxygen/"
+                  '''
+                } // container('gcloud-cli')
+              } // withEnv
+            } // withCredentials
+          }
+        } // stage('push docs')
+      } // ws
+    } // util.insideK8sContainer
   } // run
 
-  util.nodeWrap(lsstswConfig.label) {
-    timeout(time: timelimit, unit: 'HOURS') {
-      run()
-    }
+  timeout(time: timelimit, unit: 'HOURS') {
+    run()
   }
 } // notify.wrap

@@ -45,41 +45,46 @@ notify.wrap {
   def slug = util.lsstswConfigSlug(lsstswConfig)
 
   def run = {
-    ws(canonical.workspace) {
-      def cwd = pwd()
-      def pkgroot = "${cwd}/distrib"
+    // Everything -- create packages and push -- runs inside ONE pod sharing the
+    // emptyDir workspace. The gcloud-cli sidecar (cacheImage) provides gcloud
+    // for the push stage; without a single pod the push stage could not see the
+    // distrib/ tree produced by `publish` inside the build container.
+    util.insideK8sContainer(
+      image: lsstswConfig.image,
+      pull: true,
+      cacheImage: util.defaultGcloudCliImage(),
+    ) {
+      ws(canonical.workspace) {
+        def cwd = pwd()
+        def pkgroot = "${cwd}/distrib"
 
-      stage('create packages') {
-        dir('lsstsw') {
-          util.cloneLsstsw()
-        }
+        stage('create packages') {
+          dir('lsstsw') {
+            util.cloneLsstsw()
+          }
 
-        def tagDir  = "${pkgroot}/tags"
+          def tagDir  = "${pkgroot}/tags"
 
-        // remove any pre-existing eups tags to prevent them from being
-        // [re]published
-        // the src pkgroot has tags under ./tags/
-        dir(tagDir) {
-          deleteDir()
-        }
+          // remove any pre-existing eups tags to prevent them from being
+          // [re]published
+          // the src pkgroot has tags under ./tags/
+          dir(tagDir) {
+            deleteDir()
+          }
 
-        def env = [
-          "HOME=${cwd}/home",
-          "EUPS_PKGROOT=${pkgroot}",
-          "EUPS_USERDATA=${cwd}/home/.eups_userdata",
-          "EUPSPKG_SOURCE=${eupspkgSource}",
-          "LSST_SPLENV_REF=${splenvRef}",
-          "RUBINENV_VER=${rubinEnvVer}",
-          "MANIFEST_ID=${manifestId}",
-          "EUPS_TAG=${eupsTag}",
-          "PRODUCTS=${products}",
-        ]
+          def env = [
+            "HOME=${cwd}/home",
+            "EUPS_PKGROOT=${pkgroot}",
+            "EUPS_USERDATA=${cwd}/home/.eups_userdata",
+            "EUPSPKG_SOURCE=${eupspkgSource}",
+            "LSST_SPLENV_REF=${splenvRef}",
+            "RUBINENV_VER=${rubinEnvVer}",
+            "MANIFEST_ID=${manifestId}",
+            "EUPS_TAG=${eupsTag}",
+            "PRODUCTS=${products}",
+          ]
 
-        withEnv(env) {
-          util.insideDockerWrap(
-            image: lsstswConfig.image,
-            pull: true,
-          ) {
+          withEnv(env) {
             util.bash '''
               ARGS=()
               ARGS+=('-b' "$MANIFEST_ID")
@@ -99,43 +104,41 @@ notify.wrap {
 
               publish "${ARGS[@]}"
             '''
+          } // withEnv
+        } // stage('create packages')
+        stage('push packages gcp') {
+          if (pushToBucket) {
+            withCredentials([file(
+              credentialsId: 'gs-eups-push',
+              variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+            )]) {
+              def env = [
+                "EUPS_PKGROOT=${pkgroot}",
+                "HOME=${cwd}/home",
+                "EUPS_GS_OBJECT_PREFIX=stack/src/",
+                "EUPS_GS_BUCKET=eups-prod"
+              ]
+              withEnv(env) {
+                container('gcloud-cli') {
+                  // alpine does not include bash by default
+                  util.posixSh '''
+                   gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
+                   gcloud storage cp \
+                   --recursive \
+                   "${EUPS_PKGROOT}/*" \
+                   "gs://${EUPS_GS_BUCKET}/${EUPS_GS_OBJECT_PREFIX}"
+                  '''
+                } // container('gcloud-cli')
+              } // withEnv
+            } // withCredentials
+          } else {
+            echo "skipping gcp push."
           }
-        } // util.insideDockerWrap
-      } // stage('publish')
-      stage('push packages gcp') {
-        if (pushToBucket) {
-          withCredentials([file(
-            credentialsId: 'gs-eups-push',
-            variable: 'GOOGLE_APPLICATION_CREDENTIALS'
-          )]) {
-            def env = [
-              "EUPS_PKGROOT=${pkgroot}",
-              "HOME=${cwd}/home",
-              "EUPS_GS_OBJECT_PREFIX=stack/src/",
-              "EUPS_GS_BUCKET=eups-prod"
-            ]
-            withEnv(env) {
-              docker.image(util.defaultGcloudImage()).inside {
-                // alpine does not include bash by default
-                util.posixSh '''
-                 gcloud auth activate-service-account eups-dev@prompt-proto.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-                 gcloud storage cp \
-                 --recursive \
-                 "${EUPS_PKGROOT}/*" \
-                 "gs://${EUPS_GS_BUCKET}/${EUPS_GS_OBJECT_PREFIX}"
-                '''
-              } // .inside
-            } // withEnv
-          } // withCredentials
-        } else {
-          echo "skipping gcp push."
-        }
-      } // stage('push packages')
-    } // ws
+        } // stage('push packages')
+      } // ws
+    } // util.insideK8sContainer
   } // run
-  util.nodeWrap(lsstswConfig.label) {
-    timeout(time: timelimit, unit: 'HOURS') {
-      run()
-    }
+  timeout(time: timelimit, unit: 'HOURS') {
+    run()
   }
 } // notify.wrap

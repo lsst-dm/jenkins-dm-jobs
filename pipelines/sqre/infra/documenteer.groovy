@@ -44,56 +44,60 @@ notify.wrap {
   relImage = relImage ?: "${dockerRepo}:al9-${eupsTag}"
 
   def run = {
-    def docTemplateDir = "${pwd()}/doc_template"
+    // The doc build and the ltd push must share one pod/workspace so that
+    // ltdPush can see the `_build/html` produced by runDocumenteer. Run both
+    // inside a single release-image pod.
+    util.insideK8sContainer(
+      image: relImage,
+      pull: false,
+    ) {
+      def docTemplateDir = "${pwd()}/doc_template"
 
-    dir(docTemplateDir) {
-      stage('build docs') {
-        deleteDir()
+      dir(docTemplateDir) {
+        stage('build docs') {
+          deleteDir()
 
-        git([
-          url: docTemplateRepo,
-          branch: docTemplateRef,
-        ])
-
-        util.runDocumenteer(
-          docImage: relImage,
-          docTemplateDir: docTemplateDir,
-          docPull: false,
-          eupsTag: 'current',
-        )
-      } // stage
-
-      stage('publish') {
-        if (publish) {
-          publishHTML([
-            allowMissing: false,
-            alwaysLinkToLastBuild: true,
-            keepAll: true,
-            reportDir: '_build/html',
-            reportFiles: 'index.html',
-            reportName: 'doc build',
-            reportTitles: '',
+          git([
+            url: docTemplateRepo,
+            branch: docTemplateRef,
           ])
 
-          archiveArtifacts([
-            artifacts: '_build/html/**/*',
-            allowEmptyArchive: true,
-            fingerprint: false,
-          ])
-
-          util.ltdPush(
-            ltdProduct: "pipelines",
-            repoSlug: "lsst/pipelines_lsst_io",
-            ltdSlug: ltdSlug,
+          util.runDocumenteer(
+            docTemplateDir: docTemplateDir,
+            eupsTag: 'current',
           )
-        } // if
-      } // stage
-    } // dir
+        } // stage
+
+        stage('publish') {
+          if (publish) {
+            publishHTML([
+              allowMissing: false,
+              alwaysLinkToLastBuild: true,
+              keepAll: true,
+              reportDir: '_build/html',
+              reportFiles: 'index.html',
+              reportName: 'doc build',
+              reportTitles: '',
+            ])
+
+            archiveArtifacts([
+              artifacts: '_build/html/**/*',
+              allowEmptyArchive: true,
+              fingerprint: false,
+            ])
+
+            util.ltdPush(
+              ltdProduct: "pipelines",
+              repoSlug: "lsst/pipelines_lsst_io",
+              ltdSlug: ltdSlug,
+            )
+          } // if
+        } // stage
+      } // dir
+    } // util.insideK8sContainer
   } // run
 
-  util.nodeWrap('linux-64') {
-    timeout(time: 120, unit: 'MINUTES') {
-      run()
-    }
-  } // util.nodeWrap
+  timeout(time: 120, unit: 'MINUTES') {
+    run()
+  }
 } // notify.wrap
