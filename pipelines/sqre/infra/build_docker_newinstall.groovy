@@ -41,7 +41,7 @@ notify.wrap {
   def matrix = [:]
   lsstswConfigs.each{ lsstswConfig ->
     def slug = util.lsstswConfigSlug(lsstswConfig)
-    matrix[slug] ={
+    matrix[slug] = {
     def run = {
       stage('checkout') {
         repo = git([
@@ -49,71 +49,94 @@ notify.wrap {
           branch: gitRef,
         ])
       }
-      stage('build') {
-        def opt = []
-        opt << '--pull=true'
-        opt << '--no-cache'
-        opt << "--build-arg LSST_SPLENV_REF=\"${splenvRef}\""
-        opt << "--load"
-        opt << '.'
-        dir(buildDir) {
-          println("TEST")
-          println(dockerRepo)
-          image = docker.build("${dockerRepo}", opt.join(' '))
+
+      stage('build and push') {
+        def arch = lsstswConfig.display_name.tokenize('-').last()
+        def cacheRepo = util.buildcacheRepo('newinstall')
+        def metadataFile = '/tmp/build-metadata.json'
+
+        util.setupBuildkitBuilder()
+
+        // The BuildKit registry cache lives in GCP Artifact Registry; --cache-from
+        // (and --cache-to on push builds) needs auth even on NO_PUSH validation
+        // runs, so authenticate to the cache registry unconditionally.
+        withCredentials([file(
+          credentialsId: 'google_archive_registry_sa',
+          variable: 'GOOGLE_APPLICATION_CREDENTIALS',
+        )]) {
+          sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+          sh 'gcloud auth configure-docker us-central1-docker.pkg.dev --quiet'
         }
-      }
-      stage('push') {
-        def digest = null
+
+        // GHCR login is only for pushing images, so keep it gated on push.
         if (!noPush) {
-          docker.withRegistry(
-            'https://ghcr.io',
-            'rubinobs-dm'
-          ) {
-            registryTags.each { name ->
-              image.push(name)
-            }
+          withCredentials([usernamePassword(
+            credentialsId: 'rubinobs-dm',
+            usernameVariable: 'GHCR_USER',
+            passwordVariable: 'GHCR_TOKEN',
+          )]) {
+            sh 'echo $GHCR_TOKEN | docker login ghcr.io -u $GHCR_USER --password-stdin'
           }
-          digest = sh(
-            script: "docker inspect --format='{{index .RepoDigests 0}}' ${dockerRepo}:${dockerTag}",
-            returnStdout: true
-          ).trim()
-
         }
-          dockerdigest.add(digest)
-      } // push
-  }
 
+        def buildArgs = [
+          '--pull=true',
+          "--build-arg LSST_SPLENV_REF=\"${splenvRef}\"",
+          util.buildkitCacheArgs(cacheRepo, arch, !noPush),
+          "--metadata-file ${metadataFile}",
+        ]
 
-  util.nodeWrap(lsstswConfig.label) {
-    timeout(time: 4, unit: 'HOURS') {
-      run()
+        if (!noPush) {
+          buildArgs << '--push'
+          registryTags.each { name ->
+            buildArgs << "--tag ${dockerRepo}:${name}"
+          }
+        }
+
+        buildArgs << '.'
+
+        dir(buildDir) {
+          sh "docker buildx build ${buildArgs.join(' ')}"
+        }
+
+        if (!noPush) {
+          def meta = readJSON(file: metadataFile)
+          def digest = meta['containerimage.digest']
+          dockerdigest.add("${dockerRepo}:${dockerTag}@${digest}")
+        }
+      } // stage('build and push')
+    } // run
+
+    util.nodeWrap(lsstswConfig.label) {
+      timeout(time: 4, unit: 'HOURS') {
+        run()
+      }
+    } // util.nodeWrap
     }
-  } // util.nodeWrap('linux-64')
-  }
   }
   parallel matrix
 
   def merge = {
-    stage('digest'){
+    stage('digest') {
+      withCredentials([usernamePassword(
+        credentialsId: 'rubinobs-dm',
+        usernameVariable: 'GHCR_USER',
+        passwordVariable: 'GHCR_TOKEN',
+      )]) {
+        sh 'echo $GHCR_TOKEN | docker login ghcr.io -u $GHCR_USER --password-stdin'
         def digest = dockerdigest.join(' ')
-        docker.withRegistry(
-          'https://ghcr.io',
-          'rubinobs-dm'
-        ) {
         registryTags.each { name ->
-          sh(script: """ \
-            docker buildx imagetools create -t $dockerRepo:$name \
-            $digest
-            """,
-            returnStdout: true)
-          }
+          sh "docker buildx imagetools create -t ${dockerRepo}:${name} ${digest}"
         }
       }
+    }
   } // merge
-  util.nodeWrap('linux-64') {
+  if (!noPush && !dockerdigest.isEmpty()) {
+    util.nodeWrap('linux-64') {
       timeout(time: 1, unit: 'HOURS') {
         merge()
       }
     } // nodeWrap
+  }
 
 } // notify.wrap
