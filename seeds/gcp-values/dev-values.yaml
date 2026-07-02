@@ -82,7 +82,7 @@ controller:
   resources:
     requests:
       cpu: "50m"
-      memory: "256Mi"
+      memory: "8Gi"
     limits:
       cpu: "6000m"
       memory: "32096Mi"
@@ -150,7 +150,14 @@ controller:
     - name: CASC_VAULT_PATHS
       value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-checks,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/github-jenkins,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev,secret/rubin/rubin-jenkins-control-dev/sqre-mini,secret/rubin/rubin-jenkins-control-dev/rubinobs-dm,secret/rubin/rubin-jenkins-control-dev/gs-eups-push,secret/rubin/rubin-jenkins-control-dev/weka-s3/testdata-ci-lsst,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/sonarqube/jenkins-token
   # Set min/max heap here if needed with:
+  # Heap pinned (-Xms == -Xmx) so the JVM does not auto-size to 25% of the
+  # container limit (~7.8Gi of the 31.3Gi limit) and then grow/thrash under GC.
+  # 4g sits within the 8Gi memory request, leaving headroom for metaspace,
+  # thread stacks, code cache, and direct buffers so the pod stays inside its
+  # guaranteed allocation and avoids OOMKill-triggered reboots.
   javaOpts: >
+    -Xms4g
+    -Xmx4g
     -Dorg.jenkinsci.plugins.docker.workflow.client.DockerClient.CLIENT_TIMEOUT=1200
     -Dorg.csanchez.jenkins.plugins.kubernetes.ContainerExecTimeout=1200
     -Dorg.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep.NO_ACTIVITY_TIMEOUT=1200
