@@ -3013,12 +3013,20 @@ def sonarScanPackage(Map args) {
         ''',
       ).trim()
 
+      // The scan workspace reaches the cache via a `lsstsw` -> `cache-load/lsstsw`
+      // symlink, so CWD here is the symlink path. SonarQube indexes source files
+      // keyed under projectBaseDir, but the Cobertura sensor canonicalizes the
+      // coverage report's paths (resolving the symlink) to the real cache-load
+      // path. If base dir stays the symlink path the two key sets never match and
+      // coverage silently records 0.0%. Pin projectBaseDir to the canonical path
+      // (`pwd -P`) so indexed sources and resolved coverage share one real path.
       withSonarQubeEnv('lsst-sonarqube') {
         sh """
           ${scannerHome}/bin/sonar-scanner \\
             -Dsonar.projectKey=${projectKey} \\
             -Dsonar.projectName=${pkg} \\
             -Dsonar.projectVersion=${eupsTag} \\
+            -Dsonar.projectBaseDir="\$(pwd -P)" \\
             -Dsonar.sources=${sonarSources} \\
             -Dsonar.python.version=3 \\
             -Dsonar.sourceEncoding=UTF-8 \\
