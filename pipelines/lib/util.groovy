@@ -1700,54 +1700,48 @@ def String epochToUtc(Integer epoch) {
 }
 
 /**
- * run ltd-mason-travis to push a doc build
+ * run `ltd upload` (ltd-conveyor) to push a doc build
  *
  * Runs in the caller's container -- the caller must produce `_build/html` in
- * the same pod/workspace (see documenteer.groovy). ltd-mason is pip-installed
- * here because the LSST release image provides python/pip but not ltd-mason.
+ * the same pod/workspace (see documenteer.groovy). ltd-conveyor is
+ * pip-installed here because the LSST release image provides python/pip but
+ * not ltd-conveyor.
+ *
+ * ltd-conveyor talks to LTD Keeper (LTD_USERNAME/LTD_PASSWORD) and uploads via
+ * presigned S3 URLs handed back by Keeper, so no raw AWS credentials are
+ * needed (the old ltd-mason `ltd-mason-aws` binding is dropped).
  *
  * @param p Map
  * @param p.eupsTag String tag to setup (required). Eg.: 'current', 'b1234'
- * @param p.repoSlug String github repo slug (required). Eg.: 'lsst/pipelines_lsst_io'
+ * @param p.repoSlug String github repo slug. Eg.: 'lsst/pipelines_lsst_io'
  * @param p.ltdProduct String LTD product name (required)., Eg.: 'pipelines'
+ * @param p.ltdSlug String git ref / edition slug (required)
  */
 def ltdPush(Map p) {
   requireMapKeys(p, [
     'ltdSlug',
     'ltdProduct',
-    'repoSlug',
   ])
 
   withEnv([
-    "LTD_MASON_BUILD=true",
-    "LTD_MASON_PRODUCT=${p.ltdProduct}",
-    "LTD_KEEPER_URL=https://keeper.lsst.codes",
-    "LTD_KEEPER_USER=travis",
-    "TRAVIS_PULL_REQUEST=false",
-    "TRAVIS_REPO_SLUG=${p.repoSlug}",
-    "TRAVIS_BRANCH=${p.ltdSlug}",
+    "LTD_HOST=https://keeper.lsst.codes",
+    "LTD_PRODUCT=${p.ltdProduct}",
+    "LTD_GIT_REF=${p.ltdSlug}",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
-      credentialsId: 'ltd-mason-aws',
-      usernameVariable: 'LTD_MASON_AWS_ID',
-      passwordVariable: 'LTD_MASON_AWS_SECRET',
-    ],
-    [
-      $class: 'UsernamePasswordMultiBinding',
       credentialsId: 'ltd-keeper',
-      usernameVariable: 'LTD_KEEPER_USER',
-      passwordVariable: 'LTD_KEEPER_PASSWORD',
+      usernameVariable: 'LTD_USERNAME',
+      passwordVariable: 'LTD_PASSWORD',
     ]]) {
-      // expect that the service will return an HTTP 502, which causes
-      // ltd-mason-travis to exit 1
-      // TODO(DM-54833): migrate to ltd-conveyor (`ltd upload`) and drop this
-      // pip install of the deprecated ltd-mason.
       bash '''
       source /opt/lsst/software/stack/loadLSST.bash
-      pip install --user ltd-mason
+      pip install --user ltd-conveyor
       export PATH="${HOME}/.local/bin:${PATH}"
-      ltd-mason-travis --html-dir _build/html --verbose || true
+      ltd upload \
+        --product "${LTD_PRODUCT}" \
+        --git-ref "${LTD_GIT_REF}" \
+        --dir _build/html
       '''
     } // withCredentials
   } //withEnv

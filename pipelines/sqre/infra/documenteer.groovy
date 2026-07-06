@@ -50,6 +50,14 @@ notify.wrap {
     util.insideK8sContainer(
       image: relImage,
       pull: false,
+      // hyperdisk-balanced (the /j workspace StorageClass) has a 4Gi minimum;
+      // anything smaller is rejected by the CSI provisioner and the pod never
+      // schedules ("PreBind VolumeBinding: context deadline exceeded").
+      storage: '10Gi',
+      cpuRequest: '1',
+      cpuLimit: '2',
+      memRequest: '2Gi',
+      memLimit: '8Gi',
     ) {
       def docTemplateDir = "${pwd()}/doc_template"
 
