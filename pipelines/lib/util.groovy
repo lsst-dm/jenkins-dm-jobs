@@ -1753,34 +1753,61 @@ def ltdPush(Map p) {
       usernameVariable: 'LTD_USERNAME',
       passwordVariable: 'LTD_PASSWORD',
     ]]) {
-      // ltd-conveyor uploads every file via a presigned S3 POST and raises
-      // S3Error on the first non-success response, aborting the whole push. The
-      // S3 backend intermittently returns 503 (slow down / service unavailable)
-      // on a single file, so retry the upload with backoff rather than failing
-      // the build on a transient hiccup. Each `ltd upload` registers a fresh LTD
-      // build, so re-running is safe.
+      // ltd-conveyor uploads every file with a bare requests.post and no retry,
+      // then raises S3Error on the first non-204 response, aborting the whole
+      // directory push. The S3 backend intermittently returns 503 (slow down)
+      // on individual files; pipelines_lsst_io has tens of thousands of files,
+      // so at any nonzero per-file 503 rate a whole-directory retry almost
+      // always trips again on some other file. Instead, monkeypatch
+      // ltd-conveyor's per-file upload with a bounded retry so a transient 503
+      // retries just that one file (upload_file re-opens from local_path each
+      // call, so retries are safe) rather than failing the whole build.
       bash '''
       source /opt/lsst/software/stack/loadLSST.bash
       pip install --user ltd-conveyor
       export PATH="${HOME}/.local/bin:${PATH}"
 
-      attempt=1
-      max_attempts=4
-      while true; do
-        if ltd upload \
-          --product "${LTD_PRODUCT}" \
-          --git-ref "${LTD_GIT_REF}" \
-          --dir _build/html; then
-          break
-        fi
-        if [ "${attempt}" -ge "${max_attempts}" ]; then
-          echo "ltd upload failed after ${max_attempts} attempts" >&2
-          exit 1
-        fi
-        echo "ltd upload attempt ${attempt} failed; retrying in $((attempt * 20))s" >&2
-        sleep "$((attempt * 20))"
-        attempt=$((attempt + 1))
-      done
+      cat > ltd_retry_upload.py <<'PYEOF'
+import sys
+import time
+
+import ltdconveyor.s3.presignedpost as pp
+
+_orig_upload_file = pp.upload_file
+_S3Error = pp.S3Error
+
+
+def _retrying_upload_file(**kwargs):
+    local_path = kwargs.get("local_path")
+    max_attempts = 5
+    for attempt in range(1, max_attempts + 1):
+        try:
+            result = _orig_upload_file(**kwargs)
+            sys.stdout.write("uploaded %s\\n" % local_path)
+            sys.stdout.flush()
+            return result
+        except _S3Error:
+            if attempt >= max_attempts:
+                raise
+            delay = min(5 * attempt, 30)
+            sys.stderr.write(
+                "ltd upload attempt %d for %s failed; retry in %ds\\n"
+                % (attempt, local_path, delay)
+            )
+            time.sleep(delay)
+
+
+pp.upload_file = _retrying_upload_file
+
+from ltdconveyor.cli.main import main
+
+main()
+PYEOF
+
+      python ltd_retry_upload.py upload \
+        --product "${LTD_PRODUCT}" \
+        --git-ref "${LTD_GIT_REF}" \
+        --dir _build/html
       '''
     } // withCredentials
   } //withEnv
