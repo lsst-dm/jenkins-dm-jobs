@@ -215,8 +215,8 @@ def String renderPodYaml(Map p) {
   // node to be scaled up.
   String cpuRequest = p.cpuRequest ?: '8'
   String cpuLimit   = p.cpuLimit ?: '10'
-  String memRequest = p.memRequest ?: '64Gi'
-  String memLimit   = p.memLimit ?: '64Gi'
+  String memRequest = p.memRequest ?: '32Gi'
+  String memLimit   = p.memLimit ?: '48Gi'
   String storage    = p.storage ?: '300Gi'
   Boolean emptyDirWorkspace = p.emptyDirWorkspace ?: false
 
@@ -719,10 +719,15 @@ def lsstswBuild(
       image: lsstswConfig.image,
       pull: true,
       arch: arch,
+      cpuRequest: '8',
+      cpuLimit: '10',
+      memRequest: '12Gi',
+      memLimit: '32Gi',
       // Add gcloud-cli sidecar when cache loading, saving, or test-data download
       // is needed.  All three operations share the j-workspace emptyDir so data
       // transfers happen without inter-pod hostPath mounts.
       cacheImage: (fetchCache || cachelsstsw || buildParams['CI_LSSTCAM']) ? defaultGcloudCliImage() : null,
+
     ) {
       try {
         if (fetchCache) {
@@ -1543,22 +1548,6 @@ def void gitNoNoise(Map args) {
   git([
     url: args.url,
     branch: args.branch,
-  ])
-}
-
-/**
- * Checkout a git ref (branch, tag or SHA)
-*/
-def checkoutGitRef(String url, String ref) {
-  checkout([
-    $class: 'GitSCM',
-    branches: [[name: ref]],
-    userRemoteConfigs: [[url: url]],
-    doGenerateSubmoduleConfigurations: false,
-    submoduleCfg: [],
-      extensions: [
-          [$class: 'CloneOption', noTags: false, shallow: false]
-        ],
   ])
 }
 
@@ -2407,17 +2396,31 @@ def void checkoutLFS(Map p) {
   // git-lfs (via loadLSST.bash). The clone and the lfs pull have to run in the
   // same pod workspace: a separate pod gets its own emptyDir /j and cannot see a
   // clone made on the outer agent (this is what broke ap_verify/verify_drp).
-  checkoutGitRef(gitRepo, p.gitRef)
-
-  try {
+  //
+  // Clone via shell git (not the checkout/GitSCM plugin step): under the k8s
+  // plugin the git-client plugin runs on the agent JVM in the jnlp sidecar
+  // (JENKINS-30600), whose small memory limit OOMs on large datasets like
+  // rc2_subset and drops the remoting channel. A `bash` git clone is a launched
+  // process, so it is decorated into the runner container and gets the runner's
+  // full memory instead.
+  withEnv([
+    "LFS_GIT_REPO=${gitRepo}",
+    "LFS_GIT_REF=${p.gitRef}",
+  ]) {
     bash('''
       source /opt/lsst/software/stack/loadLSST.bash
+
+      # Materialize pointers only during clone/checkout; the blobs are fetched
+      # explicitly by `git lfs pull` below so a smudge filter can't double-pull.
+      export GIT_LFS_SKIP_SMUDGE=1
+
       git lfs install --skip-repo
+      git clone "${LFS_GIT_REPO}" .
+      git checkout "${LFS_GIT_REF}"
+
+      unset GIT_LFS_SKIP_SMUDGE
       git lfs pull origin
     ''')
-  } finally {
-    // try not to break jenkins clone mangement
-    bash 'rm -f .git/hooks/post-checkout'
   }
 } // checkoutLFS
 
