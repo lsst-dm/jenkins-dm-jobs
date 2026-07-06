@@ -69,7 +69,7 @@ notify.wrap {
   switch(osfamily) {
     case 'redhat':
       linuxTarballs(image, platform, compiler, py,
-        timeout, buildTarget, smokeConfig, wipeout, publish)
+        timeout, buildTarget, smokeConfig, label, wipeout, publish)
       break
     case 'osx':
       osxTarballs(label, platform, compiler, py,
@@ -104,6 +104,7 @@ def void linuxTarballs(
   Integer timelimit,
   Map buildTarget,
   Map smokeConfig,
+  String label,
   Boolean wipeout = false,
   Boolean publish = false
 ) {
@@ -117,9 +118,14 @@ def void linuxTarballs(
     // the pod landing on a different node than the agent, and separate per-stage
     // pods can't see each other's distrib/ output. The gcloud-cli sidecar
     // (cacheImage) provides gcloud for the publish step.
+    //
+    // Pin to the matrix entry's arch: arm nodes are tainted, so without arch
+    // the aarch64 tarball lands on the x86 pool and produces x86 binaries.
+    def arch = (label == 'linux-aarch64') ? 'arm64' : 'amd64'
     util.insideK8sContainer(
       image: imageName,
       pull: true,
+      arch: arch,
       cacheImage: util.defaultGcloudCliImage(),
     ) {
       if (wipeout) {
@@ -801,6 +807,11 @@ def String scriptPreamble(
 
     set -xe
     set -o pipefail
+
+    # lsstinstall derives the conda shell hook from \$SHELL; when the container
+    # leaves \$SHELL at a value conda's hook rejects (e.g. /bin/sh) it aborts
+    # with "Unknown shell". This script runs under bash, so pin it.
+    export SHELL=/bin/bash
 
     if [[ -n \$EUPS_S3_BUCKET ]]; then
         export LSST_EUPS_PKGROOT_BASE_URL="https://\${EUPS_S3_BUCKET}/stack"

@@ -60,12 +60,14 @@ notify.wrap {
         // The BuildKit registry cache lives in GCP Artifact Registry; --cache-from
         // (and --cache-to on push builds) needs auth even on NO_PUSH validation
         // runs, so authenticate to the cache registry unconditionally.
-        withCredentials([file(
+        // google_archive_registry_sa is a usernamePassword credential, so log in
+        // with docker rather than a gcloud key file (gcloud isn't on the agent).
+        withCredentials([usernamePassword(
           credentialsId: 'google_archive_registry_sa',
-          variable: 'GOOGLE_APPLICATION_CREDENTIALS',
+          usernameVariable: 'AR_USER',
+          passwordVariable: 'AR_TOKEN',
         )]) {
-          sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
-          sh 'gcloud auth configure-docker us-central1-docker.pkg.dev --quiet'
+          sh 'echo $AR_TOKEN | docker login us-central1-docker.pkg.dev -u $AR_USER --password-stdin'
         }
 
         // GHCR login is only for pushing images, so keep it gated on push.

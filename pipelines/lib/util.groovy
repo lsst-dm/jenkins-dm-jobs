@@ -78,6 +78,26 @@ def void setupBuildkitBuilder() {
         --use \
         unix:///run/buildkit/buildkitd.sock
     fi
+
+    # The remote driver does not verify connectivity at create time; the first
+    # build is what actually dials the socket. The buildkitd sidecar can still
+    # be starting then -- especially on the arm nodepool, which scales from zero
+    # so the pod lands on a cold node while moby/buildkit is still pulling. Poll
+    # until the daemon answers, otherwise the build fails with
+    # "waiting for connection: context deadline exceeded".
+    for i in $(seq 1 60); do
+      if docker buildx inspect --bootstrap agent-builder >/dev/null 2>&1; then
+        echo "buildkitd ready after attempt ${i}"
+        break
+      fi
+      if [ "${i}" -eq 60 ]; then
+        echo "buildkitd never became reachable; diagnostics follow:" >&2
+        ls -la /run/buildkit || true
+        docker buildx inspect --bootstrap agent-builder || true
+        exit 1
+      fi
+      sleep 5
+    done
   '''
 }
 
@@ -166,12 +186,29 @@ def String renderPodYaml(Map p) {
   String cacheImage = p.cacheImage ?: null
   String arch       = p.arch ?: null
 
-  // Always mount emptyDirs at /j and /home/jenkins.
-  // /j: cluster default readOnlyRootFilesystem:true blocks Jenkins creating /j/workspace/...
+  // /j: the build workspace, backed by a per-build generic ephemeral volume
+  // (a Hyperdisk dynamically provisioned via the hyperdisk-rwo StorageClass,
+  // deleted with the pod) rather than an emptyDir. An emptyDir lives on the
+  // node root disk, and the multi-GB lsstsw build filling it triggered kubelet
+  // ephemeral-storage eviction of the whole agent. The c4d (x86) and c4a (arm)
+  // worker machine families are Hyperdisk-only -- GCP rejects pd-balanced and
+  // other pd-* disk types on them -- so the class must be hyperdisk-balanced,
+  // and it must NOT be zone-restricted because the c4d pool spans
+  // us-central1-a and -c (WaitForFirstConsumer binds it in the pod's zone).
+  // The cluster default readOnlyRootFilesystem:true is why /j must be a
+  // writable mount at all.
   // /home/jenkins: gives git a writable home so it can find .gitconfig and skip getpwuid()
   def extraVolumeMounts = "    - name: j-workspace\n      mountPath: /j\n" +
                           "    - name: home-jenkins\n      mountPath: /home/jenkins\n"
-  def extraVolumes      = "  - name: j-workspace\n    emptyDir: {}\n" +
+  def extraVolumes      = "  - name: j-workspace\n" +
+                          "    ephemeral:\n" +
+                          "      volumeClaimTemplate:\n" +
+                          "        spec:\n" +
+                          "          accessModes: [ReadWriteOnce]\n" +
+                          "          storageClassName: hyperdisk-rwo\n" +
+                          "          resources:\n" +
+                          "            requests:\n" +
+                          "              storage: 300Gi\n" +
                           "  - name: home-jenkins\n    emptyDir: {}\n"
 
   def volumeMountsSection = "    volumeMounts:\n" + extraVolumeMounts
@@ -207,6 +244,13 @@ def String renderPodYaml(Map p) {
       runAsUser: 1000
       runAsNonRoot: true
       readOnlyRootFilesystem: false
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 500m
+        memory: 1Gi
     volumeMounts:
     - name: j-workspace
       mountPath: /j
@@ -218,6 +262,13 @@ def String renderPodYaml(Map p) {
 apiVersion: v1
 kind: Pod
 spec:
+  securityContext:
+    # The /j workspace is a freshly-formatted Hyperdisk owned root:root 0755;
+    # without fsGroup the uid-1000 containers (notably jnlp) cannot write it and
+    # the remoting agent aborts its RWX check. fsGroup makes the kubelet chown
+    # mounted volumes to this GID and set them group-writable. (An emptyDir was
+    # created 0777 so this was never needed before the PVC switch.)
+    fsGroup: 1000
   initContainers:
   - name: setup-home
     image: ${image}
@@ -229,12 +280,26 @@ spec:
     args:
     - |
       printf '[user]\\n\\tname = jenkins\\n\\temail = jenkins@lsst.org\\n' > /home/jenkins/.gitconfig
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
     volumeMounts:
     - name: home-jenkins
       mountPath: /home/jenkins
   containers:
   - name: jnlp
     workingDir: /j
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
     volumeMounts:
     - name: j-workspace
       mountPath: /j
@@ -260,6 +325,13 @@ spec:
       runAsUser: 1000
       runAsNonRoot: true
       readOnlyRootFilesystem: false
+    resources:
+      requests:
+        cpu: "8"
+        memory: 64Gi
+      limits:
+        cpu: "10"
+        memory: 64Gi
 ${volumeMountsSection}${gcloudContainerSection}${volumesSection}${schedulingSection}"""
 
   return podYaml

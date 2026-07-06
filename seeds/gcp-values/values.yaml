@@ -1092,8 +1092,10 @@ controller:
                     - name: buildkitd
                       image: moby/buildkit:v0.15.0-rootless
                       imagePullPolicy: Always
-                      command:
-                        - buildkitd
+                      # No command: override -- the -rootless image entrypoint is
+                      # `rootlesskit buildkitd`, which sets up the user namespace.
+                      # Overriding command bypasses rootlesskit, so buildkitd exits
+                      # immediately and the k8s plugin reaper tears down the agent.
                       args:
                         - --addr
                         - unix:///run/buildkit/buildkitd.sock
@@ -1102,6 +1104,8 @@ controller:
                         exec:
                           command:
                             - buildctl
+                            - --addr
+                            - unix:///run/buildkit/buildkitd.sock
                             - debug
                             - workers
                         failureThreshold: 3
@@ -1113,6 +1117,8 @@ controller:
                         exec:
                           command:
                             - buildctl
+                            - --addr
+                            - unix:///run/buildkit/buildkitd.sock
                             - debug
                             - workers
                         failureThreshold: 3
@@ -1128,13 +1134,20 @@ controller:
                           cpu: "2"
                           memory: 8Gi
                       securityContext:
-                        allowPrivilegeEscalation: false
+                        # rootlesskit needs setuid newuidmap (blocked by
+                        # NoNewPrivs when allowPrivilegeEscalation is false) and
+                        # an unconfined AppArmor profile (GKE COS applies the
+                        # runtime/default profile, which denies the mount syscall
+                        # rootlesskit uses to share the root mount).
+                        allowPrivilegeEscalation: true
                         privileged: false
                         readOnlyRootFilesystem: false
                         runAsGroup: 1000
                         runAsNonRoot: true
                         runAsUser: 1000
                         seccompProfile:
+                          type: Unconfined
+                        appArmorProfile:
                           type: Unconfined
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
@@ -1210,8 +1223,10 @@ controller:
                     - name: buildkitd
                       image: moby/buildkit:v0.15.0-rootless
                       imagePullPolicy: Always
-                      command:
-                        - buildkitd
+                      # No command: override -- the -rootless image entrypoint is
+                      # `rootlesskit buildkitd`, which sets up the user namespace.
+                      # Overriding command bypasses rootlesskit, so buildkitd exits
+                      # immediately and the k8s plugin reaper tears down the agent.
                       args:
                         - --addr
                         - unix:///run/buildkit/buildkitd.sock
@@ -1220,6 +1235,8 @@ controller:
                         exec:
                           command:
                             - buildctl
+                            - --addr
+                            - unix:///run/buildkit/buildkitd.sock
                             - debug
                             - workers
                         failureThreshold: 3
@@ -1231,6 +1248,8 @@ controller:
                         exec:
                           command:
                             - buildctl
+                            - --addr
+                            - unix:///run/buildkit/buildkitd.sock
                             - debug
                             - workers
                         failureThreshold: 3
@@ -1246,13 +1265,20 @@ controller:
                           cpu: "2"
                           memory: 8Gi
                       securityContext:
-                        allowPrivilegeEscalation: false
+                        # rootlesskit needs setuid newuidmap (blocked by
+                        # NoNewPrivs when allowPrivilegeEscalation is false) and
+                        # an unconfined AppArmor profile (GKE COS applies the
+                        # runtime/default profile, which denies the mount syscall
+                        # rootlesskit uses to share the root mount).
+                        allowPrivilegeEscalation: true
                         privileged: false
                         readOnlyRootFilesystem: false
                         runAsGroup: 1000
                         runAsNonRoot: true
                         runAsUser: 1000
                         seccompProfile:
+                          type: Unconfined
+                        appArmorProfile:
                           type: Unconfined
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
@@ -1385,8 +1411,10 @@ controller:
                     - name: buildkitd
                       image: moby/buildkit:v0.15.0-rootless
                       imagePullPolicy: Always
-                      command:
-                        - buildkitd
+                      # No command: override -- the -rootless image entrypoint is
+                      # `rootlesskit buildkitd`, which sets up the user namespace.
+                      # Overriding command bypasses rootlesskit, so buildkitd exits
+                      # immediately and the k8s plugin reaper tears down the agent.
                       args:
                         - --addr
                         - unix:///run/buildkit/buildkitd.sock
@@ -1395,6 +1423,8 @@ controller:
                         exec:
                           command:
                             - buildctl
+                            - --addr
+                            - unix:///run/buildkit/buildkitd.sock
                             - debug
                             - workers
                         failureThreshold: 3
@@ -1406,6 +1436,8 @@ controller:
                         exec:
                           command:
                             - buildctl
+                            - --addr
+                            - unix:///run/buildkit/buildkitd.sock
                             - debug
                             - workers
                         failureThreshold: 3
@@ -1421,13 +1453,20 @@ controller:
                           cpu: "2"
                           memory: 8Gi
                       securityContext:
-                        allowPrivilegeEscalation: false
+                        # rootlesskit needs setuid newuidmap (blocked by
+                        # NoNewPrivs when allowPrivilegeEscalation is false) and
+                        # an unconfined AppArmor profile (GKE COS applies the
+                        # runtime/default profile, which denies the mount syscall
+                        # rootlesskit uses to share the root mount).
+                        allowPrivilegeEscalation: true
                         privileged: false
                         readOnlyRootFilesystem: false
                         runAsGroup: 1000
                         runAsNonRoot: true
                         runAsUser: 1000
                         seccompProfile:
+                          type: Unconfined
+                        appArmorProfile:
                           type: Unconfined
                       terminationMessagePath: /dev/termination-log
                       terminationMessagePolicy: File
