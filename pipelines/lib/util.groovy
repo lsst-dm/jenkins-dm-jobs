@@ -1753,14 +1753,34 @@ def ltdPush(Map p) {
       usernameVariable: 'LTD_USERNAME',
       passwordVariable: 'LTD_PASSWORD',
     ]]) {
+      // ltd-conveyor uploads every file via a presigned S3 POST and raises
+      // S3Error on the first non-success response, aborting the whole push. The
+      // S3 backend intermittently returns 503 (slow down / service unavailable)
+      // on a single file, so retry the upload with backoff rather than failing
+      // the build on a transient hiccup. Each `ltd upload` registers a fresh LTD
+      // build, so re-running is safe.
       bash '''
       source /opt/lsst/software/stack/loadLSST.bash
       pip install --user ltd-conveyor
       export PATH="${HOME}/.local/bin:${PATH}"
-      ltd upload \
-        --product "${LTD_PRODUCT}" \
-        --git-ref "${LTD_GIT_REF}" \
-        --dir _build/html
+
+      attempt=1
+      max_attempts=4
+      while true; do
+        if ltd upload \
+          --product "${LTD_PRODUCT}" \
+          --git-ref "${LTD_GIT_REF}" \
+          --dir _build/html; then
+          break
+        fi
+        if [ "${attempt}" -ge "${max_attempts}" ]; then
+          echo "ltd upload failed after ${max_attempts} attempts" >&2
+          exit 1
+        fi
+        echo "ltd upload attempt ${attempt} failed; retrying in $((attempt * 20))s" >&2
+        sleep "$((attempt * 20))"
+        attempt=$((attempt + 1))
+      done
       '''
     } // withCredentials
   } //withEnv
