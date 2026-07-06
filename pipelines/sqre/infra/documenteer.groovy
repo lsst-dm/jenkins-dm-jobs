@@ -50,10 +50,11 @@ notify.wrap {
     util.insideK8sContainer(
       image: relImage,
       pull: false,
-      // hyperdisk-balanced (the /j workspace StorageClass) has a 4Gi minimum;
-      // anything smaller is rejected by the CSI provisioner and the pod never
-      // schedules ("PreBind VolumeBinding: context deadline exceeded").
-      storage: '10Gi',
+      // The doc build is lightweight and needs no dedicated disk, so back /j
+      // with an emptyDir instead of a hyperdisk PVC. That sidesteps the
+      // hyperdisk-balanced 4Gi minimum and lets us cap the workspace at 2Gi.
+      emptyDirWorkspace: true,
+      storage: '2Gi',
       cpuRequest: '1',
       cpuLimit: '2',
       memRequest: '2Gi',

@@ -135,6 +135,11 @@ def String buildkitCacheArgs(String cacheRepo, String arch, Boolean pushCache = 
  * @param p.memRequest  String optional runner memory request (default '64Gi').
  * @param p.memLimit    String optional runner memory limit (default '64Gi').
  * @param p.storage     String optional /j workspace size (default '300Gi').
+ * @param p.emptyDirWorkspace Boolean optional; back /j with an emptyDir
+ *                      (sizeLimit = storage) instead of a hyperdisk PVC. Use for
+ *                      lightweight jobs that don't need a dedicated disk and want
+ *                      a workspace below the hyperdisk-balanced 4Gi minimum
+ *                      (optional, default false).
  * @param run       Closure to execute inside the container
  */
 def void insideK8sContainer(Map p, Closure run) {
@@ -145,6 +150,7 @@ def void insideK8sContainer(Map p, Closure run) {
   String cacheImage  = p.cacheImage ?: null
   String arch        = p.arch ?: null
   String pullPolicy  = pull ? 'Always' : 'IfNotPresent'
+  Boolean emptyDirWorkspace = p.emptyDirWorkspace ?: false
 
   def podYaml = renderPodYaml(
     image:      image,
@@ -156,6 +162,7 @@ def void insideK8sContainer(Map p, Closure run) {
     memRequest: p.memRequest,
     memLimit:   p.memLimit,
     storage:    p.storage,
+    emptyDirWorkspace: emptyDirWorkspace,
   )
 
   // Surface the arch in the generated pod name so the two matrix instances are
@@ -192,6 +199,8 @@ def void insideK8sContainer(Map p, Closure run) {
  * @param p.memRequest String optional runner memory request (default '64Gi').
  * @param p.memLimit   String optional runner memory limit (default '64Gi').
  * @param p.storage    String optional /j workspace ephemeral-PVC size (default '300Gi').
+ * @param p.emptyDirWorkspace Boolean optional; when true /j is an emptyDir with
+ *                     sizeLimit=storage instead of a hyperdisk PVC (default false).
  * @return YAML String
  */
 @NonCPS
@@ -209,6 +218,7 @@ def String renderPodYaml(Map p) {
   String memRequest = p.memRequest ?: '64Gi'
   String memLimit   = p.memLimit ?: '64Gi'
   String storage    = p.storage ?: '300Gi'
+  Boolean emptyDirWorkspace = p.emptyDirWorkspace ?: false
 
   // /j: the build workspace, backed by a per-build generic ephemeral volume
   // (a Hyperdisk dynamically provisioned via the hyperdisk-rwo StorageClass,
@@ -221,18 +231,27 @@ def String renderPodYaml(Map p) {
   // us-central1-a and -c (WaitForFirstConsumer binds it in the pod's zone).
   // The cluster default readOnlyRootFilesystem:true is why /j must be a
   // writable mount at all.
+  //
+  // emptyDirWorkspace flips /j back to an emptyDir (sizeLimit=storage) for
+  // lightweight jobs that neither run a multi-GB lsstsw build nor need a
+  // dedicated disk. This dodges the hyperdisk-balanced 4Gi minimum (so /j can be
+  // 2Gi) and is pool-agnostic -- no PVC provisioning and no pd-* class that the
+  // c4d/c4a worker pools would reject if the pod landed there.
   // /home/jenkins: gives git a writable home so it can find .gitconfig and skip getpwuid()
   def extraVolumeMounts = "    - name: j-workspace\n      mountPath: /j\n" +
                           "    - name: home-jenkins\n      mountPath: /home/jenkins\n"
-  def extraVolumes      = "  - name: j-workspace\n" +
-                          "    ephemeral:\n" +
-                          "      volumeClaimTemplate:\n" +
-                          "        spec:\n" +
-                          "          accessModes: [ReadWriteOnce]\n" +
-                          "          storageClassName: hyperdisk-rwo\n" +
-                          "          resources:\n" +
-                          "            requests:\n" +
-                          "              storage: ${storage}\n" +
+  def jWorkspaceVolume  = emptyDirWorkspace ?
+    "  - name: j-workspace\n    emptyDir:\n      sizeLimit: ${storage}\n" :
+    "  - name: j-workspace\n" +
+    "    ephemeral:\n" +
+    "      volumeClaimTemplate:\n" +
+    "        spec:\n" +
+    "          accessModes: [ReadWriteOnce]\n" +
+    "          storageClassName: hyperdisk-rwo\n" +
+    "          resources:\n" +
+    "            requests:\n" +
+    "              storage: ${storage}\n"
+  def extraVolumes      = jWorkspaceVolume +
                           "  - name: home-jenkins\n    emptyDir: {}\n"
 
   def volumeMountsSection = "    volumeMounts:\n" + extraVolumeMounts
