@@ -353,9 +353,12 @@ spec:
     imagePullPolicy: ${pullPolicy}
     tty: true
     command: [sh, -c]
+    # Runs as UID 1000, so it cannot write the root-owned /etc/passwd; user
+    # resolution is handled instead via the HOME/USER/LOGNAME env below (plus the
+    # staged /home/jenkins/.gitconfig), which is what git and the Rubin tooling
+    # actually consult. The LSST stack images already ship a UID-1000 user.
     args:
     - |
-      echo 'jenkins:x:1000:0:Jenkins:/home/jenkins:/bin/sh' >> /etc/passwd
       exec sleep 99d
     env:
     - name: HOME
@@ -721,8 +724,11 @@ def lsstswBuild(
       arch: arch,
       cpuRequest: '8',
       cpuLimit: '10',
-      memRequest: '12Gi',
-      memLimit: '32Gi',
+      // Cap the runner at 32Gi (vs the 64Gi renderPodYaml default) so ~4 matrix
+      // cells pack onto a c4d/c4a-standard-32 node instead of ~2, easing the
+      // scheduling stalls when many cells launch at once.
+      memRequest: '32Gi',
+      memLimit:   '32Gi',
       // Add gcloud-cli sidecar when cache loading, saving, or test-data download
       // is needed.  All three operations share the j-workspace emptyDir so data
       // transfers happen without inter-pod hostPath mounts.
@@ -757,60 +763,58 @@ def lsstswBuild(
     } // insideK8sContainer
   } // runDocker
 
-  def runEnv = { doRun ->
-      // No longer need hashpath as slug is short enough
-      def buildDirHash = slug
-      try {
-        dir(buildDirHash) {
-          if (wipeout) {
-            deleteDir()
-          }
-
-          try {
-            timeout(time: 12, unit: 'HOURS') {
-              doRun()
-            } // timeout
-          } catch (e) {
-            if (!lsstswConfig.allow_fail) {
-              throw e
-            }
-            echo "giving up on build but suppressing error"
-            echo e.toString()
-          } // try
-        } // dir
-      } finally {
-        // For non-image builds (e.g. macOS), jenkinsWrapper ran on this same
-        // agent so artifacts are here.  For image builds, artifacts are in the
-        // inner pod's workspace and jenkinsWrapperPost is called inside runDocker.
-        if (!lsstswConfig.image) {
-          jenkinsWrapperPost(buildDirHash)
-        }
+  // timeout + allow_fail handling shared by both the image and non-image paths.
+  def withBuildTimeout = { doRun ->
+    try {
+      timeout(time: 12, unit: 'HOURS') {
+        doRun()
+      } // timeout
+    } catch (e) {
+      if (!lsstswConfig.allow_fail) {
+        throw e
       }
+      echo "giving up on build but suppressing error"
+      echo e.toString()
+    } // try
+  } // withBuildTimeout
+
+  // Non-image builds (e.g. macOS) run jenkinsWrapper on the labeled agent itself,
+  // so they need an outer workspace (dir) and post-processing on that same agent.
+  def runEnv = { doRun ->
+    // No longer need hashpath as slug is short enough
+    def buildDirHash = slug
+    try {
+      dir(buildDirHash) {
+        if (wipeout) {
+          deleteDir()
+        }
+        withBuildTimeout(doRun)
+      } // dir
+    } finally {
+      jenkinsWrapperPost(buildDirHash)
+    }
   } // runEnv
 
   def agent = lsstswConfig.label
-  def task = null
   if (lsstswConfig.image) {
-    task = {
-      if (buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64'){
-        return
-      }
-      runEnv(runDocker)
-    }
-  } else {
-    if (cachelsstsw || buildParams['CI_LSSTCAM']){
-      // runs only if we are not running a caching job. Since this isn't on
-      // docker we do not need to store cache for them.
+    if (buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64') {
       return
     }
-    else {
-      task = { runEnv(run) }
+    // Enter the runner pod directly -- it IS the agent (see insideK8sContainer),
+    // so wrapping it in an outer nodeWrap would allocate a second labeled agent
+    // that sits idle for the entire 12h build. The pod's ephemeral workspace is
+    // fresh per retry (implicit wipeout) and jenkinsWrapperPost runs inside
+    // runDocker's own finally.
+    withBuildTimeout(runDocker)
+  } else {
+    if (cachelsstsw || buildParams['CI_LSSTCAM']) {
+      // Non-image builds don't cache; nothing to do for a caching/lsstcam run.
+      return
     }
+    nodeWrap(agent) {
+      runEnv(run)
+    } // nodeWrap
   }
-
-  nodeWrap(agent) {
-    task()
-  } // nodeWrap
 } // lsstswBuild
 
 /**
