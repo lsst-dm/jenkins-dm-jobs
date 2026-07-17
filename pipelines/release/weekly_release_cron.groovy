@@ -9,10 +9,10 @@ node('jenkins-manager') {
       branches: scm.getBranches(),
       userRemoteConfigs: scm.getUserRemoteConfigs(),
     ])
-    def notify = load 'pipelines/lib/notify.groovy'
-    def util = load 'pipelines/lib/util.groovy'
-    def scipipe = util.scipipeConfig() // needed for side effects
-    def sqre = util.sqreConfig() // needed for side effects
+    notify = load 'pipelines/lib/notify.groovy'
+    util = load 'pipelines/lib/util.groovy'
+    scipipe = util.scipipeConfig() // needed for side effects
+    sqre = util.sqreConfig() // needed for side effects
   }
 }
 
