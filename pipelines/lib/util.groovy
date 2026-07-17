@@ -876,8 +876,8 @@ def void jenkinsWrapper(Map buildParams) {
       touch lsstsw/miniconda/conda-meta/history
     '''
 
-    // This line uses k8s to set EUPSPKG_NJOBS
-    def njobs = 16
+    // scons -j (EUPSPKG_NJOBS); kept under the pod's 10-CPU/32Gi caps -- -j16 memcg-OOM'd heavy packages.
+    def njobs = 8
 
     // Check if NODE_LABELS is set in the environment
     def nodeLabels = env.NODE_LABELS
