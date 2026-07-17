@@ -367,6 +367,10 @@ spec:
       value: jenkins
     - name: LOGNAME
       value: jenkins
+    # loadLSST.bash derives its conda hook from $SHELL; some stack images ship $SHELL=/bin/sh
+    # ("conda shell.sh hook" -> "Unknown shell" -> exit 1), so pin it to bash pod-wide.
+    - name: SHELL
+      value: /bin/bash
     securityContext:  # matches 'jenkins' user in LSST base images
       runAsUser: 1000
       runAsNonRoot: true
