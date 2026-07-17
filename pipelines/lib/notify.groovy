@@ -93,11 +93,11 @@ Object slackApiGet(Map args) {
   requiredParams(['method', 'query'], args)
 
   // token is not allowed in query parameters anymore
-  token = args.query.token
+  def token = args.query.token
   args.query.remove("token")
   def call = "${slackEndpoint}/${args.method}?${mapToArg(args.query)}"
 
-  url = new URL(call)
+  def url = new URL(call)
   debugln("url: ${url.toString()}")
   debugln("token: ${token.substring(0,8)}")
 
@@ -136,7 +136,7 @@ Object slackApiPost(Map args) {
   def json = new groovy.json.JsonBuilder(args.body)
 
   def call = "${slackEndpoint}/${args.method}"
-  url = new URL(call)
+  def url = new URL(call)
   debugln("url: ${url.toString()}")
   debugln("token: ${args.token.substring(0,8)}")
 

@@ -9,10 +9,10 @@ node('jenkins-manager') {
       branches: scm.getBranches(),
       userRemoteConfigs: scm.getUserRemoteConfigs(),
     ])
-    notify = load 'pipelines/lib/notify.groovy'
-    util = load 'pipelines/lib/util.groovy'
-    scipipe = util.scipipeConfig() // needed for side effects
-    sqre = util.sqreConfig() // needed for side effects
+    def notify = load 'pipelines/lib/notify.groovy'
+    def util = load 'pipelines/lib/util.groovy'
+    def scipipe = util.scipipeConfig() // needed for side effects
+    def sqre = util.sqreConfig() // needed for side effects
   }
 }
 
@@ -72,8 +72,8 @@ notify.wrap {
 
   def newRegistryTags = []
   registryTags.each { name ->
-    fixOSVersion = name.replaceFirst("7", "9")
-    fixDistribName = fixOSVersion.replace("stack-lsst_distrib", "lsst_sitcom")
+    def fixOSVersion = name.replaceFirst("7", "9")
+    dev fixDistribName = fixOSVersion.replace("stack-lsst_distrib", "lsst_sitcom")
     newRegistryTags += fixDistribName
   }
 
