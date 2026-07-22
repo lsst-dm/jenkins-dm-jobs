@@ -130,11 +130,13 @@ def String buildkitCacheArgs(String cacheRepo, String arch, Boolean pushCache = 
  *                      added to the pod sharing the same workspace volumes so that
  *                      container('gcloud-cli') can be used to download/upload cache
  *                      without a separate pod and without hostPath mounts.
- * @param p.cpuRequest  String optional runner CPU request (default '8').
- * @param p.cpuLimit    String optional runner CPU limit (default '10').
- * @param p.memRequest  String optional runner memory request (default '64Gi').
- * @param p.memLimit    String optional runner memory limit (default '64Gi').
- * @param p.storage     String optional /j workspace size (default '300Gi').
+ * @param p.cpuRequest  String optional runner CPU request; passed through nullable.
+ * @param p.cpuLimit    String optional runner CPU limit; passed through nullable.
+ * @param p.memRequest  String optional runner memory request; passed through nullable.
+ * @param p.memLimit    String optional runner memory limit; passed through nullable.
+ * @param p.storage     String optional /j workspace size; passed through nullable.
+ *                      When any of the above are null, renderPodYaml applies the
+ *                      default (see the '?:' fallbacks there -- the single source of truth).
  * @param p.emptyDirWorkspace Boolean optional; back /j with an emptyDir
  *                      (sizeLimit = storage) instead of a hyperdisk PVC. Use for
  *                      lightweight jobs that don't need a dedicated disk and want
@@ -196,8 +198,8 @@ def void insideK8sContainer(Map p, Closure run) {
  *                     on the default (x86) pool.
  * @param p.cpuRequest String optional runner CPU request (default '8').
  * @param p.cpuLimit   String optional runner CPU limit (default '10').
- * @param p.memRequest String optional runner memory request (default '64Gi').
- * @param p.memLimit   String optional runner memory limit (default '64Gi').
+ * @param p.memRequest String optional runner memory request (default '32Gi').
+ * @param p.memLimit   String optional runner memory limit (default '48Gi').
  * @param p.storage    String optional /j workspace ephemeral-PVC size (default '300Gi').
  * @param p.emptyDirWorkspace Boolean optional; when true /j is an emptyDir with
  *                     sizeLimit=storage instead of a hyperdisk PVC (default false).
@@ -728,7 +730,7 @@ def lsstswBuild(
       arch: arch,
       cpuRequest: '8',
       cpuLimit: '10',
-      // Cap the runner at 32Gi (vs the 64Gi renderPodYaml default) so ~4 matrix
+      // Cap the runner memLimit at 32Gi (vs the 48Gi renderPodYaml default) so ~4 matrix
       // cells pack onto a c4d/c4a-standard-32 node instead of ~2, easing the
       // scheduling stalls when many cells launch at once.
       memRequest: '32Gi',
