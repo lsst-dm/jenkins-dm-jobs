@@ -240,25 +240,36 @@ def String renderPodYaml(Map p) {
   // 2Gi) and is pool-agnostic -- no PVC provisioning and no pd-* class that the
   // c4d/c4a worker pools would reject if the pod landed there.
   // /home/jenkins: gives git a writable home so it can find .gitconfig and skip getpwuid()
-  def extraVolumeMounts = "    - name: j-workspace\n      mountPath: /j\n" +
-                          "    - name: home-jenkins\n      mountPath: /home/jenkins\n"
-  def jWorkspaceVolume  = emptyDirWorkspace ?
-    "  - name: j-workspace\n    emptyDir:\n      sizeLimit: ${storage}\n" :
-    "  - name: j-workspace\n" +
-    "    ephemeral:\n" +
-    "      volumeClaimTemplate:\n" +
-    "        spec:\n" +
-    "          accessModes: [ReadWriteOnce]\n" +
-    "          storageClassName: hyperdisk-rwo\n" +
-    "          resources:\n" +
-    "            requests:\n" +
-    "              storage: ${storage}\n"
-  def extraVolumes      = jWorkspaceVolume +
-                          "  - name: home-jenkins\n    emptyDir: {}\n"
+  def volumeMountsSection = """\
+    volumeMounts:
+    - name: j-workspace
+      mountPath: /j
+    - name: home-jenkins
+      mountPath: /home/jenkins
+"""
 
-  def volumeMountsSection = "    volumeMounts:\n" + extraVolumeMounts
+  def jWorkspaceVolume = emptyDirWorkspace ? """\
+  - name: j-workspace
+    emptyDir:
+      sizeLimit: ${storage}
+""" : """\
+  - name: j-workspace
+    ephemeral:
+      volumeClaimTemplate:
+        spec:
+          accessModes: [ReadWriteOnce]
+          storageClassName: hyperdisk-rwo
+          resources:
+            requests:
+              storage: ${storage}
+"""
 
-  def volumesSection = "  volumes:\n" + extraVolumes
+  def volumesSection = """\
+  volumes:
+""" + jWorkspaceVolume + """\
+  - name: home-jenkins
+    emptyDir: {}
+"""
 
   // arm nodes are tainted kubernetes.io/arch=arm64:NoSchedule, so without both
   // the nodeSelector and the matching toleration the pod can only land on the
