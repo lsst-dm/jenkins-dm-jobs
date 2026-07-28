@@ -1460,11 +1460,12 @@ def filterProducts(String rubinVer, String products) {
 }
 
 def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
-  def agent = lsstswConfig.label
   def runDocker = {
     insideK8sContainer(
       image: lsstswConfig.image,
       pull: true,
+      // Older releases are x86-only; pin the pod to the amd64 pool.
+      arch: 'amd64',
     ) {
       withCredentials([[
         $class: 'StringBinding',
@@ -1500,9 +1501,10 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
     } // insideK8sContainer
   } // runDocker
 
-  nodeWrap(agent) {
-    runDocker()
-  } // nodeWrap
+  // Enter the runner pod directly -- insideK8sContainer IS the agent, so an outer
+  // nodeWrap would allocate a second labeled agent that sits idle for the whole
+  // build (see lsstswBuild's image path for the same reasoning).
+  runDocker()
 } // buildOlderVersionTask
 
 /**
