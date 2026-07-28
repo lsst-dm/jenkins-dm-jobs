@@ -6,6 +6,14 @@ gcloud:
   docker_registry:
     repo: gcr.io/google.com/cloudsdktool/google-cloud-cli
     tag: '523.0.1-alpine'
+gcloudcli:
+  docker_registry:
+    repo: ghcr.io/lsst-dm/docker-gcloudcli
+    tag: latest
+eups:
+  service_account: eups-dev@prompt-proto.iam.gserviceaccount.com
+buildcache:
+  repo_base: us-central1-docker.pkg.dev/prompt-proto/buildcache
 codekit:
   docker_registry:
     repo: ghcr.io/lsst-dm/codekit

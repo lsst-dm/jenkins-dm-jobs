@@ -16,34 +16,31 @@ notify.wrap {
   def hub_repo = 'ghcr.io/lsst-dm/tag-monger'
 
   def run = {
-    def image = docker.image("${hub_repo}:latest")
-
-    stage('pull') {
-      image.pull()
-    }
-
-    stage('retire daily tags') {
-      withCredentials([file(
-          credentialsId: 'gs-eups-push',
-          variable: 'GOOGLE_APPLICATION_CREDENTIALS'
-        )])  {
-        withEnv([
-          "IMAGE=${image.id}",
-          "TAG_MONGER_BUCKET=eups-prod",
-          "TAG_MONGER_MAX=0",
-          "TAG_MONGER_VERBOSE=true",
-        ]) {
-          image.inside {
-            sh 'tag-monger'
+    // tag-monger is self-contained: it reads/retires eups tags in a GCS bucket
+    // and needs no workspace data, so it runs in a single pod with no sidecar.
+    util.insideK8sContainer(
+      image: "${hub_repo}:latest",
+      pull: true,
+    ) {
+      stage('retire daily tags') {
+        withCredentials([file(
+            credentialsId: 'gs-eups-push',
+            variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+          )])  {
+          withEnv([
+            "TAG_MONGER_BUCKET=eups-prod",
+            "TAG_MONGER_MAX=0",
+            "TAG_MONGER_VERBOSE=true",
+          ]) {
+            util.bash 'tag-monger'
           }
-        }
-      } // withCredentials
-    } // stage
+        } // withCredentials
+      } // stage
+    } // util.insideK8sContainer
   } // run
 
-  util.nodeWrap('linux-64') {
-    timeout(time: 4, unit: 'HOURS') {
-      run()
-    }
-  } // util.nodeWrap('linux-64')
+  // No outer nodeWrap: the pod is the agent.
+  timeout(time: 4, unit: 'HOURS') {
+    run()
+  }
 } // notify.wrap

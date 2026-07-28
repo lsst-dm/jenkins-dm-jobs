@@ -63,139 +63,396 @@ def String hashpath(String path) {
 }
 
 /**
- * Build a docker image, constructing the `Dockerfile` from `config`.
- *
- * Example:
- *
- *     util.buildImage(
- *       config: dockerfileText,
- *       tag: 'example/foo:bar',
- *       pull: true,
- *     )
- *
- * @param p Map
- * @param p.config String literal text of Dockerfile (required)
- * @param p.tag String name of tag to apply to generated image (required)
- * @param p.pull Boolean always pull docker base image (optional)
+ * Create a buildx builder pointing at the BuildKit sidecar socket.
+ * Call once per node before any docker buildx build invocation.
  */
-def void buildImage(Map p) {
-  requireMapKeys(p, [
-    'config',
-    'tag',
-  ])
+def void setupBuildkitBuilder() {
+  sh '''
+    set -eu
+    if docker buildx inspect agent-builder >/dev/null 2>&1; then
+      docker buildx use agent-builder
+    else
+      docker buildx create \
+        --driver remote \
+        --name agent-builder \
+        --use \
+        unix:///run/buildkit/buildkitd.sock
+    fi
 
-  String config = p.config
-  String tag    = p.tag
-  Boolean pull  = p.pull ?: false
-
-  def opt = []
-  opt << "--pull=${pull}"
-  opt << '--build-arg D_USER="$(id -un)"'
-  opt << '--build-arg D_UID="$(id -u)"'
-  opt << '--build-arg D_GROUP="$(id -gn)"'
-  opt << '--build-arg D_GID="$(id -g)"'
-  opt << '--build-arg D_HOME="$HOME"'
-  opt << '--load'
-  opt << '.'
-
-  writeFile(file: 'Dockerfile', text: config)
-  docker.build(tag, opt.join(' '))
-} // buildImage
+    # The remote driver does not verify connectivity at create time; the first
+    # build is what actually dials the socket. The buildkitd sidecar can still
+    # be starting then -- especially on the arm nodepool, which scales from zero
+    # so the pod lands on a cold node while moby/buildkit is still pulling. Poll
+    # until the daemon answers, otherwise the build fails with
+    # "waiting for connection: context deadline exceeded".
+    for i in $(seq 1 60); do
+      if docker buildx inspect --bootstrap agent-builder >/dev/null 2>&1; then
+        echo "buildkitd ready after attempt ${i}"
+        break
+      fi
+      if [ "${i}" -eq 60 ]; then
+        echo "buildkitd never became reachable; diagnostics follow:" >&2
+        ls -la /run/buildkit || true
+        docker buildx inspect --bootstrap agent-builder || true
+        exit 1
+      fi
+      sleep 5
+    done
+  '''
+}
 
 /**
- * Create a thin "wrapper" container around {@code image} to map uid/gid of
- * the user invoking docker into the container.
+ * Return --cache-from and --cache-to flags for BuildKit registry cache.
  *
- * Example:
- *
- *     util.wrapDockerImage(
- *       image: 'example/foo:bar',
- *       tag: 'example/foo:bar-local',
- *       pull: true,
- *     )
- *
- * @param p Map
- * @param p.image String name of docker base image (required)
- * @param p.tag String name of tag to apply to generated image
- * @param p.pull Boolean always pull docker base image. Defaults to `false`
+ * @param cacheRepo Full repo path without tag, e.g.
+ *   us-central1-docker.pkg.dev/prompt-proto/buildcache/newinstall
+ * @param arch Architecture suffix, e.g. amd64 or arm64
  */
-def void wrapDockerImage(Map p) {
-  requireMapKeys(p, [
-    'image',
-    'tag',
-  ])
-
-  String image = p.image
-  String tag   = p.tag
-  Boolean pull = p.pull ?: false
-
-  def buildDir = 'docker'
-  def config = dedent("""
-    FROM ${image}
-
-    ARG     D_USER
-    ARG     D_UID
-    ARG     D_GROUP
-    ARG     D_GID
-    ARG     D_HOME
-
-    USER    root
-    RUN     mkdir -p "\$(dirname \$D_HOME)"
-    RUN     groupadd \$D_GROUP || echo \$D_GROUP already exist
-    RUN     useradd -d \$D_HOME -g \$D_GROUP \$D_USER || echo \$D_USER already exist
-
-    USER    \$D_USER
-    WORKDIR \$D_HOME
-  """)
-
-  // docker insists on recusrively checking file access under its execution
-  // path -- so run it from a dedicated dir
-  dir(buildDir) {
-    buildImage(
-      config: config,
-      tag: tag,
-      pull: pull,
-    )
-
-    deleteDir()
+def String buildkitCacheArgs(String cacheRepo, String arch, Boolean pushCache = true) {
+  // --cache-from only needs read access; --cache-to needs write auth to the cache
+  // registry, so gate it on pushCache (e.g. omit on NO_PUSH validation builds).
+  def out = "--cache-from type=registry,ref=${cacheRepo}:cache-${arch}"
+  if (pushCache) {
+    out += " --cache-to type=registry,ref=${cacheRepo}:cache-${arch},mode=max"
   }
-} // wrapDockerImage
+  return out
+}
 
 /**
- * Invoke block inside of a "wrapper" container.  See: wrapDockerImage
- *
- * Example:
- *
- *     util.insideDockerWrap(
- *       image: 'example/foo:bar',
- *       args: '-e HOME=/baz',
- *       pull: true,
- *     )
+ * Run a closure inside a Kubernetes pod using the specified container image.
+ * Kubernetes-native replacement for insideDockerWrap — no Docker daemon required.
  *
  * @param p Map
- * @param p.image String name of docker image (required)
- * @param p.args String docker run args (optional)
- * @param p.pull Boolean always pull docker image. Defaults to `false`
- * @param run Closure Invoked inside of wrapper container
+ * @param p.image       String container image to run inside (required)
+ * @param p.pull        Boolean set imagePullPolicy: Always (optional, default false)
+ * @param p.cacheImage  String gcloud-cli image to add as a second container for cache
+ *                      operations (optional). When set, a 'gcloud-cli' container is
+ *                      added to the pod sharing the same workspace volumes so that
+ *                      container('gcloud-cli') can be used to download/upload cache
+ *                      without a separate pod and without hostPath mounts.
+ * @param p.cpuRequest  String optional runner CPU request; passed through nullable.
+ * @param p.cpuLimit    String optional runner CPU limit; passed through nullable.
+ * @param p.memRequest  String optional runner memory request; passed through nullable.
+ * @param p.memLimit    String optional runner memory limit; passed through nullable.
+ * @param p.storage     String optional /j workspace size; passed through nullable.
+ *                      When any of the above are null, renderPodYaml applies the
+ *                      default (see the '?:' fallbacks there -- the single source of truth).
+ * @param p.emptyDirWorkspace Boolean optional; back /j with an emptyDir
+ *                      (sizeLimit = storage) instead of a hyperdisk PVC. Use for
+ *                      lightweight jobs that don't need a dedicated disk and want
+ *                      a workspace below the hyperdisk-balanced 4Gi minimum
+ *                      (optional, default false).
+ * @param run       Closure to execute inside the container
  */
-def insideDockerWrap(Map p, Closure run) {
-  requireMapKeys(p, [
-    'image',
-  ])
+def void insideK8sContainer(Map p, Closure run) {
+  requireMapKeys(p, ['image'])
 
-  String image = p.image
-  String args  = p.args ?: null
-  Boolean pull = p.pull ?: false
+  String image       = p.image
+  Boolean pull       = p.pull ?: false
+  String cacheImage  = p.cacheImage ?: null
+  String arch        = p.arch ?: null
+  String pullPolicy  = pull ? 'Always' : 'IfNotPresent'
+  Boolean emptyDirWorkspace = p.emptyDirWorkspace ?: false
 
-  def imageLocal = "${image}-local"
-
-  wrapDockerImage(
-    image: image,
-    tag: imageLocal,
-    pull: pull,
+  def podYaml = renderPodYaml(
+    image:      image,
+    pullPolicy: pullPolicy,
+    cacheImage: cacheImage,
+    arch:       arch,
+    cpuRequest: p.cpuRequest,
+    cpuLimit:   p.cpuLimit,
+    memRequest: p.memRequest,
+    memLimit:   p.memLimit,
+    storage:    p.storage,
+    emptyDirWorkspace: emptyDirWorkspace,
   )
 
-  docker.image(imageLocal).inside(args) { run() }
+  // Surface the arch in the generated pod name so the two matrix instances are
+  // distinguishable at a glance (e.g. stack-os-matrix-9465-arm64-xxxxx).  The
+  // plugin sanitizes and appends random suffixes to this base name.
+  def podName = "${env.JOB_BASE_NAME}-${env.BUILD_NUMBER}"
+  if (arch) {
+    podName = "${podName}-${arch}"
+  }
+
+  podTemplate(name: podName, yaml: podYaml) {
+    node(POD_LABEL) {
+      container('runner') {
+        run()
+      }
+    }
+  }
+} // insideK8sContainer
+
+/**
+ * Render the agent pod YAML used by {@link #insideK8sContainer}. Pure (no
+ * pipeline steps) so it is unit-testable.
+ *
+ * @param p Map
+ * @param p.image      String runner/initContainer image (required)
+ * @param p.pullPolicy String imagePullPolicy, e.g. 'Always' or 'IfNotPresent'
+ * @param p.cacheImage String optional gcloud-cli sidecar image; when set, a
+ *                     'gcloud-cli' container sharing the workspace volumes is added
+ * @param p.arch       String optional target arch; 'arm64' pins the pod to arm
+ *                     nodes (nodeSelector + toleration). Anything else schedules
+ *                     on the default (x86) pool.
+ * @param p.cpuRequest String optional runner CPU request (default '8').
+ * @param p.cpuLimit   String optional runner CPU limit (default '10').
+ * @param p.memRequest String optional runner memory request (default '32Gi').
+ * @param p.memLimit   String optional runner memory limit (default '48Gi').
+ * @param p.storage    String optional /j workspace ephemeral-PVC size (default '300Gi').
+ * @param p.emptyDirWorkspace Boolean optional; when true /j is an emptyDir with
+ *                     sizeLimit=storage instead of a hyperdisk PVC (default false).
+ * @return YAML String
+ */
+@NonCPS
+def String renderPodYaml(Map p) {
+  String image      = p.image
+  String pullPolicy = p.pullPolicy
+  String cacheImage = p.cacheImage ?: null
+  String arch       = p.arch ?: null
+  // Runner resources and workspace size. Defaults are sized for a full stack
+  // build; lightweight jobs (e.g. sonar-scan) can request less so the pod packs
+  // onto existing capacity instead of forcing a new -- possibly stocked-out --
+  // node to be scaled up.
+  String cpuRequest = p.cpuRequest ?: '8'
+  String cpuLimit   = p.cpuLimit ?: '10'
+  String memRequest = p.memRequest ?: '32Gi'
+  String memLimit   = p.memLimit ?: '48Gi'
+  String storage    = p.storage ?: '300Gi'
+  Boolean emptyDirWorkspace = p.emptyDirWorkspace ?: false
+
+  // /j: the build workspace, backed by a per-build generic ephemeral volume
+  // (a Hyperdisk dynamically provisioned via the hyperdisk-rwo StorageClass,
+  // deleted with the pod) rather than an emptyDir. An emptyDir lives on the
+  // node root disk, and the multi-GB lsstsw build filling it triggered kubelet
+  // ephemeral-storage eviction of the whole agent. The c4d (x86) and c4a (arm)
+  // worker machine families are Hyperdisk-only -- GCP rejects pd-balanced and
+  // other pd-* disk types on them -- so the class must be hyperdisk-balanced,
+  // and it must NOT be zone-restricted because the c4d pool spans
+  // us-central1-a and -c (WaitForFirstConsumer binds it in the pod's zone).
+  // The cluster default readOnlyRootFilesystem:true is why /j must be a
+  // writable mount at all.
+  //
+  // emptyDirWorkspace flips /j back to an emptyDir (sizeLimit=storage) for
+  // lightweight jobs that neither run a multi-GB lsstsw build nor need a
+  // dedicated disk. This dodges the hyperdisk-balanced 4Gi minimum (so /j can be
+  // 2Gi) and is pool-agnostic -- no PVC provisioning and no pd-* class that the
+  // c4d/c4a worker pools would reject if the pod landed there.
+  // /home/jenkins: gives git a writable home so it can find .gitconfig and skip getpwuid()
+  def volumeMountsSection = """\
+    volumeMounts:
+    - name: j-workspace
+      mountPath: /j
+    - name: home-jenkins
+      mountPath: /home/jenkins
+"""
+
+  def jWorkspaceVolume = emptyDirWorkspace ? """\
+  - name: j-workspace
+    emptyDir:
+      sizeLimit: ${storage}
+""" : """\
+  - name: j-workspace
+    ephemeral:
+      volumeClaimTemplate:
+        spec:
+          accessModes: [ReadWriteOnce]
+          storageClassName: hyperdisk-rwo
+          resources:
+            requests:
+              storage: ${storage}
+"""
+
+  def volumesSection = """\
+  volumes:
+""" + jWorkspaceVolume + """\
+  - name: home-jenkins
+    emptyDir: {}
+"""
+
+  // arm nodes are tainted kubernetes.io/arch=arm64:NoSchedule, so without both
+  // the nodeSelector and the matching toleration the pod can only land on the
+  // default x86 pool -- which is why aarch64 matrix builds were running on x86.
+  def schedulingSection = (arch == 'arm64') ? """  nodeSelector:
+    kubernetes.io/arch: arm64
+  tolerations:
+  - effect: NoSchedule
+    key: kubernetes.io/arch
+    operator: Equal
+    value: arm64
+""" : ''
+
+  // Optional gcloud-cli sidecar that shares the same workspace volumes.
+  // Both containers see the same /j/workspace/... so files downloaded by
+  // gcloud-cli are immediately visible to the runner without any inter-pod
+  // data transfer or hostPath mounts.
+  def gcloudContainerSection = cacheImage ? """  - name: gcloud-cli
+    image: ${cacheImage}
+    imagePullPolicy: Always
+    tty: true
+    command: [sleep]
+    args: ['99d']
+    env:
+    - name: HOME
+      value: /home/jenkins
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+      readOnlyRootFilesystem: false
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    volumeMounts:
+    - name: j-workspace
+      mountPath: /j
+    - name: home-jenkins
+      mountPath: /home/jenkins
+""" : ''
+
+  def podYaml = """
+apiVersion: v1
+kind: Pod
+spec:
+  securityContext:
+    # The /j workspace is a freshly-formatted Hyperdisk owned root:root 0755;
+    # without fsGroup the uid-1000 containers (notably jnlp) cannot write it and
+    # the remoting agent aborts its RWX check. fsGroup makes the kubelet chown
+    # mounted volumes to this GID and set them group-writable. (An emptyDir was
+    # created 0777 so this was never needed before the PVC switch.)
+    fsGroup: 1000
+  initContainers:
+  - name: setup-home
+    image: ${image}
+    imagePullPolicy: ${pullPolicy}
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+    command: [sh, -c]
+    args:
+    - |
+      printf '[user]\\n\\tname = jenkins\\n\\temail = jenkins@lsst.org\\n' > /home/jenkins/.gitconfig
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+    volumeMounts:
+    - name: home-jenkins
+      mountPath: /home/jenkins
+  containers:
+  - name: jnlp
+    workingDir: /j
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    volumeMounts:
+    - name: j-workspace
+      mountPath: /j
+    - name: home-jenkins
+      mountPath: /home/jenkins
+  - name: runner
+    image: ${image}
+    imagePullPolicy: ${pullPolicy}
+    tty: true
+    command: [sh, -c]
+    # Runs as UID 1000, so it cannot write the root-owned /etc/passwd; user
+    # resolution is handled instead via the HOME/USER/LOGNAME env below (plus the
+    # staged /home/jenkins/.gitconfig), which is what git and the Rubin tooling
+    # actually consult. The LSST stack images already ship a UID-1000 user.
+    args:
+    - |
+      exec sleep 99d
+    env:
+    - name: HOME
+      value: /home/jenkins
+    - name: USER
+      value: jenkins
+    - name: LOGNAME
+      value: jenkins
+    # loadLSST.bash derives its conda hook from the SHELL env var; some stack images ship
+    # SHELL=/bin/sh ("conda shell.sh hook" -> "Unknown shell" -> exit 1), so pin it to bash.
+    - name: SHELL
+      value: /bin/bash
+    securityContext:  # matches 'jenkins' user in LSST base images
+      runAsUser: 1000
+      runAsNonRoot: true
+      readOnlyRootFilesystem: false
+    resources:
+      requests:
+        cpu: "${cpuRequest}"
+        memory: ${memRequest}
+      limits:
+        cpu: "${cpuLimit}"
+        memory: ${memLimit}
+${volumeMountsSection}${gcloudContainerSection}${volumesSection}${schedulingSection}"""
+
+  return podYaml
+} // renderPodYaml
+
+/**
+ * Parse OCI image labels from the JSON emitted by an image-inspection tool.
+ * Pure (no pipeline steps) so it is unit-testable. Handles the three shapes we
+ * may encounter:
+ *   - skopeo inspect                -> top-level `.Labels`
+ *   - crane config / docker inspect -> `.config.Labels` (or `.Config.Labels`)
+ *   - `docker buildx imagetools inspect --format '{{json ....Labels}}'`
+ *                                   -> a flat label map (no wrapper)
+ *
+ * @param json String JSON document.
+ * @return Map of label name -> value (empty Map if none).
+ */
+@NonCPS
+def Map parseImageLabels(String json) {
+  // imagetools emits a bare `null` when the platform has no labels, which the
+  // slurper refuses to parse; treat that (and blank output) as no labels.
+  if (json == null || json.trim() in ['', 'null']) {
+    return [:]
+  }
+  def obj = new groovy.json.JsonSlurperClassic().parseText(json)
+  if (obj == null) {
+    return [:]
+  }
+  def labels = obj.Labels ?: obj.config?.Labels ?: obj.Config?.Labels ?: obj
+  return (labels ?: [:]) as Map
+}
+
+/**
+ * Read OCI image labels from a registry without a Docker daemon.
+ *
+ * Runs `crane config` in the gcloud-cli sidecar (which ships crane), so this
+ * MUST be called from inside an `insideK8sContainer` pod created with
+ * `cacheImage` set (i.e. the 'gcloud-cli' container is present). crane reads
+ * the image config straight from the registry over HTTP -- no `docker pull`,
+ * no daemon, no outer agent. This is what lets the verify jobs run entirely
+ * in-pod and drop the otherwise-idle outer idf-agent.
+ *
+ * scipipe release tags are multi-platform manifest indexes; crane selects a
+ * platform config (the labels we read -- VERSIONDB_MANIFEST_ID, LSST_COMPILER
+ * -- are identical across arches) and emits `.config.Labels`.
+ *
+ * @param image String fully-qualified image ref.
+ * @return Map of image labels.
+ */
+def Map imageLabels(String image) {
+  def json = ''
+  container('gcloud-cli') {
+    json = sh(
+      returnStdout: true,
+      script: "crane config ${image}",
+    ).trim()
+  }
+  return parseImageLabels(json)
 }
 
 /**
@@ -260,69 +517,6 @@ def shJson(String script) {
 }
 
 /**
- * Create an EUPS distrib tag
- *
- * Example:
- *
- *     util.runPublish(
- *       parameters: [
- *         EUPSPKG_SOURCE: 'git',
- *         MANIFEST_ID: manifestId,
- *         EUPS_TAG: eupsTag,
- *         PRODUCTS: products,
- *       ],
- *     )
- *
- * @param p Map
- * @param p.job String job to trigger. Defaults to `release/run-publish`.
- * @param p.parameters.EUPSPKG_SOURCE String
- * @param p.parameters.MANIFEST_ID String
- * @param p.parameters.EUPS_TAG String
- * @param p.parameters.PRODUCTS String
- * @param p.parameters.TIMEOUT String Defaults to `'1'`.
- * @param p.parameters.SPLENV_REF String Optional
- */
-def void runPublish(Map p) {
-  requireMapKeys(p, [
-    'parameters',
-  ])
-  def useP = [
-    job: 'release/run-publish',
-  ] + p
-
-  requireMapKeys(p.parameters, [
-    'EUPSPKG_SOURCE',
-    'MANIFEST_ID',
-    'EUPS_TAG',
-    'PRODUCTS',
-  ])
-  useP.parameters = [
-    TIMEOUT: '1' // should be string
-  ] + p.parameters
-
-  def jobParameters = [
-          string(name: 'EUPSPKG_SOURCE', value: useP.parameters.EUPSPKG_SOURCE),
-          string(name: 'MANIFEST_ID', value: useP.parameters.MANIFEST_ID),
-          string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG),
-          string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
-          string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT.toString()),
-  ]
-
-  // Optional parameter. Set 'em if you got 'em
-  if (useP.parameters.SPLENV_REF) {
-    jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
-  }
-  if (useP.parameters.RUBINENV_VER) {
-    jobParameters += string(name: 'RUBINENV_VER', value: useP.parameters.RUBINENV_VER)
-  }
-
-  build(
-    job: useP.job,
-    parameters: jobParameters,
-  )
-} // runPublish
-
-/**
  * Loads LSSTCAM test data
  * @param buildDir where to run this
  * @param testDir where to place the test data
@@ -331,43 +525,41 @@ def void runPublish(Map p) {
 def loadLSSTCamTestData(
   String buildDir,
   String testDir){
-  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
-  def testdata // Assigning location of data later
+  def testdata
   dir(buildDir) {
-  def cwd = pwd()
-  testdata = "${cwd}/${testDir}"
-  dir(testdata){
-    withCredentials([
-      [
-        $class: 'StringBinding',
-        credentialsId: 'weka-bucket-secret',
-        variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
-      ], [
-        $class: 'StringBinding',
-        credentialsId: 'weka-access-key',
-        variable: 'RCLONE_CONFIG_WEKA_ACCESS_KEY_ID'
-      ], [
-        $class: 'StringBinding',
-        credentialsId: 'weka-bucket-url',
-        variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
-      ]]){
-      withEnv([
-        "RCLONE_CONFIG_WEKA_TYPE=s3",
-        "RCLONE_CONFIG_WEKA_PROVIDER=Other",
-        "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
-    ]){
-      insideDockerWrap(
-        image: "${gcp_repo}:latest",
-        pull: true,
-        args: "-v ${cwd}:/home",
-      ) {
-        bash """
-          rclone copy weka:"${LSSTCAM_BUCKET}" .
-        """
+    def cwd = pwd()
+    testdata = "${cwd}/${testDir}"
+    dir(testdata){
+      withCredentials([
+        [
+          $class: 'StringBinding',
+          credentialsId: 'weka-bucket-secret',
+          variable: 'RCLONE_CONFIG_WEKA_SECRET_ACCESS_KEY'
+        ], [
+          $class: 'StringBinding',
+          credentialsId: 'weka-access-key',
+          variable: 'RCLONE_CONFIG_WEKA_ACCESS_KEY_ID'
+        ], [
+          $class: 'StringBinding',
+          credentialsId: 'weka-bucket-url',
+          variable: 'RCLONE_CONFIG_WEKA_ENDPOINT'
+        ]]){
+        withEnv([
+          "RCLONE_CONFIG_WEKA_TYPE=s3",
+          "RCLONE_CONFIG_WEKA_PROVIDER=Other",
+          "LSSTCAM_BUCKET=rubin-ci-lsst/testdata_ci_lsstcam_m49"
+        ]){
+          // Use the gcloud-cli sidecar already present in the builder pod.
+          // dir(testdata) above sets CWD inside the shared j-workspace emptyDir,
+          // so rclone writes directly into the path returned to the caller.
+          container('gcloud-cli') {
+            bash """
+              rclone copy weka:"\${LSSTCAM_BUCKET}" .
+            """
+          }
         }
       }
     }
-  }
   }
   return testdata
 }
@@ -380,11 +572,9 @@ def loadCache(
   String buildDir,
   String tag="d_latest"
 ) {
-  def gcp_repo = 'ghcr.io/lsst-dm/docker-gcloudcli'
   dir(buildDir) {
-    def cwd = pwd()
-    def ciDir = "${cwd}/ci-scripts"
-    dir(ciDir){
+    def workDir = pwd()
+    dir("${workDir}/ci-scripts") {
       cloneCiScripts()
     }
     withCredentials([file(
@@ -392,19 +582,19 @@ def loadCache(
       variable: 'GOOGLE_APPLICATION_CREDENTIALS'
     )]) {
       withEnv([
-        "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
+        "SERVICEACCOUNT=${eupsServiceAccount()}",
         "DATE_TAG=${tag}",
       ]) {
-          insideDockerWrap(
-            image: "${gcp_repo}:latest",
-            pull: true,
-            args: "-v ${cwd}:/home",
-          ) {
-             bash """
-             gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-             cd /home/ci-scripts
-             ./loadlsststack.sh $DATE_TAG
-             """
+        // Run in the gcloud-cli sidecar that was added to this pod by
+        // insideK8sContainer when cacheImage was set.  Both containers share
+        // the j-workspace emptyDir so files downloaded here are immediately
+        // visible to the runner — no inter-pod hostPath mounts required.
+        container('gcloud-cli') {
+          bash """
+          gcloud auth activate-service-account \$SERVICEACCOUNT --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+          cd ${workDir}/ci-scripts
+          ./loadlsststack.sh \$DATE_TAG
+          """
         }
       }
     }
@@ -418,27 +608,27 @@ def loadCache(
 def saveCache(
   String tag="d_latest"
 ) {
-  def cwd = pwd()
-  bash '''
-    cd lsstsw
-    source bin/envconfig
-    conda install google-cloud-sdk
-  '''
+  def workDir = pwd()
+  dir("${workDir}/ci-scripts") {
+    cloneCiScripts()
+  }
   withCredentials([file(
     credentialsId: 'gs-eups-push',
     variable: 'GOOGLE_APPLICATION_CREDENTIALS'
   )]) {
     withEnv([
-      "SERVICEACCOUNT=eups-dev@prompt-proto.iam.gserviceaccount.com",
+      "SERVICEACCOUNT=${eupsServiceAccount()}",
       "DATE_TAG=${tag}",
     ]) {
+      // Run in the gcloud-cli sidecar so we don't need gcloud in the LSST
+      // runner image and don't need to install it via conda.
+      container('gcloud-cli') {
         bash """
-        cd lsstsw
-        source bin/envconfig
-        gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-        cd ../ci-scripts
-        ./backuplsststack.sh $DATE_TAG
+        gcloud auth activate-service-account \$SERVICEACCOUNT --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+        cd ${workDir}/ci-scripts
+        ./backuplsststack.sh \$DATE_TAG
         """
+      }
     }
   }
 }
@@ -542,78 +732,106 @@ def lsstswBuild(
     } // else
   } // run
   def runDocker = {
-    insideDockerWrap(
+    // Pin the inner pod to the matrix entry's arch; without this the aarch64
+    // build lands on x86 because arm nodes are tainted (see renderPodYaml).
+    def arch = (lsstswConfig.label == 'linux-aarch64') ? 'arm64' : 'amd64'
+    insideK8sContainer(
       image: lsstswConfig.image,
       pull: true,
+      arch: arch,
+      cpuRequest: '8',
+      cpuLimit: '10',
+      // Cap the runner memLimit at 32Gi (vs the 48Gi renderPodYaml default) so ~4 matrix
+      // cells pack onto a c4d/c4a-standard-32 node instead of ~2, easing the
+      // scheduling stalls when many cells launch at once.
+      memRequest: '32Gi',
+      memLimit:   '32Gi',
+      // Add gcloud-cli sidecar when cache loading, saving, or test-data download
+      // is needed.  All three operations share the j-workspace emptyDir so data
+      // transfers happen without inter-pod hostPath mounts.
+      cacheImage: (fetchCache || cachelsstsw || buildParams['CI_LSSTCAM']) ? defaultGcloudCliImage() : null,
+
     ) {
-      withCredentials([[
-        $class: 'StringBinding',
-        credentialsId: 'github-api-token-checks',
-        variable: 'GITHUB_TOKEN'
-      ]]){
-        run()
-      } // withCredentials
-    } // insideDockerWrap
+      try {
+        if (fetchCache) {
+          loadCache(slug, "d_latest")
+        }
+        if (buildParams['CI_LSSTCAM']) {
+          buildParams['LSSTCAM_TESTDATA_DIR'] = loadLSSTCamTestData(slug, "lsstcam_testdata")
+        }
+        withCredentials([[
+          $class: 'StringBinding',
+          credentialsId: 'github-api-token-checks',
+          variable: 'GITHUB_TOKEN'
+        ]]){
+          // dir(slug) replicates the outer dir(buildDirHash) context, which does
+          // not carry across the node() boundary created by insideK8sContainer.
+          dir(slug) {
+            run()
+          }
+        } // withCredentials
+      } finally {
+        // Collect artifacts from the pod's own workspace.  jenkinsWrapperPost
+        // must run here (not in the outer nodeWrap agent) because insideK8sContainer
+        // allocates a separate pod with its own workspace; the outer agent never
+        // sees the build output.
+        jenkinsWrapperPost(slug)
+      }
+    } // insideK8sContainer
   } // runDocker
 
-  def runEnv = { doRun ->
-      // No longer need hashpath as slug is short enough
-      def buildDirHash = slug
-      try {
-        dir(buildDirHash) {
-          if (wipeout) {
-            deleteDir()
-          }
-
-          try {
-            timeout(time: 12, unit: 'HOURS') {
-              doRun()
-            } // timeout
-          } catch (e) {
-            if (!lsstswConfig.allow_fail) {
-              throw e
-            }
-            echo "giving up on build but suppressing error"
-            echo e.toString()
-          } // try
-        } // dir
-      } finally {
-        // needs to be called in the parent dir of jenkinsWrapper() in order to
-        // add the slug as a prefix to the archived files.
-        jenkinsWrapperPost(buildDirHash)
+  // timeout + allow_fail handling shared by both the image and non-image paths.
+  def withBuildTimeout = { doRun ->
+    try {
+      timeout(time: 12, unit: 'HOURS') {
+        doRun()
+      } // timeout
+    } catch (e) {
+      if (!lsstswConfig.allow_fail) {
+        throw e
       }
+      echo "giving up on build but suppressing error"
+      echo e.toString()
+    } // try
+  } // withBuildTimeout
+
+  // Non-image builds (e.g. macOS) run jenkinsWrapper on the labeled agent itself,
+  // so they need an outer workspace (dir) and post-processing on that same agent.
+  def runEnv = { doRun ->
+    // No longer need hashpath as slug is short enough
+    def buildDirHash = slug
+    try {
+      dir(buildDirHash) {
+        if (wipeout) {
+          deleteDir()
+        }
+        withBuildTimeout(doRun)
+      } // dir
+    } finally {
+      jenkinsWrapperPost(buildDirHash)
+    }
   } // runEnv
 
   def agent = lsstswConfig.label
-  def task = null
   if (lsstswConfig.image) {
-    task = {
-      if (fetchCache){
-        loadCache(slug,"d_latest")
-      }
-      if (buildParams['CI_LSSTCAM']){
-        def testdatadir = loadLSSTCamTestData(slug,"lsstcam_testdata")
-        buildParams['LSSTCAM_TESTDATA_DIR'] = testdatadir
-      }
-      if (buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64'){
-        return
-      }
-      runEnv(runDocker)
-    }
-  } else {
-    if (cachelsstsw || buildParams['CI_LSSTCAM']){
-      // runs only if we are not running a caching job. Since this isn't on
-      // docker we do not need to store cache for them.
+    if (buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64') {
       return
     }
-    else {
-      task = { runEnv(run) }
+    // Enter the runner pod directly -- it IS the agent (see insideK8sContainer),
+    // so wrapping it in an outer nodeWrap would allocate a second labeled agent
+    // that sits idle for the entire 12h build. The pod's ephemeral workspace is
+    // fresh per retry (implicit wipeout) and jenkinsWrapperPost runs inside
+    // runDocker's own finally.
+    withBuildTimeout(runDocker)
+  } else {
+    if (cachelsstsw || buildParams['CI_LSSTCAM']) {
+      // Non-image builds don't cache; nothing to do for a caching/lsstcam run.
+      return
     }
+    nodeWrap(agent) {
+      runEnv(run)
+    } // nodeWrap
   }
-
-  nodeWrap(agent) {
-    task()
-  } // nodeWrap
 } // lsstswBuild
 
 /**
@@ -675,8 +893,8 @@ def void jenkinsWrapper(Map buildParams) {
       touch lsstsw/miniconda/conda-meta/history
     '''
 
-    // This line uses k8s to set EUPSPKG_NJOBS
-    def njobs = 16
+    // scons -j (EUPSPKG_NJOBS); kept under the pod's 10-CPU/32Gi caps -- -j16 memcg-OOM'd heavy packages.
+    def njobs = 8
 
     // Check if NODE_LABELS is set in the environment
     def nodeLabels = env.NODE_LABELS
@@ -909,7 +1127,9 @@ def void getManifest(String rebuildId, String filename) {
   def buildJob          = 'release/run-rebuild'
 
   step([$class: 'CopyArtifact',
-        projectName: buildJob,
+        // leading slash: CopyArtifact resolves names relative to the copying
+        // job's folder, so a folder-qualified name must be made absolute.
+        projectName: "/${buildJob}",
         filter: manifest_artifact,
         selector: [
           $class: 'SpecificBuildSelector',
@@ -1110,14 +1330,14 @@ def String makeCliCmd(
  * @param run Closure Invoked inside of node step
  */
 def void insideCodekit(Closure run) {
-  insideDockerWrap(
+  insideK8sContainer(
     image: defaultCodekitImage(),
     pull: true,
   ) {
     withGithubAdminCredentials {
       run()
     }
-  } // insideDockerWrap
+  } // insideK8sContainer
 } // insideCodekit
 
 /**
@@ -1240,11 +1460,12 @@ def filterProducts(String rubinVer, String products) {
 }
 
 def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
-  def agent = lsstswConfig.label
   def runDocker = {
-    insideDockerWrap(
+    insideK8sContainer(
       image: lsstswConfig.image,
       pull: true,
+      // Older releases are x86-only; pin the pod to the amd64 pool.
+      arch: 'amd64',
     ) {
       withCredentials([[
         $class: 'StringBinding',
@@ -1277,12 +1498,13 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
         """
         } // stage
       } // withCredentials
-    } // insideDockerWrap
+    } // insideK8sContainer
   } // runDocker
 
-  nodeWrap(agent) {
-    runDocker()
-  } // nodeWrap
+  // Enter the runner pod directly -- insideK8sContainer IS the agent, so an outer
+  // nodeWrap would allocate a second labeled agent that sits idle for the whole
+  // build (see lsstswBuild's image path for the same reasoning).
+  runDocker()
 } // buildOlderVersionTask
 
 /**
@@ -1349,22 +1571,6 @@ def void gitNoNoise(Map args) {
   git([
     url: args.url,
     branch: args.branch,
-  ])
-}
-
-/**
- * Checkout a git ref (branch, tag or SHA)
-*/
-def checkoutGitRef(String url, String ref) {
-  checkout([
-    $class: 'GitSCM',
-    branches: [[name: ref]],
-    userRemoteConfigs: [[url: url]],
-    doGenerateSubmoduleConfigurations: false,
-    submoduleCfg: [],
-      extensions: [
-          [$class: 'CloneOption', noTags: false, shallow: false]
-        ],
   ])
 }
 
@@ -1525,53 +1731,96 @@ def String epochToUtc(Integer epoch) {
 }
 
 /**
- * run ltd-mason-travis to push a doc build
+ * run `ltd upload` (ltd-conveyor) to push a doc build
+ *
+ * Runs in the caller's container -- the caller must produce `_build/html` in
+ * the same pod/workspace (see documenteer.groovy). ltd-conveyor is
+ * pip-installed here because the LSST release image provides python/pip but
+ * not ltd-conveyor.
+ *
+ * ltd-conveyor talks to LTD Keeper (LTD_USERNAME/LTD_PASSWORD) and uploads via
+ * presigned S3 URLs handed back by Keeper, so no raw AWS credentials are
+ * needed (the old ltd-mason `ltd-mason-aws` binding is dropped).
  *
  * @param p Map
  * @param p.eupsTag String tag to setup (required). Eg.: 'current', 'b1234'
- * @param p.repoSlug String github repo slug (required). Eg.: 'lsst/pipelines_lsst_io'
+ * @param p.repoSlug String github repo slug. Eg.: 'lsst/pipelines_lsst_io'
  * @param p.ltdProduct String LTD product name (required)., Eg.: 'pipelines'
- * @param p.masonImage String docker image (optional). Defaults to: 'lsstsqre/ltd-mason'
+ * @param p.ltdSlug String git ref / edition slug (required)
  */
 def ltdPush(Map p) {
   requireMapKeys(p, [
     'ltdSlug',
     'ltdProduct',
-    'repoSlug',
   ])
-  p = [
-    masonImage: 'lsstsqre/ltd-mason',
-  ] + p
-
 
   withEnv([
-    "LTD_MASON_BUILD=true",
-    "LTD_MASON_PRODUCT=${p.ltdProduct}",
-    "LTD_KEEPER_URL=https://keeper.lsst.codes",
-    "LTD_KEEPER_USER=travis",
-    "TRAVIS_PULL_REQUEST=false",
-    "TRAVIS_REPO_SLUG=${p.repoSlug}",
-    "TRAVIS_BRANCH=${p.ltdSlug}",
+    "LTD_HOST=https://keeper.lsst.codes",
+    "LTD_PRODUCT=${p.ltdProduct}",
+    "LTD_GIT_REF=${p.ltdSlug}",
   ]) {
     withCredentials([[
       $class: 'UsernamePasswordMultiBinding',
-      credentialsId: 'ltd-mason-aws',
-      usernameVariable: 'LTD_MASON_AWS_ID',
-      passwordVariable: 'LTD_MASON_AWS_SECRET',
-    ],
-    [
-      $class: 'UsernamePasswordMultiBinding',
       credentialsId: 'ltd-keeper',
-      usernameVariable: 'LTD_KEEPER_USER',
-      passwordVariable: 'LTD_KEEPER_PASSWORD',
+      usernameVariable: 'LTD_USERNAME',
+      passwordVariable: 'LTD_PASSWORD',
     ]]) {
-      docker.image(p.masonImage).inside {
-        // expect that the service will return an HTTP 502, which causes
-        // ltd-mason-travis to exit 1
-        sh '''
-        ltd-mason-travis --html-dir _build/html --verbose || true
-        '''
-      } // .inside
+      // ltd-conveyor uploads every file with a bare requests.post and no retry,
+      // then raises S3Error on the first non-204 response, aborting the whole
+      // directory push. The S3 backend intermittently returns 503 (slow down)
+      // on individual files; pipelines_lsst_io has tens of thousands of files,
+      // so at any nonzero per-file 503 rate a whole-directory retry almost
+      // always trips again on some other file. Instead, monkeypatch
+      // ltd-conveyor's per-file upload with a bounded retry so a transient 503
+      // retries just that one file (upload_file re-opens from local_path each
+      // call, so retries are safe) rather than failing the whole build.
+      bash '''
+      source /opt/lsst/software/stack/loadLSST.bash
+      pip install --user ltd-conveyor
+      export PATH="${HOME}/.local/bin:${PATH}"
+
+      cat > ltd_retry_upload.py <<'PYEOF'
+import sys
+import time
+
+import ltdconveyor.s3.presignedpost as pp
+
+_orig_upload_file = pp.upload_file
+_S3Error = pp.S3Error
+
+
+def _retrying_upload_file(**kwargs):
+    local_path = kwargs.get("local_path")
+    max_attempts = 5
+    for attempt in range(1, max_attempts + 1):
+        try:
+            result = _orig_upload_file(**kwargs)
+            sys.stdout.write("uploaded %s\\n" % local_path)
+            sys.stdout.flush()
+            return result
+        except _S3Error:
+            if attempt >= max_attempts:
+                raise
+            delay = min(5 * attempt, 30)
+            sys.stderr.write(
+                "ltd upload attempt %d for %s failed; retry in %ds\\n"
+                % (attempt, local_path, delay)
+            )
+            time.sleep(delay)
+
+
+pp.upload_file = _retrying_upload_file
+
+from ltdconveyor.cli.main import main
+
+main()
+PYEOF
+
+      python ltd_retry_upload.py upload \
+        --product "${LTD_PRODUCT}" \
+        --git-ref "${LTD_GIT_REF}" \
+        --dir _build/html
+      '''
     } // withCredentials
   } //withEnv
 } // ltdPush
@@ -1608,34 +1857,34 @@ def String instantToUtc(Instant moment) {
  * @param tag String tag of docker image to use.
  */
 def void librarianPuppet(String cmd='install', String tag='2.2.3') {
-  insideDockerWrap(
+  insideK8sContainer(
     image: "lsstsqre/cakepan:${tag}",
-    args: "-e HOME=${pwd()}",
     pull: true,
   ) {
-    bash "librarian-puppet ${cmd}"
+    withEnv(["HOME=${pwd()}"]) {
+      bash "librarian-puppet ${cmd}"
+    }
   }
 }
 
 /**
  * run documenteer doc build
  *
+ * Runs in the caller's container -- the caller must open the doc build pod
+ * (see documenteer.groovy) so this build and the subsequent ltdPush share one
+ * pod and thus one workspace (the produced `_build/html` must be visible to
+ * ltdPush).
+ *
  * @param p Map
  * @param p.docTemplateDir String path to sphinx template clone (required)
  * @param p.eupsTag String tag to setup (required)
  * @param p.eupsPath String path to EUPS installed productions (optional)
- * @param p.docImage String defaults to: 'lsstsqre/documenteer-base'
- * @param p.docPull Boolean defaults to: `false`
  */
 def runDocumenteer(Map p) {
   requireMapKeys(p, [
     'docTemplateDir',
     'eupsTag',
   ])
-  p = [
-    docImage: null,
-    docPull: false,
-  ] + p
 
   def homeDir = "${pwd()}/home"
   emptyDirs([homeDir])
@@ -1650,30 +1899,25 @@ def runDocumenteer(Map p) {
   }
 
   withEnv(docEnv) {
-    insideDockerWrap(
-      image: p.docImage,
-      pull: p.docPull,
-    ) {
-      dir(p.docTemplateDir) {
-        bash '''
-          source /opt/lsst/software/stack/loadLSST.bash
-          dot -V
-          if [ -f requirements.txt ]; then
-            # allow to override doc tools
-            pip install --upgrade --user --force-reinstall -r requirements.txt
-          fi
-          export PATH="${HOME}/.local/bin:${PATH}"
-          setup -r . -t "$EUPS_TAG"
-          if command -v  build-stack-docs >/dev/null 2>&1; then
-            # use old documenteer 0.8 build installed from requirements.txt
-            build-stack-docs -d . -v
-          else
-            # New documenteer 2.X build with spinxutils from stack
-            stack-docs -d . -v build --disable-doxygen --disable-doxygen-conf
-          fi
-        '''
-      } // dir
-    } // insideDockerWrap
+    dir(p.docTemplateDir) {
+      bash '''
+        source /opt/lsst/software/stack/loadLSST.bash
+        dot -V
+        if [ -f requirements.txt ]; then
+          # allow to override doc tools
+          pip install --upgrade --user --force-reinstall -r requirements.txt
+        fi
+        export PATH="${HOME}/.local/bin:${PATH}"
+        setup -r . -t "$EUPS_TAG"
+        if command -v  build-stack-docs >/dev/null 2>&1; then
+          # use old documenteer 0.8 build installed from requirements.txt
+          build-stack-docs -d . -v
+        else
+          # New documenteer 2.X build with spinxutils from stack
+          stack-docs -d . -v build --disable-doxygen --disable-doxygen-conf
+        fi
+      '''
+    } // dir
   } // withEnv
 } // runDocumenteer
 
@@ -1712,6 +1956,7 @@ def String runRebuild(Map p) {
     TIMEOUT: '12', // should be String
     PREP_ONLY: false,
     NO_BINARY_FETCH: true,
+    PUBLISH: false,
   ] + p.parameters
 
   def jobParameters = [
@@ -1721,11 +1966,22 @@ def String runRebuild(Map p) {
           booleanParam(name: 'NO_BINARY_FETCH', value: useP.parameters.NO_BINARY_FETCH),
           string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
           booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),
+          booleanParam(name: 'PUBLISH', value: useP.parameters.PUBLISH),
   ]
 
   // Optional parameter. Set 'em if you got 'em
   if (useP.parameters.SPLENV_REF) {
     jobParameters += string(name: 'SPLENV_REF', value: useP.parameters.SPLENV_REF)
+  }
+  // EUPS distrib publish params -- only meaningful when PUBLISH is true.
+  if (useP.parameters.EUPS_TAG) {
+    jobParameters += string(name: 'EUPS_TAG', value: useP.parameters.EUPS_TAG)
+  }
+  if (useP.parameters.EUPSPKG_SOURCE) {
+    jobParameters += string(name: 'EUPSPKG_SOURCE', value: useP.parameters.EUPSPKG_SOURCE)
+  }
+  if (useP.parameters.RUBINENV_VER) {
+    jobParameters += string(name: 'RUBINENV_VER', value: useP.parameters.RUBINENV_VER)
   }
 
   def result = build(
@@ -1738,7 +1994,9 @@ def String runRebuild(Map p) {
     manifestArtifact = 'lsstsw/build/manifest.txt'
 
     step([$class: 'CopyArtifact',
-          projectName: useP.job,
+          // leading slash: CopyArtifact resolves names relative to the copying
+          // job's folder, so a folder-qualified name must be made absolute.
+          projectName: "/${useP.job}",
           filter: manifestArtifact,
           selector: [
             $class: 'SpecificBuildSelector',
@@ -1966,6 +2224,35 @@ def String defaultCodekitImage() {
   "${dockerRegistry.repo}:${dockerRegistry.tag}"
 }
 
+/*
+ * Get default gcloud-cli sidecar docker image string.
+ *
+ * @return gcloudCliImage String
+ */
+def String defaultGcloudCliImage() {
+  def dockerRegistry = sqreConfig().gcloudcli.docker_registry
+  "${dockerRegistry.repo}:${dockerRegistry.tag}"
+}
+
+/*
+ * Get the EUPS publish service account.
+ *
+ * @return serviceAccount String
+ */
+def String eupsServiceAccount() {
+  sqreConfig().eups.service_account
+}
+
+/*
+ * Build a BuildKit registry cache repo path for a given image name.
+ *
+ * @param name String cache image name, e.g. 'newinstall', 'scipipe-base'
+ * @return repo String full cache repo path
+ */
+def String buildcacheRepo(String name) {
+  "${sqreConfig().buildcache.repo_base}/${name}"
+}
+
 def Object runIndexUpdate(){
   def job = 'sqre/infra/update_indexjson'
   build(
@@ -2046,7 +2333,9 @@ def Object runBuildStack(Map p) {
 
     step([
       $class: 'CopyArtifact',
-      projectName: p.job,
+      // leading slash: CopyArtifact resolves names relative to the copying
+      // job's folder, so a folder-qualified name must be made absolute.
+      projectName: "/${p.job}",
       filter: resultsArtifact,
       selector: [
         $class: 'SpecificBuildSelector',
@@ -2126,25 +2415,35 @@ def void checkoutLFS(Map p) {
 
   def gitRepo = githubSlugToUrl(p.githubSlug)
 
-  def lfsImage = 'ghcr.io/lsst-dm/docker-newinstall'
-
-  // running a git clone in a docker.inside block is broken
-  checkoutGitRef(gitRepo, p.gitRef)
-
-  try {
-    insideDockerWrap(
-      image: lfsImage,
-      pull: true,
-    ) {
-      bash("""
+  // Must be called from inside an insideK8sContainer pod whose image provides
+  // git-lfs (via loadLSST.bash). The clone and the lfs pull have to run in the
+  // same pod workspace: a separate pod gets its own emptyDir /j and cannot see a
+  // clone made on the outer agent (this is what broke ap_verify/verify_drp).
+  //
+  // Clone via shell git (not the checkout/GitSCM plugin step): under the k8s
+  // plugin the git-client plugin runs on the agent JVM in the jnlp sidecar
+  // (JENKINS-30600), whose small memory limit OOMs on large datasets like
+  // rc2_subset and drops the remoting channel. A `bash` git clone is a launched
+  // process, so it is decorated into the runner container and gets the runner's
+  // full memory instead.
+  withEnv([
+    "LFS_GIT_REPO=${gitRepo}",
+    "LFS_GIT_REF=${p.gitRef}",
+  ]) {
+    bash('''
       source /opt/lsst/software/stack/loadLSST.bash
+
+      # Materialize pointers only during clone/checkout; the blobs are fetched
+      # explicitly by `git lfs pull` below so a smudge filter can't double-pull.
+      export GIT_LFS_SKIP_SMUDGE=1
+
       git lfs install --skip-repo
+      git clone "${LFS_GIT_REPO}" .
+      git checkout "${LFS_GIT_REF}"
+
+      unset GIT_LFS_SKIP_SMUDGE
       git lfs pull origin
-      """)
-    }
-  } finally {
-    // try not to break jenkins clone mangement
-    bash 'rm -f .git/hooks/post-checkout'
+    ''')
   }
 } // checkoutLFS
 
@@ -2692,20 +2991,26 @@ def sonarScanWorkspace(Map args) {
   echo "sonarScanWorkspace: found ${packages.size()} packages"
 
   try {
-    packages.collate(8).each { chunk ->
-      def scans = [:]
-      chunk.each { pkg ->
-        scans["scan ${pkg}"] = {
-          sonarScanPackage(
-            pkg: pkg,
-            eupsTag: eupsTag,
-            envPrefix: envPrefix,
-            scannerHome: scannerHome,
-            statusFile: statusFile,
-          )
+    // Cap each scanner JVM's heap so a chunk of 8 running in parallel fits the
+    // pod's memory limit (default JVM ergonomics would size each heap to ~25%
+    // of the container limit and collectively OOM). The umbrella scan sets its
+    // own larger -Xmx4g inside sonarScanUmbrella and is not affected.
+    withEnv(['SONAR_SCANNER_OPTS=-Xmx1g']) {
+      packages.collate(8).each { chunk ->
+        def scans = [:]
+        chunk.each { pkg ->
+          scans["scan ${pkg}"] = {
+            sonarScanPackage(
+              pkg: pkg,
+              eupsTag: eupsTag,
+              envPrefix: envPrefix,
+              scannerHome: scannerHome,
+              statusFile: statusFile,
+            )
+          }
         }
+        parallel scans
       }
-      parallel scans
     }
 
     sonarScanUmbrella(
@@ -2800,12 +3105,20 @@ def sonarScanPackage(Map args) {
         ''',
       ).trim()
 
+      // The scan workspace reaches the cache via a `lsstsw` -> `cache-load/lsstsw`
+      // symlink, so CWD here is the symlink path. SonarQube indexes source files
+      // keyed under projectBaseDir, but the Cobertura sensor canonicalizes the
+      // coverage report's paths (resolving the symlink) to the real cache-load
+      // path. If base dir stays the symlink path the two key sets never match and
+      // coverage silently records 0.0%. Pin projectBaseDir to the canonical path
+      // (`pwd -P`) so indexed sources and resolved coverage share one real path.
       withSonarQubeEnv('lsst-sonarqube') {
         sh """
           ${scannerHome}/bin/sonar-scanner \\
             -Dsonar.projectKey=${projectKey} \\
             -Dsonar.projectName=${pkg} \\
             -Dsonar.projectVersion=${eupsTag} \\
+            -Dsonar.projectBaseDir="\$(pwd -P)" \\
             -Dsonar.sources=${sonarSources} \\
             -Dsonar.python.version=3 \\
             -Dsonar.sourceEncoding=UTF-8 \\

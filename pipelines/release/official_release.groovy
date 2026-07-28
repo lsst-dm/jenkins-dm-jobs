@@ -148,6 +148,8 @@ notify.wrap {
 
     stage('build') {
       retry(retries) {
+        // publish runs inside the rebuild pod (same stack), tagging both the
+        // dated eups tag and o_latest.
         manifestId = util.runRebuild(
           parameters: [
             REFS: buildGitTags,
@@ -155,32 +157,13 @@ notify.wrap {
             SPLENV_REF: splenvRef,
             BUILD_DOCS: true,
             NO_BINARY_FETCH: true,
+            PUBLISH: true,
+            EUPS_TAG: "${eupsTag} o_latest",
+            EUPSPKG_SOURCE: eupspkgSource,
+            RUBINENV_VER: rubinEnvVer,
           ],
         )
       } // retry
-    } // stage
-
-    stage('eups publish') {
-      def pub = [:]
-
-      [eupsTag, 'o_latest'].each { tagName ->
-        pub[tagName] = {
-          retry(retries) {
-            util.runPublish(
-              parameters: [
-                EUPSPKG_SOURCE: eupspkgSource,
-                MANIFEST_ID: manifestId,
-                EUPS_TAG: tagName,
-                PRODUCTS: products,
-                SPLENV_REF: splenvRef,
-                RUBINENV_VER: rubinEnvVer,
-              ],
-            )
-          } // retry
-        } // pub
-      } // each
-
-      parallel pub
     } // stage
     stage('update index files'){
       util.runIndexUpdate()

@@ -172,88 +172,95 @@ def void verifyDataset(Map p) {
   Boolean buildCode = code?.name
 
   def run = {
-    // note that pwd() must be run inside of a node {} block
-    def jobDir           = pwd()
-    def datasetDir       = "${jobDir}/datasets/${ds.name}"
-    def ciDir            = "${jobDir}/ci-scripts"
-    def baseDir          = "${jobDir}/${p.slug}"
-    // the code clone needs to be under the long winded path for archiving
-    def codeDir          = buildCode ? "${baseDir}/${code.name}" : ''
-    def homeDir          = "${baseDir}/home"
-    def runDir           = "${baseDir}/run"
-    def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
+    // Pin the inner pod to the matrix entry's arch; without this the aarch64
+    // build silently lands on the default x86 pool. Also surfaces the arch in
+    // the pod name so the instances are distinguishable.
+    def arch = (p.architecture == 'linux-aarch64') ? 'arm64' : 'amd64'
 
-    docker.image(p.dockerImage).pull()
-    def labels = util.shJson """
-      docker inspect --format '{{json .Config.Labels }}' ${p.dockerImage}
-    """
+    // Everything -- including reading the image labels -- runs inside ONE pod.
+    // The gcloud-cli sidecar (cacheImage) ships crane, which reads the labels
+    // straight from the registry, so no outer buildx agent is needed. A single
+    // pod also keeps all cloned data on one emptyDir /j (no cross-pod sharing).
+    util.insideK8sContainer(
+      image: p.dockerImage,
+      pull: true,
+      arch: arch,
+      cacheImage: util.defaultGcloudCliImage(),
+    ) {
+      def labels = util.imageLabels(p.dockerImage)
 
-    if (!labels.VERSIONDB_MANIFEST_ID) {
-      missingDockerLabel 'VERSIONDB_MANIFEST_ID'
-    }
-    if (!labels.LSST_COMPILER) {
-      missingDockerLabel 'LSST_COMPILER'
-    }
+      if (!labels.VERSIONDB_MANIFEST_ID) {
+        missingDockerLabel 'VERSIONDB_MANIFEST_ID'
+      }
+      if (!labels.LSST_COMPILER) {
+        missingDockerLabel 'LSST_COMPILER'
+      }
 
-    String manifestId = labels.VERSIONDB_MANIFEST_ID
-    String lsstCompiler = labels.LSST_COMPILER
+      String manifestId = labels.VERSIONDB_MANIFEST_ID
+      String lsstCompiler = labels.LSST_COMPILER
 
-    // empty ephemeral dirs at start of build
-    util.emptyDirs([
-      homeDir,
-      runDir,
-    ])
+      // pwd() resolves to the pod's own workspace; the outer dir() context does
+      // not carry across the node() boundary insideK8sContainer creates.
+      def jobDir           = pwd()
+      def datasetDir       = "${jobDir}/datasets/${ds.name}"
+      def ciDir            = "${jobDir}/ci-scripts"
+      def baseDir          = "${jobDir}/${p.slug}"
+      // the code clone needs to be under the long winded path for archiving
+      def codeDir          = buildCode ? "${baseDir}/${code.name}" : ''
+      def homeDir          = "${baseDir}/home"
+      def runDir           = "${baseDir}/run"
+      def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
 
-    // stage manifest.txt early so we don't risk a long processing run and
-    // then fail setting up to run dispatch_verify.py
-    stageFakeLsstsw(
-      fakeLsstswDir: fakeLsstswDir,
-      manifestId: manifestId,
-      archiveDir: jobDir,
-    )
+      // empty ephemeral dirs at start of build
+      util.emptyDirs([
+        homeDir,
+        runDir,
+      ])
 
-    dir(ciDir) {
-      util.cloneCiScripts()
-    }
+      // stage manifest.txt early so we don't risk a long processing run and
+      // then fail setting up to run dispatch_verify.py
+      stageFakeLsstsw(
+        fakeLsstswDir: fakeLsstswDir,
+        manifestId: manifestId,
+        archiveDir: jobDir,
+      )
 
-    // clone dataset
-    dir(datasetDir) {
-      timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
-        util.checkoutLFS(
-          githubSlug: ds.github_repo,
-          gitRef: ds.git_ref,
-        )
-      } // timeout
-    } // dir
+      dir(ciDir) {
+        util.cloneCiScripts()
+      }
 
-    // clone code
-    if (buildCode) {
-      dir(codeDir) {
-        timeout(time: code.clone_timelimit, unit: 'MINUTES') {
-          // the simplier git step doesn't support 'CleanBeforeCheckout'
-          def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
-          def codeRef     = code.git_ref
-
-          checkout(
-            scm: [
-              $class: 'GitSCM',
-              branches: [[name: "*/${codeRef}"]],
-              doGenerateSubmoduleConfigurations: false,
-              extensions: [[$class: 'CleanBeforeCheckout']],
-              submoduleCfg: [],
-              userRemoteConfigs: [[url: codeRepoUrl]]
-            ],
+      // clone dataset
+      dir(datasetDir) {
+        timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
+          util.checkoutLFS(
+            githubSlug: ds.github_repo,
+            gitRef: ds.git_ref,
           )
         } // timeout
       } // dir
-    }
 
-    // process dataset
-    util.insideDockerWrap(
-      image: p.dockerImage,
-      pull: true,
-      args: "-v ${datasetDir}:${datasetDir}",
-    ) {
+      // clone code
+      if (buildCode) {
+        dir(codeDir) {
+          timeout(time: code.clone_timelimit, unit: 'MINUTES') {
+            // the simplier git step doesn't support 'CleanBeforeCheckout'
+            def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
+            def codeRef     = code.git_ref
+
+            checkout(
+              scm: [
+                $class: 'GitSCM',
+                branches: [[name: "*/${codeRef}"]],
+                doGenerateSubmoduleConfigurations: false,
+                extensions: [[$class: 'CleanBeforeCheckout']],
+                submoduleCfg: [],
+                userRemoteConfigs: [[url: codeRepoUrl]]
+              ],
+            )
+          } // timeout
+        } // dir
+      }
+
       if (buildCode) {
         buildAp(
           codeDir: codeDir,
@@ -303,21 +310,18 @@ def void verifyDataset(Map p) {
             echo "Sasquatch upload not supported for Gen ${conf.gen} pipeline framework; skipping"
         }
       }
-    } // insideDockerWrap
+    } // util.insideK8sContainer
   } // run
 
+  // No outer nodeWrap: the pod IS the agent. Each retry provisions a fresh pod
+  // with its own emptyDir workspace, so WIPEOUT is implicit (nothing persists
+  // between pods) and there is no outer workspace to deleteDir.
   retry(conf.retries) {
-    util.nodeWrap(architecture) {
-      // total allowed runtime for this "try" including cloning a test data /
-      // git-lfs repo
-      timeout(time: conf.run_timelimit, unit: 'MINUTES') {
-        if (p.wipeout) {
-          deleteDir()
-        }
-
-        run()
-      } // timeout
-    } // util.nodeWrap
+    // total allowed runtime for this "try" including cloning a test data /
+    // git-lfs repo
+    timeout(time: conf.run_timelimit, unit: 'MINUTES') {
+      run()
+    } // timeout
   } // retry
 } // verifyDataset
 

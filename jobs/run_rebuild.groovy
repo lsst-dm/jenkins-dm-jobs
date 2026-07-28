@@ -15,6 +15,10 @@ p.pipeline().with {
     booleanParam('PREP_ONLY', false, 'Pass -p flag to lsstsw/bin/rebuild -- prepare git clones/a manifest but do not build products.')
     stringParam('TIMEOUT', '8', 'build timeout in hours')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
+    booleanParam('PUBLISH', false, 'Publish EUPS distrib packages from the stack built in this job (runs in the same pod as the build).')
+    stringParam('EUPS_TAG', null, 'Whitespace delimited EUPS distrib tag(s) to publish, e.g. "d.2026.06.27 d_latest". Only used when PUBLISH=true.')
+    choiceParam('EUPSPKG_SOURCE', ['git', 'package'], 'type of "eupspkg" to create -- "git" should always be used except for a final (non-rc) release. Only used when PUBLISH=true.')
+    stringParam('RUBINENV_VER', scipipe.template.splenv_ref, 'conda env ref used for the publish env')
     // enable for debugging only
     // booleanParam('NO_VERSIONDB_PUSH', true, 'Skip push to remote versiondb repo.')
   }

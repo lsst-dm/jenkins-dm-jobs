@@ -46,35 +46,19 @@ notify.wrap {
 
     stage('build') {
       retry(retries) {
+        // publish runs inside the rebuild pod (same stack), tagging both the
+        // dated eups tag and w_latest.
         manifestId = util.runRebuild(
           parameters: [
             PRODUCTS: products,
             BUILD_DOCS: true,
             NO_BINARY_FETCH: true,
+            PUBLISH: true,
+            EUPS_TAG: "${eupsTag} w_latest",
+            EUPSPKG_SOURCE: 'git',
           ],
         )
       } // retry
-    } // stage
-
-    stage('eups publish') {
-      def pub = [:]
-
-      [eupsTag, 'w_latest'].each { tagName ->
-        pub[tagName] = {
-          retry(retries) {
-            util.runPublish(
-              parameters: [
-                EUPSPKG_SOURCE: 'git',
-                MANIFEST_ID: manifestId,
-                EUPS_TAG: tagName,
-                PRODUCTS: products,
-              ],
-            )
-          } // retry
-        } // pub
-      } // each
-
-      parallel pub
     } // stage
 
     stage('git tag eups products') {
@@ -182,7 +166,7 @@ notify.wrap {
             job: 'sqre/infra/build-sciplatlab',
             parameters: [
               string(name: 'TAG', value: eupsTag),
-              string(name: 'IMAGE', value: 'docker.io/lsstsqre/sciplat-lab,us-central1-docker.pkg.dev/rubin-shared-services-71ec/sciplat/sciplat-lab,ghcr.io/lsst-sqre/sciplat-lab'),
+              string(name: 'IMAGE', value: 'us-central1-docker.pkg.dev/rubin-shared-services-71ec/sciplat/sciplat-lab,ghcr.io/lsst-sqre/sciplat-lab'),
             ],
           )
         } // retry

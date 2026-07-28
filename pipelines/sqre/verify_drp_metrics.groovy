@@ -145,87 +145,95 @@ def void verifyDataset(Map p) {
   // code.name is required in order to build code
 
   def run = {
-    // note that pwd() must be run inside of a node {} block
-    def jobDir           = pwd()
-    def datasetDir       = "${jobDir}/datasets/${ds.name}"
-    def ciDir            = "${jobDir}/ci-scripts"
-    def baseDir          = "${jobDir}/${p.slug}"
-    // the code clone needs to be under the long winded path for archiving
-    def codeDir          = "${baseDir}/${code.name}"
-    def homeDir          = "${baseDir}/home"
-    def runDir           = "${baseDir}/run"
-    def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
+    // Pin the inner pod to the matrix entry's arch; without this the aarch64
+    // build silently lands on the default x86 pool. Also surfaces the arch in
+    // the pod name so the instances are distinguishable.
+    def arch = (p.architecture == 'linux-aarch64') ? 'arm64' : 'amd64'
 
-    docker.image(p.dockerImage).pull()
-    def labels = util.shJson """
-      docker inspect --format '{{json .Config.Labels }}' ${p.dockerImage}
-    """
-
-    if (!labels.VERSIONDB_MANIFEST_ID) {
-      missingDockerLabel 'VERSIONDB_MANIFEST_ID'
-    }
-    if (!labels.LSST_COMPILER) {
-      missingDockerLabel 'LSST_COMPILER'
-    }
-
-    String manifestId   = labels.VERSIONDB_MANIFEST_ID
-    String lsstCompiler = labels.LSST_COMPILER
-
-    // empty ephemeral dirs at start of build
-    util.emptyDirs([
-      homeDir,
-      runDir,
-    ])
-
-    // stage manifest.txt early so we don't risk a long processing run and
-    // then fail setting up to run dispatch_verify.py
-    stageFakeLsstsw(
-      fakeLsstswDir: fakeLsstswDir,
-      manifestId: manifestId,
-      archiveDir: jobDir,
-    )
-
-    dir(ciDir) {
-      util.cloneCiScripts()
-    }
-
-    // clone dataset
-    dir(datasetDir) {
-      // start with a fresh clone each time to avoid running out of disk
-      deleteDir()
-      timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
-        util.checkoutLFS(
-          githubSlug: ds.github_repo,
-          gitRef: ds.git_ref,
-        )
-      }
-    } // dir
-
-    // clone code
-    dir(codeDir) {
-      timeout(time: code.clone_timelimit, unit: 'MINUTES') {
-        // the simplier git step doesn't support 'CleanBeforeCheckout'
-        def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
-        def codeRef     = p.gitRef
-
-        checkout(
-          scm: [
-            $class: 'GitSCM',
-            branches: [[name: "*/${codeRef}"]],
-            doGenerateSubmoduleConfigurations: false,
-            extensions: [[$class: 'CleanBeforeCheckout']],
-            submoduleCfg: [],
-            userRemoteConfigs: [[url: codeRepoUrl]]
-          ],
-        )
-      } // timeout
-    } // dir
-
-    util.insideDockerWrap(
+    // Everything -- including reading the image labels -- runs inside ONE pod.
+    // The gcloud-cli sidecar (cacheImage) ships crane, which reads the labels
+    // straight from the registry, so no outer buildx agent is needed. A single
+    // pod also keeps all cloned data on one emptyDir /j (no cross-pod sharing).
+    util.insideK8sContainer(
       image: p.dockerImage,
       pull: true,
-      args: "-v ${datasetDir}:${datasetDir} -v ${ciDir}:${ciDir}",
+      arch: arch,
+      cacheImage: util.defaultGcloudCliImage(),
     ) {
+      def labels = util.imageLabels(p.dockerImage)
+
+      if (!labels.VERSIONDB_MANIFEST_ID) {
+        missingDockerLabel 'VERSIONDB_MANIFEST_ID'
+      }
+      if (!labels.LSST_COMPILER) {
+        missingDockerLabel 'LSST_COMPILER'
+      }
+
+      String manifestId   = labels.VERSIONDB_MANIFEST_ID
+      String lsstCompiler = labels.LSST_COMPILER
+
+      // pwd() resolves to the pod's own workspace; the outer dir() context does
+      // not carry across the node() boundary insideK8sContainer creates.
+      def jobDir           = pwd()
+      def datasetDir       = "${jobDir}/datasets/${ds.name}"
+      def ciDir            = "${jobDir}/ci-scripts"
+      def baseDir          = "${jobDir}/${p.slug}"
+      // the code clone needs to be under the long winded path for archiving
+      def codeDir          = "${baseDir}/${code.name}"
+      def homeDir          = "${baseDir}/home"
+      def runDir           = "${baseDir}/run"
+      def fakeLsstswDir    = "${baseDir}/lsstsw-fake"
+
+      // empty ephemeral dirs at start of build
+      util.emptyDirs([
+        homeDir,
+        runDir,
+      ])
+
+      // stage manifest.txt early so we don't risk a long processing run and
+      // then fail setting up to run dispatch_verify.py
+      stageFakeLsstsw(
+        fakeLsstswDir: fakeLsstswDir,
+        manifestId: manifestId,
+        archiveDir: jobDir,
+      )
+
+      dir(ciDir) {
+        util.cloneCiScripts()
+      }
+
+      // clone dataset
+      dir(datasetDir) {
+        // start with a fresh clone each time to avoid running out of disk
+        deleteDir()
+        timeout(time: ds.clone_timelimit, unit: 'MINUTES') {
+          util.checkoutLFS(
+            githubSlug: ds.github_repo,
+            gitRef: ds.git_ref,
+          )
+        }
+      } // dir
+
+      // clone code
+      dir(codeDir) {
+        timeout(time: code.clone_timelimit, unit: 'MINUTES') {
+          // the simplier git step doesn't support 'CleanBeforeCheckout'
+          def codeRepoUrl = util.githubSlugToUrl(code.github_repo)
+          def codeRef     = p.gitRef
+
+          checkout(
+            scm: [
+              $class: 'GitSCM',
+              branches: [[name: "*/${codeRef}"]],
+              doGenerateSubmoduleConfigurations: false,
+              extensions: [[$class: 'CleanBeforeCheckout']],
+              submoduleCfg: [],
+              userRemoteConfigs: [[url: codeRepoUrl]]
+            ],
+          )
+        } // timeout
+      } // dir
+
       buildDrp(
         codeDir: codeDir,
         ciDir: ciDir,
@@ -274,22 +282,19 @@ def void verifyDataset(Map p) {
         }
       }
       */
-    } // inside
+    } // util.insideK8sContainer
   } // run
 
+  // No outer nodeWrap: the pod IS the agent. Each retry provisions a fresh pod
+  // with its own emptyDir workspace, so WIPEOUT is implicit (nothing persists
+  // between pods) and there is no outer workspace to deleteDir.
   // retrying is important as there is a good chance that the dataset will
   // fill the disk up
   retry(conf.retries) {
     try {
-      util.nodeWrap(architecture) {
-        timeout(time: conf.run_timelimit, unit: 'MINUTES') {
-          if (p.wipeout) {
-            deleteDir()
-          }
-
-          run()
-        } // timeout
-      } // util.nodeWrap
+      timeout(time: conf.run_timelimit, unit: 'MINUTES') {
+        run()
+      } // timeout
     } catch(e) {
       runNodeCleanup()
       throw e
