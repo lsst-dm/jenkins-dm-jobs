@@ -123,10 +123,10 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: main
+  git_ref: tickets/DM-55655
 ciscripts:
   github_repo: lsst-dm/ci-scripts
-  git_ref: main
+  git_ref: tickets/DM-54833-2
 shebangtron:
   github_repo: lsst/shebangtron
   git_ref: main
