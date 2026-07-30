@@ -681,6 +681,14 @@ def String buildScript(
     ciDir
   ) +
   util.dedent("""
+      # Force the conda solver to target glibc 2.17 so the resulting tarballs
+      # run on RHEL7-era hosts (e.g. USDF cvmfs). Scope it to the lsstinstall
+      # conda-create call only; unset immediately after so it never influence
+      # runtime.
+      if [[ \$(uname -s) == Linux && \$(uname -m) == x86_64 ]] && \
+            [[ \$(printf '%s\\n' "13.0.0" "${menv.rubinEnvVer}" | sort -V | tail -n1) == "${menv.rubinEnvVer}" ]]; then
+        export CONDA_OVERRIDE_GLIBC=2.17
+      fi
     curl -sSL ${util.lsstinstallUrl()} | bash -s -- -v ${menv.rubinEnvVer}
     . ./loadLSST.bash
 
@@ -706,6 +714,7 @@ def String buildScript(
     # saving environment information
     mkdir -p "\${EUPS_PKGROOT}/env"
     conda list --explicit > "\${EUPS_PKGROOT}/env/${tag}.env"
+    conda list | grep libsystemd
   """)
 }
 
