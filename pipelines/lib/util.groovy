@@ -1962,6 +1962,7 @@ def String runRebuild(Map p) {
   def jobParameters = [
           string(name: 'REFS', value: useP.parameters.REFS),
           string(name: 'PRODUCTS', value: useP.parameters.PRODUCTS),
+          booleanParam(name: 'GLIBC_FLAG', value: useP.parameters.GLIBC_FLAG),
           booleanParam(name: 'BUILD_DOCS', value: useP.parameters.BUILD_DOCS),
           booleanParam(name: 'NO_BINARY_FETCH', value: useP.parameters.NO_BINARY_FETCH),
           string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
@@ -1982,6 +1983,9 @@ def String runRebuild(Map p) {
   }
   if (useP.parameters.RUBINENV_VER) {
     jobParameters += string(name: 'RUBINENV_VER', value: useP.parameters.RUBINENV_VER)
+  }
+  if (useP.parameters.GLIBC_FLAG) {
+    jobParameters += booleanParam(name: 'GLIBC_FLAG', value: useP.parameters.GLIBC_FLAG)
   }
 
   def result = build(

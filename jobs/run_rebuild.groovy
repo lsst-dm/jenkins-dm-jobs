@@ -13,6 +13,7 @@ p.pipeline().with {
     booleanParam('BUILD_DOCS', false, 'Build and publish documentation.')
     booleanParam('NO_BINARY_FETCH', true, 'pass -B flag to rebuild -- builds all binary')
     booleanParam('PREP_ONLY', false, 'Pass -p flag to lsstsw/bin/rebuild -- prepare git clones/a manifest but do not build products.')
+    booleanParam('GLIBC_FLAG', false, 'Pass a flag to force conda solver to target glibc 2.17. So the rebuild resolves for RHE7-era host such as USDF cvmfs')
     stringParam('TIMEOUT', '8', 'build timeout in hours')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
     booleanParam('PUBLISH', false, 'Publish EUPS distrib packages from the stack built in this job (runs in the same pod as the build).')

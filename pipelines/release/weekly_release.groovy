@@ -56,6 +56,7 @@ notify.wrap {
             PUBLISH: true,
             EUPS_TAG: "${eupsTag} w_latest",
             EUPSPKG_SOURCE: 'git',
+            GLIBC_FLAG: true,
           ],
         )
       } // retry
