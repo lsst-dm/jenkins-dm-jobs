@@ -497,7 +497,8 @@ String githubToSlackEz(jenkinsId) {
 // memoized to reduce the number of withCredentials steps reported to console
 @Field String jobChannel = null
 @Field String defaultChannel = null
-void slackSendBuild(Map args) {
+@Field String startThreadTs = null
+def slackSendBuild(Map args) {
   // required keys:
   // color
   // detail
@@ -506,6 +507,7 @@ void slackSendBuild(Map args) {
   defaultChannel = defaultChannel ?: defaultChannel()
   jobChannel = jobChannel ?: jobChannel()
 
+  def result = null
   withCredentials([[
     $class: 'StringBinding',
     credentialsId: 'slack-lsstc-token',
@@ -529,6 +531,7 @@ void slackSendBuild(Map args) {
       color:   args.color,
       detail:  args.detail,
     )
+    message = addThreadContext(message, args.threadTs, args.broadcast ?: false)
 
     if (slackId) {
       // add @user ping to message
@@ -589,12 +592,15 @@ void slackSendBuild(Map args) {
           topic: "${env.JOB_NAME} - ${env.JOB_DISPLAY_URL}",
           purpose: "Jenkins ${env.JOB_NAME} job related notifications",
         )
-        sendMessage()
+        send = sendMessage()
       } else {
         echo "failed to send message: ${send}"
       }
     }
+    result = send
   } // withCredentials
+
+  return result
 }
 
 String slackStartMessage() {
@@ -614,19 +620,20 @@ String slackAbortedMessage() {
 }
 
 def started() {
-  slackSendBuild(color: 'good', detail: slackStartMessage())
+  def send = slackSendBuild(color: 'good', detail: slackStartMessage())
+  startThreadTs = send?.ts
 }
 
 def success() {
-  slackSendBuild(color: 'good', detail: slackSuccessMessage())
+  slackSendBuild(color: 'good', detail: slackSuccessMessage(), threadTs: startThreadTs)
 }
 
 def aborted() {
-  slackSendBuild(color: 'warning', detail: slackAbortedMessage())
+  slackSendBuild(color: 'warning', detail: slackAbortedMessage(), threadTs: startThreadTs, broadcast: true)
 }
 
 def failure() {
-  slackSendBuild(color: 'danger', detail: slackFailureMessage())
+  slackSendBuild(color: 'danger', detail: slackFailureMessage(), threadTs: startThreadTs, broadcast: true)
 }
 
 def trynotify(Closure run) {
