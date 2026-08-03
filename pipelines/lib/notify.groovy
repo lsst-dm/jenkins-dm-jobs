@@ -298,6 +298,28 @@ def requiredParams(List need, Map args) {
   }
 }
 
+/*
+ * Stamp Slack thread fields onto a chat.postMessage body.
+ *
+ * thread_ts / reply_broadcast are top-level body fields (siblings of channel
+ * and attachments). reply_broadcast is only valid with a thread parent, so it
+ * is only set when threadTs is present.
+ *
+ * @param message Map chat.postMessage body
+ * @param threadTs String parent message ts (or null for a top-level message)
+ * @param broadcast Boolean also surface the threaded reply in the channel
+ * @return Map the same message, mutated
+ */
+Map addThreadContext(Map message, String threadTs, Boolean broadcast = false) {
+  if (threadTs) {
+    message.thread_ts = threadTs
+    if (broadcast) {
+      message.reply_broadcast = true
+    }
+  }
+  return message
+}
+
 
 /*
  * Methods below are coupled to jenkins
@@ -613,13 +635,11 @@ def trynotify(Closure run) {
   // } else {
     try {
       run()
-    } catch (org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException e) {
-      // fail on groovy sandbox exceptions. ie., methods that need to be
-      // whitelisted
-      throw e
     } catch (Error e) {
-      // ignore other exception so problems with slack messaging will not cause
+      // ignore errors so problems with slack messaging will not cause
       // the build to be marked as a failure.
+      // Note: sandbox RejectedAccessException extends RuntimeException (not Error)
+      // so it propagates up naturally without needing an explicit catch+rethrow.
       echo "error sending slack notification: ${e.toString()}"
     }
   // }
