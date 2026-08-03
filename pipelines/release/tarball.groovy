@@ -681,15 +681,16 @@ def String buildScript(
     ciDir
   ) +
   util.dedent("""
-      # Force the conda solver to target glibc 2.17 so the resulting tarballs
-      # run on RHEL7-era hosts (e.g. USDF cvmfs). Scope it to the lsstinstall
-      # conda-create call only; unset immediately after so it never influence
-      # runtime.
-      if [[ \$(uname -s) == Linux && \$(uname -m) == x86_64 ]] && \
-            [[ \$(printf '%s\\n' "13.0.0" "${menv.rubinEnvVer}" | sort -V | tail -n1) == "${menv.rubinEnvVer}" ]]; then
-        export CONDA_OVERRIDE_GLIBC=2.17
-      fi
+    # Force the conda solver to target glibc 2.17 so the resulting tarballs
+    # run on RHEL7-era hosts (e.g. USDF cvmfs). Scope it to the lsstinstall
+    # conda-create call only; unset immediately after so it never influence
+    # runtime. This should only run on linux x86_64 and only on rubinenv > 13.
+    if [[ \$(uname -s) == Linux && \$(uname -m) == x86_64 ]] && \
+      [[ \$(printf '%s\\n' "13.0.0" "${menv.rubinEnvVer}" | sort -V | tail -n1) == "${menv.rubinEnvVer}" ]]; then
+      export CONDA_OVERRIDE_GLIBC=2.17
+    fi
     curl -sSL ${util.lsstinstallUrl()} | bash -s -- -v ${menv.rubinEnvVer}
+    unset CONDA_OVERRIDE_GLIBC
     . ./loadLSST.bash
 
     for prod in ${products}; do
