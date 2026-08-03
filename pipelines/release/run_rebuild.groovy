@@ -30,6 +30,7 @@ notify.wrap {
   String products   = params.PRODUCTS
   Boolean buildDocs = params.BUILD_DOCS
   Boolean nobinary = params.NO_BINARY_FETCH
+  Boolean glibcFlag = params.GLIBC_FLAG
   Integer timelimit = Integer.parseInt(params.TIMEOUT)
 
   // EUPS distrib publish is folded into this job so it runs in the same pod as
@@ -87,6 +88,7 @@ notify.wrap {
           LSST_JUNIT_PREFIX:     slug,
           LSST_PREP_ONLY:        prepOnly,
           LSST_NO_BINARY_FETCH:  nobinary,
+          LSST_GLIBC_FLAG:       glibcFlag,
           LSST_PRODUCTS:         products,
           LSST_PYTHON_VERSION:   lsstswConfig.python,
           LSST_SPLENV_REF:       splenvRef,
