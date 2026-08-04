@@ -298,6 +298,28 @@ def requiredParams(List need, Map args) {
   }
 }
 
+/*
+ * Stamp Slack thread fields onto a chat.postMessage body.
+ *
+ * thread_ts / reply_broadcast are top-level body fields (siblings of channel
+ * and attachments). reply_broadcast is only valid with a thread parent, so it
+ * is only set when threadTs is present.
+ *
+ * @param message Map chat.postMessage body
+ * @param threadTs String parent message ts (or null for a top-level message)
+ * @param broadcast Boolean also surface the threaded reply in the channel
+ * @return Map the same message, mutated
+ */
+Map addThreadContext(Map message, String threadTs, Boolean broadcast = false) {
+  if (threadTs) {
+    message.thread_ts = threadTs
+    if (broadcast) {
+      message.reply_broadcast = true
+    }
+  }
+  return message
+}
+
 
 /*
  * Methods below are coupled to jenkins
@@ -475,7 +497,8 @@ String githubToSlackEz(jenkinsId) {
 // memoized to reduce the number of withCredentials steps reported to console
 @Field String jobChannel = null
 @Field String defaultChannel = null
-void slackSendBuild(Map args) {
+@Field String startThreadTs = null
+def slackSendBuild(Map args) {
   // required keys:
   // color
   // detail
@@ -484,6 +507,7 @@ void slackSendBuild(Map args) {
   defaultChannel = defaultChannel ?: defaultChannel()
   jobChannel = jobChannel ?: jobChannel()
 
+  def result = null
   withCredentials([[
     $class: 'StringBinding',
     credentialsId: 'slack-lsstc-token',
@@ -507,6 +531,7 @@ void slackSendBuild(Map args) {
       color:   args.color,
       detail:  args.detail,
     )
+    message = addThreadContext(message, args.threadTs, args.broadcast ?: false)
 
     if (slackId) {
       // add @user ping to message
@@ -567,12 +592,15 @@ void slackSendBuild(Map args) {
           topic: "${env.JOB_NAME} - ${env.JOB_DISPLAY_URL}",
           purpose: "Jenkins ${env.JOB_NAME} job related notifications",
         )
-        sendMessage()
+        send = sendMessage()
       } else {
         echo "failed to send message: ${send}"
       }
     }
+    result = send
   } // withCredentials
+
+  return result
 }
 
 String slackStartMessage() {
@@ -592,19 +620,20 @@ String slackAbortedMessage() {
 }
 
 def started() {
-  slackSendBuild(color: 'good', detail: slackStartMessage())
+  def send = slackSendBuild(color: 'good', detail: slackStartMessage())
+  startThreadTs = send?.ts
 }
 
 def success() {
-  slackSendBuild(color: 'good', detail: slackSuccessMessage())
+  slackSendBuild(color: 'good', detail: slackSuccessMessage(), threadTs: startThreadTs)
 }
 
 def aborted() {
-  slackSendBuild(color: 'warning', detail: slackAbortedMessage())
+  slackSendBuild(color: 'warning', detail: slackAbortedMessage(), threadTs: startThreadTs, broadcast: true)
 }
 
 def failure() {
-  slackSendBuild(color: 'danger', detail: slackFailureMessage())
+  slackSendBuild(color: 'danger', detail: slackFailureMessage(), threadTs: startThreadTs, broadcast: true)
 }
 
 def trynotify(Closure run) {
@@ -613,13 +642,11 @@ def trynotify(Closure run) {
   // } else {
     try {
       run()
-    } catch (org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException e) {
-      // fail on groovy sandbox exceptions. ie., methods that need to be
-      // whitelisted
-      throw e
     } catch (Error e) {
-      // ignore other exception so problems with slack messaging will not cause
+      // ignore errors so problems with slack messaging will not cause
       // the build to be marked as a failure.
+      // Note: sandbox RejectedAccessException extends RuntimeException (not Error)
+      // so it propagates up naturally without needing an explicit catch+rethrow.
       echo "error sending slack notification: ${e.toString()}"
     }
   // }
