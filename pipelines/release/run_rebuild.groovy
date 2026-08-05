@@ -94,6 +94,7 @@ notify.wrap {
           LSST_PYTHON_VERSION:   lsstswConfig.python,
           LSST_SPLENV_REF:       splenvRef,
           LSST_REFS:             refs,
+          LSST_ADD_RSP:          true,
           VERSIONDB_PUSH:        versiondbPush,
           VERSIONDB_REPO:        versiondbRepo,
         ]
