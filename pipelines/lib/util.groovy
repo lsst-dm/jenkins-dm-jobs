@@ -177,6 +177,7 @@ def void insideK8sContainer(Map p, Closure run) {
 
   podTemplate(name: podName, yaml: podYaml) {
     node(POD_LABEL) {
+      labelPod()
       container('runner') {
         run()
       }
