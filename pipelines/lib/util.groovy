@@ -282,8 +282,25 @@ def String renderPodYaml(Map p) {
     key: kubernetes.io/arch
     operator: Equal
     value: arm64
-""" : ''
-
+""" : """  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node.kubernetes.io/instance-type
+            operator: In
+            values:
+            - c4d-standard-32
+            - c4d-highmem-32
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+          - key: node.kubernetes.io/instance-type
+            operator: In
+            values:
+            - c4d-standard-32
+"""
   // Optional gcloud-cli sidecar that shares the same workspace volumes.
   // Both containers see the same /j/workspace/... so files downloaded by
   // gcloud-cli are immediately visible to the runner without any inter-pod
