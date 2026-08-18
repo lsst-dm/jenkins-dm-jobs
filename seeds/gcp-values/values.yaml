@@ -1163,7 +1163,7 @@ controller:
                           mountPath: /run/buildkit
                     dnsPolicy: ClusterFirst
                     nodeSelector:
-                      cloud.google.com/gke-nodepool: jenkins-workers-c4d
+                      cloud.google.com/compute-class: jenkins-workers-x86
                     enableServiceLinks: true
                     preemptionPolicy: PreemptLowerPriority
                     priority: 0
@@ -1179,6 +1179,10 @@ controller:
                     shareProcessNamespace: false
                     terminationGracePeriodSeconds: 30
                     tolerations:
+                    - effect: NoSchedule
+                      key: cloud.google.com/compute-class
+                      operator: Equal
+                      value: jenkins-workers-x86
                     - effect: NoExecute
                       key: node.kubernetes.io/not-ready
                       operator: Exists
@@ -1338,7 +1342,7 @@ controller:
                     dnsPolicy: ClusterFirst
                     enableServiceLinks: true
                     nodeSelector:
-                      cloud.google.com/gke-nodepool: jenkins-workers-multiarch-c4a
+                      cloud.google.com/compute-class: jenkins-workers-arm
                       kubernetes.io/arch: arm64
                     preemptionPolicy: PreemptLowerPriority
                     priority: 0
@@ -1354,6 +1358,10 @@ controller:
                     shareProcessNamespace: false
                     terminationGracePeriodSeconds: 30
                     tolerations:
+                    - effect: NoSchedule
+                      key: cloud.google.com/compute-class
+                      operator: Equal
+                      value: jenkins-workers-arm
                     - effect: NoExecute
                       key: node.kubernetes.io/not-ready
                       operator: Exists
@@ -1402,10 +1410,20 @@ controller:
                     name: snowflake
                     namespace: jenkins
                   spec:
+                    # Stays pinned to the C4A pool by name rather than selecting the
+                    # jenkins-workers-arm ComputeClass: this agent is long-lived and we
+                    # do not want it migrating between machine families. Because it
+                    # does not select the class, GKE will not auto-inject the
+                    # compute-class toleration, so it is spelled out below -- without it
+                    # the pod cannot schedule onto the now-tainted C4A pool.
                     nodeSelector:
                       cloud.google.com/gke-nodepool: jenkins-workers-multiarch-c4a
                       kubernetes.io/arch: arm64
                     tolerations:
+                      - effect: NoSchedule
+                        key: cloud.google.com/compute-class
+                        operator: Equal
+                        value: jenkins-workers-arm
                       - key: "workload"
                         operator: "Equal"
                         value: "snowflake"

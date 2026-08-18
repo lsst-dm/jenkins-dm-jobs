@@ -194,9 +194,10 @@ def void insideK8sContainer(Map p, Closure run) {
  * @param p.pullPolicy String imagePullPolicy, e.g. 'Always' or 'IfNotPresent'
  * @param p.cacheImage String optional gcloud-cli sidecar image; when set, a
  *                     'gcloud-cli' container sharing the workspace volumes is added
- * @param p.arch       String optional target arch; 'arm64' pins the pod to arm
- *                     nodes (nodeSelector + toleration). Anything else schedules
- *                     on the default (x86) pool.
+ * @param p.arch       String optional target arch; 'arm64' selects the
+ *                     jenkins-workers-arm ComputeClass and adds the arm64
+ *                     nodeSelector/toleration. Anything else (including null)
+ *                     selects jenkins-workers-x86.
  * @param p.cpuRequest String optional runner CPU request (default '8').
  * @param p.cpuLimit   String optional runner CPU limit (default '10').
  * @param p.memRequest String optional runner memory request (default '32Gi').
@@ -227,11 +228,18 @@ def String renderPodYaml(Map p) {
   // (a Hyperdisk dynamically provisioned via the hyperdisk-rwo StorageClass,
   // deleted with the pod) rather than an emptyDir. An emptyDir lives on the
   // node root disk, and the multi-GB lsstsw build filling it triggered kubelet
-  // ephemeral-storage eviction of the whole agent. The c4d (x86) and c4a (arm)
-  // worker machine families are Hyperdisk-only -- GCP rejects pd-balanced and
-  // other pd-* disk types on them -- so the class must be hyperdisk-balanced,
-  // and it must NOT be zone-restricted because the c4d pool spans
-  // us-central1-a and -c (WaitForFirstConsumer binds it in the pod's zone).
+  // ephemeral-storage eviction of the whole agent. The worker machine families
+  // are Hyperdisk-only -- GCP rejects pd-balanced and other pd-* disk types on
+  // them -- so the class must be hyperdisk-balanced, and it must NOT be
+  // zone-restricted because the c4d pool spans us-central1-a and -c
+  // (WaitForFirstConsumer binds it in the pod's zone).
+  //
+  // A pod's volume spec is fixed before it is scheduled, so every family a
+  // ComputeClass can fall back to must accept hyperdisk-balanced; one that did
+  // not would leave the pod deadlocked on volume attach, a worse failure than
+  // the stockout the fallback exists to escape. That holds for all four pools
+  // today (c4d/c4 on x86, c4a/n4a on arm) and is a constraint on adding any
+  // new fallback family.
   // The cluster default readOnlyRootFilesystem:true is why /j must be a
   // writable mount at all.
   //
@@ -272,17 +280,34 @@ def String renderPodYaml(Map p) {
     emptyDir: {}
 """
 
-  // arm nodes are tainted kubernetes.io/arch=arm64:NoSchedule, so without both
-  // the nodeSelector and the matching toleration the pod can only land on the
-  // default x86 pool -- which is why aarch64 matrix builds were running on x86.
-  def schedulingSection = (arch == 'arm64') ? """  nodeSelector:
+  // Pods select a machine family by ComputeClass rather than by pool name. Each
+  // class lists its primary pool first and its fallback second, so GKE only
+  // reaches for the fallback family once the primary is out of capacity. The
+  // worker pools are also tainted with the same key, which is what keeps
+  // unrelated pods off them now that no pod pins a specific pool.
+  String computeClass = (arch == 'arm64') ? 'jenkins-workers-arm' : 'jenkins-workers-x86'
+
+  // arm nodes are additionally tainted kubernetes.io/arch=arm64:NoSchedule, so
+  // without both the nodeSelector and the matching toleration the pod can only
+  // land on x86 -- which is why aarch64 matrix builds were running on x86.
+  def archSelector = (arch == 'arm64') ? """\
     kubernetes.io/arch: arm64
-  tolerations:
+""" : ''
+  def archToleration = (arch == 'arm64') ? """\
   - effect: NoSchedule
     key: kubernetes.io/arch
     operator: Equal
     value: arm64
 """ : ''
+
+  def schedulingSection = """  nodeSelector:
+    cloud.google.com/compute-class: ${computeClass}
+""" + archSelector + """  tolerations:
+  - effect: NoSchedule
+    key: cloud.google.com/compute-class
+    operator: Equal
+    value: ${computeClass}
+""" + archToleration
 
   // Optional gcloud-cli sidecar that shares the same workspace volumes.
   // Both containers see the same /j/workspace/... so files downloaded by
