@@ -33,6 +33,16 @@ notify.wrap {
       image: "${hub_repo}:alpine",
       pull: true,
       arch: (architecture == 'linux-aarch64') ? 'arm64' : 'amd64',
+      // Only holds a ci-scripts clone, so make the emptyDir above actually true:
+      // renderPodYaml otherwise defaults /j to a 300Gi hyperdisk and requests
+      // 8 CPU/32Gi. The release pipelines call this twice with wait:true, so that
+      // overhead landed on the critical path both times.
+      emptyDirWorkspace: true,
+      storage: '2Gi',
+      cpuRequest: '1',
+      cpuLimit: '2',
+      memRequest: '2Gi',
+      memLimit: '4Gi',
     ) {
       dir('ci-scripts') {
         util.cloneCiScripts()

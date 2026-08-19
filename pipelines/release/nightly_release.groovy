@@ -65,18 +65,17 @@ notify.wrap {
     // NOOP / DRY_RUN
     stage('git tag eups products') {
       retry(retries) {
-        util.nodeWrap('linux-64') {
-          // needs eups distrib tag to be sync'd from s3 -> k8s volume
-          util.githubTagRelease(
-            options: [
-              '--dry-run': true,
-              '--org': scipipe.release_tag_org,
-              '--manifest': manifestId,
-              '--eups-tag': eupsTag,
-            ],
-            args: [gitTag],
-          )
-        } // util.nodeWrap
+        // No outer nodeWrap: githubTagRelease reaches insideCodekit, whose pod IS
+        // the agent. A wrapper here only pins an idle linux-64 slot for the stage.
+        util.githubTagRelease(
+          options: [
+            '--dry-run': true,
+            '--org': scipipe.release_tag_org,
+            '--manifest': manifestId,
+            '--eups-tag': eupsTag,
+          ],
+          args: [gitTag],
+        )
       } // retry
     } // stage
 
@@ -85,15 +84,13 @@ notify.wrap {
     // first being removed from the aux team).
     stage('git tag auxilliaries') {
       retry(retries) {
-        util.nodeWrap('linux-64') {
-          util.githubTagTeams(
-            options: [
-              '--dry-run': true,
-              '--org': scipipe.release_tag_org,
-              '--tag': gitTag,
-            ],
-          )
-        } // util.nodeWrap
+        util.githubTagTeams(
+          options: [
+            '--dry-run': true,
+            '--org': scipipe.release_tag_org,
+            '--tag': gitTag,
+          ],
+        )
       } // retry
     } // stage
     stage('update index files'){

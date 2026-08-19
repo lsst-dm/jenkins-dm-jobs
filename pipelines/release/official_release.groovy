@@ -112,19 +112,19 @@ notify.wrap {
 
     stage('git tag eups products') {
       retry(retries) {
-        util.nodeWrap('linux-64') {
-          util.githubTagRelease(
-            options: [
-              '--dry-run': false,
-              '--org': scipipe.release_tag_org,
-              '--manifest': gitTagOnlyManifestId,
-              '--manifest-only': true,
-              '--ignore-git-message': true,
-              '--ignore-git-tagger': true,
-            ],
-            args: [gitTag],
-          )
-        } // util.nodeWrap
+        // No outer nodeWrap: githubTagRelease reaches insideCodekit, whose pod IS
+        // the agent. A wrapper here only pins an idle linux-64 slot for the stage.
+        util.githubTagRelease(
+          options: [
+            '--dry-run': false,
+            '--org': scipipe.release_tag_org,
+            '--manifest': gitTagOnlyManifestId,
+            '--manifest-only': true,
+            '--ignore-git-message': true,
+            '--ignore-git-tagger': true,
+          ],
+          args: [gitTag],
+        )
       } // retry
     } // stage
 
@@ -133,16 +133,14 @@ notify.wrap {
     // first being removed from the aux team).
     stage('git tag auxilliaries') {
       retry(retries) {
-        util.nodeWrap('linux-64') {
-          util.githubTagTeams(
-            options: [
-              '--dry-run': false,
-              '--org': scipipe.release_tag_org,
-              '--tag': gitTag,
-            ],
-            args: refArgs,
-          )
-        } // util.nodeWrap
+        util.githubTagTeams(
+          options: [
+            '--dry-run': false,
+            '--org': scipipe.release_tag_org,
+            '--tag': gitTag,
+          ],
+          args: refArgs,
+        )
       } // retry
     } // stage
 

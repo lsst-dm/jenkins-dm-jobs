@@ -21,6 +21,15 @@ notify.wrap {
     util.insideK8sContainer(
       image: "${hub_repo}:latest",
       pull: true,
+      // No workspace data (see above), so back /j with a small emptyDir rather
+      // than renderPodYaml's default 300Gi hyperdisk, and request a footprint
+      // that packs onto an already-running node.
+      emptyDirWorkspace: true,
+      storage: '2Gi',
+      cpuRequest: '1',
+      cpuLimit: '2',
+      memRequest: '2Gi',
+      memLimit: '4Gi',
     ) {
       stage('retire daily tags') {
         withCredentials([file(

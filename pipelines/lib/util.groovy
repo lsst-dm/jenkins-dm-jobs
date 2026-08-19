@@ -1359,6 +1359,16 @@ def void insideCodekit(Closure run) {
   insideK8sContainer(
     image: defaultCodekitImage(),
     pull: true,
+    // codekit just drives the GitHub API, so it needs no build workspace and no
+    // dedicated disk. Taking renderPodYaml's stack-build defaults would provision
+    // a 300Gi hyperdisk and request 8 CPU/32Gi per invocation -- too big to pack
+    // onto a running node, so each git-tag stage waited on a fresh worker.
+    emptyDirWorkspace: true,
+    storage: '2Gi',
+    cpuRequest: '1',
+    cpuLimit: '2',
+    memRequest: '2Gi',
+    memLimit: '4Gi',
   ) {
     withGithubAdminCredentials {
       run()
@@ -1886,6 +1896,13 @@ def void librarianPuppet(String cmd='install', String tag='2.2.3') {
   insideK8sContainer(
     image: "lsstsqre/cakepan:${tag}",
     pull: true,
+    // Fetches puppet modules into the workspace; no dedicated disk required.
+    emptyDirWorkspace: true,
+    storage: '2Gi',
+    cpuRequest: '1',
+    cpuLimit: '2',
+    memRequest: '2Gi',
+    memLimit: '4Gi',
   ) {
     withEnv(["HOME=${pwd()}"]) {
       bash "librarian-puppet ${cmd}"
