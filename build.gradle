@@ -31,6 +31,10 @@ dependencies {
     testImplementation 'org.codehaus.groovy:groovy-json:3.0.21'
     testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    // useJUnitPlatform() needs a launcher on the test runtime classpath. Gradle 8
+    // still injects one when it is absent, but that is deprecated and removed in
+    // Gradle 9, so declare it rather than inherit a wrapper upgrade's breakage.
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
 }
 
 //task clean(type: Delete) {
