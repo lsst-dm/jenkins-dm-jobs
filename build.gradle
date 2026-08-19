@@ -3,7 +3,8 @@ apply plugin: 'groovy'
 defaultTasks 'test'
 
 repositories {
-    jcenter()
+    mavenCentral()
+    maven { url 'https://repo.jenkins-ci.org/releases/' }
 }
 
 configurations {
@@ -12,6 +13,13 @@ configurations {
 
 dependencies {
     libs 'org.yaml:snakeyaml:1.17'
+
+    // groovy-all became a POM-only BOM in 3.x; use the main artifact jar instead
+    testImplementation 'org.codehaus.groovy:groovy:3.0.21'
+    testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+    // 1.21 was never published; highest Java-8-compatible release is 1.16
+    testImplementation 'com.lesfurets:jenkins-pipeline-unit:1.16'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 }
 
 //task clean(type: Delete) {
@@ -35,6 +43,18 @@ sourceSets {
             srcDirs 'jobs'
         }
     }
+    test {
+        groovy {
+            srcDirs = ['src/test/groovy']
+        }
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
 }
 
 tasks.getByName('test').inputs.files(sourceSets.jobs.groovy.srcDirs)
