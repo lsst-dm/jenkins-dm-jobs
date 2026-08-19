@@ -15,8 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # build.gradle pins a Java 8 toolchain; Gradle cannot auto-provision one
-      # without a settings.gradle, so the JDK has to be installed here.
+      # Gradle could provision the pinned Java 8 toolchain itself, but `cache:
+      # gradle` does not cache ~/.gradle/jdks, so it would re-download a JDK on
+      # every run. Installing it here hits setup-java's own cache instead.
       - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:

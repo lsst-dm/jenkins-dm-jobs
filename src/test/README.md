@@ -33,16 +33,17 @@ JUnit XML to `build/test-results/test/`.
 
 ## Requirements
 
-- **A locally installed JDK 8.** `build.gradle` pins a Java 8 toolchain, because
-  Groovy 3 and Spock 2.3 are not reliable on recent JDKs and Java 8 is what the
-  Jenkins hosts provide. Gradle finds any JDK 8 on the machine on its own, so
-  you do not need to change `JAVA_HOME`, and your default JDK can stay whatever
-  it is. If no JDK 8 is present the build fails with `No matching toolchains
-  found`; Gradle cannot download one, since auto-provisioning needs the foojay
-  resolver and that is a `settings.gradle` plugin this project does not have.
-- **Network access on the first run.** The wrapper downloads Gradle itself, and
-  the test dependencies all come from Maven Central. Subsequent runs work from
-  the Gradle cache.
+- **Java 8, but you do not have to install it.** `build.gradle` pins a Java 8
+  toolchain, because Groovy 3 and Spock 2.3 are not reliable on recent JDKs and
+  Java 8 is what the Jenkins hosts provide. Gradle uses any JDK 8 already on the
+  machine, and `settings.gradle` applies the foojay resolver so it downloads one
+  when there is none. Either way your default JDK and `JAVA_HOME` can stay
+  whatever they are.
+- **Network access on the first run.** The wrapper downloads Gradle itself, the
+  test dependencies come from Maven Central, and a provisioned toolchain comes
+  from `api.foojay.io`. Subsequent runs work from the Gradle cache. On a host
+  that blocks `api.foojay.io`, install a JDK 8 yourself and Gradle will find it
+  rather than trying to download one.
 
 You do not need to run `./gradlew libs` first; that task only stages
 `snakeyaml` into `lib/` for the seed job and is unrelated to the tests.
