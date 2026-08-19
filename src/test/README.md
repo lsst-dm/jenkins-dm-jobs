@@ -33,11 +33,13 @@ JUnit XML to `build/test-results/test/`.
 
 ## Requirements
 
-- **Java 8.** Gradle 8.7 (via `./gradlew`) and Groovy 3.0.21 both run here, and
-  Java 8 is what the SLAC build hosts provide. Groovy 3 and Spock 2.3 are not
-  reliable on recent JDKs, so if you have a newer default JDK, point
-  `JAVA_HOME` at a Java 8 or 11 installation before running the suite. Nothing
-  in `build.gradle` pins a toolchain yet, so the JVM on your `PATH` decides.
+- **A locally installed JDK 8.** `build.gradle` pins a Java 8 toolchain, because
+  Groovy 3 and Spock 2.3 are not reliable on recent JDKs and Java 8 is what the
+  Jenkins hosts provide. Gradle finds any JDK 8 on the machine on its own, so
+  you do not need to change `JAVA_HOME`, and your default JDK can stay whatever
+  it is. If no JDK 8 is present the build fails with `No matching toolchains
+  found`; Gradle cannot download one, since auto-provisioning needs the foojay
+  resolver and that is a `settings.gradle` plugin this project does not have.
 - **Network access on the first run.** The wrapper downloads Gradle itself, and
   the test dependencies come from Maven Central plus
   <https://repo.jenkins-ci.org/releases/>. Subsequent runs work from the Gradle
@@ -107,7 +109,7 @@ Two things to know:
    project directory as the working directory, so `pipelines/lib/util.groovy`
    resolves. If you run a spec from an IDE, set the working directory to the
    repo root or the load will fail.
-2. **To assert on a method that calls other steps**, stub them through the
+1. **To assert on a method that calls other steps**, stub them through the
    loaded object's `metaClass` and restore it afterwards:
 
    ```groovy
@@ -127,10 +129,13 @@ Two things to know:
 
    Without the `cleanup`, the stub leaks into later specs in the same class.
 
-## Not yet wired up
+## Continuous integration
 
-These tests do not run in CI. The GitHub Actions workflows in this repo cover
-markdown, YAML, and shell only, so nothing currently fails a pull request when
-a spec breaks — you have to run `./gradlew test` yourself. Adding a workflow
-that does it, and pinning a Java toolchain so the result does not depend on
-each developer's default JDK, are both still open.
+`.github/workflows/unit-tests.yaml` runs this suite on every pull request and
+on pushes to `main`, so a broken spec fails the PR. It installs Temurin 8 to
+satisfy the pinned toolchain; on failure it uploads the HTML report as a
+`test-report` artifact, which is usually quicker to read than the log.
+
+These specs cover only what can be reached without Jenkins. They are not a
+substitute for running the affected job once on
+<https://rubin-ci-dev.slac.stanford.edu/> before merging a pipeline change.

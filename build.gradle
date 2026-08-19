@@ -7,6 +7,17 @@ repositories {
     maven { url 'https://repo.jenkins-ci.org/releases/' }
 }
 
+// Groovy 3 and Spock 2.3 are unreliable on recent JDKs and the Jenkins hosts run
+// Java 8, so pin it: otherwise whichever JVM is on the developer's PATH decides,
+// and the same commit passes for one person and fails for another. This needs a
+// JDK 8 installed locally -- there is no settings.gradle, so the foojay resolver
+// plugin (a settings plugin) cannot be used to auto-provision one.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
 configurations {
     libs
 }
