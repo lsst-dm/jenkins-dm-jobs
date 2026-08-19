@@ -41,9 +41,8 @@ JUnit XML to `build/test-results/test/`.
   found`; Gradle cannot download one, since auto-provisioning needs the foojay
   resolver and that is a `settings.gradle` plugin this project does not have.
 - **Network access on the first run.** The wrapper downloads Gradle itself, and
-  the test dependencies come from Maven Central plus
-  <https://repo.jenkins-ci.org/releases/>. Subsequent runs work from the Gradle
-  cache.
+  the test dependencies all come from Maven Central. Subsequent runs work from
+  the Gradle cache.
 
 You do not need to run `./gradlew libs` first; that task only stages
 `snakeyaml` into `lib/` for the seed job and is unrelated to the tests.
@@ -56,9 +55,8 @@ running Jenkins, and they end by returning `this` so a `load` step can hand
 back their methods. Loading one outside Jenkins therefore fails on the first
 step call.
 
-The usual answer is JenkinsPipelineUnit, which is already declared in
-`build.gradle` but deliberately unused: it requires Java 9 or later. Three
-small pieces stand in for it.
+The usual answer is JenkinsPipelineUnit, which this project cannot use: it
+requires Java 9 or later. Three small pieces stand in for it.
 
 - `groovy/lib/StepSwallowingScript.groovy` — base script whose
   `methodMissing` and `propertyMissing` return `null`, so undefined pipeline

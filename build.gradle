@@ -4,7 +4,6 @@ defaultTasks 'test'
 
 repositories {
     mavenCentral()
-    maven { url 'https://repo.jenkins-ci.org/releases/' }
 }
 
 // Groovy 3 and Spock 2.3 are unreliable on recent JDKs and the Jenkins hosts run
@@ -27,9 +26,10 @@ dependencies {
 
     // groovy-all became a POM-only BOM in 3.x; use the main artifact jar instead
     testImplementation 'org.codehaus.groovy:groovy:3.0.21'
+    // the core groovy jar has no json support, and the pipeline scripts use
+    // JsonSlurperClassic, JsonSlurper, JsonOutput and JsonBuilder
+    testImplementation 'org.codehaus.groovy:groovy-json:3.0.21'
     testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
-    // 1.21 was never published; highest Java-8-compatible release is 1.16
-    testImplementation 'com.lesfurets:jenkins-pipeline-unit:1.16'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 }
 
