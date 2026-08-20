@@ -1,0 +1,7 @@
+// The foojay resolver teaches Gradle to download the JDK that build.gradle's
+// toolchain block asks for. It is a settings plugin, so it can only live here.
+plugins {
+  id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'jenkins-dm-jobs'

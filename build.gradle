@@ -3,7 +3,17 @@ apply plugin: 'groovy'
 defaultTasks 'test'
 
 repositories {
-    jcenter()
+    mavenCentral()
+}
+
+// Groovy 3 and Spock 2.3 are unreliable on recent JDKs and the Jenkins hosts run
+// Java 8, so pin it: otherwise whichever JVM is on the developer's PATH decides,
+// and the same commit passes for one person and fails for another. settings.gradle
+// applies the foojay resolver, so Gradle downloads a JDK 8 when the machine has none.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
 }
 
 configurations {
@@ -12,6 +22,18 @@ configurations {
 
 dependencies {
     libs 'org.yaml:snakeyaml:1.17'
+
+    // groovy-all became a POM-only BOM in 3.x; use the main artifact jar instead
+    testImplementation 'org.codehaus.groovy:groovy:3.0.21'
+    // the core groovy jar has no json support, and the pipeline scripts use
+    // JsonSlurperClassic, JsonSlurper, JsonOutput and JsonBuilder
+    testImplementation 'org.codehaus.groovy:groovy-json:3.0.21'
+    testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    // useJUnitPlatform() needs a launcher on the test runtime classpath. Gradle 8
+    // still injects one when it is absent, but that is deprecated and removed in
+    // Gradle 9, so declare it rather than inherit a wrapper upgrade's breakage.
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
 }
 
 //task clean(type: Delete) {
@@ -35,6 +57,18 @@ sourceSets {
             srcDirs 'jobs'
         }
     }
+    test {
+        groovy {
+            srcDirs = ['src/test/groovy']
+        }
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
 }
 
 tasks.getByName('test').inputs.files(sourceSets.jobs.groovy.srcDirs)
