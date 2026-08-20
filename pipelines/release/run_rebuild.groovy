@@ -37,6 +37,7 @@ notify.wrap {
   // the build -- the freshly-deployed lsstsw/miniconda and eups-installed stack
   // only exist inside the build pod, so a separate publish pod cannot see them.
   Boolean publish        = params.PUBLISH?.toBoolean()
+  String saveCacheTag    = params.SAVE_CACHE_TAG ?: ''
   String eupsTags        = params.EUPS_TAG ?: ''
   String eupspkgSource   = params.EUPSPKG_SOURCE ?: 'git'
 
@@ -121,6 +122,18 @@ notify.wrap {
             runJW()
           }
         } // stage('build')
+
+        // Upload the lsstsw tree just built here so downstream consumers
+        // (sonar-scan, stack-os-matrix LOAD_CACHE) do not have to rebuild the
+        // same products a second time. The tag is a per-build temporary one; the
+        // calling release pipeline promotes it to d_latest only after the rest of
+        // the release succeeds, so a failed release cannot leave the shared cache
+        // pointing at a stack that was never published.
+        stage('save cache') {
+          if (saveCacheTag && !prepOnly) {
+            util.saveCache(saveCacheTag)
+          }
+        } // stage('save cache')
 
         stage('push docs') {
           if (buildDocs) {

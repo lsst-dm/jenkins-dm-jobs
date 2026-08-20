@@ -81,7 +81,7 @@ Jenkins state is currently stored in a tarball at s3df under the directory
 * Check that you have `ssh` access to s3df with:
    * __ssh *YOUR_USERNAME*@sdfdtn001.slac.stanford.edu__
 
-1. Ensure that no jobs are running at <https://rubin-ci.slac.stanford.edu/>.
+1. Ensure that no jobs are running at <https://ci.lsst.cloud/>.
    If there are jobs running during an update, cancel those jobs and notify the
    owners of the jobs via the slack channel `dm-jenkins`. Ensure the jobs are
    cancelled completely before beginning the backup.
@@ -137,8 +137,8 @@ The `jdk21` part of the tag above corresponds to the JDK version
 ### Upgrade the __plugins__
 
 1. Navigate to the UI.
-   * [Development Jenkins](https://rubin-ci-dev.slac.stanford.edu/)
-   * [Production Jenkins](https://rubin-ci.slac.stanford.edu/)
+   * [Development Jenkins](https://ci-dev.lsst.cloud/)
+   * [Production Jenkins](https://ci.lsst.cloud/)
 1. Select `Manage Jenkins`
    ![](../runbook/images/jenkins1.png)
 1. Select `Plugins`

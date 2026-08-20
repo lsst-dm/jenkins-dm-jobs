@@ -57,6 +57,9 @@ notify.wrap {
             PUBLISH: true,
             EUPS_TAG: "${eupsTag} d_latest",
             EUPSPKG_SOURCE: 'git',
+            // save the lsstsw tree under the dated tag; it is promoted to
+            // d_latest at the end of the release (see 'Update cache + sonar-scan')
+            SAVE_CACHE_TAG: eupsTag,
           ],
         )
       } // retry
@@ -134,19 +137,12 @@ notify.wrap {
     def triggerMe = [:]
 
     triggerMe['Update cache + sonar-scan'] = {
+      // The cache tarball was already produced by the 'build' stage's rebuild
+      // (SAVE_CACHE_TAG), so there is no second build of the same products here.
+      // Promoting only now means d_latest is never advanced by a release that
+      // failed after the build.
       retry(retries) {
-        build(
-          job: 'stack-os-matrix',
-          parameters: [
-            string(name: 'REFS', value: ''),
-            string(name: 'PRODUCTS', value: scipipe.canonical.products),
-            string(name: 'SPLENV_REF', value: scipipe.template.splenv_ref),
-            booleanParam(name: 'NO_BINARY_FETCH', value: true),
-            booleanParam(name: 'LOAD_CACHE', value: false),
-            booleanParam(name: 'SAVE_CACHE', value: true),
-          ],
-          wait: true,
-        )
+        util.promoteCache(eupsTag, 'd_latest')
       }
       build(
         job: 'sqre/infra/sonar-scan',

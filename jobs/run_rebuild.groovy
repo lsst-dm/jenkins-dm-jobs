@@ -20,6 +20,7 @@ p.pipeline().with {
     stringParam('EUPS_TAG', null, 'Whitespace delimited EUPS distrib tag(s) to publish, e.g. "d.2026.06.27 d_latest". Only used when PUBLISH=true.')
     choiceParam('EUPSPKG_SOURCE', ['git', 'package'], 'type of "eupspkg" to create -- "git" should always be used except for a final (non-rc) release. Only used when PUBLISH=true.')
     stringParam('RUBINENV_VER', scipipe.template.splenv_ref, 'conda env ref used for the publish env')
+    stringParam('SAVE_CACHE_TAG', '', 'Upload the built lsstsw tree to the lsstsw cache bucket under this tag. Empty (default) disables the upload. Use a per-build temporary tag (eg. the dated eups tag) -- the release pipeline promotes it to d_latest only once the rest of the release succeeds, so never pass d_latest directly.')
     // enable for debugging only
     // booleanParam('NO_VERSIONDB_PUSH', true, 'Skip push to remote versiondb repo.')
   }
