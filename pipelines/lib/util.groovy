@@ -659,6 +659,60 @@ def saveCache(
   }
 }
 
+/**
+ * Rename an lsstsw cache tarball from one tag to another, in place in the bucket
+ * (no download/upload of the multi-GB tarball).
+ *
+ * This is how a release publishes its cache: run-rebuild saves under a temporary
+ * per-build tag and the pipeline promotes that to the shared tag (d_latest) only
+ * once the rest of the release has succeeded.
+ *
+ * Spins its own lightweight pod, so it can be called from a release pipeline's
+ * top level -- unlike saveCache/loadCache, which must run inside the pod holding
+ * the lsstsw tree.
+ *
+ * @param srcTag String tag the tarball was saved under
+ * @param dstTag String tag to promote it to
+ */
+def void promoteCache(String srcTag, String dstTag) {
+  insideK8sContainer(
+    image: 'ghcr.io/lsst-dm/jenkins-jnlp-client:latest',
+    pull: true,
+    cacheImage: defaultGcloudCliImage(),
+    // metadata-only gcloud calls -- ask for as little as possible so the pod
+    // packs onto an already-running node instead of scaling up a fresh one.
+    cpuRequest: '500m',
+    cpuLimit:   '1',
+    memRequest: '1Gi',
+    memLimit:   '2Gi',
+    storage:    '2Gi',
+    emptyDirWorkspace: true,
+  ) {
+    def workDir = pwd()
+    dir("${workDir}/ci-scripts") {
+      cloneCiScripts()
+    }
+    withCredentials([file(
+      credentialsId: 'gs-eups-push',
+      variable: 'GOOGLE_APPLICATION_CREDENTIALS'
+    )]) {
+      withEnv([
+        "SERVICEACCOUNT=${eupsServiceAccount()}",
+        "SRC_TAG=${srcTag}",
+        "DST_TAG=${dstTag}",
+      ]) {
+        container('gcloud-cli') {
+          bash """
+          gcloud auth activate-service-account \$SERVICEACCOUNT --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+          cd ${workDir}/ci-scripts
+          ./promotelsststack.sh \$SRC_TAG \$DST_TAG
+          """
+        }
+      }
+    }
+  }
+}
+
 
 def labelPod(){
   if (!fileExists('/var/run/secrets/kubernetes.io/serviceaccount/token')) {
@@ -1967,6 +2021,7 @@ def runDocumenteer(Map p) {
  * @param p.parameters.BUILD_DOCS Boolean Defaults to `false`.
  * @param p.parameters.TIMEOUT String Defaults to `'12'`.
  * @param p.parameters.PREP_ONLY Boolean Defaults to `false`.
+ * @param p.parameters.SAVE_CACHE_TAG String Defaults to `''` (no cache upload).
  * @param p.parameters.SPLENV_REF String Optional
  * @return manifestId String
  */
@@ -1983,6 +2038,7 @@ def String runRebuild(Map p) {
     PREP_ONLY: false,
     NO_BINARY_FETCH: true,
     PUBLISH: false,
+    SAVE_CACHE_TAG: '',
   ] + p.parameters
 
   def jobParameters = [
@@ -1994,6 +2050,7 @@ def String runRebuild(Map p) {
           string(name: 'TIMEOUT', value: useP.parameters.TIMEOUT), // hours
           booleanParam(name: 'PREP_ONLY', value: useP.parameters.PREP_ONLY),
           booleanParam(name: 'PUBLISH', value: useP.parameters.PUBLISH),
+          string(name: 'SAVE_CACHE_TAG', value: useP.parameters.SAVE_CACHE_TAG),
   ]
 
   // Optional parameter. Set 'em if you got 'em
