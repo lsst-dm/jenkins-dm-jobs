@@ -689,7 +689,12 @@ def String buildScript(
       [[ \$(printf '%s\\n' "13.0.0" "${menv.rubinEnvVer}" | sort -V | tail -n1) == "${menv.rubinEnvVer}" ]]; then
       export CONDA_OVERRIDE_GLIBC=2.17
     fi
-    curl -sSL ${util.lsstinstallUrl()} | bash -s -- -v ${menv.rubinEnvVer}
+
+    # -r builds in rubin-env-rsp so the single solve below is both the exact
+    # build record (\${tag}_rsp.env) and the source of versions for the derived
+    # rubin-env subset (\${tag}.env). Deriving from the build's own solve is what
+    # keeps the two published files version-consistent with the tarballs.
+    curl -sSL ${util.lsstinstallUrl()} | bash -s -- -r -v ${menv.rubinEnvVer}
     unset CONDA_OVERRIDE_GLIBC
     . ./loadLSST.bash
 
@@ -704,7 +709,7 @@ def String buildScript(
     # the tarball pkgroots have tag files (.list) directly in the root of the
     # repo
     if [[ -e \$EUPS_PKGROOT ]]; then
-      rm -f "\${EUPS_PKGROOT}/*.list"
+      rm -f "\${EUPS_PKGROOT}"/*.list
     fi
 
     for prod in ${products}; do
@@ -714,84 +719,55 @@ def String buildScript(
 
     # saving environment information
     #
-    # Products above were built in the active rubin-env environment. Capture it
-    # as the ground truth used to validate the derived rubin-env file below.
+    # The products are now built on rubin-env-rsp
+    # capturing it verbatim gives the exact build record.
     mkdir -p "\${EUPS_PKGROOT}/env"
-    conda list --explicit > build_env.env
+    conda list --explicit > "\${EUPS_PKGROOT}/env/${tag}_rsp.env"
 
-    # rubin-env-rsp is the source of truth for the published environment files.
-    # Solve it -- plus a clean rubin-env used only to determine which package
-    # names belong to rubin-env -- under the same glibc constraint the build
-    # used, so the resolved versions are directly comparable to the build env.
+    # A throwaway rubin-env solve, used only to decide which package *names*
+    # belong to rubin-env; its resolved versions are discarded. Solve under the
+    # same glibc constraint the build used so the name set matches.
+    rm -rf ./_rubinenv_solve
     if [[ \$(uname -s) == Linux && \$(uname -m) == x86_64 ]] && \
       [[ \$(printf '%s\\n' "13.0.0" "${menv.rubinEnvVer}" | sort -V | tail -n1) == "${menv.rubinEnvVer}" ]]; then
       export CONDA_OVERRIDE_GLIBC=2.17
     fi
-    conda create -y -p ./_rsp_solve "rubin-env-rsp=${menv.rubinEnvVer}"
-    conda create -y -p ./_rubinenv_solve "rubin-env=${menv.rubinEnvVer}"
+    conda create -y -p ./_rubinenv_solve -c conda-forge \
+      --strict-channel-priority "rubin-env=${menv.rubinEnvVer}"
     unset CONDA_OVERRIDE_GLIBC
-
-    conda list --explicit -p ./_rsp_solve > "\${EUPS_PKGROOT}/env/${tag}_rsp.env"
     conda list --explicit -p ./_rubinenv_solve > rubinenv_solve.env
 
-    # Derive \${tag}.env: the rubin-env package names taken at rubin-env-rsp
-    # versions (a byte-identical subset of \${tag}_rsp.env). Then hard fail if
-    # that subset diverges from the actual build environment, so RSP silently
-    # pulling a shared dependency to a different build is caught, not shipped.
+    # Derive \${tag}.env the same way lsstsw/bin/rebuild does: walk the
+    # rubin-env solve and substitute the build environment's line wherever the
+    # package name matches. Iterating the rubin-env solve (rather than filtering
+    # the rsp list) keeps the name set dependency closed for rubin-env, while
+    # taking versions from the build means every package in \${tag}.env is at the
+    # exact version the tarballs were built against.
     #
-    # pkgname turns a conda explicit URL line into just the package name by
-    # stripping the trailing '#md5', the URL path, the archive extension, and
-    # the trailing '-<version>-<build>' fields (names may contain '-', so trim
-    # the two trailing fields rather than splitting on '-').
-    pkgname() {
-      local fn="\${1%%#*}"
-      fn="\${fn##*/}"
-      fn="\${fn%.conda}"
-      fn="\${fn%.tar.bz2}"
-      fn="\${fn%-*}"
-      fn="\${fn%-*}"
-      printf '%s\\n' "\$fn"
-    }
+    # pkgname strips the trailing '#md5', the URL path, the archive extension,
+    # and the trailing '-<version>-<build>' fields; names may contain '-', so
+    # trim the two trailing fields rather than splitting on '-'.
+    awk '
+      function pkgname(line) {
+        n = line
+        sub(/#.*\$/, "", n)
+        sub(/^.*\\//, "", n)
+        sub(/\\.conda\$/, "", n)
+        sub(/\\.tar\\.bz2\$/, "", n)
+        sub(/-[^-]+-[^-]+\$/, "", n)
+        return n
+      }
+      NR == FNR { if (/^http/) rsp[pkgname(\$0)] = \$0; next }
+      /^http/ {
+        n = pkgname(\$0)
+        if (n in rsp) print rsp[n]; else print
+        next
+      }
+      { print }
+    ' "\${EUPS_PKGROOT}/env/${tag}_rsp.env" rubinenv_solve.env \
+      > "\${EUPS_PKGROOT}/env/${tag}.env"
 
-    # rubin-env package-name set (membership oracle).
-    while IFS= read -r line || [ -n "\$line" ]; do
-      case "\$line" in
-        http*) pkgname "\$line" ;;
-      esac
-    done < rubinenv_solve.env | sort -u > rubinenv_names.txt
-
-    # Keep every rubin-env-rsp header/comment line, plus only the package lines
-    # whose name is in the rubin-env set -- preserving rubin-env-rsp versions.
-    {
-      while IFS= read -r line || [ -n "\$line" ]; do
-        case "\$line" in
-          http*)
-            if grep -qxF "\$(pkgname "\$line")" rubinenv_names.txt; then
-              printf '%s\\n' "\$line"
-            fi
-            ;;
-          *)
-            printf '%s\\n' "\$line"
-            ;;
-        esac
-      done < "\${EUPS_PKGROOT}/env/${tag}_rsp.env"
-    } > "\${EUPS_PKGROOT}/env/${tag}.env"
-
-    # Validate the derived subset matches the build environment exactly.
-    grep '^http' "\${EUPS_PKGROOT}/env/${tag}.env" | sort > derived_pkgs.txt
-    grep '^http' build_env.env | sort > build_pkgs.txt
-    if ! diff -q build_pkgs.txt derived_pkgs.txt > /dev/null; then
-      echo "ERROR: derived rubin-env subset diverges from build env" >&2
-      echo "  build-only:" >&2
-      comm -23 build_pkgs.txt derived_pkgs.txt | sed 's/^/    /' >&2
-      echo "  rsp-only:" >&2
-      comm -13 build_pkgs.txt derived_pkgs.txt | sed 's/^/    /' >&2
-      exit 1
-    fi
-
-    rm -rf ./_rsp_solve ./_rubinenv_solve \
-      build_env.env rubinenv_solve.env rubinenv_names.txt \
-      derived_pkgs.txt build_pkgs.txt
+    rm -rf ./_rubinenv_solve rubinenv_solve.env
   """)
 }
 
