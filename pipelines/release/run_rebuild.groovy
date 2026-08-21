@@ -215,7 +215,10 @@ notify.wrap {
 
                     export EUPSPKG_SOURCE="$EUPSPKG_SOURCE"
 
-                    source ./lsstsw/bin/envconfig -n "lsst-scipipe-$LSST_SPLENV_REF"
+                    # -b reads the env name the build recorded, so publish
+                    # activates whatever the build actually ran in rather than
+                    # reconstructing the name from LSST_SPLENV_REF
+                    source ./lsstsw/bin/envconfig -b "$MANIFEST_ID"
 
                     publish "${ARGS[@]}"
                   '''
