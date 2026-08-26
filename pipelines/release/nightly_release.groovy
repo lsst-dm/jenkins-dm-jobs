@@ -34,17 +34,11 @@ notify.wrap {
   def eupsTag      = null
   def manifestId   = null
   def stackResults = null
+  def cacheOk      = false
 
   def lsstswConfig = scipipe.canonical.lsstsw_config
 
-  def run = {
-    stage('format nightly tag') {
-      gitTag  = "d.${year}.${month}.${day}"
-      eupsTag = util.sanitizeEupsTag(gitTag)
-      echo "generated [git] tag: ${gitTag}"
-      echo "generated [eups] tag: ${eupsTag}"
-    } // stage
-
+  def releaseBranch = {
     stage('build') {
       retry(retries) {
         // publish runs inside the rebuild pod (same stack), tagging both the
@@ -57,9 +51,6 @@ notify.wrap {
             PUBLISH: true,
             EUPS_TAG: "${eupsTag} d_latest",
             EUPSPKG_SOURCE: 'git',
-            // save the lsstsw tree under the dated tag; it is promoted to
-            // d_latest at the end of the release (see 'Update cache + sonar-scan')
-            SAVE_CACHE_TAG: eupsTag,
           ],
         )
       } // retry
@@ -133,14 +124,72 @@ notify.wrap {
         )
       } // retry
     } // stage
+  } // releaseBranch
+
+  // The lsstsw cache cannot be produced by release/run-rebuild: an lsstsw tree is
+  // not relocatable -- conda bakes its prefix into
+  // miniconda/etc/profile.d/conda.sh and every miniconda/bin shebang -- and
+  // run-rebuild builds at /j/snowflake/release while every cache consumer
+  // extracts to /j/workspace/stack-os-matrix/<slug>. Only a stack-os-matrix build
+  // lands at that path, so the cache is built by one here. It runs concurrently
+  // with the release rather than after it, so the second build of the same
+  // products costs compute but no wall clock on the release's critical path.
+  def cacheBranch = {
+    stage('build lsstsw cache') {
+      try {
+        retry(retries) {
+          build(
+            job: 'stack-os-matrix',
+            parameters: [
+              string(name: 'REFS', value: ''),
+              string(name: 'PRODUCTS', value: products),
+              string(name: 'SPLENV_REF', value: scipipe.template.splenv_ref),
+              booleanParam(name: 'NO_BINARY_FETCH', value: true),
+              booleanParam(name: 'LOAD_CACHE', value: false),
+              booleanParam(name: 'SAVE_CACHE', value: true),
+              // temporary tag; promoted to d_latest only once the release has
+              // succeeded, so a failed release cannot advance the shared cache
+              string(name: 'SAVE_CACHE_TAG', value: eupsTag),
+            ],
+            wait: true,
+          )
+        } // retry
+        cacheOk = true
+      } catch (e) {
+        // nothing the release publishes depends on the cache, so a cache
+        // failure must not fail an otherwise good release -- d_latest simply
+        // keeps pointing at the last stack that built cleanly.
+        currentBuild.result = 'UNSTABLE'
+        echo "lsstsw cache build failed, leaving d_latest untouched: ${e}"
+      }
+    } // stage
+  } // cacheBranch
+
+  def run = {
+    stage('format nightly tag') {
+      gitTag  = "d.${year}.${month}.${day}"
+      eupsTag = util.sanitizeEupsTag(gitTag)
+      echo "generated [git] tag: ${gitTag}"
+      echo "generated [eups] tag: ${eupsTag}"
+    } // stage
+
+    // failFast: false so a cache failure cannot abort the release mid-flight.
+    parallel([
+      'release':      releaseBranch,
+      'lsstsw cache': cacheBranch,
+      failFast:       false,
+    ])
 
     def triggerMe = [:]
 
     triggerMe['Update cache + sonar-scan'] = {
-      // The cache tarball was already produced by the 'build' stage's rebuild
-      // (SAVE_CACHE_TAG), so there is no second build of the same products here.
-      // Promoting only now means d_latest is never advanced by a release that
-      // failed after the build.
+      // Both parallel branches have joined by now, so the tarball is in the
+      // bucket under the dated tag. Promoting only here means d_latest is never
+      // advanced by a release that failed after the build.
+      if (!cacheOk) {
+        echo 'lsstsw cache build did not succeed; skipping promotion and sonar-scan'
+        return
+      }
       retry(retries) {
         util.promoteCache(eupsTag, 'd_latest')
       }

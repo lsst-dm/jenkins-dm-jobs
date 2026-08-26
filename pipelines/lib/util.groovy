@@ -783,13 +783,15 @@ def labelPod(){
  * @param lsstswConfig Map
  * @param buildParams Map
  * @param wipeout Delete all existing state before starting build
+ * @param saveCacheTag Tag to upload the cache under when cachelsstsw is set
  */
 def lsstswBuild(
   Map lsstswConfig,
   Map buildParams,
   Boolean wipeout=false,
   Boolean fetchCache=false,
-  Boolean cachelsstsw=false
+  Boolean cachelsstsw=false,
+  String saveCacheTag='d_latest'
 ) {
   validateLsstswConfig(lsstswConfig)
   def slug = lsstswConfigSlug(lsstswConfig)
@@ -805,7 +807,11 @@ def lsstswBuild(
   def run = {
     if (cachelsstsw){ // runs only if we want to cache the work
       jenkinsWrapper(buildParams)
-      saveCache("d_latest")
+      // The tarball is only usable when extracted at the path it was created
+      // at -- conda bakes its prefix into miniconda/etc/profile.d/conda.sh and
+      // every miniconda/bin shebang -- so it must be saved from here, inside
+      // dir(slug), which is where loadCache() puts it back.
+      saveCache(saveCacheTag)
     } // if saveCacheRun
     else {
         jenkinsWrapper(buildParams)
@@ -1593,13 +1599,15 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
  * @param matrixConfig List of lsstsw build configurations
  * @param buildParams Map of params/env vars for jenkins_wrapper.sh
  * @param wipeout Boolean wipeout the workspace build starting the build
+ * @param saveCacheTag String tag to upload the cache under when saveCache is set
  */
 def lsstswBuildMatrix(
   List matrixConfig,
   Map buildParams,
   Boolean wipeout=false,
   Boolean loadCache=false,
-  Boolean saveCache=false
+  Boolean saveCache=false,
+  String saveCacheTag='d_latest'
 ) {
   def matrix = [:]
 
@@ -1614,6 +1622,7 @@ def lsstswBuildMatrix(
         wipeout,
         loadCache,
         saveCache,
+        saveCacheTag,
       )
     }
   }

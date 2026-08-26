@@ -51,6 +51,11 @@ notify.wrap {
     SAVE_CACHE = params.SAVE_CACHE
   }
 
+  // Release pipelines save under a per-build temporary tag and promote it to
+  // d_latest only once the release has succeeded, so a failed release cannot
+  // leave the shared cache pointing at a stack that was never published.
+  def saveCacheTag = params.SAVE_CACHE_TAG ?: 'd_latest'
+
   def lsstswConfigs = scipipe[BUILD_CONFIG]
   if (lsstswConfigs == null) {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
@@ -58,7 +63,7 @@ notify.wrap {
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean() )
+      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean(), saveCacheTag)
     }
   }
 } // notify.wrap
