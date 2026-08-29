@@ -45,11 +45,16 @@ notify.wrap {
     buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
   }
 
-  // override env for SAVE_CACHE. Currently job override any env set by the build job
-  // in nightly.
-  if (params.SAVE_CACHE) {
-    SAVE_CACHE = params.SAVE_CACHE
-  }
+  // SAVE_CACHE/LOAD_CACHE are read as env vars rather than params because this
+  // script backs two kinds of job: stack-os-matrix, which declares them as
+  // parameters, and the CleanBuild jobs, which only set them as env vars.
+  // Declared parameters are exposed as env vars too, so the env var is the one
+  // spelling that works for both.
+
+  // Release pipelines save under a per-build temporary tag and promote it to
+  // d_latest only once the release has succeeded, so a failed release cannot
+  // leave the shared cache pointing at a stack that was never published.
+  def saveCacheTag = params.SAVE_CACHE_TAG ?: 'd_latest'
 
   def lsstswConfigs = scipipe[BUILD_CONFIG]
   if (lsstswConfigs == null) {
@@ -58,7 +63,7 @@ notify.wrap {
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean() )
+      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean(), saveCacheTag)
     }
   }
 } // notify.wrap
