@@ -694,7 +694,7 @@ def String buildScript(
     # build record (\${tag}_rsp.env) and the source of versions for the derived
     # rubin-env subset (\${tag}.env). Deriving from the build's own solve is what
     # keeps the two published files version-consistent with the tarballs.
-    curl -sSL ${util.lsstinstallUrl()} | bash -s -- -r -v ${menv.rubinEnvVer}
+    curl -sSL ${util.lsstinstallUrl()} | bash -s -- -R -v ${menv.rubinEnvVer}
     unset CONDA_OVERRIDE_GLIBC
     . ./loadLSST.bash
 
