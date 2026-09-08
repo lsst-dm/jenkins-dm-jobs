@@ -690,10 +690,10 @@ def String buildScript(
       export CONDA_OVERRIDE_GLIBC=2.17
     fi
 
-    # -r builds in rubin-env-rsp so the single solve below is both the exact
-    # build record (\${tag}_rsp.env) and the source of versions for the derived
-    # rubin-env subset (\${tag}.env). Deriving from the build's own solve is what
-    # keeps the two published files version-consistent with the tarballs.
+    # -R builds in rubin-env-rsp, as lsstsw/bin/rebuild does. That single solve
+    # is both the exact build record (\${tag}_rsp.env) and the sole input to the
+    # derived rubin-env subset (\${tag}.env), which is what keeps both published
+    # files version-consistent with the tarballs.
     curl -sSL ${util.lsstinstallUrl()} | bash -s -- -R -v ${menv.rubinEnvVer}
     unset CONDA_OVERRIDE_GLIBC
     . ./loadLSST.bash
@@ -724,50 +724,10 @@ def String buildScript(
     mkdir -p "\${EUPS_PKGROOT}/env"
     conda list --explicit > "\${EUPS_PKGROOT}/env/${tag}_rsp.env"
 
-    # A throwaway rubin-env solve, used only to decide which package *names*
-    # belong to rubin-env; its resolved versions are discarded. Solve under the
-    # same glibc constraint the build used so the name set matches.
-    rm -rf ./_rubinenv_solve
-    if [[ \$(uname -s) == Linux && \$(uname -m) == x86_64 ]] && \
-      [[ \$(printf '%s\\n' "13.0.0" "${menv.rubinEnvVer}" | sort -V | tail -n1) == "${menv.rubinEnvVer}" ]]; then
-      export CONDA_OVERRIDE_GLIBC=2.17
-    fi
-    conda create -y -p ./_rubinenv_solve -c conda-forge \
-      --strict-channel-priority "rubin-env=${menv.rubinEnvVer}"
-    unset CONDA_OVERRIDE_GLIBC
-    conda list --explicit -p ./_rubinenv_solve > rubinenv_solve.env
-
-    # Derive \${tag}.env the same way lsstsw/bin/rebuild does: walk the
-    # rubin-env solve and substitute the build environment's line wherever the
-    # package name matches. Iterating the rubin-env solve (rather than filtering
-    # the rsp list) keeps the name set dependency closed for rubin-env, while
-    # taking versions from the build means every package in \${tag}.env is at the
-    # exact version the tarballs were built against.
-    #
-    # pkgname strips the trailing '#md5', the URL path, the archive extension,
-    # and the trailing '-<version>-<build>' fields; names may contain '-', so
-    # trim the two trailing fields rather than splitting on '-'.
-    awk '
-      function pkgname(line) {
-        n = line
-        sub(/#.*\$/, "", n)
-        sub(/^.*\\//, "", n)
-        sub(/\\.conda\$/, "", n)
-        sub(/\\.tar\\.bz2\$/, "", n)
-        sub(/-[^-]+-[^-]+\$/, "", n)
-        return n
-      }
-      NR == FNR { if (/^http/) rsp[pkgname(\$0)] = \$0; next }
-      /^http/ {
-        n = pkgname(\$0)
-        if (n in rsp) print rsp[n]; else print
-        next
-      }
-      { print }
-    ' "\${EUPS_PKGROOT}/env/${tag}_rsp.env" rubinenv_solve.env \
-      > "\${EUPS_PKGROOT}/env/${tag}.env"
-
-    rm -rf ./_rubinenv_solve rubinenv_solve.env
+    # calculating the valid rubin-env subset.
+    python3 "${ciDir}/derive_rubinenv_env.py" \
+      --rsp-env "\${EUPS_PKGROOT}/env/${tag}_rsp.env" \
+      --out "\${EUPS_PKGROOT}/env/${tag}.env"
   """)
 }
 
