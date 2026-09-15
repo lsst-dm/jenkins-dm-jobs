@@ -17,7 +17,7 @@ p.pipeline().with {
     stringParam('PRODUCTS', scipipe.canonical.products + " lsst_sitcom",
       'Whitespace delimited list of EUPS products to build.')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
-    stringParam('PYTHON_PIN', '', 'EXPERIMENTAL.  Build the conda env with a specific python version, eg. "3.14".  Empty (the default) uses the python rubin-env selects, which is the only supported one and the only one the published eups binaries are built for.  A pinned build gets its own conda env and eups stack and does not use the lsstsw cache.')
+    choiceParam('PYTHON_PIN', ['', '3.13', '3.14'], 'EXPERIMENTAL.  Build the conda env with a specific python version, eg. "3.14".  Empty (the default) uses the python rubin-env selects, which is the only supported one and the only one the published eups binaries are built for.  A pinned build gets its own conda env and eups stack and does not use the lsstsw cache.')
     // XXX testing only
     //booleanParam('NO_FETCH', false, 'Do not pull from git remote if branch is already the current ref. (This should generally be false outside of testing the CI system)')
     booleanParam('NO_BINARY_FETCH', false, 'if enable, will build all binaries from scratch')
