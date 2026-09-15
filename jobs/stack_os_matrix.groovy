@@ -17,13 +17,13 @@ p.pipeline().with {
     stringParam('PRODUCTS', scipipe.canonical.products + " lsst_sitcom",
       'Whitespace delimited list of EUPS products to build.')
     stringParam('SPLENV_REF', scipipe.template.splenv_ref, 'conda env ref')
-    stringParam('PYTHON_PIN', '', 'EXPERIMENTAL.  Build the conda env with a specific python version, eg. "3.14".  Empty (the default) uses the python rubin-env selects, which is the only supported one and the only one the published eups binaries are built for.  A pinned build gets its own conda env and eups stack and does not use the lsstsw cache.')
+    choiceParam('PYTHON_PIN', ['', '3.13', '3.14'], 'EXPERIMENTAL.  Build the conda env with a specific python version, eg. "3.14".  Empty (the default) uses the python rubin-env selects, which is the only supported one and the only one the published eups binaries are built for.  A pinned build gets its own conda env and eups stack and does not use the lsstsw cache.')
     // XXX testing only
     //booleanParam('NO_FETCH', false, 'Do not pull from git remote if branch is already the current ref. (This should generally be false outside of testing the CI system)')
     booleanParam('NO_BINARY_FETCH', false, 'if enable, will build all binaries from scratch')
     booleanParam('LOAD_CACHE', true, 'if enable, will load cache from gcp')
-    booleanParam('SAVE_CACHE', false, 'if enable, will upload the built lsstsw tree to gcp as the lsstsw cache')
-    stringParam('SAVE_CACHE_TAG', '', 'Tag to upload the lsstsw cache under when SAVE_CACHE is enabled. Empty (default) means d_latest. Release pipelines pass a per-build temporary tag (eg. the dated eups tag) and promote it to d_latest only once the rest of the release succeeds, so never pass d_latest directly.')
+    // booleanParam('SAVE_CACHE', false, 'if enable, will upload the built lsstsw tree to gcp as the lsstsw cache')
+    // stringParam('SAVE_CACHE_TAG', '', 'Tag to upload the lsstsw cache under when SAVE_CACHE is enabled. Empty (default) means d_latest. Release pipelines pass a per-build temporary tag (eg. the dated eups tag) and promote it to d_latest only once the rest of the release succeeds, so never pass d_latest directly.')
   }
 
   environmentVariables(
