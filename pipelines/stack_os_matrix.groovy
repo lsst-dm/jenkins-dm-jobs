@@ -45,6 +45,12 @@ notify.wrap {
     buildParams['LSST_SPLENV_REF'] = params.SPLENV_REF
   }
 
+  // experimental python pin; a param, not an env var, so the CleanBuild jobs
+  // sharing this script fall through to no pin, same as SPLENV_REF above
+  if (params.PYTHON_PIN) {
+    buildParams['LSST_PYTHON_PIN'] = params.PYTHON_PIN
+  }
+
   // SAVE_CACHE/LOAD_CACHE are read as env vars rather than params because this
   // script backs two kinds of job: stack-os-matrix, which declares them as
   // parameters, and the CleanBuild jobs, which only set them as env vars.

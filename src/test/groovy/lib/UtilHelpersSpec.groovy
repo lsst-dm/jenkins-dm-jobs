@@ -37,6 +37,14 @@ class UtilHelpersSpec extends Specification {
     util.buildkitCacheArgs('repo/x', 'amd64').contains('--cache-to')
   }
 
+  def "cacheIsSharable is false only for a python pinned build"() {
+    expect:
+    util.cacheIsSharable([:])
+    util.cacheIsSharable([LSST_PYTHON_PIN: null])
+    util.cacheIsSharable([LSST_PYTHON_PIN: ''])
+    !util.cacheIsSharable([LSST_PYTHON_PIN: '3.14'])
+  }
+
   def "sanitizeEupsTag prefixes numeric tags with v and replaces separators"() {
     expect:
     util.sanitizeEupsTag('1.2.3-rc1') == 'v1_2_3_rc1'
