@@ -5,7 +5,7 @@
 # provide yaml anchors internal to this file.
 #
 template:
-  splenv_ref: &splenv_ref '13.1.0'
+  splenv_ref: &splenv_ref '14.0.0'
   tarball_defaults: &tarball_defaults
     miniver: &miniver 'py38_4.9.2'
     timelimit: 30
@@ -123,10 +123,10 @@ versiondb:
 release_tag_org: lsst
 lsstsw:
   github_repo: lsst/lsstsw
-  git_ref: tickets/DM-55744
+  git_ref: main
 ciscripts:
   github_repo: lsst-dm/ci-scripts
-  git_ref: tickets/DM-55744
+  git_ref: main
 shebangtron:
   github_repo: lsst/shebangtron
   git_ref: main
