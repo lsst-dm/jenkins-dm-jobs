@@ -803,6 +803,13 @@ def lsstswBuild(
     LSST_SPLENV_REF:     lsstswConfig.splenv_ref,
   ] + buildParams
 
+  if (!cacheIsSharable(buildParams)) {
+    if (fetchCache || cachelsstsw) {
+      echo "python pin ${buildParams['LSST_PYTHON_PIN']}: not using the lsstsw cache"
+    }
+    fetchCache = false
+    cachelsstsw = false
+  }
 
   def run = {
     if (cachelsstsw){ // runs only if we want to cache the work
@@ -2215,6 +2222,18 @@ def String sanitizeDockerTag(String tag) {
   // is there a canonical reference for the tag format?
   // convert / to -
   tag.tr('/', '_')
+}
+
+/**
+ * May a build use the lsstsw cache?  The cache is shared by every build on a
+ * platform and is not python-aware, so a python-pinned build opts out of it.
+ *
+ * @param buildParams Map of params/env vars for jenkins_wrapper.sh
+ * @return Boolean
+ */
+@NonCPS
+def Boolean cacheIsSharable(Map buildParams) {
+  !buildParams['LSST_PYTHON_PIN']
 }
 
 /**
