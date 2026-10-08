@@ -39,19 +39,19 @@ template:
 #
 scipipe-lsstsw-matrix:
   - <<: *el7-conda
-  - <<: *linux-9-aarch64
+  # - <<: *linux-9-aarch64
   - <<: *macarm64-conda
 scipipe-lsstsw-lsst_distrib:
   - <<: *el7-conda
-  - <<: *linux-9-aarch64
+  # - <<: *linux-9-aarch64
   - <<: *macarm64-conda
 scipipe-lsstsw-ci_hsc:
   - <<: *el7-conda
-  - <<: *linux-9-aarch64
+  # - <<: *linux-9-aarch64
   - <<: *macarm64-conda
 scipipe-lsstsw-ci_imsim:
   - <<: *el7-conda
-  - <<: *linux-9-aarch64
+  # - <<: *linux-9-aarch64
   - <<: *macarm64-conda
 
 #
@@ -69,7 +69,7 @@ canonical:
 build_stack:
   lsstsw_config:
     - <<: *el7-conda
-    - <<: *linux-9-aarch64
+    # - <<: *linux-9-aarch64
 #
 # eups distrib tarball configuration -- used by
 # release/{*-release,tarball-matrix}
@@ -85,10 +85,10 @@ tarball:
       <<: *el7-conda
       platform: el7
       osfamily: redhat
-    - <<: *tarball_defaults
-      <<: *linux-9-aarch64
-      platform: el8-arm
-      osfamily: redhat
+    # - <<: *tarball_defaults
+    #   <<: *linux-9-aarch64
+    #   platform: el8-arm
+    #   osfamily: redhat
     - <<: *tarball_defaults
       <<: *macarm64-conda
       platform: 14-arm

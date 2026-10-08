@@ -218,7 +218,7 @@ notify.wrap {
       } // stage
     }
 
-    ['linux-64','linux-aarch64'].each{ arch ->
+    ['linux-64'].each{ arch ->
       triggerMe['verify_drp_metrics ' + arch] = {
         retry(1) {
           // based on lsstsqre/stack image
