@@ -244,4 +244,42 @@ class UtilHelpersSpec extends Specification {
     expect:
     util.parseImageLabels('null') == [:]
   }
+
+  def "provisionTimeoutMinutes parses a positive minute count"() {
+    expect:
+    util.provisionTimeoutMinutes('10') == 10
+    util.provisionTimeoutMinutes(10) == 10
+    util.provisionTimeoutMinutes(' 10 ') == 10
+  }
+
+  def "provisionTimeoutMinutes returns null for unset, zero or unparsable values"() {
+    expect:
+    util.provisionTimeoutMinutes(raw) == null
+
+    where:
+    raw << [null, '', '  ', '0', 0, '-5', -5, 'abc', '10m']
+  }
+
+  def "provisionTimeoutMessage names the slug and the minute count"() {
+    when:
+    def msg = util.provisionTimeoutMessage('linux-9-aarch64', 10)
+
+    then:
+    msg.contains('linux-9-aarch64')
+    msg.contains('10')
+  }
+
+  def "provisionTimeoutMessage round-trips through isProvisionTimeout"() {
+    expect:
+    util.isProvisionTimeout(
+      new RuntimeException(util.provisionTimeoutMessage('linux-9-aarch64', 10))
+    )
+  }
+
+  def "isProvisionTimeout ignores unrelated throwables"() {
+    expect:
+    !util.isProvisionTimeout(new RuntimeException('scons failed'))
+    !util.isProvisionTimeout(new RuntimeException((String) null))
+    !util.isProvisionTimeout(null)
+  }
 }

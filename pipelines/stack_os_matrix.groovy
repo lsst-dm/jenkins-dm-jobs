@@ -67,12 +67,13 @@ notify.wrap {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
   }
 
-  // Temp fix for aarch64 stockout in gce
-  lsstswConfigs.removeAll { it.label == 'linux-aarch64' }
+  // Optional, and deliberately not in requireEnvVars: only stack-os-matrix sets
+  // it, so the CleanBuild jobs backed by this script keep waiting indefinitely.
+  def armProvisionTimeout = util.provisionTimeoutMinutes(env.AARCH64_PROVISION_TIMEOUT)
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean(), saveCacheTag)
+      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean(), saveCacheTag, armProvisionTimeout)
     }
   }
 } // notify.wrap

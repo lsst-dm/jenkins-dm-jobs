@@ -118,6 +118,35 @@ def String buildkitCacheArgs(String cacheRepo, String arch, Boolean pushCache = 
   return out
 }
 
+@NonCPS
+def String provisionTimeoutPrefix() {
+  'PROVISION_TIMEOUT:'
+}
+
+/**
+ * Parse a provisioning timeout in minutes. Unset, zero, negative and
+ * unparsable values all mean "wait forever" (null).
+ */
+@NonCPS
+def Integer provisionTimeoutMinutes(Object raw) {
+  def s = raw?.toString()?.trim()
+  if (!s || !(s ==~ /\d+/)) {
+    return null
+  }
+  def minutes = s.toInteger()
+  return (minutes > 0) ? minutes : null
+}
+
+@NonCPS
+def String provisionTimeoutMessage(String slug, Integer minutes) {
+  "${provisionTimeoutPrefix()} could not provision a node for ${slug} within ${minutes} minutes"
+}
+
+@NonCPS
+def Boolean isProvisionTimeout(Throwable e) {
+  e?.getMessage()?.startsWith(provisionTimeoutPrefix()) ? true : false
+}
+
 /**
  * Run a closure inside a Kubernetes pod using the specified container image.
  * Kubernetes-native replacement for insideDockerWrap — no Docker daemon required.
@@ -146,6 +175,11 @@ def String buildkitCacheArgs(String cacheRepo, String arch, Boolean pushCache = 
  * @param p.cacheCpuLimit   String optional gcloud-cli sidecar CPU limit; passed through nullable.
  * @param p.cacheMemRequest String optional gcloud-cli sidecar memory request; passed through nullable.
  * @param p.cacheMemLimit   String optional gcloud-cli sidecar memory limit; passed through nullable.
+ * @param p.provisionTimeout Integer optional minutes to wait for the pod to come
+ *                      online before giving up; null (default) waits forever.
+ *                      Bounds ONLY the scheduling wait -- once the pod is up the
+ *                      closure runs uncapped.
+ * @param p.provisionSlug String optional label for the provisioning error message.
  * @param run       Closure to execute inside the container
  */
 def void insideK8sContainer(Map p, Closure run) {
@@ -157,6 +191,8 @@ def void insideK8sContainer(Map p, Closure run) {
   String arch        = p.arch ?: null
   String pullPolicy  = pull ? 'Always' : 'IfNotPresent'
   Boolean emptyDirWorkspace = p.emptyDirWorkspace ?: false
+  Integer provisionTimeout  = provisionTimeoutMinutes(p.provisionTimeout)
+  String provisionSlug      = p.provisionSlug ?: (arch ?: 'pod')
 
   def podYaml = renderPodYaml(
     image:      image,
@@ -183,12 +219,44 @@ def void insideK8sContainer(Map p, Closure run) {
     podName = "${podName}-${arch}"
   }
 
-  podTemplate(name: podName, yaml: podYaml) {
+  // Mutable holder rather than a local Boolean: the watchdog branch must observe
+  // writes made by the pod branch, and CPS-transformed closures do not share
+  // captured primitive locals reliably.
+  def state = [podUp: false]
+
+  def runOnPod = {
     node(POD_LABEL) {
+      state.podUp = true
       labelPod()
       container('runner') {
         run()
       }
+    }
+  }
+
+  podTemplate(name: podName, yaml: podYaml) {
+    if (provisionTimeout == null) {
+      runOnPod()
+    } else {
+      // A plain timeout() around node() would also cap the build running inside
+      // it, so the scheduling wait is timed by a sibling branch instead.
+      // failFast cancels the still-queued node allocation, which is what tears
+      // down the Pending pod.
+      parallel(
+        failFast: true,
+        'pod': runOnPod,
+        'provision-watchdog': {
+          for (int i = 0; i < provisionTimeout * 4; i++) {
+            if (state.podUp) {
+              return
+            }
+            sleep(time: 15, unit: 'SECONDS')
+          }
+          if (!state.podUp) {
+            error provisionTimeoutMessage(provisionSlug, provisionTimeout)
+          }
+        },
+      )
     }
   }
 } // insideK8sContainer
@@ -815,6 +883,8 @@ def labelPod(){
  * @param buildParams Map
  * @param wipeout Delete all existing state before starting build
  * @param saveCacheTag Tag to upload the cache under when cachelsstsw is set
+ * @param armProvisionTimeout Minutes to wait for an aarch64 node before skipping
+ *        this build; null waits forever. Ignored for non-aarch64 configs.
  */
 def lsstswBuild(
   Map lsstswConfig,
@@ -822,7 +892,8 @@ def lsstswBuild(
   Boolean wipeout=false,
   Boolean fetchCache=false,
   Boolean cachelsstsw=false,
-  String saveCacheTag='d_latest'
+  String saveCacheTag='d_latest',
+  Integer armProvisionTimeout=null
 ) {
   validateLsstswConfig(lsstswConfig)
   def slug = lsstswConfigSlug(lsstswConfig)
@@ -874,7 +945,10 @@ def lsstswBuild(
       // is needed.  All three operations share the j-workspace emptyDir so data
       // transfers happen without inter-pod hostPath mounts.
       cacheImage: (fetchCache || cachelsstsw || buildParams['CI_LSSTCAM']) ? defaultGcloudCliImage() : null,
-
+      // arm only: an x86 stockout should still block rather than silently skip
+      // the platform nearly every change depends on.
+      provisionTimeout: (arch == 'arm64') ? armProvisionTimeout : null,
+      provisionSlug: slug,
     ) {
       try {
         if (fetchCache) {
@@ -911,7 +985,9 @@ def lsstswBuild(
         doRun()
       } // timeout
     } catch (e) {
-      if (!lsstswConfig.allow_fail) {
+      // A provisioning skip is always rethrown so allow_fail cannot swallow it
+      // into a generic suppressed failure; lsstswBuildMatrix accounts for it.
+      if (!lsstswConfig.allow_fail || isProvisionTimeout(e)) {
         throw e
       }
       echo "giving up on build but suppressing error"
@@ -1638,6 +1714,8 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
  * @param buildParams Map of params/env vars for jenkins_wrapper.sh
  * @param wipeout Boolean wipeout the workspace build starting the build
  * @param saveCacheTag String tag to upload the cache under when saveCache is set
+ * @param armProvisionTimeout Integer minutes to wait for an aarch64 node before
+ *        marking that cell NOT_BUILT and keeping the build green; null waits forever.
  */
 def lsstswBuildMatrix(
   List matrixConfig,
@@ -1645,26 +1723,44 @@ def lsstswBuildMatrix(
   Boolean wipeout=false,
   Boolean loadCache=false,
   Boolean saveCache=false,
-  String saveCacheTag='d_latest'
+  String saveCacheTag='d_latest',
+  Integer armProvisionTimeout=null
 ) {
   def matrix = [:]
+  def skipped = []
 
   matrixConfig.each { lsstswConfig ->
     validateLsstswConfig(lsstswConfig)
     def slug = lsstswConfigSlug(lsstswConfig)
 
     matrix[slug] = {
-      lsstswBuild(
-        lsstswConfig,
-        buildParams,
-        wipeout,
-        loadCache,
-        saveCache,
-        saveCacheTag,
-      )
+      try {
+        lsstswBuild(
+          lsstswConfig,
+          buildParams,
+          wipeout,
+          loadCache,
+          saveCache,
+          saveCacheTag,
+          armProvisionTimeout,
+        )
+      } catch (e) {
+        if (!isProvisionTimeout(e)) {
+          throw e
+        }
+        skipped << slug
+        catchError(buildResult: 'SUCCESS', stageResult: 'NOT_BUILT') {
+          error e.getMessage()
+        }
+      }
     }
   }
   parallel matrix
+
+  if (skipped) {
+    def note = "skipped (no capacity): ${skipped.sort().join(', ')}"
+    currentBuild.description = currentBuild.description ? "${currentBuild.description}<br/>${note}" : note
+  }
 } // lsstswBuildMatrix
 
 /**

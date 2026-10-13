@@ -30,5 +30,8 @@ p.pipeline().with {
     BUILD_CONFIG: 'scipipe-lsstsw-matrix',
     BUILD_DOCS: false,
     WIPEOUT: false,
+    // Minutes to wait for GCP to provision an aarch64 node before skipping that
+    // matrix cell. aarch64 stockouts are frequent and must not block CI.
+    AARCH64_PROVISION_TIMEOUT: 10,
   )
 }
