@@ -96,6 +96,36 @@ class UtilHelpersSpec extends Specification {
     yaml.contains('image: gc:latest')
   }
 
+  // The sidecar does the cache tar/zstd work, so its CPU *limit* must leave
+  // headroom to burst; a limit equal to the request (the old 500m/500m) put a
+  // hard CFS quota ceiling on every multi-GB cache transfer. The request stays
+  // small so the otherwise-idle sidecar doesn't block pod packing.
+  def "renderPodYaml lets the gcloud-cli sidecar burst above its CPU request"() {
+    when:
+    def yaml = util.renderPodYaml(image: 'img:1', pullPolicy: 'Always', cacheImage: 'gc:latest')
+    def sidecar = yaml.split(/ {2}- name: gcloud-cli/)[1]
+
+    then:
+    sidecar.contains('cpu: 500m')
+    sidecar.contains('cpu: 8')
+    sidecar.contains('memory: 1Gi')
+    sidecar.contains('memory: 2Gi')
+  }
+
+  def "renderPodYaml allows per-job gcloud-cli sidecar resource overrides"() {
+    when:
+    def yaml = util.renderPodYaml(image: 'img:1', pullPolicy: 'Always', cacheImage: 'gc:latest',
+      cacheCpuRequest: '250m', cacheCpuLimit: '1', cacheMemRequest: '512Mi', cacheMemLimit: '1Gi')
+    def sidecar = yaml.split(/ {2}- name: gcloud-cli/)[1]
+
+    then:
+    sidecar.contains('cpu: 250m')
+    sidecar.contains('cpu: 1')
+    sidecar.contains('memory: 512Mi')
+    sidecar.contains('memory: 1Gi')
+    !sidecar.contains('cpu: 8')
+  }
+
   def "config accessors build strings from sqreConfig"() {
     given:
     util.metaClass.sqreConfig = { ->
