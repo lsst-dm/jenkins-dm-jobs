@@ -142,6 +142,10 @@ def String buildkitCacheArgs(String cacheRepo, String arch, Boolean pushCache = 
  *                      lightweight jobs that don't need a dedicated disk and want
  *                      a workspace below the hyperdisk-balanced 4Gi minimum
  *                      (optional, default false).
+ * @param p.cacheCpuRequest String optional gcloud-cli sidecar CPU request; passed through nullable.
+ * @param p.cacheCpuLimit   String optional gcloud-cli sidecar CPU limit; passed through nullable.
+ * @param p.cacheMemRequest String optional gcloud-cli sidecar memory request; passed through nullable.
+ * @param p.cacheMemLimit   String optional gcloud-cli sidecar memory limit; passed through nullable.
  * @param run       Closure to execute inside the container
  */
 def void insideK8sContainer(Map p, Closure run) {
@@ -165,6 +169,10 @@ def void insideK8sContainer(Map p, Closure run) {
     memLimit:   p.memLimit,
     storage:    p.storage,
     emptyDirWorkspace: emptyDirWorkspace,
+    cacheCpuRequest: p.cacheCpuRequest,
+    cacheCpuLimit:   p.cacheCpuLimit,
+    cacheMemRequest: p.cacheMemRequest,
+    cacheMemLimit:   p.cacheMemLimit,
   )
 
   // Surface the arch in the generated pod name so the two matrix instances are
@@ -205,6 +213,10 @@ def void insideK8sContainer(Map p, Closure run) {
  * @param p.storage    String optional /j workspace ephemeral-PVC size (default '300Gi').
  * @param p.emptyDirWorkspace Boolean optional; when true /j is an emptyDir with
  *                     sizeLimit=storage instead of a hyperdisk PVC (default false).
+ * @param p.cacheCpuRequest String optional gcloud-cli sidecar CPU request (default '500m').
+ * @param p.cacheCpuLimit   String optional gcloud-cli sidecar CPU limit (default '8').
+ * @param p.cacheMemRequest String optional gcloud-cli sidecar memory request (default '1Gi').
+ * @param p.cacheMemLimit   String optional gcloud-cli sidecar memory limit (default '2Gi').
  * @return YAML String
  */
 @NonCPS
@@ -223,6 +235,21 @@ def String renderPodYaml(Map p) {
   String memLimit   = p.memLimit ?: '48Gi'
   String storage    = p.storage ?: '300Gi'
   Boolean emptyDirWorkspace = p.emptyDirWorkspace ?: false
+
+  // gcloud-cli sidecar resources. This container does the cache tar/zstd/gcloud
+  // work (loadCache/saveCache), so it is throughput-critical despite being a
+  // "sidecar": a 15G+ lsstsw tarball is compressed and extracted here. It was
+  // formerly capped at 500m CPU request AND limit, which put a hard CFS quota
+  // ceiling on every cache transfer.
+  //
+  // The request stays small so the pod still packs onto an already-running node
+  // (the sidecar is idle for the whole build except during the cache stages),
+  // while the limit allows bursting for the duration of a transfer. Requests,
+  // not limits, are what the scheduler reserves.
+  String cacheCpuRequest = p.cacheCpuRequest ?: '500m'
+  String cacheCpuLimit   = p.cacheCpuLimit ?: '8'
+  String cacheMemRequest = p.cacheMemRequest ?: '1Gi'
+  String cacheMemLimit   = p.cacheMemLimit ?: '2Gi'
 
   // /j: the build workspace, backed by a per-build generic ephemeral volume
   // (a Hyperdisk dynamically provisioned via the hyperdisk-rwo StorageClass,
@@ -328,11 +355,11 @@ def String renderPodYaml(Map p) {
       readOnlyRootFilesystem: false
     resources:
       requests:
-        cpu: 500m
-        memory: 1Gi
+        cpu: ${cacheCpuRequest}
+        memory: ${cacheMemRequest}
       limits:
-        cpu: 500m
-        memory: 1Gi
+        cpu: ${cacheCpuLimit}
+        memory: ${cacheMemLimit}
     volumeMounts:
     - name: j-workspace
       mountPath: /j
@@ -681,12 +708,16 @@ def void promoteCache(String srcTag, String dstTag) {
     cacheImage: defaultGcloudCliImage(),
     // metadata-only gcloud calls -- ask for as little as possible so the pod
     // packs onto an already-running node instead of scaling up a fresh one.
+    // The sidecar only renames objects in-bucket here (no tar/zstd of a
+    // multi-GB tarball), so it keeps the small cap rather than the burst limit
+    // the transfer paths need.
     cpuRequest: '500m',
     cpuLimit:   '1',
     memRequest: '1Gi',
     memLimit:   '2Gi',
     storage:    '2Gi',
     emptyDirWorkspace: true,
+    cacheCpuLimit: '1',
   ) {
     def workDir = pwd()
     dir("${workDir}/ci-scripts") {
