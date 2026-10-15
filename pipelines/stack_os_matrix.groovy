@@ -67,6 +67,9 @@ notify.wrap {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
   }
 
+  // Temp fix for aarch64 stockout in gce
+  lsstswConfigs.removeAll { it.label == 'linux-aarch64' }
+
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
       util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean(), saveCacheTag)
