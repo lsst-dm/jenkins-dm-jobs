@@ -282,4 +282,31 @@ class UtilHelpersSpec extends Specification {
     !util.isProvisionTimeout(new RuntimeException((String) null))
     !util.isProvisionTimeout(null)
   }
+
+  def "renderPodYaml honours a compute class override in both selector and toleration"() {
+    when:
+    def yaml = util.renderPodYaml(image: 'img:1', pullPolicy: 'IfNotPresent', cacheImage: null,
+      arch: 'arm64', computeClass: 'jenkins-workers-arm-reserved', mounts: [])
+
+    then:
+    yaml.contains('cloud.google.com/compute-class: jenkins-workers-arm-reserved')
+    yaml.contains('value: jenkins-workers-arm-reserved')
+    // the arch selector/toleration must survive the override
+    yaml.contains('kubernetes.io/arch: arm64')
+    yaml.contains('value: arm64')
+  }
+
+  def "renderPodYaml ignores an empty compute class override"() {
+    expect:
+    util.renderPodYaml(image: 'img:1', pullPolicy: 'IfNotPresent', cacheImage: null,
+      arch: 'arm64', computeClass: '', mounts: [])
+      .contains('cloud.google.com/compute-class: jenkins-workers-arm')
+  }
+
+  def "renderPodYaml does not apply an arm override to an x86 pod"() {
+    expect:
+    util.renderPodYaml(image: 'img:1', pullPolicy: 'IfNotPresent', cacheImage: null,
+      arch: 'amd64', computeClass: 'jenkins-workers-arm-reserved', mounts: [])
+      .contains('cloud.google.com/compute-class: jenkins-workers-x86')
+  }
 }

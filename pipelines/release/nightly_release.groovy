@@ -79,6 +79,7 @@ notify.wrap {
               // temporary tag; promoted to d_latest only once the release has
               // succeeded, so a failed release cannot advance the shared cache
               string(name: 'SAVE_CACHE_TAG', value: eupsTag),
+              string(name: 'ARM_COMPUTE_CLASS', value: 'jenkins-workers-arm-reserved'),
             ],
             wait: true,
           )
@@ -158,6 +159,7 @@ notify.wrap {
           SMOKE: true,
           RUN_SCONS_CHECK: true,
           PUBLISH: true,
+          ARM_COMPUTE_CLASS: 'jenkins-workers-arm-reserved',
         ],
         retries: retries,
       )

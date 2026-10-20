@@ -180,6 +180,8 @@ def Boolean isProvisionTimeout(Throwable e) {
  *                      Bounds ONLY the scheduling wait -- once the pod is up the
  *                      closure runs uncapped.
  * @param p.provisionSlug String optional label for the provisioning error message.
+ * @param p.computeClass String optional ComputeClass override; arm64 only (see
+ *                      renderPodYaml). Empty/null selects the default class.
  * @param run       Closure to execute inside the container
  */
 def void insideK8sContainer(Map p, Closure run) {
@@ -209,6 +211,7 @@ def void insideK8sContainer(Map p, Closure run) {
     cacheCpuLimit:   p.cacheCpuLimit,
     cacheMemRequest: p.cacheMemRequest,
     cacheMemLimit:   p.cacheMemLimit,
+    computeClass: p.computeClass,
   )
 
   // Surface the arch in the generated pod name so the two matrix instances are
@@ -380,7 +383,10 @@ def String renderPodYaml(Map p) {
   // reaches for the fallback family once the primary is out of capacity. The
   // worker pools are also tainted with the same key, which is what keeps
   // unrelated pods off them now that no pod pins a specific pool.
-  String computeClass = (arch == 'arm64') ? 'jenkins-workers-arm' : 'jenkins-workers-x86'
+  // arm-only: an x86 pod selecting an arm class would be unschedulable.
+  String computeClass = (arch == 'arm64')
+    ? (p.computeClass ?: 'jenkins-workers-arm')
+    : 'jenkins-workers-x86'
 
   // arm nodes are additionally tainted kubernetes.io/arch=arm64:NoSchedule, so
   // without both the nodeSelector and the matching toleration the pod can only
@@ -885,6 +891,8 @@ def labelPod(){
  * @param saveCacheTag Tag to upload the cache under when cachelsstsw is set
  * @param armProvisionTimeout Minutes to wait for an aarch64 node before skipping
  *        this build; null waits forever. Ignored for non-aarch64 configs.
+ * @param armComputeClass ComputeClass override for aarch64 builds; empty/null
+ *        selects jenkins-workers-arm. Ignored for non-aarch64 configs.
  */
 def lsstswBuild(
   Map lsstswConfig,
@@ -893,7 +901,8 @@ def lsstswBuild(
   Boolean fetchCache=false,
   Boolean cachelsstsw=false,
   String saveCacheTag='d_latest',
-  Integer armProvisionTimeout=null
+  Integer armProvisionTimeout=null,
+  String armComputeClass=null
 ) {
   validateLsstswConfig(lsstswConfig)
   def slug = lsstswConfigSlug(lsstswConfig)
@@ -949,6 +958,7 @@ def lsstswBuild(
       // the platform nearly every change depends on.
       provisionTimeout: (arch == 'arm64') ? armProvisionTimeout : null,
       provisionSlug: slug,
+      computeClass: armComputeClass,
     ) {
       try {
         if (fetchCache) {
@@ -1716,6 +1726,8 @@ def buildOlderVersionTask(String rubinVer, products, Map lsstswConfig){
  * @param saveCacheTag String tag to upload the cache under when saveCache is set
  * @param armProvisionTimeout Integer minutes to wait for an aarch64 node before
  *        marking that cell NOT_BUILT and keeping the build green; null waits forever.
+ * @param armComputeClass String ComputeClass override for aarch64 cells;
+ *        empty/null selects jenkins-workers-arm.
  */
 def lsstswBuildMatrix(
   List matrixConfig,
@@ -1724,7 +1736,8 @@ def lsstswBuildMatrix(
   Boolean loadCache=false,
   Boolean saveCache=false,
   String saveCacheTag='d_latest',
-  Integer armProvisionTimeout=null
+  Integer armProvisionTimeout=null,
+  String armComputeClass=null
 ) {
   def matrix = [:]
   def skipped = []
@@ -1743,6 +1756,7 @@ def lsstswBuildMatrix(
           saveCache,
           saveCacheTag,
           armProvisionTimeout,
+          armComputeClass,
         )
       } catch (e) {
         if (!isProvisionTimeout(e)) {
@@ -1899,6 +1913,10 @@ def void buildTarballMatrix(Map p) {
             string(name: 'RUBINENV_VER', value: rubinEnvVer),
             string(name: 'OSFAMILY', value: item.osfamily),
             string(name: 'PLATFORM', value: item.platform),
+            string(
+              name: 'ARM_COMPUTE_CLASS',
+              value: nullToEmpty(p.parameters.ARM_COMPUTE_CLASS)
+            ),
           ]
       } // retry
     }

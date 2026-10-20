@@ -69,7 +69,8 @@ notify.wrap {
   switch(osfamily) {
     case 'redhat':
       linuxTarballs(image, platform, compiler, py,
-        timeout, buildTarget, smokeConfig, label, wipeout, publish)
+        timeout, buildTarget, smokeConfig, label, wipeout, publish,
+        params.ARM_COMPUTE_CLASS ?: null)
       break
     case 'osx':
       osxTarballs(label, platform, compiler, py,
@@ -95,6 +96,7 @@ notify.wrap {
  * @param smoke.run_scons_check Boolean
  * @param wipeout Boolean
  * @param publish Boolean
+ * @param armComputeClass ComputeClass override for aarch64; null uses the default
  */
 def void linuxTarballs(
   String imageName,
@@ -106,7 +108,8 @@ def void linuxTarballs(
   Map smokeConfig,
   String label,
   Boolean wipeout = false,
-  Boolean publish = false
+  Boolean publish = false,
+  String armComputeClass = null
 ) {
   def String slug = menv.slug()
   def envId = util.joinPath('redhat', platform, compiler, slug)
@@ -127,6 +130,7 @@ def void linuxTarballs(
       pull: true,
       arch: arch,
       cacheImage: util.defaultGcloudCliImage(),
+      computeClass: armComputeClass,
     ) {
       if (wipeout) {
         deleteDir()

@@ -24,6 +24,7 @@ p.pipeline().with {
     booleanParam('LOAD_CACHE', true, 'if enable, will load cache from gcp')
     booleanParam('SAVE_CACHE', false, 'if enable, will upload the built lsstsw tree to gcp as the lsstsw cache')
     stringParam('SAVE_CACHE_TAG', '', 'Tag to upload the lsstsw cache under when SAVE_CACHE is enabled. Empty (default) means d_latest. Release pipelines pass a per-build temporary tag (eg. the dated eups tag) and promote it to d_latest only once the rest of the release succeeds, so never pass d_latest directly.')
+    stringParam('ARM_COMPUTE_CLASS', '', 'ComputeClass for aarch64 cells. Empty (default) means jenkins-workers-arm, which cannot consume the reserved C4A capacity floor. Release pipelines pass jenkins-workers-arm-reserved so the nightly can reach that floor; PR builds must leave this empty.')
   }
 
   environmentVariables(
