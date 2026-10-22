@@ -51,7 +51,7 @@ notify.wrap {
             ]) {
               util.posixSh '''
               gcloud auth activate-service-account $SERVICEACCOUNT --key-file=$GOOGLE_APPLICATION_CREDENTIALS;
-              google-cloud-sdk/platform/bundledpythonunixmusl/bin/python3 ci-scripts/updateindexfile.py
+              /google-cloud-sdk/platform/bundledpythonunixmusl/bin/python3 ci-scripts/updateindexfile.py
               '''
             }
           } // withCredentials
