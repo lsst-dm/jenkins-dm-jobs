@@ -80,6 +80,9 @@ returned will see `null`. That is why the specs target pure functions.
   hyperdisk vs emptyDir workspaces, sidecars), `buildkitCacheArgs`,
   `sanitizeEupsTag`, `sanitizeDockerTag`, `joinPath`, `dedent`, `shebangerize`,
   the config accessors, and `parseImageLabels`.
+- `JobScriptPathSpec` — every Plumber job in `jobs/` names a pipeline file
+  that exists, so a deleted pipeline cannot leave a job behind that fails on
+  checkout.
 - `NotifyThreadContextSpec` — `notify.groovy`'s `addThreadContext`, which
   decides whether a Slack message is threaded and broadcast.
 

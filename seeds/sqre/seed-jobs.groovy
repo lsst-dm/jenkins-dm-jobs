@@ -14,6 +14,10 @@ freeStyleJob('seed-job') {
         shell('./gradlew libs')
         dsl {
             external('jobs/*.groovy')
+            // Jenkins keeps a job whose jobs/*.groovy file was deleted unless
+            // the seed is told otherwise. DELETE removes the job and its build
+            // history; anything seeded must therefore have a file in jobs/.
+            removeAction('DELETE')
         }
     }
 }
