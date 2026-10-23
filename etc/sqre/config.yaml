@@ -27,8 +27,13 @@ squash:
 sasquatch:
   url: https://usdf-rsp-dev.slac.stanford.edu/sasquatch-rest-proxy/
 scipipe_base:
+  dockerfile:
+    github_repo: lsst-dm/docker-scipipe
+    git_ref: main
+    dir: base-9
   docker_registry:
-    repo: lsstdm/scipipe-base
+    repo: ghcr.io/lsst-dm/docker-scipipe
+    tag: 9-latest
 jenkins_swarm_client:
   dockerfile:
     github_repo: lsst-sqre/docker-jenkins-swarm-client
