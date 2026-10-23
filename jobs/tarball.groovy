@@ -28,5 +28,6 @@ p.pipeline().with {
     stringParam('RUBINENV_VER', scipipe.template.splenv_ref, 'rubin-env version')
     choiceParam('OSFAMILY', ['redhat', 'osx'], 'Published osfamily name')
     stringParam('PLATFORM', null, 'Published platform name (el7, 10.9)')
+    stringParam('ARM_COMPUTE_CLASS', '', 'ComputeClass for aarch64 builds. Empty (default) means jenkins-workers-arm, which cannot consume the reserved C4A capacity floor. Release pipelines pass jenkins-workers-arm-reserved.')
   }
 }

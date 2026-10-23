@@ -244,4 +244,69 @@ class UtilHelpersSpec extends Specification {
     expect:
     util.parseImageLabels('null') == [:]
   }
+
+  def "provisionTimeoutMinutes parses a positive minute count"() {
+    expect:
+    util.provisionTimeoutMinutes('10') == 10
+    util.provisionTimeoutMinutes(10) == 10
+    util.provisionTimeoutMinutes(' 10 ') == 10
+  }
+
+  def "provisionTimeoutMinutes returns null for unset, zero or unparsable values"() {
+    expect:
+    util.provisionTimeoutMinutes(raw) == null
+
+    where:
+    raw << [null, '', '  ', '0', 0, '-5', -5, 'abc', '10m']
+  }
+
+  def "provisionTimeoutMessage names the slug and the minute count"() {
+    when:
+    def msg = util.provisionTimeoutMessage('linux-9-aarch64', 10)
+
+    then:
+    msg.contains('linux-9-aarch64')
+    msg.contains('10')
+  }
+
+  def "provisionTimeoutMessage round-trips through isProvisionTimeout"() {
+    expect:
+    util.isProvisionTimeout(
+      new RuntimeException(util.provisionTimeoutMessage('linux-9-aarch64', 10))
+    )
+  }
+
+  def "isProvisionTimeout ignores unrelated throwables"() {
+    expect:
+    !util.isProvisionTimeout(new RuntimeException('scons failed'))
+    !util.isProvisionTimeout(new RuntimeException((String) null))
+    !util.isProvisionTimeout(null)
+  }
+
+  def "renderPodYaml honours a compute class override in both selector and toleration"() {
+    when:
+    def yaml = util.renderPodYaml(image: 'img:1', pullPolicy: 'IfNotPresent', cacheImage: null,
+      arch: 'arm64', computeClass: 'jenkins-workers-arm-reserved', mounts: [])
+
+    then:
+    yaml.contains('cloud.google.com/compute-class: jenkins-workers-arm-reserved')
+    yaml.contains('value: jenkins-workers-arm-reserved')
+    // the arch selector/toleration must survive the override
+    yaml.contains('kubernetes.io/arch: arm64')
+    yaml.contains('value: arm64')
+  }
+
+  def "renderPodYaml ignores an empty compute class override"() {
+    expect:
+    util.renderPodYaml(image: 'img:1', pullPolicy: 'IfNotPresent', cacheImage: null,
+      arch: 'arm64', computeClass: '', mounts: [])
+      .contains('cloud.google.com/compute-class: jenkins-workers-arm')
+  }
+
+  def "renderPodYaml does not apply an arm override to an x86 pod"() {
+    expect:
+    util.renderPodYaml(image: 'img:1', pullPolicy: 'IfNotPresent', cacheImage: null,
+      arch: 'amd64', computeClass: 'jenkins-workers-arm-reserved', mounts: [])
+      .contains('cloud.google.com/compute-class: jenkins-workers-x86')
+  }
 }
