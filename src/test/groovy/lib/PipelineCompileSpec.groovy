@@ -15,6 +15,8 @@ class PipelineCompileSpec extends Specification {
       'pipelines/release/weekly_release.groovy',
       'pipelines/release/run_rebuild.groovy',
       'pipelines/stack_os_matrix.groovy',
+      'pipelines/sqre/infra/build_docker_scipipe_base.groovy',
+      'pipelines/sqre/infra/infra_daily.groovy',
     ]
   }
 
