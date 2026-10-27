@@ -28,6 +28,9 @@ dependencies {
     // the core groovy jar has no json support, and the pipeline scripts use
     // JsonSlurperClassic, JsonSlurper, JsonOutput and JsonBuilder
     testImplementation 'org.codehaus.groovy:groovy-json:3.0.21'
+    // the config specs read etc/**/*.yaml with the same parser the seed job
+    // stages into lib/ (see the `libs` configuration above)
+    testImplementation 'org.yaml:snakeyaml:1.17'
     testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     // useJUnitPlatform() needs a launcher on the test runtime classpath. Gradle 8

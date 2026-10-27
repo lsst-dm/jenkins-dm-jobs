@@ -16,12 +16,18 @@ notify.wrap {
   def retries = 3
 
   def run = {
-    def tasks = [:]
-
-    triggerJob trigger: tasks,
-      name: 'sqre/infra/tag-monger'
-
-    parallel tasks
+    parallel(
+      'tag-monger': {
+        triggerJob name: 'sqre/infra/tag-monger', retries: retries
+      },
+      // newinstall FROMs the scipipe base image, so the two run in sequence;
+      // a base-image failure skips newinstall rather than building it on a
+      // stale base.
+      'images': {
+        triggerJob name: 'sqre/infra/build-docker-scipipe-base', retries: retries
+        triggerJob name: 'sqre/infra/build_docker_newinstall', retries: retries
+      },
+    )
   } // run
 
   timeout(time: 24, unit: 'HOURS') {
@@ -32,10 +38,8 @@ notify.wrap {
 } // notify.wrap
 
 def triggerJob(Map args) {
-  args.trigger[args.name] = {
-    retry(args.retries) {
-      build job: args.name,
-        parameters: args.parameters
-    }
+  retry(args.retries) {
+    build job: args.name,
+      parameters: args.parameters
   }
 }
