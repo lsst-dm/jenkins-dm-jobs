@@ -3114,6 +3114,63 @@ def void nodeWrap(String label, Closure run) {
 }
 
 /**
+ * Product names named by setupRequired/setupOptional in an EUPS table file.
+ * Conditional blocks are treated as unconditional.
+ *
+ * @param tableText String contents of a ups/<pkg>.table file
+ * @return List<String> unique product names, in order of first appearance
+ */
+@NonCPS
+def List<String> parseTableDeps(String tableText) {
+  def deps = []
+  tableText.eachLine { line ->
+    def m = line.replaceAll(/#.*/, '') =~ /setup(?:Required|Optional)\(\s*([\w\-]+)/
+    while (m.find()) {
+      deps << m.group(1)
+    }
+  }
+  return deps.unique()
+}
+
+/**
+ * Transitive EUPS dependency set of an umbrella product, limited to packages
+ * present in `tables` (i.e. built in lsstsw/build).
+ *
+ * @param root   String umbrella product, e.g. 'lsst_distrib'
+ * @param tables Map<String,String> package name -> ups table text ('' if none)
+ * @return List<String> sorted package names, including root
+ */
+@NonCPS
+def List<String> resolveUmbrellaPackages(String root, Map<String, String> tables) {
+  def seen = [] as Set
+  def queue = [root]
+  while (queue) {
+    def pkg = queue.remove(0)
+    if (seen.contains(pkg) || !tables.containsKey(pkg)) {
+      continue
+    }
+    seen << pkg
+    queue.addAll(parseTableDeps(tables[pkg] ?: ''))
+  }
+  return (seen as List).sort()
+}
+
+/**
+ * Rewrite Cobertura <source> entries ending in python/ or tests/ to
+ * <pkg>/python or <pkg>/tests so they resolve from an lsstsw/build base dir.
+ *
+ * @param xml String coverage XML contents
+ * @param pkg String package directory name under lsstsw/build
+ * @return String rewritten XML
+ */
+@NonCPS
+def String remapCoverageSources(String xml, String pkg) {
+  return xml.replaceAll(/<source>(?:[^<]*\/)?(python|tests)<\/source>/) { all, sub ->
+    "<source>${pkg}/${sub}</source>".toString()
+  }
+}
+
+/**
  * Run sonar-scanner across every package in the current workspace's lsstsw/build/
  * tree, then run the umbrella scan. Intended to be called from inside lsstswBuild
  * (cache path, linux-64) after saveCache() has uploaded the tarball.
