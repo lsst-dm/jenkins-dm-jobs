@@ -254,12 +254,14 @@ class UtilHelpersSpec extends Specification {
       setupOptional(sconsUtils 1.0)
       if (type == exact) {
         setupRequired(daf_butler)
+        setupRequired(pex_config      -j g1a2b3c+4d5e6f)
       }
+      setupRequired(geom g7a8b9c [>= g7a8b9c])
       setupRequired(utils)  # duplicate
     '''.stripIndent()
 
     expect:
-    util.parseTableDeps(table) == ['utils', 'afw', 'sconsUtils', 'daf_butler']
+    util.parseTableDeps(table) == ['utils', 'afw', 'sconsUtils', 'daf_butler', 'pex_config', 'geom']
   }
 
   def "parseTableDeps returns empty list for empty text"() {
