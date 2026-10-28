@@ -244,4 +244,70 @@ class UtilHelpersSpec extends Specification {
     expect:
     util.parseImageLabels('null') == [:]
   }
+
+  def "parseTableDeps reads setupRequired and setupOptional product names"() {
+    given:
+    def table = '''\
+      # comment setupRequired(ignored)
+      setupRequired(utils)
+      setupRequired( afw -j )
+      setupOptional(sconsUtils 1.0)
+      if (type == exact) {
+        setupRequired(daf_butler)
+        setupRequired(pex_config      -j g1a2b3c+4d5e6f)
+      }
+      setupRequired(geom g7a8b9c [>= g7a8b9c])
+      setupRequired(utils)  # duplicate
+    '''.stripIndent()
+
+    expect:
+    util.parseTableDeps(table) == ['utils', 'afw', 'sconsUtils', 'daf_butler', 'pex_config', 'geom']
+  }
+
+  def "parseTableDeps returns empty list for empty text"() {
+    expect:
+    util.parseTableDeps('') == []
+  }
+
+  def "resolveUmbrellaPackages walks deps transitively and drops unbuilt products"() {
+    given:
+    def tables = [
+      lsst_apps: 'setupRequired(afw)\nsetupRequired(numpy)',
+      afw      : 'setupRequired(utils)',
+      utils    : '',
+      unrelated: 'setupRequired(utils)',
+    ]
+
+    expect:
+    util.resolveUmbrellaPackages('lsst_apps', tables) == ['afw', 'lsst_apps', 'utils']
+  }
+
+  def "resolveUmbrellaPackages tolerates cycles"() {
+    expect:
+    util.resolveUmbrellaPackages('a', [a: 'setupRequired(b)', b: 'setupRequired(a)']) == ['a', 'b']
+  }
+
+  def "resolveUmbrellaPackages returns empty when root was not built"() {
+    expect:
+    util.resolveUmbrellaPackages('lsst_apps', [afw: '']) == []
+  }
+
+  def "remapCoverageSources prefixes python and tests sources with the package"() {
+    given:
+    def xml = '''\
+      <sources>
+        <source>/j/ws/lsstsw/build/afw/python</source>
+        <source>./python</source>
+        <source>/j/ws/lsstsw/build/afw/tests</source>
+        <source>/opt/lib/mypython</source>
+      </sources>'''.stripIndent()
+
+    when:
+    def out = util.remapCoverageSources(xml, 'afw')
+
+    then:
+    out.count('<source>afw/python</source>') == 2
+    out.contains('<source>afw/tests</source>')
+    out.contains('<source>/opt/lib/mypython</source>')
+  }
 }

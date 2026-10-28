@@ -3113,10 +3113,66 @@ def void nodeWrap(String label, Closure run) {
   }
 }
 
+// EUPS table deps; conditional blocks are treated as unconditional.
+@NonCPS
+def List<String> parseTableDeps(String tableText) {
+  def deps = []
+  tableText.eachLine { line ->
+    def m = line.replaceAll(/#.*/, '') =~ /setup(?:Required|Optional)\(\s*([\w\-]+)/
+    while (m.find()) {
+      deps << m.group(1)
+    }
+  }
+  return deps.unique()
+}
+
+// Transitive deps of root, limited to packages present in tables.
+@NonCPS
+def List<String> resolveUmbrellaPackages(String root, Map<String, String> tables) {
+  def seen = [] as Set
+  def queue = [root]
+  while (queue) {
+    def pkg = queue.remove(0)
+    if (seen.contains(pkg) || !tables.containsKey(pkg)) {
+      continue
+    }
+    seen << pkg
+    queue.addAll(parseTableDeps(tables[pkg] ?: ''))
+  }
+  return (seen as List).sort()
+}
+
+// Rewrite coverage <source> python/tests dirs to <pkg>/python so they resolve from lsstsw/build.
+@NonCPS
+def String remapCoverageSources(String xml, String pkg) {
+  return xml.replaceAll(/<source>(?:[^<]*\/)?(python|tests)<\/source>/) { all, sub ->
+    "<source>${pkg}/${sub}</source>".toString()
+  }
+}
+
+def List<String> findCoverageXmls(List<String> roots) {
+  if (!roots) {
+    return []
+  }
+  def out = sh(
+    returnStdout: true,
+    script: """find ${roots.join(' ')} -maxdepth 6 \\( \\
+        -name 'coverage.xml' \\
+        -o -name 'pytest-coverage.xml' \\
+        -o -path '*/.tests/pytest-coverage.xml' \\
+        -o -path '*/.tests/pytest-*.xml-cov-*.xml' \\
+        -o -path '*/.tests/pytest-*-cov.xml' \\
+        -o -path '*/.tests/*-cov.xml' \\
+      \\) 2>/dev/null | sort -u""",
+  ).trim()
+  return out ? out.split('\n') as List : []
+}
+
 /**
  * Run sonar-scanner across every package in the current workspace's lsstsw/build/
- * tree, then run the umbrella scan. Intended to be called from inside lsstswBuild
- * (cache path, linux-64) after saveCache() has uploaded the tarball.
+ * tree, then run the umbrella product scans. Intended to be
+ * called from inside lsstswBuild (cache path, linux-64) after saveCache() has
+ * uploaded the tarball.
  *
  * @param args.eupsTag    String  EUPS tag, used as projectVersion (e.g. 'w_2026_21')
  * @param args.envPrefix  String  '' on prod, 'dev-' on dev (from SONAR_ENV_PREFIX)
@@ -3159,11 +3215,23 @@ def sonarScanWorkspace(Map args) {
       }
     }
 
-    sonarScanUmbrella(
-      eupsTag: eupsTag,
-      envPrefix: envPrefix,
-      scannerHome: scannerHome,
-    )
+    ['lsst_distrib', 'lsst_apps', 'lsst_ci', 'lsst_extras', 'lsst_sitcom', 'lsst_middleware', 'lsst_obs'].each { product ->
+      try {
+        sonarScanUmbrella(
+          product: product,
+          eupsTag: eupsTag,
+          envPrefix: envPrefix,
+          scannerHome: scannerHome,
+        )
+        sh "echo '${product},OK,' >> ${statusFile}"
+      } catch (InterruptedException e) {
+        throw e
+      } catch (Exception e) {
+        String reason = (e.message ?: 'unknown error').replaceAll(/[^\w .:\-]/, ' ')
+        sh "echo '${product},FAILED,${reason}' >> ${statusFile}"
+        echo "sonar-scan FAILED for ${product}: ${reason}"
+      }
+    }
   } finally {
     dir(env.WORKSPACE) {
       archiveArtifacts artifacts: 'sonar-scan-status.csv', allowEmptyArchive: true
@@ -3191,17 +3259,7 @@ def sonarScanPackage(Map args) {
 
   try {
     dir(pkgDir) {
-      def covPaths = sh(
-        returnStdout: true,
-        script: '''find . -maxdepth 6 \\( \
-            -name 'coverage.xml' \
-            -o -name 'pytest-coverage.xml' \
-            -o -path '*/.tests/pytest-coverage.xml' \
-            -o -path '*/.tests/pytest-*.xml-cov-*.xml' \
-            -o -path '*/.tests/pytest-*-cov.xml' \
-            -o -path '*/.tests/*-cov.xml' \
-          \\) 2>/dev/null | sort -u''',
-      ).trim()
+      def covPaths = findCoverageXmls(['.']).join('\n')
       def junitPaths = sh(
         returnStdout: true,
         script: '''find . -maxdepth 6 \\( \
@@ -3279,29 +3337,70 @@ def sonarScanPackage(Map args) {
   }
 }
 
-/**
- * Run a single umbrella sonar-scanner over the entire lsstsw/build/ tree
- * to populate the lsst_distrib SonarQube project.
- *
- * @param args.eupsTag        String  EUPS tag, used as projectVersion
- * @param args.envPrefix      String  '' or 'dev-'
- * @param args.scannerHome    String  filesystem path returned by `tool 'sonar-scanner'`
- */
 def sonarScanUmbrella(Map args) {
+  String product = args.product
   String eupsTag = args.eupsTag
   String envPrefix = args.envPrefix ?: ''
   String scannerHome = args.scannerHome
-  String projectKey = "${envPrefix}lsst_distrib"
+  String projectKey = "${envPrefix}${product}"
+  String scratch = "${env.WORKSPACE}/sonar-umbrella-cov/${product}"
 
   dir('lsstsw/build') {
+    def built = sh(
+      returnStdout: true,
+      script: 'ls -1 . 2>/dev/null | sort',
+    ).trim().split('\n').findAll { it && !it.startsWith('.') }
+
+    def tables = [:]
+    built.each { pkg ->
+      String table = "${pkg}/ups/${pkg}.table"
+      tables[pkg] = fileExists(table) ? readFile(table) : ''
+    }
+
+    def members = resolveUmbrellaPackages(product, tables)
+    if (!members) {
+      error "${product} not found in lsstsw/build"
+    }
+
+    def withPython = sh(
+      returnStdout: true,
+      script: "for p in ${members.join(' ')}; do [ -d \"\$p/python\" ] && echo \"\$p\"; done; true",
+    ).trim().split('\n').findAll { it }
+    if (!withPython) {
+      error "${product}: no member packages have a python/ directory"
+    }
+
+    sh "rm -rf '${scratch}' && mkdir -p '${scratch}'"
+    def reports = []
+    def covered = [] as Set
+    findCoverageXmls(withPython).eachWithIndex { path, i ->
+      String pkg = path.split('/')[0]
+      String dest = "${scratch}/${pkg}-${i}.xml"
+      writeFile file: dest, text: remapCoverageSources(readFile(path), pkg)
+      reports << dest
+      covered << pkg
+    }
+
+    echo "[sonar:${product}] members: ${members.size()}, with python/: ${withPython.size()}, with coverage: ${covered.size()}"
+    echo "[sonar:${product}] without coverage: ${(withPython - covered).join(' ')}"
+
+    // Hundreds of source dirs; a properties file avoids command-line length limits.
+    String props = "${scratch}/sonar-project.properties"
+    writeFile file: props, text: [
+      "sonar.sources=${withPython.collect { "${it}/python" }.join(',')}",
+      "sonar.python.coverage.reportPaths=${reports.join(',')}",
+    ].join('\n') + '\n'
+
+    // lsstsw is a symlink; coverage only matches indexed files under the canonical path.
     withEnv(['SONAR_SCANNER_OPTS=-Xmx4g']) {
       withSonarQubeEnv('lsst-sonarqube') {
         sh """
           ${scannerHome}/bin/sonar-scanner \\
+            -Dproject.settings=${props} \\
             -Dsonar.projectKey=${projectKey} \\
-            -Dsonar.projectName=lsst_distrib \\
+            -Dsonar.projectName=${product} \\
             -Dsonar.projectVersion=${eupsTag} \\
-            -Dsonar.sources=. \\
+            -Dsonar.projectBaseDir="\$(pwd -P)" \\
             -Dsonar.python.version=3 \\
             -Dsonar.sourceEncoding=UTF-8 \\
             -Dsonar.scm.disabled=true \\
