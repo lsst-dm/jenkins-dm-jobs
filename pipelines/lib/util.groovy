@@ -3170,7 +3170,7 @@ def List<String> findCoverageXmls(List<String> roots) {
 
 /**
  * Run sonar-scanner across every package in the current workspace's lsstsw/build/
- * tree, then run the lsst_distrib and lsst_apps umbrella scans. Intended to be
+ * tree, then run the umbrella product scans. Intended to be
  * called from inside lsstswBuild (cache path, linux-64) after saveCache() has
  * uploaded the tarball.
  *
@@ -3215,7 +3215,7 @@ def sonarScanWorkspace(Map args) {
       }
     }
 
-    ['lsst_distrib', 'lsst_apps'].each { product ->
+    ['lsst_distrib', 'lsst_apps', 'lsst_ci', 'lsst_extras', 'lsst_sitcom', 'lsst_middleware', 'lsst_obs'].each { product ->
       try {
         sonarScanUmbrella(
           product: product,
