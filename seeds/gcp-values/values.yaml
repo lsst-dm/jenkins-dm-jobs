@@ -1931,8 +1931,6 @@ controller:
     spec:
       timeoutSec: 86400
 
-
-
   # Openshift route
   route:
     enabled: false
