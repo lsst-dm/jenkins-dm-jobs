@@ -1869,6 +1869,10 @@ controller:
       # Global static IP for GCE Ingress:
       kubernetes.io/ingress.global-static-ip-name: "jenkins"
 
+      # Raise the GCLB backend timeout above its 30s default so the
+      # agentListener WebSocket connection isn't cut by the LB.
+      cloud.google.com/backend-config: '{"default": "jenkins-backendconfig"}'
+
       # cert-manager annotation pointing to the ClusterIssuer:
       cert-manager.io/cluster-issuer: "letsencrypt-prod"
 
@@ -1919,12 +1923,13 @@ controller:
   # to finish ingress setup, use the following values.
   # Docs: https://cloud.google.com/kubernetes-engine/docs/concepts/backendconfig
   backendconfig:
-    enabled: false
+    enabled: true
     apiVersion: "extensions/v1beta1"
-    name:
+    name: "jenkins-backendconfig"
     labels: {}
     annotations: {}
-    spec: {}
+    spec:
+      timeoutSec: 86400
 
   # Openshift route
   route:
