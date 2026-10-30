@@ -68,7 +68,7 @@ notify.wrap {
   }
 
   // Temp fix for aarch64 stockout in gce
-  lsstswConfigs.removeAll { it.label == 'linux-aarch64' }
+  // lsstswConfigs.removeAll { it.label == 'linux-aarch64' }
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
