@@ -820,19 +820,23 @@ def runArmPreferSlurm(String slug, Closure runEnv, Closure run, Closure withBuil
     parallel(
       failFast: true,
       slurm: {
-        nodeWrap(SLURM_AARCH64_LABEL) {
-          claimed = true
-          runEnv(run)
+        stage('slurm') {
+          nodeWrap(SLURM_AARCH64_LABEL) {
+            claimed = true
+            runEnv(run)
+          }
         }
       },
       watchdog: {
-        def waited = 0
-        while (!claimed && waited < SLURM_AARCH64_WAIT_SECONDS) {
-          sleep(time: 15, unit: 'SECONDS')
-          waited += 15
-        }
-        if (!claimed) {
-          error "${SLURM_PROVISION_TIMEOUT_PREFIX}${slug}: no ${SLURM_AARCH64_LABEL} executor within ${SLURM_AARCH64_WAIT_SECONDS}s"
+        stage('watchdog') {
+          def waited = 0
+          while (!claimed && waited < SLURM_AARCH64_WAIT_SECONDS) {
+            sleep(time: 15, unit: 'SECONDS')
+            waited += 15
+          }
+          if (!claimed) {
+            error "${SLURM_PROVISION_TIMEOUT_PREFIX}${slug}: no ${SLURM_AARCH64_LABEL} executor within ${SLURM_AARCH64_WAIT_SECONDS}s"
+          }
         }
       },
     )
@@ -841,7 +845,9 @@ def runArmPreferSlurm(String slug, Closure runEnv, Closure run, Closure withBuil
       throw e
     }
     echo "${SLURM_AARCH64_LABEL} unavailable within ${SLURM_AARCH64_WAIT_SECONDS}s; falling back to GKE for ${slug}"
-    withBuildTimeout(runDocker)
+    stage('gke fallback') {
+      withBuildTimeout(runDocker)
+    }
   }
 }
 
