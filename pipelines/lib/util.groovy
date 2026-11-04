@@ -984,7 +984,8 @@ def lsstswBuild(
     if (buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64') {
       return
     }
-    if (lsstswConfig.label == 'linux-aarch64') {
+    // Cache builds stay on GKE: saveCache needs the gcloud-cli sidecar.
+    if (lsstswConfig.label == 'linux-aarch64' && !cachelsstsw) {
       runArmPreferSlurm(slug, runEnv, run, withBuildTimeout, runDocker)
     } else {
       // Enter the runner pod directly -- it IS the agent (see insideK8sContainer),
