@@ -227,6 +227,7 @@ controller:
   # auto-reload on restart feature possible.
   publishNotReadyAddresses:
   serviceAnnotations:
+    cloud.google.com/backend-config: '{"default": "jenkins-backendconfig"}'
     #cloud.google.com/load-balancer-type: "External"
   # Jenkins controller custom labels
   statefulSetLabels: {}
@@ -1585,6 +1586,13 @@ controller:
                 launcher: "inbound"
                 name: "snowflake-dev-0"
                 remoteFS: "/j"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "slurm cca linux-aarch64 aarch64 cca-aarch64"
+                name: "cca-aarch64-4"
+                launcher: "inbound"
+                numExecutors: 1
+                remoteFS: "./work-4"
                 retentionStrategy: "always"
             # - permanent:
             #     labelString: "mini osx-arm64"
