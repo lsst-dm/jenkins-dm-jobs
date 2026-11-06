@@ -645,6 +645,16 @@ def loadCache(
         container('gcloud-cli') {
           bash """
           gcloud auth activate-service-account \$SERVICEACCOUNT --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
+          """
+          def exists = sh(
+            returnStatus: true,
+            script: 'gcloud storage ls "gs://eups-lsstsw-cache/${DATE_TAG}_$(uname -m)_lsstsw.tar.zst"',
+          ) == 0
+          if (!exists) {
+            echo "no lsstsw cache for tag ${tag}; continuing without it"
+            return
+          }
+          bash """
           cd ${workDir}/ci-scripts
           ./loadlsststack.sh \$DATE_TAG
           """
