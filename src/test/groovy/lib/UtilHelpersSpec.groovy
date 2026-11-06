@@ -37,6 +37,14 @@ class UtilHelpersSpec extends Specification {
     util.buildkitCacheArgs('repo/x', 'amd64').contains('--cache-to')
   }
 
+  def "isSlurmProvisionTimeout matches only the prefixed message"() {
+    expect:
+    util.isSlurmProvisionTimeout(new RuntimeException('SLURM_PROVISION_TIMEOUT:linux-9-aarch64: no cca-aarch64 executor within 180s'))
+    !util.isSlurmProvisionTimeout(new RuntimeException('some other failure'))
+    !util.isSlurmProvisionTimeout(new RuntimeException())
+    !util.isSlurmProvisionTimeout(null)
+  }
+
   def "cacheIsSharable is false only for a python pinned build"() {
     expect:
     util.cacheIsSharable([:])
