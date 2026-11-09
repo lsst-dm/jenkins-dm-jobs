@@ -819,6 +819,49 @@ def labelPod(){
 }
 
 /**
+ * Try the cca-aarch64 Slurm agent for an arm build; fall back to the GKE pod
+ * path (runDocker) if it doesn't pick up an executor within
+ * SLURM_AARCH64_WAIT_SECONDS. A real build failure after claiming the Slurm
+ * node is never treated as a fallback trigger.
+ */
+def runArmPreferSlurm(String slug, Closure runEnv, Closure run, Closure withBuildTimeout, Closure runDocker) {
+  def claimed = false
+  try {
+    parallel(
+      failFast: true,
+      slurm: {
+        stage('slurm') {
+          nodeWrap(SLURM_AARCH64_LABEL) {
+            claimed = true
+            runEnv(run)
+          }
+        }
+      },
+      watchdog: {
+        stage('watchdog') {
+          def waited = 0
+          while (!claimed && waited < SLURM_AARCH64_WAIT_SECONDS) {
+            sleep(time: 15, unit: 'SECONDS')
+            waited += 15
+          }
+          if (!claimed) {
+            error "${SLURM_PROVISION_TIMEOUT_PREFIX}${slug}: no ${SLURM_AARCH64_LABEL} executor within ${SLURM_AARCH64_WAIT_SECONDS}s"
+          }
+        }
+      },
+    )
+  } catch (e) {
+    if (claimed || !isSlurmProvisionTimeout(e)) {
+      throw e
+    }
+    echo "${SLURM_AARCH64_LABEL} unavailable within ${SLURM_AARCH64_WAIT_SECONDS}s; falling back to GKE for ${slug}"
+    stage('gke fallback') {
+      withBuildTimeout(runDocker)
+    }
+  }
+}
+
+/**
  * Run a lsstsw build.
  *
  * @param lsstswConfig Map
@@ -951,12 +994,17 @@ def lsstswBuild(
     if (buildParams['CI_LSSTCAM'] && lsstswConfig.label != 'linux-64') {
       return
     }
-    // Enter the runner pod directly -- it IS the agent (see insideK8sContainer),
-    // so wrapping it in an outer nodeWrap would allocate a second labeled agent
-    // that sits idle for the entire 12h build. The pod's ephemeral workspace is
-    // fresh per retry (implicit wipeout) and jenkinsWrapperPost runs inside
-    // runDocker's own finally.
-    withBuildTimeout(runDocker)
+    // Cache builds stay on GKE: saveCache needs the gcloud-cli sidecar.
+    if (lsstswConfig.label == 'linux-aarch64' && !cachelsstsw) {
+      runArmPreferSlurm(slug, runEnv, run, withBuildTimeout, runDocker)
+    } else {
+      // Enter the runner pod directly -- it IS the agent (see insideK8sContainer),
+      // so wrapping it in an outer nodeWrap would allocate a second labeled agent
+      // that sits idle for the entire 12h build. The pod's ephemeral workspace is
+      // fresh per retry (implicit wipeout) and jenkinsWrapperPost runs inside
+      // runDocker's own finally.
+      withBuildTimeout(runDocker)
+    }
   } else {
     if (cachelsstsw || buildParams['CI_LSSTCAM']) {
       // Non-image builds don't cache; nothing to do for a caching/lsstcam run.
@@ -1730,6 +1778,17 @@ def String validateProducts(String products) {
 // The @Memoized decorator seems to break pipeline serialization and this
 // method can not be labeled as @NonCPS.
 @Field Map yamlCache = [:]
+
+@Field static final String SLURM_AARCH64_LABEL = 'cca-aarch64'
+@Field static final Integer SLURM_AARCH64_WAIT_SECONDS = 180
+@Field static final String SLURM_PROVISION_TIMEOUT_PREFIX = 'SLURM_PROVISION_TIMEOUT:'
+
+// Prefix check, not an exception-type check, so this is testable under the
+// step-stubbing test harness.
+@NonCPS
+def Boolean isSlurmProvisionTimeout(Throwable e) {
+  e?.message?.startsWith(SLURM_PROVISION_TIMEOUT_PREFIX) ?: false
+}
 def Object readYamlFile(String file) {
   def yaml = yamlCache[file] ?: readYaml(text: readFile(file))
   yamlCache[file] = yaml
