@@ -826,6 +826,7 @@ def labelPod(){
  */
 def runArmPreferSlurm(String slug, Closure runEnv, Closure run, Closure withBuildTimeout, Closure runDocker) {
   def claimed = false
+  def timedOut = false
   try {
     parallel(
       failFast: true,
@@ -838,20 +839,23 @@ def runArmPreferSlurm(String slug, Closure runEnv, Closure run, Closure withBuil
         }
       },
       watchdog: {
+        // timeout (not error) so an expired wait shows as aborted, not failed
         stage('watchdog') {
-          def waited = 0
-          while (!claimed && waited < SLURM_AARCH64_WAIT_SECONDS) {
-            sleep(time: 15, unit: 'SECONDS')
-            waited += 15
-          }
-          if (!claimed) {
-            error "${SLURM_PROVISION_TIMEOUT_PREFIX}${slug}: no ${SLURM_AARCH64_LABEL} executor within ${SLURM_AARCH64_WAIT_SECONDS}s"
+          def deadline = System.currentTimeMillis() + SLURM_AARCH64_WAIT_SECONDS * 1000
+          try {
+            timeout(time: SLURM_AARCH64_WAIT_SECONDS, unit: 'SECONDS') {
+              waitUntil(initialRecurrencePeriod: 15000, quiet: true) { claimed }
+            }
+          } catch (e) {
+            // a user abort also lands here; only an expired wait may fall back
+            timedOut = !claimed && System.currentTimeMillis() >= deadline
+            throw e
           }
         }
       },
     )
   } catch (e) {
-    if (claimed || !isSlurmProvisionTimeout(e)) {
+    if (claimed || !timedOut) {
       throw e
     }
     echo "${SLURM_AARCH64_LABEL} unavailable within ${SLURM_AARCH64_WAIT_SECONDS}s; falling back to GKE for ${slug}"
@@ -1796,14 +1800,6 @@ def String validateProducts(String products) {
 
 @Field static final String SLURM_AARCH64_LABEL = 'cca-aarch64'
 @Field static final Integer SLURM_AARCH64_WAIT_SECONDS = 180
-@Field static final String SLURM_PROVISION_TIMEOUT_PREFIX = 'SLURM_PROVISION_TIMEOUT:'
-
-// Prefix check, not an exception-type check, so this is testable under the
-// step-stubbing test harness.
-@NonCPS
-def Boolean isSlurmProvisionTimeout(Throwable e) {
-  e?.message?.startsWith(SLURM_PROVISION_TIMEOUT_PREFIX) ?: false
-}
 def Object readYamlFile(String file) {
   def yaml = yamlCache[file] ?: readYaml(text: readFile(file))
   yamlCache[file] = yaml
