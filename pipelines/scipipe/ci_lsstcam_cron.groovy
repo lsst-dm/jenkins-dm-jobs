@@ -23,10 +23,8 @@ notify.wrap {
         stringParam(name: 'BUILD_CONFIG', value: 'scipipe-lsstsw-matrix'),
         stringParam(name: 'PRODUCTS', value: scipipe.canonical.products + " ci_lsstcam"),
         booleanParam(name: 'BUILD_DOCS', value: false),
-        booleanParam(name: 'WIPEOUT', value: false),
         booleanParam(name: 'NO_BINARY_FETCH', value: false),
-        booleanParam(name: 'LOAD_CACHE', value: true),
-        booleanParam(name: 'SAVE_CACHE', value: false),
+        booleanParam(name: 'WIPE_CACHE', value: false),
       ]
   }
 } // notify.wrap
