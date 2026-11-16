@@ -1603,21 +1603,42 @@ controller:
                 name: "cca-aarch64-1"
                 launcher: "inbound"
                 numExecutors: 1
-                remoteFS: "./work-1"
+                remoteFS: "./jenkins"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "slurm cca linux-aarch64 aarch64 cca-aarch64"
                 name: "cca-aarch64-2"
                 launcher: "inbound"
                 numExecutors: 1
-                remoteFS: "./work-2"
+                remoteFS: "./jenkins"
                 retentionStrategy: "always"
             - permanent:
                 labelString: "slurm cca linux-aarch64 aarch64 cca-aarch64"
                 name: "cca-aarch64-3"
                 launcher: "inbound"
                 numExecutors: 1
-                remoteFS: "./work-3"
+                remoteFS: "./jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "slurm cca linux-aarch64 aarch64 cca-aarch64"
+                name: "cca-aarch64-4"
+                launcher: "inbound"
+                numExecutors: 1
+                remoteFS: "./jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "slurm cca linux-aarch64 aarch64 cca-aarch64"
+                name: "cca-aarch64-5"
+                launcher: "inbound"
+                numExecutors: 1
+                remoteFS: "./jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "slurm cca linux-aarch64 aarch64 cca-aarch64"
+                name: "cca-aarch64-6"
+                launcher: "inbound"
+                numExecutors: 1
+                remoteFS: "./jenkins"
                 retentionStrategy: "always"
             # - permanent:
             #     labelString: "mini osx-arm64"
