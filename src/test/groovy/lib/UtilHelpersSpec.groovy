@@ -45,6 +45,16 @@ class UtilHelpersSpec extends Specification {
     !util.cacheIsSharable([LSST_PYTHON_PIN: '3.14'])
   }
 
+  def "startedByRelease is true only for a release/* upstream cause"() {
+    expect:
+    util.startedByRelease([[upstreamProject: 'release/weekly-release', upstreamBuild: 1]])
+    util.startedByRelease([[userId: 'u'], [upstreamProject: 'release/nightly-release']])
+    !util.startedByRelease([[upstreamProject: 'scipipe/ci-lsstcam-cron']])
+    !util.startedByRelease([[userId: 'u']])
+    !util.startedByRelease([])
+    !util.startedByRelease(null)
+  }
+
   def "sanitizeEupsTag prefixes numeric tags with v and replaces separators"() {
     expect:
     util.sanitizeEupsTag('1.2.3-rc1') == 'v1_2_3_rc1'

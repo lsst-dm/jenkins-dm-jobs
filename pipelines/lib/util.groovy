@@ -2348,6 +2348,18 @@ def Boolean cacheIsSharable(Map buildParams) {
 }
 
 /**
+ * Was this build started by a release/* job?  Only those may save the shared
+ * lsstsw cache.
+ *
+ * @param causes List of Maps, as returned by currentBuild.getBuildCauses()
+ * @return Boolean
+ */
+@NonCPS
+def Boolean startedByRelease(List causes) {
+  causes?.any { it.upstreamProject?.startsWith('release/') } ?: false
+}
+
+/**
  * Derive a "slug" string from a lsstsw build configuration Map.
  *
  * @param lsstswConfig Map

@@ -74,7 +74,7 @@ notify.wrap {
               string(name: 'PRODUCTS', value: products),
               string(name: 'SPLENV_REF', value: scipipe.template.splenv_ref),
               booleanParam(name: 'NO_BINARY_FETCH', value: true),
-              booleanParam(name: 'LOAD_CACHE', value: false),
+              booleanParam(name: 'WIPE_CACHE', value: true),
               booleanParam(name: 'SAVE_CACHE', value: true),
               // temporary tag; promoted to d_latest only once the release has
               // succeeded, so a failed release cannot advance the shared cache
