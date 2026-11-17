@@ -77,6 +77,14 @@ notify.wrap {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
   }
 
+  // Cache builds stay off Slurm (saveCache needs the gcloud-cli sidecar), so
+  // their aarch64 cell would be GKE-only: a GKE arm stockout, or any aarch64
+  // failure, would fail the cache build and block promoting the x86 cache too.
+  // findAll, not removeAll, so the shared scipipe config is untouched.
+  if (saveCache) {
+    lsstswConfigs = lsstswConfigs.findAll { it.label != 'linux-aarch64' }
+  }
+
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
       util.lsstswBuildMatrix(lsstswConfigs, buildParams, wipeCache, !wipeCache, saveCache, saveCacheTag)
