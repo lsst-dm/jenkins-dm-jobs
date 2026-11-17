@@ -818,49 +818,83 @@ def labelPod(){
 
 }
 
+@Field static final String SLURM_AARCH64_LABEL = 'cca-aarch64'
+@Field static final Integer SLURM_AARCH64_WAIT_SECONDS = 180
+// allows for an arm node scale-up plus the runner image pull
+@Field static final Integer GKE_AARCH64_WAIT_SECONDS = 1800
+
 /**
- * Try the cca-aarch64 Slurm agent for an arm build; fall back to the GKE pod
- * path (runDocker) if it doesn't pick up an executor within
- * SLURM_AARCH64_WAIT_SECONDS. A real build failure after claiming the Slurm
- * node is never treated as a fallback trigger.
+ * Run body in stage `name`, aborting it unless it calls the claim closure it
+ * is passed (once it holds an agent) within `seconds`.
+ *
+ * @return Boolean false if the wait expired before body claimed an agent
  */
-def runArmPreferSlurm(String slug, Closure runEnv, Closure run, Closure withBuildTimeout, Closure runDocker) {
+def Boolean runClaimedWithin(String name, Integer seconds, Closure body) {
   def claimed = false
   def timedOut = false
   try {
     parallel(
       failFast: true,
-      slurm: {
-        stage('slurm') {
-          nodeWrap(SLURM_AARCH64_LABEL) {
-            claimed = true
-            runEnv(run)
-          }
+      (name): {
+        stage(name) {
+          body { claimed = true }
         }
       },
       watchdog: {
         // timeout (not error) so an expired wait shows as aborted, not failed
-        stage('watchdog') {
-          def deadline = System.currentTimeMillis() + SLURM_AARCH64_WAIT_SECONDS * 1000
+        stage("${name} watchdog") {
+          def deadline = System.currentTimeMillis() + seconds * 1000
           try {
-            timeout(time: SLURM_AARCH64_WAIT_SECONDS, unit: 'SECONDS') {
+            timeout(time: seconds, unit: 'SECONDS') {
               waitUntil(initialRecurrencePeriod: 15000, quiet: true) { claimed }
             }
           } catch (e) {
-            // a user abort also lands here; only an expired wait may fall back
-            timedOut = !claimed && System.currentTimeMillis() >= deadline
+            // claimed after the last poll; rethrowing would abort a real build
+            if (claimed) {
+              return
+            }
+            // a user abort or a failed body also lands here; only an expired
+            // wait may fall back
+            timedOut = System.currentTimeMillis() >= deadline
             throw e
           }
         }
       },
     )
   } catch (e) {
-    if (claimed || !timedOut) {
+    // even if body claimed just before the abort, it had done no real work
+    if (!timedOut) {
       throw e
     }
-    echo "${SLURM_AARCH64_LABEL} unavailable within ${SLURM_AARCH64_WAIT_SECONDS}s; falling back to GKE for ${slug}"
-    stage('gke fallback') {
-      withBuildTimeout(runDocker)
+    return false
+  }
+  return true
+}
+
+/**
+ * Try the cca-aarch64 Slurm agent for an arm build; fall back to the GKE pod
+ * path (runDocker) if it doesn't pick up an executor within
+ * SLURM_AARCH64_WAIT_SECONDS, and fail if no GKE pod starts within
+ * GKE_AARCH64_WAIT_SECONDS. A real build failure after claiming an agent is
+ * never treated as a fallback trigger.
+ */
+def runArmPreferSlurm(String slug, Closure runEnv, Closure run, Closure withBuildTimeout, Closure runDocker) {
+  def ranOnSlurm = runClaimedWithin('slurm', SLURM_AARCH64_WAIT_SECONDS) { claim ->
+    nodeWrap(SLURM_AARCH64_LABEL) {
+      claim()
+      runEnv(run)
+    }
+  }
+  if (ranOnSlurm) {
+    return
+  }
+  echo "${SLURM_AARCH64_LABEL} unavailable within ${SLURM_AARCH64_WAIT_SECONDS}s; falling back to GKE for ${slug}"
+  withBuildTimeout {
+    def ranOnGke = runClaimedWithin('gke fallback', GKE_AARCH64_WAIT_SECONDS) { claim ->
+      runDocker(claim)
+    }
+    if (!ranOnGke) {
+      error "no aarch64 capacity: no ${SLURM_AARCH64_LABEL} agent within ${SLURM_AARCH64_WAIT_SECONDS}s and no GKE arm pod within ${GKE_AARCH64_WAIT_SECONDS}s for ${slug}"
     }
   }
 }
@@ -912,7 +946,9 @@ def lsstswBuild(
         jenkinsWrapper(buildParams)
     } // else
   } // run
-  def runDocker = {
+  // onStart is called once the pod is up, so a caller can bound how long it
+  // waits for GKE capacity.
+  def runDocker = { Closure onStart ->
     // Pin the inner pod to the matrix entry's arch; without this the aarch64
     // build lands on x86 because arm nodes are tainted (see renderPodYaml).
     def arch = (lsstswConfig.label == 'linux-aarch64') ? 'arm64' : 'amd64'
@@ -933,6 +969,7 @@ def lsstswBuild(
       cacheImage: (fetchCache || cachelsstsw || buildParams['CI_LSSTCAM']) ? defaultGcloudCliImage() : null,
 
     ) {
+      onStart()
       try {
         if (fetchCache) {
           loadCache(slug, "d_latest")
@@ -981,12 +1018,22 @@ def lsstswBuild(
   def runEnv = { doRun ->
     // No longer need hashpath as slug is short enough
     def buildDirHash = slug
+    // Persistent agents (Slurm, macOS) keep this workspace between builds. A
+    // build that lost its agent mid-run (walltime, preemption, disconnect)
+    // never reached jenkinsWrapper's cleanup, so its stale eups .lockDir and
+    // half-built stack are still here; the marker detects that.
+    def incompleteMarker = '.lsstsw-build-incomplete'
     try {
       dir(buildDirHash) {
-        if (wipeout) {
+        if (wipeout || fileExists(incompleteMarker)) {
           deleteDir()
         }
-        withBuildTimeout(doRun)
+        writeFile(file: incompleteMarker, text: "${env.BUILD_URL}\n")
+        try {
+          withBuildTimeout(doRun)
+        } finally {
+          bash "rm -f ${incompleteMarker}"
+        }
       } // dir
     } finally {
       jenkinsWrapperPost(buildDirHash)
@@ -1007,7 +1054,7 @@ def lsstswBuild(
       // that sits idle for the entire 12h build. The pod's ephemeral workspace is
       // fresh per retry (implicit wipeout) and jenkinsWrapperPost runs inside
       // runDocker's own finally.
-      withBuildTimeout(runDocker)
+      withBuildTimeout { runDocker {} }
     }
   } else {
     if (cachelsstsw || buildParams['CI_LSSTCAM']) {
@@ -1782,9 +1829,6 @@ def String validateProducts(String products) {
 // The @Memoized decorator seems to break pipeline serialization and this
 // method can not be labeled as @NonCPS.
 @Field Map yamlCache = [:]
-
-@Field static final String SLURM_AARCH64_LABEL = 'cca-aarch64'
-@Field static final Integer SLURM_AARCH64_WAIT_SECONDS = 180
 def Object readYamlFile(String file) {
   def yaml = yamlCache[file] ?: readYaml(text: readFile(file))
   yamlCache[file] = yaml
