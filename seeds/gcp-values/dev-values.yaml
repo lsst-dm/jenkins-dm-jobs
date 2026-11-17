@@ -1592,7 +1592,7 @@ controller:
                 name: "cca-aarch64-4"
                 launcher: "inbound"
                 numExecutors: 1
-                remoteFS: "./work-4"
+                remoteFS: "./jenkins"
                 retentionStrategy: "always"
             # - permanent:
             #     labelString: "mini osx-arm64"
