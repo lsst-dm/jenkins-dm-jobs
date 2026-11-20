@@ -21,9 +21,8 @@ notify.wrap {
     'BUILD_CONFIG',
     'PRODUCTS',
     'BUILD_DOCS',
-    'WIPEOUT',
+    'WIPE_CACHE',
     'NO_BINARY_FETCH',
-    'LOAD_CACHE',
     'SAVE_CACHE'
   ])
 
@@ -51,11 +50,22 @@ notify.wrap {
     buildParams['LSST_PYTHON_PIN'] = params.PYTHON_PIN
   }
 
-  // SAVE_CACHE/LOAD_CACHE are read as env vars rather than params because this
+  // WIPE_CACHE/SAVE_CACHE are read as env vars rather than params because this
   // script backs two kinds of job: stack-os-matrix, which declares them as
   // parameters, and the CleanBuild jobs, which only set them as env vars.
   // Declared parameters are exposed as env vars too, so the env var is the one
   // spelling that works for both.
+
+  // A build can't know whether it lands on GKE or a persistent agent, so the
+  // cache is always used unless WIPE_CACHE: it wipes the workspace on
+  // Slurm/macOS and skips the cache load on GKE.
+  def wipeCache = WIPE_CACHE.toBoolean()
+
+  def saveCache = SAVE_CACHE.toBoolean()
+  if (saveCache && !util.startedByRelease(currentBuild.getBuildCauses())) {
+    echo 'SAVE_CACHE is reserved for release pipelines; ignoring it'
+    saveCache = false
+  }
 
   // Release pipelines save under a per-build temporary tag and promote it to
   // d_latest only once the release has succeeded, so a failed release cannot
@@ -67,12 +77,17 @@ notify.wrap {
     error "invalid value for BUILD_CONFIG: ${BUILD_CONFIG}"
   }
 
-  // Temp fix for aarch64 stockout in gce
-  lsstswConfigs.removeAll { it.label == 'linux-aarch64' }
+  // Cache builds stay off Slurm (saveCache needs the gcloud-cli sidecar), so
+  // their aarch64 cell would be GKE-only: a GKE arm stockout, or any aarch64
+  // failure, would fail the cache build and block promoting the x86 cache too.
+  // findAll, not removeAll, so the shared scipipe config is untouched.
+  if (saveCache) {
+    lsstswConfigs = lsstswConfigs.findAll { it.label != 'linux-aarch64' }
+  }
 
   timeout(time: 12, unit: 'HOURS') {
     stage('build') {
-      util.lsstswBuildMatrix(lsstswConfigs, buildParams, WIPEOUT.toBoolean(), LOAD_CACHE.toBoolean(), SAVE_CACHE.toBoolean(), saveCacheTag)
+      util.lsstswBuildMatrix(lsstswConfigs, buildParams, wipeCache, !wipeCache, saveCache, saveCacheTag)
     }
   }
 } // notify.wrap

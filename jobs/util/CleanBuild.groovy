@@ -41,10 +41,9 @@ class CleanBuild {
         PRODUCTS: products,
         REFS: refs,
         BUILD_DOCS: buildDocs,
-        WIPEOUT: true,
+        WIPE_CACHE: true,
         BUILD_CONFIG: buildConfig,
         NO_BINARY_FETCH: true,
-        LOAD_CACHE: false,
         SAVE_CACHE: false,
       )
 
