@@ -175,7 +175,8 @@ notify.wrap {
 
   } // run
 
-  util.nodeWrap(lsstswConfig.label) {
+  // Slurm agents also carry linux-aarch64 but have no docker.
+  util.nodeWrap("${lsstswConfig.label} && !slurm") {
     try {
       timeout(time: timelimit, unit: 'HOURS') {
         run()

@@ -46,7 +46,8 @@ notify.wrap {
     def archTag = "${dockerRepo}:${dockerTag}_${arch}"
 
     matrix[slug] = {
-      util.nodeWrap(lsstswConfig.label) {
+      // Slurm agents also carry linux-aarch64 but have no docker.
+      util.nodeWrap("${lsstswConfig.label} && !slurm") {
         timeout(time: 1, unit: 'HOURS') {
           stage("checkout ${arch}") {
             git([
