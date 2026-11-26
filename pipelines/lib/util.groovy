@@ -1152,7 +1152,8 @@ def void jenkinsWrapper(Map buildParams) {
     withEnv(["WORKSPACE=${cwd}"]) {
       bash '''
         if hash lsof 2>/dev/null; then
-          Z=$(lsof -d 200 -t)
+          # Only this workspace's rebuild: Slurm agents share a host and UID.
+          Z=$(lsof -t "${WORKSPACE}/lsstsw/var/run/rebuild.run" 2>/dev/null || true)
           if [[ ! -z $Z ]]; then
             kill -9 $Z
           fi
