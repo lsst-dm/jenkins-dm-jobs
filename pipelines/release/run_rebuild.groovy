@@ -125,7 +125,7 @@ notify.wrap {
         } // stage('build')
 
         // Upload the lsstsw tree just built here so downstream consumers
-        // (sonar-scan, stack-os-matrix LOAD_CACHE) do not have to rebuild the
+        // (sonar-scan, stack-os-matrix cache load) do not have to rebuild the
         // same products a second time. The tag is a per-build temporary one; the
         // calling release pipeline promotes it to d_latest only after the rest of
         // the release succeeds, so a failed release cannot leave the shared cache

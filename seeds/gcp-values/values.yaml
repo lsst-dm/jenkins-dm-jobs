@@ -228,6 +228,8 @@ controller:
   serviceAnnotations:
     cloud.google.com/backend-config: '{"default": "jenkins-backendconfig"}'
     #cloud.google.com/load-balancer-type: "External"
+    # Raise the GCLB backend timeout above its 30s default so the
+    # agentListener WebSocket connection isn't cut by the LB.
   # Jenkins controller custom labels
   statefulSetLabels: {}
   #   foo: bar

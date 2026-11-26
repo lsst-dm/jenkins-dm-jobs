@@ -109,7 +109,8 @@ notify.wrap {
       } // stage('build and push')
     } // run
 
-    util.nodeWrap(lsstswConfig.label) {
+    // Slurm agents also carry linux-aarch64 but have no docker.
+    util.nodeWrap("${lsstswConfig.label} && !slurm") {
       timeout(time: 4, unit: 'HOURS') {
         run()
       }

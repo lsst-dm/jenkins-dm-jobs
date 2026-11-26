@@ -21,14 +21,13 @@ p.pipeline().with {
     // XXX testing only
     //booleanParam('NO_FETCH', false, 'Do not pull from git remote if branch is already the current ref. (This should generally be false outside of testing the CI system)')
     booleanParam('NO_BINARY_FETCH', false, 'if enable, will build all binaries from scratch')
-    booleanParam('LOAD_CACHE', true, 'if enable, will load cache from gcp')
-    booleanParam('SAVE_CACHE', false, 'if enable, will upload the built lsstsw tree to gcp as the lsstsw cache')
-    stringParam('SAVE_CACHE_TAG', '', 'Tag to upload the lsstsw cache under when SAVE_CACHE is enabled. Empty (default) means d_latest. Release pipelines pass a per-build temporary tag (eg. the dated eups tag) and promote it to d_latest only once the rest of the release succeeds, so never pass d_latest directly.')
+    booleanParam('WIPE_CACHE', false, 'Start from scratch: wipe the persistent workspace on Slurm and macOS agents, and skip loading the lsstsw cache on GKE. By default each build reuses whichever cache its agent has.')
+    booleanParam('SAVE_CACHE', false, 'RELEASE PIPELINES ONLY -- ignored unless started by a release/* job. Uploads the built lsstsw tree as the lsstsw cache.')
+    stringParam('SAVE_CACHE_TAG', '', 'RELEASE PIPELINES ONLY -- ignored unless started by a release/* job. Tag to upload the lsstsw cache under; empty means d_latest.')
   }
 
   environmentVariables(
     BUILD_CONFIG: 'scipipe-lsstsw-matrix',
     BUILD_DOCS: false,
-    WIPEOUT: false,
   )
 }
