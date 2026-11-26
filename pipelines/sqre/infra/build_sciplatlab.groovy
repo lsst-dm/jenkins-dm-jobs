@@ -153,7 +153,7 @@ notify.wrap {
     } // stage
   } // run
 
-  util.withGithubAdminCredentials {
+  util.withGithubLSSTSQRECredentials {
     run()
   }
 } // notify.wrap

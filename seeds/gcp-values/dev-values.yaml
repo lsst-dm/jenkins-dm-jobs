@@ -110,7 +110,7 @@ controller:
     - name: CASC_VAULT_URL
       value: https://vault-ci.lsst.cloud
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-checks,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/github-jenkins,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev,secret/rubin/rubin-jenkins-control-dev/sqre-mini,secret/rubin/rubin-jenkins-control-dev/rubinobs-dm,secret/rubin/rubin-jenkins-control-dev/gs-eups-push,secret/rubin/rubin-jenkins-control-dev/weka-s3/testdata-ci-lsst,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/sonarqube/jenkins-token
+      value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-checks,secret/rubin/rubin-jenkins-control-dev/github-api-token-lsst,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-api-token-lsst-sqre-sciplat-lab,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/github-jenkins,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev,secret/rubin/rubin-jenkins-control-dev/sqre-mini,secret/rubin/rubin-jenkins-control-dev/rubinobs-dm,secret/rubin/rubin-jenkins-control-dev/gs-eups-push,secret/rubin/rubin-jenkins-control-dev/weka-s3/testdata-ci-lsst,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/sonarqube/jenkins-token
     #- name: JAVA_OPTS
     #  value: --add-opens=java.base/java.lang=ALL-UNNAMED,--add-opens=java.base/java.lang.reflect=ALL-UNNAMED
     #value: "-Dhttp.nonProxyHosts='*.slac.stanford.edu' -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.nonProxyHosts='*.slac.stanford.edu' -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyPort=3128 -Djava.util.logging.config.file=/var/jenkins_home/logging.properties"
@@ -148,7 +148,7 @@ controller:
     - name: CASC_VAULT_URL
       value: https://ci-vault.lsst.cloud
     - name: CASC_VAULT_PATHS
-      value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-checks,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/github-jenkins,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev,secret/rubin/rubin-jenkins-control-dev/sqre-mini,secret/rubin/rubin-jenkins-control-dev/rubinobs-dm,secret/rubin/rubin-jenkins-control-dev/gs-eups-push,secret/rubin/rubin-jenkins-control-dev/weka-s3/testdata-ci-lsst,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/sonarqube/jenkins-token
+      value: secret/rubin/rubin-jenkins-control-dev/common,secret/rubin/rubin-jenkins-control-dev/slack-lsstc-token,secret/rubin/rubin-jenkins-control-dev/ghslacker,secret/rubin/rubin-jenkins-control-dev/github-api-token-checks,secret/rubin/rubin-jenkins-control-dev/github-api-token-sqreadmin,secret/rubin/rubin-jenkins-control-dev/github-api-token-lsst,secret/rubin/rubin-jenkins-control-dev/github-api-token-lsst-sqre-sciplat-lab,secret/rubin/rubin-jenkins-control-dev/github-jenkins-versiondb,secret/rubin/rubin-jenkins-control-dev/github-jenkins,secret/rubin/rubin-jenkins-control-dev/sqre-osx,secret/rubin/rubin-jenkins-control-dev/github_backup,secret/rubin/rubin-jenkins-control-dev/squash-api-user,secret/rubin/rubin-jenkins-control-dev/dockerhub-sqreadmin,secret/rubin/rubin-jenkins-control-dev/ltd-keeper,secret/rubin/rubin-jenkins-control-dev/google_archive_registry_sa,secret/rubin/rubin-jenkins-control-dev/github-oauth,secret/rubin/rubin-jenkins-control/sqre-osx,secret/rubin/rubin-jenkins-control-dev/sqre-osx-dev,secret/rubin/rubin-jenkins-control-dev/sqre-mini,secret/rubin/rubin-jenkins-control-dev/rubinobs-dm,secret/rubin/rubin-jenkins-control-dev/gs-eups-push,secret/rubin/rubin-jenkins-control-dev/weka-s3/testdata-ci-lsst,secret/rubin/rubin-jenkins-control-dev/ltd-mason-aws,secret/sonarqube/jenkins-token
   # Set min/max heap here if needed with:
   # Heap pinned (-Xms == -Xmx) so the JVM does not auto-size to 25% of the
   # container limit (~7.8Gi of the 31.3Gi limit) and then grow/thrash under GC.
@@ -896,6 +896,16 @@ controller:
                   id: "github-api-token-checks"
                   scope: GLOBAL
                   secret: "${secret/rubin/rubin-jenkins-control-dev/github-api-token-checks/token}"
+              - string:
+                  description: "github API personal access token (rubinobs-dm-admin)"
+                  id: "github-api-token-lsst"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/github-api-token-lsst/token}"
+              - string:
+                  description: "github API personal access token (lsst-sqre-sciplat-lab)"
+                  id: "github-api-token-lsst-sqre-sciplat-lab"
+                  scope: GLOBAL
+                  secret: "${secret/rubin/rubin-jenkins-control-dev/github-api-token-lsst-sqre-sciplat-lab/token}"
               - string:
                   description: "github API personal access token (sqreadmin)"
                   id: "github-api-token-sqreadmin"

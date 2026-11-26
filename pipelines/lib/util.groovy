@@ -1323,8 +1323,8 @@ def void githubTagRelease(Map p) {
     '--debug': true,
     '--dry-run': true,
     '--token': '$GITHUB_TOKEN',
-    '--user': 'sqreadmin',
-    '--email': 'sqre-admin@lists.lsst.org',
+    '--user': 'rubinobs-dm-admin',
+    '--email': 'dm-admin@lists.lsst.org',
     '--versiondb-base-url': vdbUrl,
     '--eupstag-base-url': etbUrl,
     '--allow-team': ['Data Management', 'DM Externals'],
@@ -1369,8 +1369,8 @@ def void githubTagTeams(Map p) {
     '--debug': true,
     '--dry-run': true,
     '--token': '$GITHUB_TOKEN',
-    '--user': 'sqreadmin',
-    '--email': 'sqre-admin@lists.lsst.org',
+    '--user': 'rubinobs-dm-admin',
+    '--email': 'dm-admin@lists.lsst.org',
     '--allow-team': 'DM Auxilliaries',
     '--deny-team': 'DM Externals',
     '--ignore-existing-tag': true,
@@ -1525,7 +1525,22 @@ def String listToCliArgs(List args) {
 def void withGithubAdminCredentials(Closure run) {
   withCredentials([[
     $class: 'StringBinding',
-    credentialsId: 'github-api-token-sqreadmin',
+    credentialsId: 'github-api-token-lsst',
+    variable: 'GITHUB_TOKEN'
+  ]]) {
+    run()
+  } // withCredentials
+}
+
+/**
+ * Run block with a github oauth token defined as `GITHUB_TOKEN`.
+ *
+ * @param run Closure Invoked inside of node step
+ */
+def void withGithubLSSTSQRECredentials(Closure run) {
+  withCredentials([[
+    $class: 'StringBinding',
+    credentialsId: 'github-api-token-lsst-sqre-sciplat-lab',
     variable: 'GITHUB_TOKEN'
   ]]) {
     run()
